@@ -1,0 +1,72 @@
+//! CRM v71 -> v72 (app 0.6.64): author-bound Pinterest receipts. Existing
+//! startup owner provides lock, preflight, WAL backup and outer transaction.
+use rusqlite::Connection;
+const PROFILE_PREDECESSOR: &str = "platform IN ('bilibili','tiktok','twitter','reddit','facebook','instagram','weibo','bluesky','zhihu','hackernews')";
+const PROFILE_CURRENT: &str = "platform IN ('bilibili','tiktok','twitter','reddit','facebook','instagram','weibo','bluesky','zhihu','hackernews','pinterest')";
+const CONTENT_PREDECESSOR: &str = "platform IN ('bilibili','twitter','reddit','facebook','instagram','weibo','bluesky','zhihu','hackernews')";
+const CONTENT_CURRENT: &str = "platform IN ('bilibili','twitter','reddit','facebook','instagram','weibo','bluesky','zhihu','hackernews','pinterest')";
+
+pub(in crate::repository::sqlite::schema) fn migrate(db: &Connection) -> Result<(), String> {
+    rebuild(db, false)
+}
+
+fn rebuild(db: &Connection, reference: bool) -> Result<(), String> {
+    let tables = [
+        "discovery_profile_reads",
+        "discovery_content_reads",
+        "discovery_profile_identity_matches",
+        "discovery_content_identity_bindings",
+        "discovery_facebook_content_targets",
+    ];
+    let mut ddl = Vec::new();
+    for table in tables {
+        ddl.push(
+            db.query_row(
+                "SELECT sql FROM sqlite_master WHERE name=?1",
+                [table],
+                |r| r.get::<_, String>(0),
+            )
+            .map_err(|e| e.to_string())?,
+        );
+    }
+    for (index, old, new) in [
+        (0, PROFILE_PREDECESSOR, PROFILE_CURRENT),
+        (1, CONTENT_PREDECESSOR, CONTENT_CURRENT),
+    ] {
+        let (from, to) = if reference { (new, old) } else { (old, new) };
+        if ddl[index].matches(from).count() != 1 {
+            return Err("Pinterest receipt predecessor constraint mismatch".into());
+        }
+        ddl[index] = ddl[index].replacen(from, to, 1);
+    }
+    for table in tables {
+        db.execute_batch(&format!(
+            "CREATE TEMP TABLE pinterest_upgrade_{table} AS SELECT * FROM {table};"
+        ))
+        .map_err(|e| e.to_string())?;
+    }
+    for table in tables.into_iter().rev() {
+        db.execute_batch(&format!("DROP TABLE {table};"))
+            .map_err(|e| e.to_string())?;
+    }
+    for (table, sql) in tables.into_iter().zip(ddl) {
+        db.execute_batch(&sql).map_err(|e| e.to_string())?;
+        db.execute_batch(&format!("INSERT INTO {table} SELECT * FROM pinterest_upgrade_{table}; DROP TABLE pinterest_upgrade_{table};")).map_err(|e|e.to_string())?;
+    }
+    Ok(())
+}
+
+/// Historical reference construction only. Never an application downgrade.
+pub(in crate::repository::sqlite) fn strip_reference(db: &Connection) -> Result<(), String> {
+    let sql: String = db
+        .query_row(
+            "SELECT sql FROM sqlite_master WHERE name='discovery_profile_reads'",
+            [],
+            |r| r.get(0),
+        )
+        .map_err(|e| e.to_string())?;
+    if sql.contains(PROFILE_CURRENT) {
+        rebuild(db, true)?;
+    }
+    Ok(())
+}

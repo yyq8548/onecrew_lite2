@@ -1,0 +1,342 @@
+{
+  "daemon_running": true,
+  "extension_connected": true,
+  "issue": null,
+  "profiles": [
+    {
+      "context_id": "browser",
+      "alias": null
+    }
+  ],
+  "sources": [
+    {
+      "allowed_values": [],
+      "browser_required": true,
+      "command": "youtube/search",
+      "platform": "youtube",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": true,
+      "command": "onecrew-tiktok/search",
+      "platform": "tiktok",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": true,
+      "command": "instagram/search",
+      "platform": "instagram",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": true,
+      "command": "twitter/search",
+      "platform": "twitter",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": true,
+      "command": "onecrew-search-linkedin/people-search",
+      "platform": "linkedin",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": true,
+      "command": "onecrew-search-facebook/search",
+      "platform": "facebook",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": true,
+      "command": "pinterest/search-users",
+      "platform": "pinterest",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": true,
+      "command": "reddit/search",
+      "platform": "reddit",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": true,
+      "command": "onecrew-bilibili/search",
+      "platform": "bilibili",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": true,
+      "command": "weixin/search",
+      "platform": "weixin",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": true,
+      "command": "onecrew-search-zhihu/search",
+      "platform": "zhihu",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": true,
+      "command": "onecrew-search-douyin/search",
+      "platform": "douyin",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": true,
+      "command": "onecrew-search-weibo/search",
+      "platform": "weibo",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": true,
+      "command": "medium/search",
+      "platform": "medium",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": true,
+      "command": "onecrew-search-tieba/search",
+      "platform": "tieba",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": false,
+      "command": "bluesky/search",
+      "platform": "bluesky",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": true,
+      "command": "jike/search",
+      "platform": "jike",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": false,
+      "command": "hackernews/search",
+      "platform": "hackernews",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": true,
+      "command": "linux-do/search",
+      "platform": "linux-do",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": true,
+      "command": "onecrew-nowcoder/search",
+      "platform": "nowcoder",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": true,
+      "command": "hupu/search",
+      "platform": "hupu",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": true,
+      "command": "pixiv/search",
+      "platform": "pixiv",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": false,
+      "command": "stackoverflow/search",
+      "platform": "stackoverflow",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": true,
+      "command": "linkedin/salesnav-search",
+      "platform": "linkedin-salesnav",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": false,
+      "command": "archive/search",
+      "platform": "archive",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": false,
+      "command": "weread/search",
+      "platform": "weread",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": true,
+      "command": "onecrew-search-google/search",
+      "platform": "google",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": true,
+      "command": "onecrew-search-duckduckgo/search",
+      "platform": "duckduckgo",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": true,
+      "command": "yahoo/search",
+      "platform": "yahoo",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": true,
+      "command": "onecrew-search-dribbble/designer",
+      "platform": "dribbble-designers",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": false,
+      "command": "stackoverflow/user",
+      "platform": "stackoverflow-users",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": true,
+      "command": "onecrew-search-douban/search",
+      "platform": "douban-books",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": true,
+      "command": "onecrew-search-douban/search",
+      "platform": "douban-music",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": false,
+      "command": "devto/tag",
+      "platform": "devto-tag",
+      "registered": true,
+      "scope_kind": "tag"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": false,
+      "command": "medium/tag",
+      "platform": "medium-tag",
+      "registered": true,
+      "scope_kind": "tag"
+    },
+    {
+      "allowed_values": [
+        "ai-agents",
+        "ai-coding-agents",
+        "ai-code-editors",
+        "ai-chatbots",
+        "ai-workflow-automation",
+        "vibe-coding",
+        "developer-tools",
+        "productivity",
+        "design-creative",
+        "marketing-sales",
+        "no-code-platforms",
+        "llms",
+        "finance",
+        "social-community",
+        "engineering-development"
+      ],
+      "browser_required": false,
+      "command": "producthunt/posts",
+      "platform": "producthunt-posts",
+      "registered": true,
+      "scope_kind": "category"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": false,
+      "command": "hf/spaces",
+      "platform": "hf-spaces",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": false,
+      "command": "hf/models",
+      "platform": "hf-models",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": false,
+      "command": "hf/datasets",
+      "platform": "hf-datasets",
+      "registered": true,
+      "scope_kind": "query"
+    }
+  ],
+  "version": "1.8.8"
+}

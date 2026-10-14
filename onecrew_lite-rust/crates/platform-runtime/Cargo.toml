@@ -1,0 +1,56 @@
+[package]
+name = "onecrew-local-runtime"
+version = "0.1.0"
+edition = "2024"
+rust-version.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[features]
+# Offline adapter fixtures only; not enabled in production by default.
+test-support = []
+
+[dependencies]
+onecrew-access-client = { path = "../access-client" }
+log = "0.4"
+onecrew-local-domain = { path = "../domain" }
+onecrew-proxy = { path = "../proxy" }
+onecrew-email = { path = "../email-platform" }
+onecrew-email-contracts = { path = "../email-contracts" }
+onecrew-youtube = { path = "../youtube-platform" }
+onecrew-chrome = { path = "../chrome" }
+onecrew-creator-sync = { path = "../creator-sync" }
+onecrew-creator-runtime = { path = "../creator-runtime" }
+onecrew-opencli = { path = "../opencli" }
+onecrew-codex = { path = "../codex" }
+onecrew-dm-contracts = { path = "../dm-contracts" }
+onecrew-local-vault = { path = "../local-vault" }
+onecrew-sessions = { path = "../platform-sessions" }
+onecrew-x = { path = "../x-platform" }
+onecrew-ig = { path = "../ig-platform" }
+onecrew-tg = { path = "../tg-platform" }
+async-trait.workspace = true
+fslock.workspace = true
+futures.workspace = true
+icu_locale = { workspace = true }
+rand.workspace = true
+regex.workspace = true
+reqwest.workspace = true
+schemars = { workspace = true, features = ["uuid1"] }
+scraper.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+chrono.workspace = true
+tempfile.workspace = true
+tokio = { workspace = true, features = ["process", "io-util", "fs"] }
+url.workspace = true
+uuid.workspace = true
+
+[dev-dependencies]
+onecrew-creator-runtime = { path = "../creator-runtime", features = ["test-support"] }
+onecrew-sessions = { path = "../platform-sessions", features = ["test-support"] }
+onecrew-x-transport = { path = "../x-transport" }
+rusqlite.workspace = true

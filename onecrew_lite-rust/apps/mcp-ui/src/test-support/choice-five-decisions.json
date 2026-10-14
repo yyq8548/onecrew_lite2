@@ -1,0 +1,25 @@
+{
+  "kind": "choice",
+  "answers": [
+    {
+      "question_id": "beautyblogger",
+      "option_id": "select"
+    },
+    {
+      "question_id": "dena",
+      "option_id": "select"
+    },
+    {
+      "question_id": "btsmakeup",
+      "option_id": "select"
+    },
+    {
+      "question_id": "sikegbana",
+      "option_id": "select"
+    },
+    {
+      "question_id": "emma",
+      "option_id": "skip"
+    }
+  ]
+}

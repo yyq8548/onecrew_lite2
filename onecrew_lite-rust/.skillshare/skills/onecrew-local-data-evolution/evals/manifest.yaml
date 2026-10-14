@@ -1,0 +1,8 @@
+skill: onecrew-local-data-evolution
+version: 1
+pass_threshold: 90
+critical_fail_policy: zero
+cases:
+  - cases/golden-adjacent-upgrade.yaml
+  - cases/negative-current-query.yaml
+  - cases/verification-recovery.yaml

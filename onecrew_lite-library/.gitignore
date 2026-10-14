@@ -1,0 +1,31 @@
+# Dependencies and build output
+node_modules/
+dist/
+coverage/
+/release/
+*.tsbuildinfo
+
+# Local databases, backups, and runtime state
+/.data/
+/.run/
+/.local/
+.server.pid
+.server.log
+*.log
+
+# Local credentials (keep safe example files trackable)
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Temporary scaffolds and editor/OS files
+/tmp/
+.DS_Store
+.idea/
+*.swp
+*.swo
+
+# Upstream rebuild cache and machine-specific plugin launch configuration
+/.cache/
+/plugins/onecrew-tables/.mcp.json

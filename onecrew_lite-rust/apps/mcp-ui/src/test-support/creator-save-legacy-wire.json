@@ -1,0 +1,397 @@
+{
+  "batch": {
+    "outcomes": [
+      {
+        "call_id": "prepare_save_beautyblogger",
+        "disposition": {
+          "kind": "succeeded"
+        },
+        "operation_id": "onecrew.creator.candidate.save",
+        "resource_refs": [
+          {
+            "id": "example-record",
+            "kind": "provider_object",
+            "label": null
+          },
+          {
+            "id": "example-record",
+            "kind": "creator",
+            "label": null
+          },
+          {
+            "id": "example-record",
+            "kind": "provider_object",
+            "label": null
+          }
+        ],
+        "summary": "Creator save review returned."
+      }
+    ]
+  },
+  "binding": {
+    "fingerprint": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "origin": "mcp:full",
+    "result_ref": "rr_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "revision": 2,
+    "view": {
+      "identity": "rv_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "kind": "read_only"
+    }
+  },
+  "completed_sections_count": 0,
+  "continuation": {
+    "continuation_revision": 1,
+    "dispatch_not_after_ms": null,
+    "dispatch_started_at_ms": null,
+    "state": "not_requested"
+  },
+  "locale": "zh-CN",
+  "pending_action": null,
+  "presentation": {
+    "kind": "simple_operation",
+    "sections": [
+      {
+        "heading": "Operations",
+        "items": [
+          {
+            "description": "Save Creator candidate completed.",
+            "title": "Save Creator candidate"
+          }
+        ],
+        "kind": "items"
+      },
+      {
+        "fields": [
+          {
+            "label": "Candidate · Account · Display Name",
+            "value": "Example value 1"
+          },
+          {
+            "label": "Candidate · Account · External Id",
+            "value": "Example value 2"
+          },
+          {
+            "label": "Candidate · Account · Handle",
+            "value": "Example value 3"
+          },
+          {
+            "label": "Candidate · Account · Platform",
+            "value": "Example value 4"
+          },
+          {
+            "label": "Candidate · Account · Profile Url",
+            "value": "Example value 5"
+          },
+          {
+            "label": "Candidate · Account · Target Kind",
+            "value": "Example value 6"
+          },
+          {
+            "label": "Candidate · Allowed Actions[1]",
+            "value": "Example value 7"
+          },
+          {
+            "label": "Candidate · Allowed Actions[2]",
+            "value": "Example value 8"
+          },
+          {
+            "label": "Candidate · Candidate Id",
+            "value": "Example value 9"
+          },
+          {
+            "label": "Candidate · Contact Discovery · Enrichments",
+            "value": "Example value 10"
+          },
+          {
+            "label": "Candidate · Contact Discovery · Routes[1] · Channel",
+            "value": "Example value 11"
+          },
+          {
+            "label": "Candidate · Contact Discovery · Routes[1] · Kind",
+            "value": "Example value 12"
+          },
+          {
+            "label": "Candidate · Contact Discovery · Routes[1] · Source",
+            "value": "Example value 13"
+          },
+          {
+            "label": "Candidate · Contact Discovery · Routes[1] · Source Url",
+            "value": "Example value 14"
+          },
+          {
+            "label": "Candidate · Contact Discovery · Routes[1] · Value",
+            "value": "Example value 15"
+          },
+          {
+            "label": "Candidate · Contact Discovery · Routes[2] · Channel",
+            "value": "Example value 16"
+          },
+          {
+            "label": "Candidate · Contact Discovery · Routes[2] · Kind",
+            "value": "Example value 17"
+          },
+          {
+            "label": "Candidate · Contact Discovery · Routes[2] · Source",
+            "value": "Example value 18"
+          },
+          {
+            "label": "Candidate · Contact Discovery · Routes[2] · Source Url",
+            "value": "Example value 19"
+          },
+          {
+            "label": "Candidate · Contact Discovery · Routes[2] · Value",
+            "value": "Example value 20"
+          },
+          {
+            "label": "Candidate · Contact Discovery · Routes[3] · Channel",
+            "value": "Example value 21"
+          },
+          {
+            "label": "Candidate · Contact Discovery · Routes[3] · Kind",
+            "value": "Example value 22"
+          },
+          {
+            "label": "Candidate · Contact Discovery · Routes[3] · Source",
+            "value": "Example value 23"
+          },
+          {
+            "label": "Candidate · Contact Discovery · Routes[3] · Source Url",
+            "value": "Example value 24"
+          },
+          {
+            "label": "Candidate · Contact Discovery · Routes[3] · Value",
+            "value": "Example value 25"
+          },
+          {
+            "label": "Candidate · Identity Resolution · Status",
+            "value": "Example value 26"
+          },
+          {
+            "label": "Candidate · Origin · Account Ref Id",
+            "value": "Example value 27"
+          },
+          {
+            "label": "Candidate · Origin · Discovery Id",
+            "value": "Example value 28"
+          },
+          {
+            "label": "Candidate · Origin · Kind",
+            "value": "Example value 29"
+          },
+          {
+            "label": "Candidate · Origin · Query",
+            "value": "Example value 30"
+          },
+          {
+            "label": "Candidate · Origin · Search Kind",
+            "value": "Example value 31"
+          },
+          {
+            "label": "Candidate · Public Data · Bio",
+            "value": "Example value 32"
+          },
+          {
+            "label": "Candidate · Public Data · Blue Verified",
+            "value": "Example value 33"
+          },
+          {
+            "label": "Candidate · Public Data · Can Dm",
+            "value": "Example value 34"
+          },
+          {
+            "label": "Candidate · Public Data · Followers",
+            "value": "Example value 35"
+          },
+          {
+            "label": "Candidate · Public Data · Following",
+            "value": "Example value 36"
+          },
+          {
+            "label": "Candidate · Public Data · Id",
+            "value": "Example value 37"
+          },
+          {
+            "label": "Candidate · Public Data · Likes",
+            "value": "Example value 38"
+          },
+          {
+            "label": "Candidate · Public Data · Location",
+            "value": "Example value 39"
+          },
+          {
+            "label": "Candidate · Public Data · Name",
+            "value": "Example value 40"
+          },
+          {
+            "label": "Candidate · Public Data · Posts",
+            "value": "Example value 41"
+          },
+          {
+            "label": "Candidate · Public Data · Profile Image Url",
+            "value": "Example value 42"
+          },
+          {
+            "label": "Candidate · Public Data · Profile Links[1] · Display Text",
+            "value": "Example value 43"
+          },
+          {
+            "label": "Candidate · Public Data · Profile Links[1] · Target Url",
+            "value": "Example value 44"
+          },
+          {
+            "label": "Candidate · Public Data · Profile Links[2] · Display Text",
+            "value": "Example value 45"
+          },
+          {
+            "label": "Candidate · Public Data · Profile Links[2] · Target Url",
+            "value": "Example value 46"
+          },
+          {
+            "label": "Candidate · Public Data · Username",
+            "value": "Example value 47"
+          },
+          {
+            "label": "Candidate · Public Data · Verified",
+            "value": "Example value 48"
+          },
+          {
+            "label": "Candidate · Public Data · Viewer Followed By",
+            "value": "Example value 49"
+          },
+          {
+            "label": "Candidate · Public Data · Viewer Follows",
+            "value": "Example value 50"
+          },
+          {
+            "label": "Expires At",
+            "value": "Example value 51"
+          },
+          {
+            "label": "Next Tool",
+            "value": "Example value 52"
+          },
+          {
+            "label": "Operation Id",
+            "value": "Example value 53"
+          },
+          {
+            "label": "Route Options[1] · Channel",
+            "value": "Example value 54"
+          },
+          {
+            "label": "Route Options[1] · Collision · Status",
+            "value": "Example value 55"
+          },
+          {
+            "label": "Route Options[1] · Display Value",
+            "value": "Example value 56"
+          },
+          {
+            "label": "Route Options[1] · Kind",
+            "value": "Example value 57"
+          },
+          {
+            "label": "Route Options[1] · Normalized Value",
+            "value": "Example value 58"
+          },
+          {
+            "label": "Route Options[1] · Required",
+            "value": "Example value 59"
+          },
+          {
+            "label": "Route Options[1] · Route Id",
+            "value": "Example value 60"
+          },
+          {
+            "label": "Route Options[1] · Sources[1]",
+            "value": "Example value 61"
+          },
+          {
+            "label": "Route Options[2] · Channel",
+            "value": "Example value 62"
+          },
+          {
+            "label": "Route Options[2] · Collision · Status",
+            "value": "Example value 63"
+          },
+          {
+            "label": "Route Options[2] · Display Value",
+            "value": "Example value 64"
+          },
+          {
+            "label": "Route Options[2] · Kind",
+            "value": "Example value 65"
+          },
+          {
+            "label": "Route Options[2] · Normalized Value",
+            "value": "Example value 66"
+          },
+          {
+            "label": "Route Options[2] · Required",
+            "value": "Example value 67"
+          },
+          {
+            "label": "Route Options[2] · Route Id",
+            "value": "Example value 68"
+          },
+          {
+            "label": "Route Options[2] · Sources[1]",
+            "value": "Example value 69"
+          },
+          {
+            "label": "Route Options[3] · Channel",
+            "value": "Example value 70"
+          },
+          {
+            "label": "Route Options[3] · Collision · Status",
+            "value": "Example value 71"
+          },
+          {
+            "label": "Route Options[3] · Display Value",
+            "value": "Example value 72"
+          },
+          {
+            "label": "Route Options[3] · Kind",
+            "value": "Example value 73"
+          },
+          {
+            "label": "Route Options[3] · Normalized Value",
+            "value": "Example value 74"
+          },
+          {
+            "label": "Route Options[3] · Required",
+            "value": "Example value 75"
+          },
+          {
+            "label": "Route Options[3] · Route Id",
+            "value": "Example value 76"
+          },
+          {
+            "label": "Route Options[3] · Sources[1]",
+            "value": "Example value 77"
+          },
+          {
+            "label": "Status",
+            "value": "Example value 78"
+          }
+        ],
+        "heading": "Save Creator candidate",
+        "kind": "fields"
+      },
+      {
+        "body": "Example review notice 3",
+        "heading": null,
+        "kind": "notice",
+        "tone": "success"
+      }
+    ],
+    "summary": "Review the returned save conditions.",
+    "title": "Creator save review"
+  },
+  "presented": true,
+  "state": {
+    "code": "completed",
+    "kind": "resolved",
+    "summary": "Review result returned."
+  }
+}

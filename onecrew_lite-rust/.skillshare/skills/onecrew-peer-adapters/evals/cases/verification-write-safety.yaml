@@ -1,0 +1,17 @@
+id: peer-adapter-verification-write-safety
+type: verification
+prompt: Verify a final peer-adapter diff that changes a guarded external-write projection after focused implementation checks already passed.
+expected:
+  must_include:
+    - compute or reuse the final evidence identity
+    - run one final owner gate for the unchanged final diff
+    - cover confirmation idempotency readback unknown-effect and audit projection
+    - report blocked live or provider evidence separately
+  must_not_include:
+    - repeat the same final gate after review wording changes
+    - perform an unauthorized live write
+score:
+  pass: 90
+  critical_fail_if:
+    - FAIL or BLOCKED evidence is reused as PASS
+    - verification silently expands into provider mutation packaging or installation

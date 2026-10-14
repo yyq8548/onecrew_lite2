@@ -1,0 +1,222 @@
+.pairing-page {
+  min-height: 100svh;
+  overflow-x: clip;
+  background:
+    linear-gradient(rgb(16 23 18 / 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(16 23 18 / 0.035) 1px, transparent 1px),
+    var(--paper);
+  background-size: 40px 40px;
+  color: #101712;
+}
+
+.pairing-header {
+  border-bottom: 1px solid #cfd7ce;
+  background: rgb(255 255 255 / 0.58);
+}
+
+.pairing-header-inner {
+  width: min(1180px, calc(100% - 48px));
+  min-height: 84px;
+  margin-inline: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.pairing-back-button {
+  min-height: 44px;
+  padding-inline: 12px;
+  color: #58655d;
+}
+
+.pairing-back-button:hover {
+  color: #101712;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.pairing-content {
+  width: min(920px, calc(100% - 48px));
+  margin-inline: auto;
+  padding: clamp(32px, 5vh, 64px) 0 48px;
+}
+
+.pairing-card {
+  width: 100%;
+  max-width: 860px;
+  margin-inline: auto;
+  overflow: hidden;
+  border: 1px solid #cfd7ce;
+  border-radius: 17px;
+  background: #ffffff;
+  box-shadow: 0 24px 64px rgb(16 23 18 / 0.1);
+}
+
+.pairing-card-header {
+  gap: 12px;
+  padding: clamp(26px, 4vw, 38px) clamp(24px, 5vw, 42px) 24px;
+  border-bottom: 1px solid rgb(207 215 206 / 0.7);
+}
+
+.pairing-card-header [data-slot="card-title"] h1 {
+  margin: 0;
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  font-weight: 650;
+  line-height: 1.12;
+  letter-spacing: -0.035em;
+}
+
+.pairing-card-description {
+  margin: 0;
+  color: #58655d;
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.pairing-identity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.pairing-identity [data-slot="badge"] {
+  min-height: 30px;
+  border-radius: 7px;
+  padding-inline: 10px;
+  font-weight: 600;
+}
+
+.pairing-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px clamp(24px, 5vw, 42px) clamp(24px, 4vw, 32px);
+}
+
+.pairing-security-alert {
+  border-color: #e3d9a8;
+  border-radius: 10px;
+  background: #fff8dc;
+  color: #101712;
+}
+
+.pairing-security-alert [data-slot="alert-description"] {
+  color: #58655d;
+}
+
+.pairing-facts {
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid #cfd7ce;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.pairing-facts > div {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr);
+  gap: 24px;
+  padding: 12px 18px;
+  border-top: 1px solid #e7ebe5;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.pairing-facts > div:first-child {
+  border-top: 0;
+}
+
+.pairing-facts dt {
+  color: #58655d;
+  font-weight: 650;
+}
+
+.pairing-facts dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.pairing-actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  padding-top: 2px;
+}
+
+.pairing-cancel-action {
+  min-height: 44px;
+  border-radius: 8px;
+  padding-inline: 18px;
+}
+
+.pairing-primary-action {
+  min-height: 50px;
+  border-radius: 12px;
+  padding-inline: 23px;
+  background: #101712;
+  box-shadow: 0 10px 28px rgb(16 23 18 / 0.14);
+}
+
+.pairing-primary-action:hover {
+  background: #2a2d31;
+  transform: translateY(-2px);
+  box-shadow: 0 15px 34px rgb(16 23 18 / 0.2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pairing-primary-action {
+    transition: none;
+  }
+
+  .pairing-primary-action:hover {
+    transform: none;
+  }
+}
+
+@media (min-width: 641px) {
+  .pairing-page {
+    height: 100svh;
+    overflow-y: hidden;
+  }
+}
+
+@media (max-width: 640px) {
+  .pairing-header-inner,
+  .pairing-content {
+    width: min(100% - 30px, 920px);
+  }
+
+  .pairing-header-inner {
+    min-height: 72px;
+  }
+
+  .pairing-content {
+    padding-top: 28px;
+    padding-bottom: 40px;
+  }
+
+  .pairing-card-header {
+    padding-top: 24px;
+  }
+
+  .pairing-facts > div {
+    grid-template-columns: 1fr;
+    gap: 4px;
+    padding-block: 12px;
+  }
+
+  .pairing-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .pairing-cancel-action,
+  .pairing-primary-action {
+    width: 100%;
+  }
+}

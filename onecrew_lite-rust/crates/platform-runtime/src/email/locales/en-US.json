@@ -1,0 +1,8 @@
+{
+  "title": "Email result",
+  "sent": "The email was accepted by the mail service and recorded by OneCrew.",
+  "replayed": "OneCrew returned the previously recorded send result; no new email was sent.",
+  "batch_completed": "The email batch completed: {accepted} accepted, {rejected} rejected.",
+  "batch_replayed": "OneCrew returned the previously recorded batch result: {accepted} accepted, {rejected} rejected; no new emails were sent.",
+  "batch_unknown": "The email batch finished with {unknown} uncertain, {accepted} accepted, and {rejected} rejected. Read the batch status with the same idempotency key before sending anything again."
+}

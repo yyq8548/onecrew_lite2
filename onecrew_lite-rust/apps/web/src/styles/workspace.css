@@ -1,0 +1,12 @@
+/* Approved workspace palette. Search owns its existing sizing and layout. */
+.onecrew-navigation [data-sidebar="menu-button"] img {
+  filter: grayscale(1) brightness(0) invert(.75);
+}
+.onecrew-navigation [data-sidebar="menu-button"][data-active="true"] img {
+  filter: grayscale(1) brightness(0) invert(1);
+}
+.onecrew-navigation [data-sidebar="menu-item"]::before {
+  background-color: var(--sidebar-primary);
+}
+::selection { background: #dce2e9; color: #17191c; }
+.dark ::selection { background: #41464e; color: #ffffff; }

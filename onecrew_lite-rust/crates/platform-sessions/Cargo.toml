@@ -1,0 +1,28 @@
+[package]
+name = "onecrew-sessions"
+version = "0.1.0"
+edition = "2024"
+rust-version.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[features]
+# Owner-test evidence for other crates (X session cache inspection); never
+# enabled by production builds.
+test-support = []
+
+[dependencies]
+onecrew-dm-contracts = { path = "../dm-contracts" }
+onecrew-local-domain = { path = "../domain" }
+onecrew-local-vault = { path = "../local-vault" }
+# The proxy value model held by the encrypted profile secret; the Telegram
+# SOCKS5 egress rule reads its kind.
+onecrew-proxy = { path = "../proxy", default-features = false }
+onecrew-x = { path = "../x-platform" }
+onecrew-ig = { path = "../ig-platform" }
+onecrew-tg = { path = "../tg-platform" }
+async-trait.workspace = true
+tokio.workspace = true
+uuid.workspace = true

@@ -1,0 +1,11 @@
+{
+  "title": "Creator save results",
+  "lead": "Creator save finished: ",
+  "saved": "{count} saved",
+  "failed": "{count} failed",
+  "unknown": "{count} uncertain",
+  "not_run": "{count} not run",
+  "not_selected": "{count} not selected",
+  "separator": ", ",
+  "tail": ". Do not repeat completed or uncertain saves."
+}

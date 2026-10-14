@@ -1,0 +1,2105 @@
+{
+  "version": "2026-09-10",
+  "mode": "simulation-only",
+  "notes": "No OneCrew writes, messages, model generation or live creator assessment. initialSearch is a preview state, not a server snapshot.",
+  "cases": [
+    {
+      "id": "case-01",
+      "question": "首次搜索，还没有输入需求时显示什么？",
+      "answer": "只有需求输入和生成搜索范围按钮；没有预填条件，也没有确认计划按钮。输入有效内容后可提交生成请求。",
+      "initialSearch": true,
+      "steps": [
+        "确认初始条件区和确认按钮不存在",
+        "输入“找日本美妆达人”后点击生成搜索范围",
+        "只出现模拟接收提示，不凭空显示生成成功"
+      ]
+    },
+    {
+      "id": "case-02",
+      "question": "保存一位创作者前，我需要确认什么？",
+      "answer": "核对模拟达人 Nora Beauty 的主页和联系方式。正常联系方式默认保存，冲突联系方式不自动纳入；主页入口位于姓名后。",
+      "snapshot": {
+        "locale": "zh-CN",
+        "binding": {
+          "result_ref": "rr_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "view": {
+            "identity": "rv_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "kind": "confirmation"
+          },
+          "origin": "mcp:full",
+          "fingerprint": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "revision": 2
+        },
+        "presented": true,
+        "batch": {
+          "outcomes": [
+            {
+              "call_id": "save.creator",
+              "operation_id": "onecrew.creator.candidate.save",
+              "disposition": {
+                "kind": "not_run",
+                "reason": "confirmation_required"
+              },
+              "summary": "审核创作者保存",
+              "resource_refs": []
+            }
+          ]
+        },
+        "presentation": {
+          "kind": "creator_save_confirmation",
+          "title": "审核创作者保存",
+          "summary": "选择联系方式并确认",
+          "sections": []
+        },
+        "pending_action": {
+          "kind": "creator_save",
+          "preview": {
+            "candidate_id": "candidate-demo",
+            "platform": "x",
+            "display_name": "Nora Beauty",
+            "handle": "@beauty_demo",
+            "profile_url": "https://x.example.test/beauty_demo",
+            "avatar_url": null,
+            "identity_status": "new",
+            "identity_creator_ids": [],
+            "notes": "美妆与护肤创作者，已查看公开主页。",
+            "score": 0,
+            "assessment": "尚需核对后续合作需求。",
+            "follower_counts": {
+              "followers": 12500
+            },
+            "expires_at": 1900000000,
+            "routes": [
+              {
+                "route_id": "route-profile",
+                "channel": "x",
+                "kind": "profile",
+                "display_value": "@beauty_demo",
+                "normalized_value": "https://x.example.test/beauty_demo",
+                "sources": [
+                  "public profile"
+                ],
+                "required": true,
+                "collision": {
+                  "status": "none",
+                  "creator_ids": []
+                }
+              },
+              {
+                "route_id": "route-email",
+                "channel": "email",
+                "kind": "email",
+                "display_value": "creator@example.test",
+                "normalized_value": "creator@example.test",
+                "sources": [
+                  "profile bio"
+                ],
+                "required": false,
+                "collision": {
+                  "status": "possible",
+                  "creator_ids": [
+                    "creator-existing"
+                  ]
+                }
+              },
+              {
+                "route_id": "route-site",
+                "channel": "website",
+                "kind": "url",
+                "display_value": "https://creator.example.test",
+                "normalized_value": "https://creator.example.test/",
+                "sources": [],
+                "required": false,
+                "collision": {
+                  "status": "none",
+                  "creator_ids": []
+                }
+              }
+            ]
+          }
+        },
+        "state": {
+          "kind": "available"
+        },
+        "continuation": {
+          "state": "not_requested",
+          "continuation_revision": 1,
+          "dispatch_started_at_ms": null,
+          "dispatch_not_after_ms": null
+        }
+      },
+      "steps": [
+        "点击姓名后的主页箭头核对链接",
+        "核对正常联系方式和冲突提示",
+        "确认未真实保存到 OneCrew"
+      ]
+    },
+    {
+      "id": "case-03",
+      "question": "点击保存后，能马上显示绿勾吗？",
+      "answer": "不能。先显示处理中，确认保存成功后才显示绿勾。",
+      "snapshot": {
+        "locale": "zh-CN",
+        "binding": {
+          "result_ref": "rr_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "view": {
+            "identity": "rv_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "kind": "confirmation"
+          },
+          "origin": "mcp:full",
+          "fingerprint": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "revision": 2
+        },
+        "presented": true,
+        "batch": {
+          "outcomes": [
+            {
+              "call_id": "save.creator",
+              "operation_id": "onecrew.creator.candidate.save",
+              "disposition": {
+                "kind": "not_run",
+                "reason": "confirmation_required"
+              },
+              "summary": "审核创作者保存",
+              "resource_refs": []
+            }
+          ]
+        },
+        "presentation": {
+          "kind": "creator_save_confirmation",
+          "title": "审核创作者保存",
+          "summary": "选择联系方式并确认",
+          "sections": []
+        },
+        "pending_action": null,
+        "state": {
+          "kind": "submitted",
+          "action": {
+            "kind": "confirmed"
+          }
+        },
+        "continuation": {
+          "state": "not_requested",
+          "continuation_revision": 1,
+          "dispatch_started_at_ms": null,
+          "dispatch_not_after_ms": null
+        }
+      },
+      "steps": [
+        "观察处理中说明",
+        "确认没有成功勾或可重复提交按钮"
+      ]
+    },
+    {
+      "id": "case-04",
+      "question": "已经保存成功，回执有多长？",
+      "answer": "只显示一次已保存对象，标题不附加图标；少量有效结果直接展示。",
+      "snapshot": {
+        "locale": "zh-CN",
+        "binding": {
+          "result_ref": "rr_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "view": {
+            "identity": "rv_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "kind": "confirmation"
+          },
+          "origin": "mcp:full",
+          "fingerprint": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "revision": 3
+        },
+        "presented": true,
+        "batch": {
+          "outcomes": [
+            {
+              "call_id": "save.creator",
+              "operation_id": "onecrew.creator.candidate.save",
+              "disposition": {
+                "kind": "succeeded"
+              },
+              "summary": "审核创作者保存",
+              "resource_refs": [
+                {
+                  "kind": "creator",
+                  "id": "creator-demo",
+                  "label": "Nora Beauty"
+                }
+              ]
+            }
+          ]
+        },
+        "presentation": {
+          "kind": "creator_save_confirmation",
+          "title": "创作者已保存",
+          "summary": "创作者已保存到 OneCrew。",
+          "sections": [
+            {
+              "kind": "creator_save_rows",
+              "rows": [
+                {
+                  "row_id": "save.creator",
+                  "candidate_id": "candidate-demo",
+                  "display_name": "Nora Beauty",
+                  "platform": "x",
+                  "handle": "@beauty_demo",
+                  "profile_url": "https://x.example.test/beauty_demo",
+                  "avatar_url": null,
+                  "status": "saved",
+                  "creator_id": "creator-demo",
+                  "failure_code": null,
+                  "confirmed_route_ids": [
+                    "route-profile"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "pending_action": null,
+        "state": {
+          "kind": "resolved",
+          "code": "saved",
+          "summary": "创作者已保存到 OneCrew。"
+        },
+        "continuation": {
+          "state": "not_requested",
+          "continuation_revision": 1,
+          "dispatch_started_at_ms": null,
+          "dispatch_not_after_ms": null
+        }
+      },
+      "steps": [
+        "检查对象名称只出现一次",
+        "检查标题左对齐且没有状态图标"
+      ]
+    },
+    {
+      "id": "case-05",
+      "question": "明确保存失败时会被隐藏吗？",
+      "answer": "保留红叉和具体原因，不把错误记录从列表中删掉。",
+      "snapshot": {
+        "locale": "zh-CN",
+        "binding": {
+          "result_ref": "rr_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "view": {
+            "identity": "rv_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "kind": "confirmation"
+          },
+          "origin": "mcp:full",
+          "fingerprint": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "revision": 2
+        },
+        "presented": true,
+        "batch": {
+          "outcomes": [
+            {
+              "call_id": "save.creator",
+              "operation_id": "onecrew.creator.candidate.save",
+              "disposition": {
+                "kind": "failed",
+                "code": "save_failed"
+              },
+              "summary": "保存失败，请稍后重新发起保存。",
+              "resource_refs": []
+            }
+          ]
+        },
+        "presentation": {
+          "kind": "creator_save_confirmation",
+          "title": "审核创作者保存",
+          "summary": "选择联系方式并确认",
+          "sections": []
+        },
+        "pending_action": null,
+        "state": {
+          "kind": "failed",
+          "code": "save_failed",
+          "summary": "保存失败，请稍后重新发起保存。",
+          "retryable": false
+        },
+        "continuation": {
+          "state": "not_requested",
+          "continuation_revision": 1,
+          "dispatch_started_at_ms": null,
+          "dispatch_not_after_ms": null
+        }
+      },
+      "steps": [
+        "确认显示失败和原因",
+        "确认失败没有被当成成功或隐藏"
+      ]
+    },
+    {
+      "id": "case-06",
+      "question": "请求超时，算失败还是成功？",
+      "answer": "显示结果未知。先核对当前结果，不能把未知当失败自动重做。",
+      "snapshot": {
+        "locale": "zh-CN",
+        "binding": {
+          "result_ref": "rr_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "view": {
+            "identity": "rv_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "kind": "confirmation"
+          },
+          "origin": "mcp:full",
+          "fingerprint": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "revision": 2
+        },
+        "presented": true,
+        "batch": {
+          "outcomes": [
+            {
+              "call_id": "save.creator",
+              "operation_id": "onecrew.creator.candidate.save",
+              "disposition": {
+                "kind": "unknown",
+                "code": "save_unknown"
+              },
+              "summary": "尚未确认是否保存成功，请先检查当前结果。",
+              "resource_refs": []
+            }
+          ]
+        },
+        "presentation": {
+          "kind": "creator_save_confirmation",
+          "title": "审核创作者保存",
+          "summary": "选择联系方式并确认",
+          "sections": []
+        },
+        "pending_action": null,
+        "state": {
+          "kind": "unknown",
+          "code": "save_unknown",
+          "summary": "尚未确认是否保存成功，请先检查当前结果。"
+        },
+        "continuation": {
+          "state": "not_requested",
+          "continuation_revision": 1,
+          "dispatch_started_at_ms": null,
+          "dispatch_not_after_ms": null
+        }
+      },
+      "steps": [
+        "确认结果显示未知",
+        "确认没有自动重试写入"
+      ]
+    },
+    {
+      "id": "case-07",
+      "question": "我取消保存，会出现成功勾吗？",
+      "answer": "显示已取消，不出现成功勾；取消完成不代表保存成功。",
+      "snapshot": {
+        "locale": "zh-CN",
+        "binding": {
+          "result_ref": "rr_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "view": {
+            "identity": "rv_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "kind": "confirmation"
+          },
+          "origin": "mcp:full",
+          "fingerprint": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "revision": 2
+        },
+        "presented": true,
+        "batch": {
+          "outcomes": [
+            {
+              "call_id": "save.creator",
+              "operation_id": "onecrew.creator.candidate.save",
+              "disposition": {
+                "kind": "not_run",
+                "reason": "user_cancelled"
+              },
+              "summary": "已取消",
+              "resource_refs": []
+            }
+          ]
+        },
+        "presentation": {
+          "kind": "creator_save_confirmation",
+          "title": "审核创作者保存",
+          "summary": "选择联系方式并确认",
+          "sections": []
+        },
+        "pending_action": null,
+        "state": {
+          "kind": "resolved",
+          "code": "user_cancelled",
+          "summary": "已取消"
+        },
+        "continuation": {
+          "state": "not_requested",
+          "continuation_revision": 1,
+          "dispatch_started_at_ms": null,
+          "dispatch_not_after_ms": null
+        }
+      },
+      "steps": [
+        "确认取消状态不显示保存成功",
+        "确认已取消的原操作不能再次提交"
+      ]
+    },
+    {
+      "id": "case-08",
+      "question": "提交修改要求后，原卡片还能提交吗？",
+      "answer": "显示已请求修改，原卡片停止提交，等待新的可确认内容。",
+      "snapshot": {
+        "locale": "zh-CN",
+        "binding": {
+          "result_ref": "rr_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "view": {
+            "identity": "rv_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "kind": "confirmation"
+          },
+          "origin": "mcp:full",
+          "fingerprint": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "revision": 2
+        },
+        "presented": true,
+        "batch": {
+          "outcomes": [
+            {
+              "call_id": "save.creator",
+              "operation_id": "onecrew.creator.candidate.save",
+              "disposition": {
+                "kind": "not_run",
+                "reason": "edit_requested"
+              },
+              "summary": "已请求修改",
+              "resource_refs": []
+            }
+          ]
+        },
+        "presentation": {
+          "kind": "creator_save_confirmation",
+          "title": "审核创作者保存",
+          "summary": "选择联系方式并确认",
+          "sections": []
+        },
+        "pending_action": null,
+        "state": {
+          "kind": "resolved",
+          "code": "edit_requested",
+          "summary": "已请求修改"
+        },
+        "continuation": {
+          "state": "not_requested",
+          "continuation_revision": 1,
+          "dispatch_started_at_ms": null,
+          "dispatch_not_after_ms": null
+        }
+      },
+      "steps": [
+        "确认修改请求提交后的原卡片不可再确认",
+        "区别修改请求已提交与内容已更新"
+      ]
+    },
+    {
+      "id": "case-09",
+      "question": "批量保存时，怎么判断哪些人需要复核？",
+      "answer": "首位达人有 6 个正常联系方式，最多显示 3 个图标和第 4 个省略号；头像平台徽标仍为小尺寸。分数包含 0 和未评分。",
+      "snapshot": {
+        "locale": "zh-CN",
+        "binding": {
+          "result_ref": "rr_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "view": {
+            "identity": "rv_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "kind": "confirmation"
+          },
+          "origin": "mcp:full",
+          "fingerprint": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "revision": 2
+        },
+        "presented": true,
+        "batch": {
+          "outcomes": [
+            {
+              "call_id": "save.creator.1",
+              "operation_id": "onecrew.creator.candidate.save",
+              "disposition": {
+                "kind": "not_run",
+                "reason": "confirmation_required"
+              },
+              "summary": "审核创作者保存",
+              "resource_refs": []
+            },
+            {
+              "call_id": "save.creator.2",
+              "operation_id": "onecrew.creator.candidate.save",
+              "disposition": {
+                "kind": "not_run",
+                "reason": "confirmation_required"
+              },
+              "summary": "审核创作者保存",
+              "resource_refs": []
+            },
+            {
+              "call_id": "save.creator.3",
+              "operation_id": "onecrew.creator.candidate.save",
+              "disposition": {
+                "kind": "not_run",
+                "reason": "confirmation_required"
+              },
+              "summary": "审核创作者保存",
+              "resource_refs": []
+            },
+            {
+              "call_id": "save.creator.4",
+              "operation_id": "onecrew.creator.candidate.save",
+              "disposition": {
+                "kind": "not_run",
+                "reason": "confirmation_required"
+              },
+              "summary": "审核创作者保存",
+              "resource_refs": []
+            },
+            {
+              "call_id": "save.creator.5",
+              "operation_id": "onecrew.creator.candidate.save",
+              "disposition": {
+                "kind": "not_run",
+                "reason": "confirmation_required"
+              },
+              "summary": "审核创作者保存",
+              "resource_refs": []
+            }
+          ]
+        },
+        "presentation": {
+          "kind": "creator_save_batch_confirmation",
+          "title": "审核 Creator 列表",
+          "summary": "选择需要保存的 Creator。",
+          "sections": []
+        },
+        "pending_action": {
+          "kind": "creator_save_batch",
+          "review": {
+            "rows": [
+              {
+                "row_id": "save.creator.1",
+                "preview": {
+                  "candidate_id": "candidate-1",
+                  "platform": "x",
+                  "display_name": "Nora Beauty",
+                  "handle": "creator_1",
+                  "profile_url": "https://x.example.test/creator_1",
+                  "avatar_url": null,
+                  "identity_status": "new",
+                  "identity_creator_ids": [],
+                  "notes": "美妆与护肤创作者，已查看公开主页。",
+                  "score": 0,
+                  "assessment": "已检查公开主页；内容主题包含日常妆容、护肤步骤和产品试用。当前评分为 0，是示例低分，并非未评分。需进一步核对近三十天更新频率及合作邮箱来源。",
+                  "follower_counts": {
+                    "x": 0
+                  },
+                  "expires_at": 1900000000,
+                  "routes": [
+                    {
+                      "route_id": "route-profile",
+                      "channel": "x",
+                      "kind": "profile",
+                      "display_value": "@creator_1",
+                      "normalized_value": "https://x.example.test/creator_1",
+                      "sources": [
+                        "public profile"
+                      ],
+                      "required": true,
+                      "collision": {
+                        "status": "none",
+                        "creator_ids": []
+                      }
+                    },
+                    {
+                      "route_id": "route-email",
+                      "channel": "email",
+                      "kind": "email",
+                      "display_value": "creator_1@example.test",
+                      "normalized_value": "creator_1@example.test",
+                      "sources": [
+                        "profile bio"
+                      ],
+                      "required": false,
+                      "collision": {
+                        "status": "possible",
+                        "creator_ids": [
+                          "creator-existing"
+                        ]
+                      }
+                    },
+                    {
+                      "route_id": "route-site",
+                      "channel": "website",
+                      "kind": "url",
+                      "display_value": "https://creator-1.example.test",
+                      "normalized_value": "https://creator-1.example.test/",
+                      "sources": [],
+                      "required": false,
+                      "collision": {
+                        "status": "none",
+                        "creator_ids": []
+                      }
+                    },
+                    {
+                      "route_id": "route-instagram",
+                      "channel": "instagram",
+                      "kind": "profile",
+                      "display_value": "@creator_1",
+                      "normalized_value": "https://instagram.example.test/creator_1",
+                      "sources": [
+                        "public profile"
+                      ],
+                      "required": false,
+                      "collision": {
+                        "status": "none",
+                        "creator_ids": []
+                      }
+                    },
+                    {
+                      "route_id": "route-youtube",
+                      "channel": "youtube",
+                      "kind": "profile",
+                      "display_value": "@creator_1",
+                      "normalized_value": "https://youtube.example.test/creator_1",
+                      "sources": [
+                        "public profile"
+                      ],
+                      "required": false,
+                      "collision": {
+                        "status": "none",
+                        "creator_ids": []
+                      }
+                    },
+                    {
+                      "route_id": "route-tiktok",
+                      "channel": "tiktok",
+                      "kind": "profile",
+                      "display_value": "@creator_1",
+                      "normalized_value": "https://tiktok.example.test/creator_1",
+                      "sources": [
+                        "public profile"
+                      ],
+                      "required": false,
+                      "collision": {
+                        "status": "none",
+                        "creator_ids": []
+                      }
+                    },
+                    {
+                      "route_id": "route-telegram",
+                      "channel": "telegram",
+                      "kind": "profile",
+                      "display_value": "@creator_1",
+                      "normalized_value": "https://telegram.example.test/creator_1",
+                      "sources": [
+                        "public profile"
+                      ],
+                      "required": false,
+                      "collision": {
+                        "status": "none",
+                        "creator_ids": []
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "row_id": "save.creator.2",
+                "preview": {
+                  "candidate_id": "candidate-2",
+                  "platform": "instagram",
+                  "display_name": "Lin Sensitive Skin",
+                  "handle": "creator_2",
+                  "profile_url": "https://instagram.example.test/creator_2",
+                  "avatar_url": null,
+                  "identity_status": "new",
+                  "identity_creator_ids": [],
+                  "notes": "美妆与护肤创作者，已查看公开主页。",
+                  "score": 57,
+                  "assessment": "以敏感肌护理和成分讨论为主，受众方向与本次需求接近。建议在保存后确认最近内容仍围绕护肤，而非仅依赖过往热门视频。",
+                  "follower_counts": {
+                    "instagram": 50000
+                  },
+                  "expires_at": 1900000000,
+                  "routes": [
+                    {
+                      "route_id": "route-profile",
+                      "channel": "instagram",
+                      "kind": "profile",
+                      "display_value": "@creator_2",
+                      "normalized_value": "https://instagram.example.test/creator_2",
+                      "sources": [
+                        "public profile"
+                      ],
+                      "required": true,
+                      "collision": {
+                        "status": "none",
+                        "creator_ids": []
+                      }
+                    },
+                    {
+                      "route_id": "route-email",
+                      "channel": "email",
+                      "kind": "email",
+                      "display_value": "creator_2@example.test",
+                      "normalized_value": "creator_2@example.test",
+                      "sources": [
+                        "profile bio"
+                      ],
+                      "required": false,
+                      "collision": {
+                        "status": "possible",
+                        "creator_ids": [
+                          "creator-existing"
+                        ]
+                      }
+                    },
+                    {
+                      "route_id": "route-site",
+                      "channel": "website",
+                      "kind": "url",
+                      "display_value": "https://creator-2.example.test",
+                      "normalized_value": "https://creator-2.example.test/",
+                      "sources": [],
+                      "required": false,
+                      "collision": {
+                        "status": "none",
+                        "creator_ids": []
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "row_id": "save.creator.3",
+                "preview": {
+                  "candidate_id": "candidate-3",
+                  "platform": "youtube",
+                  "display_name": "Mika Makeup & Everyday Product Reviews",
+                  "handle": "creator_3",
+                  "profile_url": "https://youtube.example.test/creator_3",
+                  "avatar_url": null,
+                  "identity_status": "new",
+                  "identity_creator_ids": [],
+                  "notes": "美妆与护肤创作者，已查看公开主页。",
+                  "score": 69,
+                  "assessment": "主页包含完整化妆教学及产品对比，内容表达清晰。公开邮箱来自简介，可作为后续人工核验的线索；当前不发送消息。",
+                  "follower_counts": {
+                    "youtube": 75000
+                  },
+                  "expires_at": 1900000000,
+                  "routes": [
+                    {
+                      "route_id": "route-profile",
+                      "channel": "youtube",
+                      "kind": "profile",
+                      "display_value": "@creator_3",
+                      "normalized_value": "https://youtube.example.test/creator_3",
+                      "sources": [
+                        "public profile"
+                      ],
+                      "required": true,
+                      "collision": {
+                        "status": "none",
+                        "creator_ids": []
+                      }
+                    },
+                    {
+                      "route_id": "route-email",
+                      "channel": "email",
+                      "kind": "email",
+                      "display_value": "creator_3@example.test",
+                      "normalized_value": "creator_3@example.test",
+                      "sources": [
+                        "profile bio"
+                      ],
+                      "required": false,
+                      "collision": {
+                        "status": "possible",
+                        "creator_ids": [
+                          "creator-existing"
+                        ]
+                      }
+                    },
+                    {
+                      "route_id": "route-site",
+                      "channel": "website",
+                      "kind": "url",
+                      "display_value": "https://creator-3.example.test",
+                      "normalized_value": "https://creator-3.example.test/",
+                      "sources": [],
+                      "required": false,
+                      "collision": {
+                        "status": "none",
+                        "creator_ids": []
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "row_id": "save.creator.4",
+                "preview": {
+                  "candidate_id": "candidate-4",
+                  "platform": "tiktok",
+                  "display_name": "Emma Daily",
+                  "handle": "creator_4",
+                  "profile_url": "https://tiktok.example.test/creator_4",
+                  "avatar_url": null,
+                  "identity_status": "new",
+                  "identity_creator_ids": [],
+                  "notes": "美妆与护肤创作者，已查看公开主页。",
+                  "score": 81,
+                  "assessment": "短视频更新稳定，主要内容覆盖轻妆和日常穿搭。平台主页应始终保留；外部网站和邮箱属于可选联系方式。",
+                  "follower_counts": {
+                    "tiktok": 100000
+                  },
+                  "expires_at": 1900000000,
+                  "routes": [
+                    {
+                      "route_id": "route-profile",
+                      "channel": "tiktok",
+                      "kind": "profile",
+                      "display_value": "@creator_4",
+                      "normalized_value": "https://tiktok.example.test/creator_4",
+                      "sources": [
+                        "public profile"
+                      ],
+                      "required": true,
+                      "collision": {
+                        "status": "none",
+                        "creator_ids": []
+                      }
+                    },
+                    {
+                      "route_id": "route-email",
+                      "channel": "email",
+                      "kind": "email",
+                      "display_value": "creator_4@example.test",
+                      "normalized_value": "creator_4@example.test",
+                      "sources": [
+                        "profile bio"
+                      ],
+                      "required": false,
+                      "collision": {
+                        "status": "possible",
+                        "creator_ids": [
+                          "creator-existing"
+                        ]
+                      }
+                    },
+                    {
+                      "route_id": "route-site",
+                      "channel": "website",
+                      "kind": "url",
+                      "display_value": "https://creator-4.example.test",
+                      "normalized_value": "https://creator-4.example.test/",
+                      "sources": [],
+                      "required": false,
+                      "collision": {
+                        "status": "none",
+                        "creator_ids": []
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "row_id": "save.creator.5",
+                "preview": {
+                  "candidate_id": "candidate-5",
+                  "platform": "x",
+                  "display_name": "Sora Cosmetics",
+                  "handle": "creator_5",
+                  "profile_url": "https://x.example.test/creator_5",
+                  "avatar_url": null,
+                  "identity_status": "new",
+                  "identity_creator_ids": [],
+                  "notes": "美妆与护肤创作者，已查看公开主页。",
+                  "score": null,
+                  "assessment": null,
+                  "follower_counts": {
+                    "x": 125000
+                  },
+                  "expires_at": 1900000000,
+                  "routes": [
+                    {
+                      "route_id": "route-profile",
+                      "channel": "x",
+                      "kind": "profile",
+                      "display_value": "@creator_5",
+                      "normalized_value": "https://x.example.test/creator_5",
+                      "sources": [
+                        "public profile"
+                      ],
+                      "required": true,
+                      "collision": {
+                        "status": "none",
+                        "creator_ids": []
+                      }
+                    },
+                    {
+                      "route_id": "route-email",
+                      "channel": "email",
+                      "kind": "email",
+                      "display_value": "creator_5@example.test",
+                      "normalized_value": "creator_5@example.test",
+                      "sources": [
+                        "profile bio"
+                      ],
+                      "required": false,
+                      "collision": {
+                        "status": "possible",
+                        "creator_ids": [
+                          "creator-existing"
+                        ]
+                      }
+                    },
+                    {
+                      "route_id": "route-site",
+                      "channel": "website",
+                      "kind": "url",
+                      "display_value": "https://creator-5.example.test",
+                      "normalized_value": "https://creator-5.example.test/",
+                      "sources": [],
+                      "required": false,
+                      "collision": {
+                        "status": "none",
+                        "creator_ids": []
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        "state": {
+          "kind": "available"
+        },
+        "continuation": {
+          "state": "not_requested",
+          "continuation_revision": 1,
+          "dispatch_started_at_ms": null,
+          "dispatch_not_after_ms": null
+        }
+      },
+      "steps": [
+        "检查第一行 3 个渠道加省略号",
+        "检查 0 分与未评分不同",
+        "检查长名称、头像小徽标、表头对齐",
+        "选择/取消达人，核对选择数量"
+      ]
+    },
+    {
+      "id": "case-10",
+      "question": "五位创作者全部保存成功，如何显示？",
+      "answer": "标题汇总数量，逐行用绿勾；每位创作者的完整结果仍在机器数据中。",
+      "snapshot": {
+        "locale": "zh-CN",
+        "binding": {
+          "result_ref": "rr_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "view": {
+            "identity": "rv_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "kind": "confirmation"
+          },
+          "origin": "mcp:full",
+          "fingerprint": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "revision": 3
+        },
+        "presented": true,
+        "batch": {
+          "outcomes": [
+            {
+              "call_id": "save.creator.1",
+              "operation_id": "onecrew.creator.candidate.save",
+              "summary": "saved",
+              "resource_refs": [
+                {
+                  "kind": "creator",
+                  "id": "creator-saved-1",
+                  "label": "Nora Beauty"
+                }
+              ],
+              "disposition": {
+                "kind": "succeeded"
+              }
+            },
+            {
+              "call_id": "save.creator.2",
+              "operation_id": "onecrew.creator.candidate.save",
+              "summary": "saved",
+              "resource_refs": [
+                {
+                  "kind": "creator",
+                  "id": "creator-saved-2",
+                  "label": "Lin Sensitive Skin"
+                }
+              ],
+              "disposition": {
+                "kind": "succeeded"
+              }
+            },
+            {
+              "call_id": "save.creator.3",
+              "operation_id": "onecrew.creator.candidate.save",
+              "summary": "saved",
+              "resource_refs": [
+                {
+                  "kind": "creator",
+                  "id": "creator-saved-3",
+                  "label": "Mika Makeup & Everyday Product Reviews"
+                }
+              ],
+              "disposition": {
+                "kind": "succeeded"
+              }
+            },
+            {
+              "call_id": "save.creator.4",
+              "operation_id": "onecrew.creator.candidate.save",
+              "summary": "saved",
+              "resource_refs": [
+                {
+                  "kind": "creator",
+                  "id": "creator-saved-4",
+                  "label": "Emma Daily"
+                }
+              ],
+              "disposition": {
+                "kind": "succeeded"
+              }
+            },
+            {
+              "call_id": "save.creator.5",
+              "operation_id": "onecrew.creator.candidate.save",
+              "summary": "saved",
+              "resource_refs": [
+                {
+                  "kind": "creator",
+                  "id": "creator-saved-5",
+                  "label": "Sora Cosmetics"
+                }
+              ],
+              "disposition": {
+                "kind": "succeeded"
+              }
+            }
+          ]
+        },
+        "presentation": {
+          "kind": "creator_save_batch_confirmation",
+          "title": "审核 Creator 列表",
+          "summary": "选择需要保存的 Creator。",
+          "sections": [
+            {
+              "kind": "creator_save_rows",
+              "rows": [
+                {
+                  "row_id": "save.creator.1",
+                  "candidate_id": "candidate-1",
+                  "display_name": "Nora Beauty",
+                  "platform": "x",
+                  "handle": "creator_1",
+                  "profile_url": "https://x.example.test/creator_1",
+                  "avatar_url": null,
+                  "status": "saved",
+                  "creator_id": "creator-saved-1",
+                  "failure_code": null,
+                  "confirmed_route_ids": [
+                    "route-profile"
+                  ]
+                },
+                {
+                  "row_id": "save.creator.2",
+                  "candidate_id": "candidate-2",
+                  "display_name": "Lin Sensitive Skin",
+                  "platform": "instagram",
+                  "handle": "creator_2",
+                  "profile_url": "https://instagram.example.test/creator_2",
+                  "avatar_url": null,
+                  "status": "saved",
+                  "creator_id": "creator-saved-2",
+                  "failure_code": null,
+                  "confirmed_route_ids": [
+                    "route-profile"
+                  ]
+                },
+                {
+                  "row_id": "save.creator.3",
+                  "candidate_id": "candidate-3",
+                  "display_name": "Mika Makeup & Everyday Product Reviews",
+                  "platform": "youtube",
+                  "handle": "creator_3",
+                  "profile_url": "https://youtube.example.test/creator_3",
+                  "avatar_url": null,
+                  "status": "saved",
+                  "creator_id": "creator-saved-3",
+                  "failure_code": null,
+                  "confirmed_route_ids": [
+                    "route-profile"
+                  ]
+                },
+                {
+                  "row_id": "save.creator.4",
+                  "candidate_id": "candidate-4",
+                  "display_name": "Emma Daily",
+                  "platform": "tiktok",
+                  "handle": "creator_4",
+                  "profile_url": "https://tiktok.example.test/creator_4",
+                  "avatar_url": null,
+                  "status": "saved",
+                  "creator_id": "creator-saved-4",
+                  "failure_code": null,
+                  "confirmed_route_ids": [
+                    "route-profile"
+                  ]
+                },
+                {
+                  "row_id": "save.creator.5",
+                  "candidate_id": "candidate-5",
+                  "display_name": "Sora Cosmetics",
+                  "platform": "x",
+                  "handle": "creator_5",
+                  "profile_url": "https://x.example.test/creator_5",
+                  "avatar_url": null,
+                  "status": "saved",
+                  "creator_id": "creator-saved-5",
+                  "failure_code": null,
+                  "confirmed_route_ids": [
+                    "route-profile"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "pending_action": null,
+        "state": {
+          "kind": "resolved",
+          "code": "saved",
+          "summary": "所选 Creator 已保存。"
+        },
+        "continuation": {
+          "state": "not_requested",
+          "continuation_revision": 1,
+          "dispatch_started_at_ms": null,
+          "dispatch_not_after_ms": null
+        }
+      },
+      "steps": [
+        "核对标题已保存 5 位且无图标",
+        "核对 5 行绿色勾、颜色 #25D766"
+      ]
+    },
+    {
+      "id": "case-11",
+      "question": "同一批里成功、失败、未知、未执行和未选中怎么办？",
+      "answer": "五种状态分别保留；成功绿勾、失败红叉，其余状态保留短标签。",
+      "snapshot": {
+        "locale": "zh-CN",
+        "binding": {
+          "result_ref": "rr_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "view": {
+            "identity": "rv_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "kind": "confirmation"
+          },
+          "origin": "mcp:full",
+          "fingerprint": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "revision": 3
+        },
+        "presented": true,
+        "batch": {
+          "outcomes": [
+            {
+              "call_id": "save.creator.1",
+              "operation_id": "onecrew.creator.candidate.save",
+              "summary": "saved",
+              "resource_refs": [
+                {
+                  "kind": "creator",
+                  "id": "creator-saved-1",
+                  "label": "Nora Beauty"
+                }
+              ],
+              "disposition": {
+                "kind": "succeeded"
+              }
+            },
+            {
+              "call_id": "save.creator.2",
+              "operation_id": "onecrew.creator.candidate.save",
+              "summary": "failed",
+              "resource_refs": [],
+              "disposition": {
+                "kind": "failed",
+                "code": "save_failed"
+              }
+            },
+            {
+              "call_id": "save.creator.3",
+              "operation_id": "onecrew.creator.candidate.save",
+              "summary": "unknown",
+              "resource_refs": [],
+              "disposition": {
+                "kind": "unknown",
+                "code": "save_unknown"
+              }
+            },
+            {
+              "call_id": "save.creator.4",
+              "operation_id": "onecrew.creator.candidate.save",
+              "summary": "not_run",
+              "resource_refs": [],
+              "disposition": {
+                "kind": "not_run",
+                "reason": "not_run"
+              }
+            },
+            {
+              "call_id": "save.creator.5",
+              "operation_id": "onecrew.creator.candidate.save",
+              "summary": "not_selected",
+              "resource_refs": [],
+              "disposition": {
+                "kind": "not_run",
+                "reason": "not_selected"
+              }
+            }
+          ]
+        },
+        "presentation": {
+          "kind": "creator_save_batch_confirmation",
+          "title": "审核 Creator 列表",
+          "summary": "选择需要保存的 Creator。",
+          "sections": [
+            {
+              "kind": "creator_save_rows",
+              "rows": [
+                {
+                  "row_id": "save.creator.1",
+                  "candidate_id": "candidate-1",
+                  "display_name": "Nora Beauty",
+                  "platform": "x",
+                  "handle": "creator_1",
+                  "profile_url": "https://x.example.test/creator_1",
+                  "avatar_url": null,
+                  "status": "saved",
+                  "creator_id": "creator-saved-1",
+                  "failure_code": null,
+                  "confirmed_route_ids": [
+                    "route-profile"
+                  ]
+                },
+                {
+                  "row_id": "save.creator.2",
+                  "candidate_id": "candidate-2",
+                  "display_name": "Lin Sensitive Skin",
+                  "platform": "instagram",
+                  "handle": "creator_2",
+                  "profile_url": "https://instagram.example.test/creator_2",
+                  "avatar_url": null,
+                  "status": "failed",
+                  "creator_id": null,
+                  "failure_code": "save_failed",
+                  "confirmed_route_ids": [
+                    "route-profile"
+                  ]
+                },
+                {
+                  "row_id": "save.creator.3",
+                  "candidate_id": "candidate-3",
+                  "display_name": "Mika Makeup & Everyday Product Reviews",
+                  "platform": "youtube",
+                  "handle": "creator_3",
+                  "profile_url": "https://youtube.example.test/creator_3",
+                  "avatar_url": null,
+                  "status": "unknown",
+                  "creator_id": null,
+                  "failure_code": "save_unknown",
+                  "confirmed_route_ids": [
+                    "route-profile"
+                  ]
+                },
+                {
+                  "row_id": "save.creator.4",
+                  "candidate_id": "candidate-4",
+                  "display_name": "Emma Daily",
+                  "platform": "tiktok",
+                  "handle": "creator_4",
+                  "profile_url": "https://tiktok.example.test/creator_4",
+                  "avatar_url": null,
+                  "status": "not_run",
+                  "creator_id": null,
+                  "failure_code": null,
+                  "confirmed_route_ids": [
+                    "route-profile"
+                  ]
+                },
+                {
+                  "row_id": "save.creator.5",
+                  "candidate_id": "candidate-5",
+                  "display_name": "Sora Cosmetics",
+                  "platform": "x",
+                  "handle": "creator_5",
+                  "profile_url": "https://x.example.test/creator_5",
+                  "avatar_url": null,
+                  "status": "not_selected",
+                  "creator_id": null,
+                  "failure_code": null,
+                  "confirmed_route_ids": []
+                }
+              ]
+            }
+          ]
+        },
+        "pending_action": null,
+        "state": {
+          "kind": "unknown",
+          "code": "creator_save_batch_unknown",
+          "summary": "存在未知结果，请逐项核对。"
+        },
+        "continuation": {
+          "state": "not_requested",
+          "continuation_revision": 1,
+          "dispatch_started_at_ms": null,
+          "dispatch_not_after_ms": null
+        }
+      },
+      "steps": [
+        "核对五种结果各一行",
+        "状态文字在前、图标在后",
+        "失败红色 #E45C3A，状态图标与勾同尺寸"
+      ]
+    },
+    {
+      "id": "case-12",
+      "question": "只完成一部分，会说全部失败吗？",
+      "answer": "显示部分完成，逐项保留已保存、失败与未选择，不抹掉已完成成果。",
+      "snapshot": {
+        "locale": "zh-CN",
+        "binding": {
+          "result_ref": "rr_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "view": {
+            "identity": "rv_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "kind": "confirmation"
+          },
+          "origin": "mcp:full",
+          "fingerprint": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "revision": 3
+        },
+        "presented": true,
+        "batch": {
+          "outcomes": [
+            {
+              "call_id": "save.creator.1",
+              "operation_id": "onecrew.creator.candidate.save",
+              "summary": "saved",
+              "resource_refs": [
+                {
+                  "kind": "creator",
+                  "id": "creator-saved-1",
+                  "label": "Nora Beauty"
+                }
+              ],
+              "disposition": {
+                "kind": "succeeded"
+              }
+            },
+            {
+              "call_id": "save.creator.2",
+              "operation_id": "onecrew.creator.candidate.save",
+              "summary": "failed",
+              "resource_refs": [],
+              "disposition": {
+                "kind": "failed",
+                "code": "save_failed"
+              }
+            },
+            {
+              "call_id": "save.creator.3",
+              "operation_id": "onecrew.creator.candidate.save",
+              "summary": "not_selected",
+              "resource_refs": [],
+              "disposition": {
+                "kind": "not_run",
+                "reason": "not_selected"
+              }
+            }
+          ]
+        },
+        "presentation": {
+          "kind": "creator_save_batch_confirmation",
+          "title": "审核 Creator 列表",
+          "summary": "选择需要保存的 Creator。",
+          "sections": [
+            {
+              "kind": "creator_save_rows",
+              "rows": [
+                {
+                  "row_id": "save.creator.1",
+                  "candidate_id": "candidate-1",
+                  "display_name": "Nora Beauty",
+                  "platform": "x",
+                  "handle": "creator_1",
+                  "profile_url": "https://x.example.test/creator_1",
+                  "avatar_url": null,
+                  "status": "saved",
+                  "creator_id": "creator-saved-1",
+                  "failure_code": null,
+                  "confirmed_route_ids": [
+                    "route-profile"
+                  ]
+                },
+                {
+                  "row_id": "save.creator.2",
+                  "candidate_id": "candidate-2",
+                  "display_name": "Lin Sensitive Skin",
+                  "platform": "instagram",
+                  "handle": "creator_2",
+                  "profile_url": "https://instagram.example.test/creator_2",
+                  "avatar_url": null,
+                  "status": "failed",
+                  "creator_id": null,
+                  "failure_code": "save_failed",
+                  "confirmed_route_ids": [
+                    "route-profile"
+                  ]
+                },
+                {
+                  "row_id": "save.creator.3",
+                  "candidate_id": "candidate-3",
+                  "display_name": "Mika Makeup & Everyday Product Reviews",
+                  "platform": "youtube",
+                  "handle": "creator_3",
+                  "profile_url": "https://youtube.example.test/creator_3",
+                  "avatar_url": null,
+                  "status": "not_selected",
+                  "creator_id": null,
+                  "failure_code": null,
+                  "confirmed_route_ids": []
+                }
+              ]
+            }
+          ]
+        },
+        "pending_action": null,
+        "state": {
+          "kind": "failed",
+          "code": "creator_save_batch_partial",
+          "summary": "部分 Creator 未能保存。",
+          "retryable": false
+        },
+        "continuation": {
+          "state": "not_requested",
+          "continuation_revision": 1,
+          "dispatch_started_at_ms": null,
+          "dispatch_not_after_ms": null
+        }
+      },
+      "steps": [
+        "核对已保存、失败、未选择均保留",
+        "标题不能误称全部失败或全部成功"
+      ]
+    },
+    {
+      "id": "case-13",
+      "question": "搜索前如何确认条件？",
+      "answer": "已有条件优先展示；补充或调整需求默认收起。编辑关键词时新增标签紧邻前一项，间距 12px；已绑定的搜索操作仅供查看，调整范围需提交修改请求。",
+      "snapshot": {
+        "locale": "zh-CN",
+        "binding": {
+          "result_ref": "rr_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "view": {
+            "identity": "rv_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "kind": "confirmation"
+          },
+          "origin": "mcp:full",
+          "fingerprint": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "revision": 2
+        },
+        "presented": true,
+        "batch": {
+          "outcomes": [
+            {
+              "call_id": "call.search-plan",
+              "operation_id": "onecrew.search.plan.prepare",
+              "disposition": {
+                "kind": "not_run",
+                "reason": "search_plan_confirmation_required"
+              },
+              "summary": "审核搜索计划",
+              "resource_refs": []
+            }
+          ]
+        },
+        "presentation": {
+          "kind": "search_plan_editor",
+          "title": "审核搜索计划",
+          "summary": "核对搜索条件与关键词后确认。",
+          "sections": [
+            {
+              "kind": "fields",
+              "heading": "搜索计划",
+              "fields": [
+                {
+                  "label": "验收标准",
+                  "value": "寻找美国烹饪类创作者，粉丝 ≥ 1,000。"
+                }
+              ]
+            }
+          ]
+        },
+        "pending_action": {
+          "kind": "search_plan",
+          "draft": {
+            "description": "寻找美国烹饪类创作者，粉丝 ≥ 1,000。",
+            "keywords": [
+              "cooking",
+              "baking",
+              "quick family meals",
+              "small kitchen recipes",
+              "cookware review"
+            ],
+            "scopes": [
+              {
+                "operation_id": "instagram.users.search",
+                "schema_revision": "1111111111111111111111111111111111111111111111111111111111111111",
+                "connection": {
+                  "kind": "operator_account",
+                  "toolkit": "instagram",
+                  "operator_account_id": "operator-demo"
+                },
+                "arguments": {
+                  "query": "cooking",
+                  "count": 20
+                }
+              }
+            ]
+          },
+          "draft_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000002"
+        },
+        "state": {
+          "kind": "available"
+        },
+        "continuation": {
+          "state": "not_requested",
+          "continuation_revision": 1,
+          "dispatch_started_at_ms": null,
+          "dispatch_not_after_ms": null
+        }
+      },
+      "steps": [
+        "默认只有搜索范围、折叠的补充入口和操作按钮",
+        "展开后标题只出现一次",
+        "点击修改搜索范围，新增一个关键词并检查 12px 间距",
+        "输入多个长关键词检查换行",
+        "核对已绑定的搜索操作只读显示，调整范围只能通过修改请求"
+      ]
+    },
+    {
+      "id": "case-14",
+      "question": "确认搜索计划，等于已经搜完了吗？",
+      "answer": "不等于。显示计划已确认，等待开始搜索。",
+      "snapshot": {
+        "locale": "zh-CN",
+        "binding": {
+          "result_ref": "rr_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "view": {
+            "identity": "rv_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "kind": "confirmation"
+          },
+          "origin": "mcp:full",
+          "fingerprint": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "revision": 2
+        },
+        "presented": true,
+        "batch": {
+          "outcomes": [
+            {
+              "call_id": "call.search-plan",
+              "operation_id": "onecrew.search.plan.prepare",
+              "disposition": {
+                "kind": "not_run",
+                "reason": "search_plan_confirmation_required"
+              },
+              "summary": "审核搜索计划",
+              "resource_refs": []
+            }
+          ]
+        },
+        "presentation": {
+          "kind": "search_plan_editor",
+          "title": "审核搜索计划",
+          "summary": "核对搜索条件与关键词后确认。",
+          "sections": [
+            {
+              "kind": "fields",
+              "heading": "搜索计划",
+              "fields": [
+                {
+                  "label": "验收标准",
+                  "value": "在 X 找到最终 5 位活跃且内容有实质的个人美妆创作者。以近 30 天持续发布原创美妆内容为活跃参考，查看近期帖子，优先有具体产品体验、妆容教程、试色或有依据的测评；排除主要为灌水、重复营销、抽奖、搬运或纯转发的账号。输出主页链接、近期活跃证据和代表内容及入选理由。地区、语言、粉丝数不限。先获取候选再核验，最终只交付 5 位；不保存到 OneCrew、不联系。"
+                },
+                {
+                  "label": "关键词",
+                  "value": "makeup、beauty、美妆"
+                }
+              ]
+            }
+          ]
+        },
+        "pending_action": null,
+        "state": {
+          "kind": "resolved",
+          "code": "search_plan_confirmed",
+          "summary": "计划已确认"
+        },
+        "continuation": {
+          "state": "not_requested",
+          "continuation_revision": 1,
+          "dispatch_started_at_ms": null,
+          "dispatch_not_after_ms": null
+        }
+      },
+      "steps": [
+        "检查计划已确认与等待开始搜索的区别",
+        "检查搜索计划标题和内容间距"
+      ]
+    },
+    {
+      "id": "case-15",
+      "question": "找厨具合作达人，还缺哪些信息？",
+      "answer": "你提出“为我的厨具品牌找合作达人”，但尚未说明目标市场和合作目标。补充这两项后，才能准备合适的搜索范围。",
+      "snapshot": {
+        "locale": "zh-CN",
+        "binding": {
+          "result_ref": "rr_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "view": {
+            "identity": "rv_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "kind": "choice"
+          },
+          "origin": "mcp:full",
+          "fingerprint": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "revision": 2
+        },
+        "presented": true,
+        "batch": {
+          "outcomes": [
+            {
+              "call_id": "call.creator",
+              "operation_id": "onecrew.creator.manual.create",
+              "disposition": {
+                "kind": "not_run",
+                "reason": "confirmation_required"
+              },
+              "summary": "Creator creation requires confirmation.",
+              "resource_refs": []
+            }
+          ]
+        },
+        "presentation": {
+          "kind": "choice",
+          "title": "补充搜索需求",
+          "summary": "为厨具品牌寻找合作达人，还需要明确目标市场和合作目标。",
+          "sections": []
+        },
+        "pending_action": {
+          "kind": "choice",
+          "questions": [
+            {
+              "id": "target_market",
+              "selection_mode": "single",
+              "header": "目标市场",
+              "prompt": "你的产品主要面向哪个市场？",
+              "options": [
+                {
+                  "id": "us",
+                  "label": "美国",
+                  "description": "寻找面向美国消费者的达人"
+                },
+                {
+                  "id": "jp",
+                  "label": "日本",
+                  "description": "寻找面向日本消费者的达人"
+                },
+                {
+                  "id": "uk",
+                  "label": "英国",
+                  "description": "寻找面向英国消费者的达人"
+                }
+              ]
+            },
+            {
+              "id": "collaboration_goal",
+              "selection_mode": "single",
+              "header": "合作目标",
+              "prompt": "这次合作最希望达成什么？",
+              "options": [
+                {
+                  "id": "product_review",
+                  "label": "产品测评",
+                  "description": "展示厨具的实际使用体验"
+                },
+                {
+                  "id": "sales",
+                  "label": "促进销售",
+                  "description": "通过产品推荐和购买链接带动下单"
+                },
+                {
+                  "id": "awareness",
+                  "label": "品牌曝光",
+                  "description": "让更多目标消费者认识品牌"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "kind": "available"
+        },
+        "continuation": {
+          "state": "not_requested",
+          "continuation_revision": 1,
+          "dispatch_started_at_ms": null,
+          "dispatch_not_after_ms": null
+        }
+      },
+      "steps": [
+        "先回答目标市场再进入合作目标",
+        "返回上一题确认答案保留",
+        "选择人工输入并检查没有常驻字节/密码提示",
+        "确认没有弹窗、数字标签切换、待确认标记"
+      ]
+    },
+    {
+      "id": "case-16",
+      "question": "只读结果也要让我点击确认吗？",
+      "answer": "不需要。直接展示业务信息，不给只读数据附加确认按钮。",
+      "snapshot": {
+        "locale": "zh-CN",
+        "binding": {
+          "result_ref": "rr_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "view": {
+            "identity": "rv_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "kind": "read_only"
+          },
+          "origin": "mcp:full",
+          "fingerprint": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "revision": 2
+        },
+        "presented": true,
+        "batch": {
+          "outcomes": [
+            {
+              "call_id": "read.creators",
+              "operation_id": "onecrew.creator.list",
+              "disposition": {
+                "kind": "succeeded"
+              },
+              "summary": "找到 1 位创作者。",
+              "resource_refs": []
+            }
+          ]
+        },
+        "presentation": {
+          "kind": "read_only",
+          "title": "创作者搜索结果",
+          "summary": null,
+          "sections": [
+            {
+              "kind": "fields",
+              "heading": null,
+              "fields": [
+                {
+                  "label": "创作者",
+                  "value": "Nora Beauty"
+                },
+                {
+                  "label": "平台",
+                  "value": "X"
+                },
+                {
+                  "label": "公开粉丝数",
+                  "value": "12,500"
+                }
+              ]
+            }
+          ]
+        },
+        "pending_action": null,
+        "state": {
+          "kind": "resolved",
+          "code": "completed",
+          "summary": "找到 1 位创作者。"
+        },
+        "continuation": {
+          "state": "not_requested",
+          "continuation_revision": 1,
+          "dispatch_started_at_ms": null,
+          "dispatch_not_after_ms": null
+        }
+      },
+      "steps": [
+        "只读结果没有确认按钮",
+        "检查平台与粉丝信息"
+      ]
+    },
+    {
+      "id": "case-17",
+      "question": "旧卡片过期后还能保存吗？",
+      "answer": "显示卡片已过期与恢复建议，关闭旧操作入口。",
+      "failure": {
+        "kind": "server",
+        "failure": {
+          "code": "expired"
+        }
+      },
+      "steps": [
+        "检查过期提示与恢复说明",
+        "确认旧操作入口不可用"
+      ]
+    },
+    {
+      "id": "case-18",
+      "question": "提交时断网，原来的输入会消失吗？",
+      "answer": "模拟手动创建创作者时断网：保留名称、平台、账号和备注，禁用提交并提供检查当前状态；不显示待确认或重复确认提问。",
+      "snapshot": {
+        "locale": "zh-CN",
+        "binding": {
+          "result_ref": "rr_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "view": {
+            "identity": "rv_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "kind": "confirmation"
+          },
+          "origin": "mcp:full",
+          "fingerprint": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "revision": 2
+        },
+        "presented": true,
+        "batch": {
+          "outcomes": [
+            {
+              "call_id": "call.creator",
+              "operation_id": "onecrew.creator.manual.create",
+              "disposition": {
+                "kind": "not_run",
+                "reason": "confirmation_required"
+              },
+              "summary": "Creator creation requires confirmation.",
+              "resource_refs": []
+            }
+          ]
+        },
+        "presentation": {
+          "kind": "simple_operation",
+          "title": "手动创建创作者",
+          "summary": "确认名称、平台和账号后再创建。",
+          "sections": [
+            {
+              "kind": "fields",
+              "heading": "创作者信息",
+              "fields": [
+                {
+                  "label": "名称",
+                  "value": "Nora Beauty"
+                },
+                {
+                  "label": "平台",
+                  "value": "X"
+                },
+                {
+                  "label": "账号",
+                  "value": "@nora_beauty"
+                },
+                {
+                  "label": "备注",
+                  "value": "美妆与护肤创作者，已查看公开主页。"
+                }
+              ]
+            }
+          ]
+        },
+        "pending_action": {
+          "kind": "confirm",
+          "prompt": "确认创建这位创作者？",
+          "label": "确认创建"
+        },
+        "state": {
+          "kind": "available"
+        },
+        "continuation": {
+          "state": "not_requested",
+          "continuation_revision": 1,
+          "dispatch_started_at_ms": null,
+          "dispatch_not_after_ms": null
+        }
+      },
+      "recovery": true,
+      "steps": [
+        "核对创作者信息完整",
+        "检查没有重复确认提问",
+        "检查断网时内容仍在，写入按钮禁用"
+      ]
+    },
+    {
+      "id": "case-19",
+      "question": "保存已完成，但后续任务没有继续怎么办？",
+      "answer": "已保存回执保留；另外提示后续流程暂停，不把保存改成失败。",
+      "snapshot": {
+        "locale": "zh-CN",
+        "binding": {
+          "result_ref": "rr_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "view": {
+            "identity": "rv_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "kind": "confirmation"
+          },
+          "origin": "mcp:full",
+          "fingerprint": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "revision": 3
+        },
+        "presented": true,
+        "batch": {
+          "outcomes": [
+            {
+              "call_id": "save.creator",
+              "operation_id": "onecrew.creator.candidate.save",
+              "disposition": {
+                "kind": "succeeded"
+              },
+              "summary": "审核创作者保存",
+              "resource_refs": [
+                {
+                  "kind": "creator",
+                  "id": "creator-demo",
+                  "label": "Nora Beauty"
+                }
+              ]
+            }
+          ]
+        },
+        "presentation": {
+          "kind": "creator_save_confirmation",
+          "title": "创作者已保存",
+          "summary": "创作者已保存到 OneCrew。",
+          "sections": [
+            {
+              "kind": "creator_save_rows",
+              "rows": [
+                {
+                  "row_id": "save.creator",
+                  "candidate_id": "candidate-demo",
+                  "display_name": "Nora Beauty",
+                  "platform": "x",
+                  "handle": "@beauty_demo",
+                  "profile_url": "https://x.example.test/beauty_demo",
+                  "avatar_url": null,
+                  "status": "saved",
+                  "creator_id": "creator-demo",
+                  "failure_code": null,
+                  "confirmed_route_ids": [
+                    "route-profile"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "pending_action": null,
+        "state": {
+          "kind": "resolved",
+          "code": "saved",
+          "summary": "创作者已保存到 OneCrew。"
+        },
+        "continuation": {
+          "state": "paused",
+          "continuation_revision": 2,
+          "dispatch_started_at_ms": null,
+          "dispatch_not_after_ms": null
+        }
+      },
+      "steps": [
+        "核对保存成功仍保留",
+        "后续暂停不能把已保存变成失败"
+      ]
+    },
+    {
+      "id": "case-20",
+      "question": "后续通知送达状态未知，要自动重发吗？",
+      "answer": "保留业务成功，说明后续通知状态未知；不盲目重发导致重复执行。",
+      "snapshot": {
+        "locale": "zh-CN",
+        "binding": {
+          "result_ref": "rr_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "view": {
+            "identity": "rv_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "kind": "confirmation"
+          },
+          "origin": "mcp:full",
+          "fingerprint": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "revision": 3
+        },
+        "presented": true,
+        "batch": {
+          "outcomes": [
+            {
+              "call_id": "save.creator",
+              "operation_id": "onecrew.creator.candidate.save",
+              "disposition": {
+                "kind": "succeeded"
+              },
+              "summary": "审核创作者保存",
+              "resource_refs": [
+                {
+                  "kind": "creator",
+                  "id": "creator-demo",
+                  "label": "Nora Beauty"
+                }
+              ]
+            }
+          ]
+        },
+        "presentation": {
+          "kind": "creator_save_confirmation",
+          "title": "创作者已保存",
+          "summary": "创作者已保存到 OneCrew。",
+          "sections": [
+            {
+              "kind": "creator_save_rows",
+              "rows": [
+                {
+                  "row_id": "save.creator",
+                  "candidate_id": "candidate-demo",
+                  "display_name": "Nora Beauty",
+                  "platform": "x",
+                  "handle": "@beauty_demo",
+                  "profile_url": "https://x.example.test/beauty_demo",
+                  "avatar_url": null,
+                  "status": "saved",
+                  "creator_id": "creator-demo",
+                  "failure_code": null,
+                  "confirmed_route_ids": [
+                    "route-profile"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "pending_action": null,
+        "state": {
+          "kind": "resolved",
+          "code": "saved",
+          "summary": "创作者已保存到 OneCrew。"
+        },
+        "continuation": {
+          "state": "delivery_unknown",
+          "continuation_revision": 2,
+          "dispatch_started_at_ms": null,
+          "dispatch_not_after_ms": null
+        }
+      },
+      "steps": [
+        "核对保存成功与后续送达未知分别表达",
+        "不因通知未知自动重复执行业务"
+      ]
+    }
+  ]
+}

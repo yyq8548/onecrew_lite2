@@ -1,0 +1,33 @@
+[package]
+name = "onecrew-x-transport"
+version = "0.1.0"
+edition = "2024"
+rust-version.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+async-trait.workspace = true
+base64.workspace = true
+rand.workspace = true
+regex.workspace = true
+wreq = { version = "6.0.0-rc", features = [
+    "json",
+    "form",
+    "query",
+    "gzip",
+    "brotli",
+    "zstd",
+    "deflate",
+    "socks",
+] }
+wreq-util = "3.0.0-rc"
+scraper.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+url.workspace = true

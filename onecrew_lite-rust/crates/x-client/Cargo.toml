@@ -1,0 +1,22 @@
+[package]
+name = "onecrew-x-client"
+version = "0.1.0"
+edition = "2024"
+rust-version.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+onecrew-x-transport = { path = "../x-transport" }
+base64.workspace = true
+regex.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+url.workspace = true
+
+[dev-dependencies]
+async-trait.workspace = true

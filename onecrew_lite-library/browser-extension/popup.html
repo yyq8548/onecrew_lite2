@@ -1,0 +1,43 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title data-i18n="extensionName">OneCrew</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <img src="assets/onecrew-ai-mark.png" data-i18n="brandName" data-i18n-attr="alt" />
+        <div>
+          <strong data-i18n="brandName">OneCrew</strong
+          ><span data-i18n="bridgeLabel">OneCrew Browser Bridge</span>
+        </div>
+        <button id="language" class="language-toggle" type="button" aria-label="Switch language">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path
+              d="m5 8 6 6m-7 0 6-6 2-3H2m5-3v3m7 17 5-11 5 11m-8-4h6"
+              transform="translate(-1 0)"
+            />
+          </svg>
+        </button>
+      </header>
+      <button id="connect" data-i18n="reconnectButton">Reconnect service</button
+      ><button id="disconnect" class="secondary" data-i18n="disconnectButton">Disconnect</button>
+      <p id="status" data-i18n="statusReading">Reading status…</p>
+      <small data-i18n="serviceAddress">Service address</small>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>

@@ -1,0 +1,379 @@
+{
+  "code_delivery": [
+    {
+      "name": "telegram_app_then_sms",
+      "status": {
+        "operation_id": "<operation_id>",
+        "phase": "awaiting_telegram_otp",
+        "expires_at": "<expires_at>",
+        "code_delivery": {
+          "method": "telegram_app",
+          "code_length": 5,
+          "destination_hint": "hint-0",
+          "timeout_seconds": 60,
+          "next_method": "sms",
+          "action_url": "https://fragment.example/login/0",
+          "can_submit_code": true
+        }
+      },
+      "handoff": {
+        "flow_id": "<flow_id>",
+        "telegram_code_delivery": {
+          "method": "telegram_app",
+          "code_length": 5,
+          "destination_hint": "hint-0",
+          "timeout_seconds": 60,
+          "next_method": "sms",
+          "action_url": "https://fragment.example/login/0",
+          "can_submit_code": true
+        }
+      }
+    },
+    {
+      "name": "sms_then_voice_call",
+      "status": {
+        "operation_id": "<operation_id>",
+        "phase": "awaiting_telegram_otp",
+        "expires_at": "<expires_at>",
+        "code_delivery": {
+          "method": "sms",
+          "code_length": 6,
+          "destination_hint": "hint-1",
+          "timeout_seconds": 61,
+          "next_method": "voice_call",
+          "action_url": "https://fragment.example/login/1",
+          "can_submit_code": true
+        }
+      },
+      "handoff": {
+        "flow_id": "<flow_id>",
+        "telegram_code_delivery": {
+          "method": "sms",
+          "code_length": 6,
+          "destination_hint": "hint-1",
+          "timeout_seconds": 61,
+          "next_method": "voice_call",
+          "action_url": "https://fragment.example/login/1",
+          "can_submit_code": true
+        }
+      }
+    },
+    {
+      "name": "voice_call_then_flash_call",
+      "status": {
+        "operation_id": "<operation_id>",
+        "phase": "awaiting_telegram_otp",
+        "expires_at": "<expires_at>",
+        "code_delivery": {
+          "method": "voice_call",
+          "code_length": 7,
+          "destination_hint": "hint-2",
+          "timeout_seconds": 62,
+          "next_method": "flash_call",
+          "action_url": "https://fragment.example/login/2",
+          "can_submit_code": true
+        }
+      },
+      "handoff": {
+        "flow_id": "<flow_id>",
+        "telegram_code_delivery": {
+          "method": "voice_call",
+          "code_length": 7,
+          "destination_hint": "hint-2",
+          "timeout_seconds": 62,
+          "next_method": "flash_call",
+          "action_url": "https://fragment.example/login/2",
+          "can_submit_code": true
+        }
+      }
+    },
+    {
+      "name": "flash_call_then_missed_call",
+      "status": {
+        "operation_id": "<operation_id>",
+        "phase": "awaiting_telegram_otp",
+        "expires_at": "<expires_at>",
+        "code_delivery": {
+          "method": "flash_call",
+          "code_length": 8,
+          "destination_hint": "hint-3",
+          "timeout_seconds": 63,
+          "next_method": "missed_call",
+          "action_url": "https://fragment.example/login/3",
+          "can_submit_code": true
+        }
+      },
+      "handoff": {
+        "flow_id": "<flow_id>",
+        "telegram_code_delivery": {
+          "method": "flash_call",
+          "code_length": 8,
+          "destination_hint": "hint-3",
+          "timeout_seconds": 63,
+          "next_method": "missed_call",
+          "action_url": "https://fragment.example/login/3",
+          "can_submit_code": true
+        }
+      }
+    },
+    {
+      "name": "missed_call_then_email",
+      "status": {
+        "operation_id": "<operation_id>",
+        "phase": "awaiting_telegram_otp",
+        "expires_at": "<expires_at>",
+        "code_delivery": {
+          "method": "missed_call",
+          "code_length": 9,
+          "destination_hint": "hint-4",
+          "timeout_seconds": 64,
+          "next_method": "email",
+          "action_url": "https://fragment.example/login/4",
+          "can_submit_code": true
+        }
+      },
+      "handoff": {
+        "flow_id": "<flow_id>",
+        "telegram_code_delivery": {
+          "method": "missed_call",
+          "code_length": 9,
+          "destination_hint": "hint-4",
+          "timeout_seconds": 64,
+          "next_method": "email",
+          "action_url": "https://fragment.example/login/4",
+          "can_submit_code": true
+        }
+      }
+    },
+    {
+      "name": "email_then_email_setup_required",
+      "status": {
+        "operation_id": "<operation_id>",
+        "phase": "awaiting_telegram_otp",
+        "expires_at": "<expires_at>",
+        "code_delivery": {
+          "method": "email",
+          "code_length": 10,
+          "destination_hint": "hint-5",
+          "timeout_seconds": 65,
+          "next_method": "email_setup_required",
+          "action_url": "https://fragment.example/login/5",
+          "can_submit_code": true
+        }
+      },
+      "handoff": {
+        "flow_id": "<flow_id>",
+        "telegram_code_delivery": {
+          "method": "email",
+          "code_length": 10,
+          "destination_hint": "hint-5",
+          "timeout_seconds": 65,
+          "next_method": "email_setup_required",
+          "action_url": "https://fragment.example/login/5",
+          "can_submit_code": true
+        }
+      }
+    },
+    {
+      "name": "email_setup_required_then_fragment",
+      "status": {
+        "operation_id": "<operation_id>",
+        "phase": "awaiting_telegram_otp",
+        "expires_at": "<expires_at>",
+        "code_delivery": {
+          "method": "email_setup_required",
+          "code_length": 11,
+          "destination_hint": "hint-6",
+          "timeout_seconds": 66,
+          "next_method": "fragment",
+          "action_url": "https://fragment.example/login/6",
+          "can_submit_code": true
+        }
+      },
+      "handoff": {
+        "flow_id": "<flow_id>",
+        "telegram_code_delivery": {
+          "method": "email_setup_required",
+          "code_length": 11,
+          "destination_hint": "hint-6",
+          "timeout_seconds": 66,
+          "next_method": "fragment",
+          "action_url": "https://fragment.example/login/6",
+          "can_submit_code": true
+        }
+      }
+    },
+    {
+      "name": "fragment_then_firebase_sms",
+      "status": {
+        "operation_id": "<operation_id>",
+        "phase": "awaiting_telegram_otp",
+        "expires_at": "<expires_at>",
+        "code_delivery": {
+          "method": "fragment",
+          "code_length": 12,
+          "destination_hint": "hint-7",
+          "timeout_seconds": 67,
+          "next_method": "firebase_sms",
+          "action_url": "https://fragment.example/login/7",
+          "can_submit_code": true
+        }
+      },
+      "handoff": {
+        "flow_id": "<flow_id>",
+        "telegram_code_delivery": {
+          "method": "fragment",
+          "code_length": 12,
+          "destination_hint": "hint-7",
+          "timeout_seconds": 67,
+          "next_method": "firebase_sms",
+          "action_url": "https://fragment.example/login/7",
+          "can_submit_code": true
+        }
+      }
+    },
+    {
+      "name": "firebase_sms_then_sms_word",
+      "status": {
+        "operation_id": "<operation_id>",
+        "phase": "awaiting_telegram_otp",
+        "expires_at": "<expires_at>",
+        "code_delivery": {
+          "method": "firebase_sms",
+          "code_length": 13,
+          "destination_hint": "hint-8",
+          "timeout_seconds": 68,
+          "next_method": "sms_word",
+          "action_url": "https://fragment.example/login/8",
+          "can_submit_code": true
+        }
+      },
+      "handoff": {
+        "flow_id": "<flow_id>",
+        "telegram_code_delivery": {
+          "method": "firebase_sms",
+          "code_length": 13,
+          "destination_hint": "hint-8",
+          "timeout_seconds": 68,
+          "next_method": "sms_word",
+          "action_url": "https://fragment.example/login/8",
+          "can_submit_code": true
+        }
+      }
+    },
+    {
+      "name": "sms_word_then_sms_phrase",
+      "status": {
+        "operation_id": "<operation_id>",
+        "phase": "awaiting_telegram_otp",
+        "expires_at": "<expires_at>",
+        "code_delivery": {
+          "method": "sms_word",
+          "code_length": 14,
+          "destination_hint": "hint-9",
+          "timeout_seconds": 69,
+          "next_method": "sms_phrase",
+          "action_url": "https://fragment.example/login/9",
+          "can_submit_code": true
+        }
+      },
+      "handoff": {
+        "flow_id": "<flow_id>",
+        "telegram_code_delivery": {
+          "method": "sms_word",
+          "code_length": 14,
+          "destination_hint": "hint-9",
+          "timeout_seconds": 69,
+          "next_method": "sms_phrase",
+          "action_url": "https://fragment.example/login/9",
+          "can_submit_code": true
+        }
+      }
+    },
+    {
+      "name": "sms_phrase_then_telegram_app",
+      "status": {
+        "operation_id": "<operation_id>",
+        "phase": "awaiting_telegram_otp",
+        "expires_at": "<expires_at>",
+        "code_delivery": {
+          "method": "sms_phrase",
+          "code_length": 15,
+          "destination_hint": "hint-10",
+          "timeout_seconds": 70,
+          "next_method": "telegram_app",
+          "action_url": "https://fragment.example/login/10",
+          "can_submit_code": true
+        }
+      },
+      "handoff": {
+        "flow_id": "<flow_id>",
+        "telegram_code_delivery": {
+          "method": "sms_phrase",
+          "code_length": 15,
+          "destination_hint": "hint-10",
+          "timeout_seconds": 70,
+          "next_method": "telegram_app",
+          "action_url": "https://fragment.example/login/10",
+          "can_submit_code": true
+        }
+      }
+    },
+    {
+      "name": "email_setup_required_without_route_details",
+      "status": {
+        "operation_id": "<operation_id>",
+        "phase": "awaiting_telegram_otp",
+        "expires_at": "<expires_at>",
+        "code_delivery": {
+          "method": "email_setup_required",
+          "code_length": null,
+          "destination_hint": null,
+          "timeout_seconds": null,
+          "next_method": null,
+          "action_url": null,
+          "can_submit_code": false
+        }
+      },
+      "handoff": {
+        "flow_id": "<flow_id>",
+        "telegram_code_delivery": {
+          "method": "email_setup_required",
+          "code_length": null,
+          "destination_hint": null,
+          "timeout_seconds": null,
+          "next_method": null,
+          "action_url": null,
+          "can_submit_code": false
+        }
+      }
+    }
+  ],
+  "qr_challenge": {
+    "status": {
+      "operation_id": "<operation_id>",
+      "phase": "awaiting_telegram_qr_scan",
+      "expires_at": "<expires_at>",
+      "qr_code": {
+        "expires_at": 1800000000
+      }
+    },
+    "handoff": {
+      "flow_id": "<flow_id>",
+      "telegram_qr_challenge": {
+        "image_data_url": "data:image/png;base64,iVBORw0KGgo=",
+        "expires_at": 1800000000
+      }
+    }
+  },
+  "no_login_material": {
+    "status": {
+      "operation_id": "<operation_id>",
+      "phase": "starting",
+      "expires_at": "<expires_at>"
+    },
+    "handoff": {
+      "flow_id": "<flow_id>"
+    }
+  }
+}

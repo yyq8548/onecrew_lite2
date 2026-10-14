@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "__MSG_extensionName__",
+  "version": "0.1.2",
+  "description": "__MSG_extensionDescription__",
+  "default_locale": "en",
+  "permissions": ["storage", "tabs", "scripting", "alarms", "cookies"],
+  "host_permissions": ["https://www.youtube.com/*", "https://youtube.com/*", "http://127.0.0.1/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "__MSG_actionTitle__",
+    "default_icon": {
+      "16": "assets/onecrew-favicon.png",
+      "32": "assets/onecrew-favicon.png"
+    }
+  },
+  "icons": {
+    "16": "assets/onecrew-favicon.png",
+    "32": "assets/onecrew-favicon.png",
+    "128": "assets/onecrew-ai-mark.png"
+  },
+  "minimum_chrome_version": "120"
+}

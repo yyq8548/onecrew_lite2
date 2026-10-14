@@ -1,0 +1,17 @@
+id: peer-adapter-golden-projection
+type: golden
+prompt: Add a typed MCP projection and matching HTTP command for an existing Creator runtime use case.
+expected:
+  must_include:
+    - identify the existing runtime owner and typed request/result
+    - map both peers without duplicating policy
+    - preserve confirmation idempotency readback and safe failures
+    - add schema serialization surface closure and parity evidence
+  must_not_include:
+    - route the desktop through MCP
+    - invent an adapter-owned business model
+score:
+  pass: 90
+  critical_fail_if:
+    - secret material appears in a public schema result log or fixture
+    - a remote write is reported complete from request acceptance alone

@@ -1,0 +1,14 @@
+Geist Sans variable webfont provenance
+
+Upstream repository: https://github.com/vercel/geist-font
+Release: v1.7.2
+Published: 2026-06-01T14:49:59Z
+Release page: https://github.com/vercel/geist-font/releases/tag/v1.7.2
+Release asset: geist-font-v1.7.2.zip
+Release asset SHA-256: 7fc800d2ac6b92844895196e5041aca55d814c15db70c44f79b3b83ab82b04e2
+Source archive member: geist-font/Geist/webfonts/Geist[wght].woff2
+Bundled file: fonts/geist/Geist-Variable.woff2
+Bundled file SHA-256: a369fcf5628ea2aa4e1b9e2ec6a5b3624e365bda588e1f0f2f12b564f728fbb8
+License: SIL Open Font License 1.1
+Bundled license: licenses/Geist-OFL-1.1.txt
+Bundled license SHA-256: c683bfbcc7e087f5d37a54ef628f10387c451a83ddc459b151403a164ac46c90

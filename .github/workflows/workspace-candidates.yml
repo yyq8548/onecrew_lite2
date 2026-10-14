@@ -1,0 +1,106 @@
+name: Workspace native candidates
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: workspace-candidates-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  windows:
+    runs-on: windows-2025
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26.7.0
+      - name: Prepare and build Windows pair
+        shell: pwsh
+        working-directory: onecrew_lite-rust
+        run: |
+          $ErrorActionPreference = 'Stop'
+          npm install --global pnpm@10.32.1
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -m pip install uv==0.8.22
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          $vsInstall = & "${env:ProgramFiles(x86)}/Microsoft Visual Studio/Installer/vswhere.exe" -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          Import-Module "$vsInstall/Common7/Tools/Microsoft.VisualStudio.DevShell.dll"
+          Enter-VsDevShell -VsInstallPath $vsInstall -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64'
+          $env:LIBCLANG_PATH = 'C:/Program Files/LLVM/bin'
+          $env:PATH = "C:/Program Files/LLVM/bin;C:/Program Files/NASM;$env:PATH"
+          node --test development/scripts/workspace-release.test.mjs development/scripts/package-workspace.test.mjs
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          node development/scripts/workspace-release.mjs build --output dist/native-candidates
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          tar -czf windows.tgz -C dist/native-candidates win32-x64
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: candidate-windows
+          path: onecrew_lite-rust/windows.tgz
+          if-no-files-found: error
+  mac:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            host: darwin-arm64
+          - runner: macos-15-intel
+            host: darwin-x64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26.7.0
+      - name: Prepare native tools
+        run: |
+          npm install --global pnpm@10.32.1
+          brew install uv cmake ninja nasm
+      - name: Build Mac pair
+        working-directory: onecrew_lite-rust
+        env:
+          EXPECTED_HOST: ${{ matrix.host }}
+        run: |
+          test "$(node -p 'process.platform+"-"+process.arch')" = "$EXPECTED_HOST"
+          node --test development/scripts/workspace-release.test.mjs development/scripts/package-workspace.test.mjs
+          node development/scripts/workspace-release.mjs build --output dist/native-candidates
+          tar -czf mac.tgz -C dist/native-candidates "$EXPECTED_HOST"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: candidate-${{ matrix.host }}
+          path: onecrew_lite-rust/mac.tgz
+          if-no-files-found: error
+  collect:
+    needs: [windows, mac]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26.7.0
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: candidate-*
+          path: incoming
+      - name: Verify all three candidates before collection
+        shell: bash
+        run: |
+          mkdir bundles
+          for archive in incoming/*/*.tgz; do tar -xzf "$archive" -C bundles; done
+          node onecrew_lite-rust/development/scripts/workspace-release.mjs collect --input bundles --output bundles/release-manifest.json
+          tar -czf workspace-candidates.tgz bundles
+      - uses: actions/upload-artifact@v4
+        with:
+          name: workspace-candidates-pending-native-acceptance
+          path: workspace-candidates.tgz
+          if-no-files-found: error

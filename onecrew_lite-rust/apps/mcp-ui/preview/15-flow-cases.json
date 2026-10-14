@@ -1,0 +1,427 @@
+{
+  "mode": "local-simulation-only",
+  "responseDelayMs": 900,
+  "rateLimitCooldownMs": 3000,
+  "cases": [
+    {
+      "id": "search-results",
+      "flow": "search",
+      "label": "搜索成功与分页",
+      "expect": "开始搜索后显示执行中，再展示 23 位模拟达人；每页最多 10 位，可按粉丝数筛选。",
+      "initialState": {
+        "id": "search-results",
+        "phase": "idle",
+        "run": 0,
+        "attempt": 0,
+        "checks": 0,
+        "revision": 1,
+        "fields": {
+          "platform": "tiktok",
+          "market": "美国",
+          "keyword": "cooking",
+          "minimum": "1000"
+        },
+        "saved": {
+          "platform": "tiktok",
+          "market": "美国",
+          "keyword": "cooking",
+          "minimum": "1000"
+        },
+        "cooldown": false,
+        "message": ""
+      }
+    },
+    {
+      "id": "search-empty",
+      "flow": "search",
+      "label": "搜索无结果",
+      "expect": "无匹配时保留搜索条件；修改条件后再次搜索得到模拟结果。",
+      "initialState": {
+        "id": "search-empty",
+        "phase": "idle",
+        "run": 0,
+        "attempt": 0,
+        "checks": 0,
+        "revision": 1,
+        "fields": {
+          "platform": "tiktok",
+          "market": "美国",
+          "keyword": "cooking",
+          "minimum": "1000"
+        },
+        "saved": {
+          "platform": "tiktok",
+          "market": "美国",
+          "keyword": "cooking",
+          "minimum": "1000"
+        },
+        "cooldown": false,
+        "message": ""
+      }
+    },
+    {
+      "id": "search-failed",
+      "flow": "search",
+      "label": "搜索失败后重试",
+      "expect": "显示失败原因，保留条件；主动重试后成功。",
+      "initialState": {
+        "id": "search-failed",
+        "phase": "idle",
+        "run": 0,
+        "attempt": 0,
+        "checks": 0,
+        "revision": 1,
+        "fields": {
+          "platform": "tiktok",
+          "market": "美国",
+          "keyword": "cooking",
+          "minimum": "1000"
+        },
+        "saved": {
+          "platform": "tiktok",
+          "market": "美国",
+          "keyword": "cooking",
+          "minimum": "1000"
+        },
+        "cooldown": false,
+        "message": ""
+      }
+    },
+    {
+      "id": "search-limited",
+      "flow": "search",
+      "label": "请求过于频繁",
+      "expect": "直接展示居中的系统提示：标题与副标题，冷却后可重试，也可暂不搜索。",
+      "initialState": {
+        "id": "search-limited",
+        "phase": "limited",
+        "run": 0,
+        "attempt": 1,
+        "checks": 0,
+        "revision": 1,
+        "fields": {
+          "platform": "tiktok",
+          "market": "美国",
+          "keyword": "cooking",
+          "minimum": "1000"
+        },
+        "saved": {
+          "platform": "tiktok",
+          "market": "美国",
+          "keyword": "cooking",
+          "minimum": "1000"
+        },
+        "cooldown": true,
+        "message": ""
+      }
+    },
+    {
+      "id": "search-unavailable",
+      "flow": "search",
+      "label": "搜索服务暂不可用",
+      "expect": "直接展示居中的系统提示：说明服务暂不可用，保留条件并提供重试与暂不搜索。",
+      "initialState": {
+        "id": "search-unavailable",
+        "phase": "error",
+        "run": 0,
+        "attempt": 1,
+        "checks": 0,
+        "revision": 1,
+        "fields": {
+          "platform": "tiktok",
+          "market": "美国",
+          "keyword": "cooking",
+          "minimum": "1000"
+        },
+        "saved": {
+          "platform": "tiktok",
+          "market": "美国",
+          "keyword": "cooking",
+          "minimum": "1000"
+        },
+        "cooldown": false,
+        "message": ""
+      }
+    },
+    {
+      "id": "account-missing",
+      "flow": "account",
+      "label": "尚未连接账号",
+      "expect": "连接成功后仍需检查搜索权限；检查通过才允许继续。",
+      "initialState": {
+        "id": "account-missing",
+        "phase": "disconnected",
+        "run": 0,
+        "attempt": 0,
+        "checks": 0,
+        "revision": 1,
+        "fields": {
+          "platform": "tiktok",
+          "market": "美国",
+          "keyword": "cooking",
+          "minimum": "1000"
+        },
+        "saved": {
+          "platform": "tiktok",
+          "market": "美国",
+          "keyword": "cooking",
+          "minimum": "1000"
+        },
+        "cooldown": false,
+        "message": ""
+      }
+    },
+    {
+      "id": "account-expired",
+      "flow": "account",
+      "label": "账号授权过期",
+      "expect": "重新授权后检查本次搜索权限，原连接记录不能当作已验证。",
+      "initialState": {
+        "id": "account-expired",
+        "phase": "expired",
+        "run": 0,
+        "attempt": 0,
+        "checks": 0,
+        "revision": 1,
+        "fields": {
+          "platform": "tiktok",
+          "market": "美国",
+          "keyword": "cooking",
+          "minimum": "1000"
+        },
+        "saved": {
+          "platform": "tiktok",
+          "market": "美国",
+          "keyword": "cooking",
+          "minimum": "1000"
+        },
+        "cooldown": false,
+        "message": ""
+      }
+    },
+    {
+      "id": "account-denied",
+      "flow": "account",
+      "label": "已连接但权限不足",
+      "expect": "账号存在但检查发现缺少搜索权限；重新授权并检查后恢复。",
+      "initialState": {
+        "id": "account-denied",
+        "phase": "unverified",
+        "run": 0,
+        "attempt": 0,
+        "checks": 0,
+        "revision": 1,
+        "fields": {
+          "platform": "tiktok",
+          "market": "美国",
+          "keyword": "cooking",
+          "minimum": "1000"
+        },
+        "saved": {
+          "platform": "tiktok",
+          "market": "美国",
+          "keyword": "cooking",
+          "minimum": "1000"
+        },
+        "cooldown": false,
+        "message": ""
+      }
+    },
+    {
+      "id": "account-cancel",
+      "flow": "account",
+      "label": "用户取消授权",
+      "expect": "显示未完成连接，不能继续搜索；允许重新连接。",
+      "initialState": {
+        "id": "account-cancel",
+        "phase": "disconnected",
+        "run": 0,
+        "attempt": 0,
+        "checks": 0,
+        "revision": 1,
+        "fields": {
+          "platform": "tiktok",
+          "market": "美国",
+          "keyword": "cooking",
+          "minimum": "1000"
+        },
+        "saved": {
+          "platform": "tiktok",
+          "market": "美国",
+          "keyword": "cooking",
+          "minimum": "1000"
+        },
+        "cooldown": false,
+        "message": ""
+      }
+    },
+    {
+      "id": "account-timeout",
+      "flow": "account",
+      "label": "账号检查超时",
+      "expect": "明确无法确认可用性；再次检查，不重新创建账号记录。",
+      "initialState": {
+        "id": "account-timeout",
+        "phase": "unverified",
+        "run": 0,
+        "attempt": 0,
+        "checks": 0,
+        "revision": 1,
+        "fields": {
+          "platform": "tiktok",
+          "market": "美国",
+          "keyword": "cooking",
+          "minimum": "1000"
+        },
+        "saved": {
+          "platform": "tiktok",
+          "market": "美国",
+          "keyword": "cooking",
+          "minimum": "1000"
+        },
+        "cooldown": false,
+        "message": ""
+      }
+    },
+    {
+      "id": "edit-success",
+      "flow": "edit",
+      "label": "修改成功后再确认",
+      "expect": "修改后生成新的范围预览；确认执行时使用更新后的条件。",
+      "initialState": {
+        "id": "edit-success",
+        "phase": "preview",
+        "run": 0,
+        "attempt": 0,
+        "checks": 0,
+        "revision": 1,
+        "fields": {
+          "platform": "tiktok",
+          "market": "美国",
+          "keyword": "cooking",
+          "minimum": "1000"
+        },
+        "saved": {
+          "platform": "tiktok",
+          "market": "美国",
+          "keyword": "cooking",
+          "minimum": "1000"
+        },
+        "cooldown": false,
+        "message": ""
+      }
+    },
+    {
+      "id": "edit-failed",
+      "flow": "edit",
+      "label": "修改失败保留输入",
+      "expect": "模拟请求明确未应用，保留修改内容；主动重试后更新。",
+      "initialState": {
+        "id": "edit-failed",
+        "phase": "preview",
+        "run": 0,
+        "attempt": 0,
+        "checks": 0,
+        "revision": 1,
+        "fields": {
+          "platform": "tiktok",
+          "market": "美国",
+          "keyword": "cooking",
+          "minimum": "1000"
+        },
+        "saved": {
+          "platform": "tiktok",
+          "market": "美国",
+          "keyword": "cooking",
+          "minimum": "1000"
+        },
+        "cooldown": false,
+        "message": ""
+      }
+    },
+    {
+      "id": "edit-unknown-applied",
+      "flow": "edit",
+      "label": "提交超时但实际已更新",
+      "expect": "先检查结果；查到已更新后回到新预览，禁止重复提交。",
+      "initialState": {
+        "id": "edit-unknown-applied",
+        "phase": "preview",
+        "run": 0,
+        "attempt": 0,
+        "checks": 0,
+        "revision": 1,
+        "fields": {
+          "platform": "tiktok",
+          "market": "美国",
+          "keyword": "cooking",
+          "minimum": "1000"
+        },
+        "saved": {
+          "platform": "tiktok",
+          "market": "美国",
+          "keyword": "cooking",
+          "minimum": "1000"
+        },
+        "cooldown": false,
+        "message": ""
+      }
+    },
+    {
+      "id": "edit-unknown-missing",
+      "flow": "edit",
+      "label": "提交超时且尚未更新",
+      "expect": "先检查结果；确认未应用后才允许重试，输入仍在。",
+      "initialState": {
+        "id": "edit-unknown-missing",
+        "phase": "preview",
+        "run": 0,
+        "attempt": 0,
+        "checks": 0,
+        "revision": 1,
+        "fields": {
+          "platform": "tiktok",
+          "market": "美国",
+          "keyword": "cooking",
+          "minimum": "1000"
+        },
+        "saved": {
+          "platform": "tiktok",
+          "market": "美国",
+          "keyword": "cooking",
+          "minimum": "1000"
+        },
+        "cooldown": false,
+        "message": ""
+      }
+    },
+    {
+      "id": "edit-conflict",
+      "flow": "edit",
+      "label": "另一窗口已更新范围",
+      "expect": "展示最新条件与当前输入，不静默覆盖；用户选择继续修改后再提交。",
+      "initialState": {
+        "id": "edit-conflict",
+        "phase": "preview",
+        "run": 0,
+        "attempt": 0,
+        "checks": 0,
+        "revision": 1,
+        "fields": {
+          "platform": "tiktok",
+          "market": "美国",
+          "keyword": "cooking",
+          "minimum": "1000"
+        },
+        "saved": {
+          "platform": "tiktok",
+          "market": "美国",
+          "keyword": "cooking",
+          "minimum": "1000"
+        },
+        "cooldown": false,
+        "message": ""
+      }
+    }
+  ]
+}

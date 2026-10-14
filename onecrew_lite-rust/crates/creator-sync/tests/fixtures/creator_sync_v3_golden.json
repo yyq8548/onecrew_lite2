@@ -1,0 +1,77 @@
+{
+  "bundle": {
+    "format": "reacher.creator_bundle",
+    "format_version": 3,
+    "profile": "portable_public",
+    "snapshot_kind": "full",
+    "creator_count": 1,
+    "content_sha256": "sha256:fdf22b669e1329f90d86dbeb228bf55bad6f65c9ca0f61ed1c59605e4fa878da",
+    "creators": [
+      {
+        "semantic_sha256": "sha256:9191797d41b1b2edaf4b42995054db7494db057090ac99cf5798349b82ff421a",
+        "record_key": "sha256:da72597ad579f1906ca1e645adf830d6dcf80809fea43552aa8de9d8577f3bb8",
+        "display_name": "Creator alpha",
+        "tags": [],
+        "score": 87,
+        "follower_counts": {
+          "x": 42
+        },
+        "pinned": true,
+        "relationship": {
+          "stage": "prospect"
+        },
+        "accounts": [
+          {
+            "capture_order": 0,
+            "platform": "x",
+            "target_kind": "user",
+            "external_id": "x-alpha",
+            "link_state": "confirmed",
+            "confidence": "exact",
+            "source_kind": "initial_platform_account",
+            "latest_profile": {
+              "handle": "alpha_new",
+              "display_name": "Newest alpha",
+              "profile_url": "https://x.com/alpha_new",
+              "avatar_url": "https://cdn.example/alpha.png"
+            }
+          },
+          {
+            "capture_order": 1,
+            "platform": "instagram",
+            "target_kind": "creator",
+            "external_id": "ig-alpha",
+            "link_state": "rejected",
+            "confidence": "possible",
+            "source_kind": "profile_bio",
+            "latest_profile": null
+          }
+        ],
+        "contact_routes": [
+          {
+            "save_order": 0,
+            "channel": "email",
+            "locator_kind": "email_address",
+            "normalized_value": "alpha@example.com",
+            "display_value": "alpha@example.com",
+            "confidence": "exact",
+            "source_kinds": [
+              "profile_bio",
+              "manual_entry"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "plan": "{\"source_bundle_format_version\":3,\"source_bundle_content_sha256\":\"sha256:fdf22b669e1329f90d86dbeb228bf55bad6f65c9ca0f61ed1c59605e4fa878da\",\"creator_count\":1,\"creators\":[{\"record_key\":\"sha256:da72597ad579f1906ca1e645adf830d6dcf80809fea43552aa8de9d8577f3bb8\",\"semantic_sha256\":\"sha256:9191797d41b1b2edaf4b42995054db7494db057090ac99cf5798349b82ff421a\",\"claims\":[{\"kind\":\"contact\",\"channel\":\"email\",\"locator_kind\":\"email_address\",\"normalized_value\":\"alpha@example.com\"},{\"kind\":\"provider_account\",\"platform\":\"instagram\",\"target_kind\":\"creator\",\"external_id\":\"ig-alpha\",\"link_state\":\"rejected\"},{\"kind\":\"provider_account\",\"platform\":\"x\",\"target_kind\":\"user\",\"external_id\":\"x-alpha\",\"link_state\":\"confirmed\"}]}]}\n",
+    "artifact": "{\"format\":\"reacher.creator_bundle\",\"format_version\":3,\"profile\":\"portable_public\",\"snapshot_kind\":\"delta\",\"source_bundle_content_sha256\":\"sha256:fdf22b669e1329f90d86dbeb228bf55bad6f65c9ca0f61ed1c59605e4fa878da\",\"manifest_sha256\":\"sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945\",\"creator_count\":1,\"content_sha256\":\"sha256:6cc32a3ca4d73890296acf2be4af9d8b79d66f79a451c8516dcbea82f8515174\",\"creators\":[{\"semantic_sha256\":\"sha256:9191797d41b1b2edaf4b42995054db7494db057090ac99cf5798349b82ff421a\",\"record_key\":\"sha256:da72597ad579f1906ca1e645adf830d6dcf80809fea43552aa8de9d8577f3bb8\",\"display_name\":\"Creator alpha\",\"tags\":[],\"score\":87,\"follower_counts\":{\"x\":42},\"pinned\":true,\"relationship\":{\"stage\":\"prospect\"},\"accounts\":[{\"capture_order\":0,\"platform\":\"x\",\"target_kind\":\"user\",\"external_id\":\"x-alpha\",\"link_state\":\"confirmed\",\"confidence\":\"exact\",\"source_kind\":\"initial_platform_account\",\"latest_profile\":{\"handle\":\"alpha_new\",\"display_name\":\"Newest alpha\",\"profile_url\":\"https://x.com/alpha_new\",\"avatar_url\":\"https://cdn.example/alpha.png\"}},{\"capture_order\":1,\"platform\":\"instagram\",\"target_kind\":\"creator\",\"external_id\":\"ig-alpha\",\"link_state\":\"rejected\",\"confidence\":\"possible\",\"source_kind\":\"profile_bio\",\"latest_profile\":null}],\"contact_routes\":[{\"save_order\":0,\"channel\":\"email\",\"locator_kind\":\"email_address\",\"normalized_value\":\"alpha@example.com\",\"display_value\":\"alpha@example.com\",\"confidence\":\"exact\",\"source_kinds\":[\"profile_bio\",\"manual_entry\"]}]}]}\n",
+    "chunk": "{\"format\":\"reacher.creator_chunk\",\"format_version\":3,\"snapshot_content_sha256\":\"sha256:6cc32a3ca4d73890296acf2be4af9d8b79d66f79a451c8516dcbea82f8515174\",\"chunk_index\":0,\"creator_start_index\":0,\"creator_count\":1,\"creators\":[{\"semantic_sha256\":\"sha256:9191797d41b1b2edaf4b42995054db7494db057090ac99cf5798349b82ff421a\",\"record_key\":\"sha256:da72597ad579f1906ca1e645adf830d6dcf80809fea43552aa8de9d8577f3bb8\",\"display_name\":\"Creator alpha\",\"tags\":[],\"score\":87,\"follower_counts\":{\"x\":42},\"pinned\":true,\"relationship\":{\"stage\":\"prospect\"},\"accounts\":[{\"capture_order\":0,\"platform\":\"x\",\"target_kind\":\"user\",\"external_id\":\"x-alpha\",\"link_state\":\"confirmed\",\"confidence\":\"exact\",\"source_kind\":\"initial_platform_account\",\"latest_profile\":{\"handle\":\"alpha_new\",\"display_name\":\"Newest alpha\",\"profile_url\":\"https://x.com/alpha_new\",\"avatar_url\":\"https://cdn.example/alpha.png\"}},{\"capture_order\":1,\"platform\":\"instagram\",\"target_kind\":\"creator\",\"external_id\":\"ig-alpha\",\"link_state\":\"rejected\",\"confidence\":\"possible\",\"source_kind\":\"profile_bio\",\"latest_profile\":null}],\"contact_routes\":[{\"save_order\":0,\"channel\":\"email\",\"locator_kind\":\"email_address\",\"normalized_value\":\"alpha@example.com\",\"display_value\":\"alpha@example.com\",\"confidence\":\"exact\",\"source_kinds\":[\"profile_bio\",\"manual_entry\"]}]}]}\n",
+    "init": "{\"format\":\"reacher.creator_bundle\",\"format_version\":3,\"profile\":\"portable_public\",\"snapshot_kind\":\"delta\",\"backup_kind\":\"full\",\"plan_token\":\"00000000-0000-4000-8000-000000000000\",\"source_bundle_content_sha256\":\"sha256:fdf22b669e1329f90d86dbeb228bf55bad6f65c9ca0f61ed1c59605e4fa878da\",\"source_creator_count\":1,\"manifest_sha256\":\"sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945\",\"creator_count\":1,\"content_sha256\":\"sha256:6cc32a3ca4d73890296acf2be4af9d8b79d66f79a451c8516dcbea82f8515174\",\"artifact_sha256\":\"sha256:d5d6ccfd4480a8e499c2a87fa0cf4a91835a8f69388682b05fe7b9134515488c\",\"artifact_size_bytes\":1488,\"chunk_count\":1,\"max_snapshot_bytes\":33554432,\"max_chunk_bytes\":1048576,\"max_chunks\":128}\n",
+    "chunk_sha256": "sha256:ba167bddb2f72a3f4d41bc4aaffbae1ea5fe344628e461abe554a9afba3081d6",
+    "plan_sha256": "sha256:a11e87f3b0add3ba4bd466ec8f4ca5b9bdf12286e6da422e036ce83cc1433ebb",
+    "content_sha256": "sha256:6cc32a3ca4d73890296acf2be4af9d8b79d66f79a451c8516dcbea82f8515174",
+    "bundle": "{\"format\":\"reacher.creator_bundle\",\"format_version\":3,\"profile\":\"portable_public\",\"snapshot_kind\":\"full\",\"creator_count\":1,\"content_sha256\":\"sha256:fdf22b669e1329f90d86dbeb228bf55bad6f65c9ca0f61ed1c59605e4fa878da\",\"creators\":[{\"semantic_sha256\":\"sha256:9191797d41b1b2edaf4b42995054db7494db057090ac99cf5798349b82ff421a\",\"record_key\":\"sha256:da72597ad579f1906ca1e645adf830d6dcf80809fea43552aa8de9d8577f3bb8\",\"display_name\":\"Creator alpha\",\"tags\":[],\"score\":87,\"follower_counts\":{\"x\":42},\"pinned\":true,\"relationship\":{\"stage\":\"prospect\"},\"accounts\":[{\"capture_order\":0,\"platform\":\"x\",\"target_kind\":\"user\",\"external_id\":\"x-alpha\",\"link_state\":\"confirmed\",\"confidence\":\"exact\",\"source_kind\":\"initial_platform_account\",\"latest_profile\":{\"handle\":\"alpha_new\",\"display_name\":\"Newest alpha\",\"profile_url\":\"https://x.com/alpha_new\",\"avatar_url\":\"https://cdn.example/alpha.png\"}},{\"capture_order\":1,\"platform\":\"instagram\",\"target_kind\":\"creator\",\"external_id\":\"ig-alpha\",\"link_state\":\"rejected\",\"confidence\":\"possible\",\"source_kind\":\"profile_bio\",\"latest_profile\":null}],\"contact_routes\":[{\"save_order\":0,\"channel\":\"email\",\"locator_kind\":\"email_address\",\"normalized_value\":\"alpha@example.com\",\"display_value\":\"alpha@example.com\",\"confidence\":\"exact\",\"source_kinds\":[\"profile_bio\",\"manual_entry\"]}]}]}\n"
+  }
+}

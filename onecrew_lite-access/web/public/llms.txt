@@ -1,0 +1,49 @@
+# OneCrew
+
+> 面向出海品牌的 AI 达人发现与外联工作台。
+
+OneCrew 帮助出海品牌、跨境电商 BD、个人创业者和达人营销代理团队发现合适的 KOL，集中管理邮件与支持的社交私信，并通过 AI Agent 检查回复、提示跟进和建议下一步。重要消息、价格与商业承诺保留人工审核。
+
+英文是默认语言，使用不带语言前缀的路径；中文使用 `/zh` 路径。每个语言版本都有独立 canonical URL，并互相声明语言 alternate。旧 `/en` 地址永久跳转到对应的默认英文地址。
+
+## 主要页面
+
+- [首页](__ONECREW_SITE_ORIGIN__/zh)：OneCrew 的产品定位、工作方式、渠道、适用团队和常见问题。
+- [产品总览](__ONECREW_SITE_ORIGIN__/zh/product)：完整的发现、沟通、跟进与审核工作流。
+- [达人发现](__ONECREW_SITE_ORIGIN__/zh/product/creator-discovery)：按市场、品类、受众和内容方向筛选 KOL。
+- [统一收件箱](__ONECREW_SITE_ORIGIN__/zh/product/unified-inbox)：按联系人集中邮件与支持的社交私信。
+- [AI Agent](__ONECREW_SITE_ORIGIN__/zh/product/ai-agent)：检查回复、提示跟进并在人工控制下推进合作。
+- [解决方案](__ONECREW_SITE_ORIGIN__/zh/use-cases)：面向出海品牌、个人创业者与代理团队的使用场景。
+- [出海电商品牌](__ONECREW_SITE_ORIGIN__/zh/use-cases/ecommerce-brands)：跨境电商和 D2C 品牌的达人外联工作流。
+- [个人创业者](__ONECREW_SITE_ORIGIN__/zh/use-cases/solo-founders)：由一个人持续推进达人发现、沟通与跟进。
+- [达人营销代理团队](__ONECREW_SITE_ORIGIN__/zh/use-cases/agencies)：按客户与项目管理达人关系和下一步。
+- [资源中心](__ONECREW_SITE_ORIGIN__/zh/resources)：达人外联指南与产品说明。
+- [KOL 外联指南](__ONECREW_SITE_ORIGIN__/zh/resources/kol-outreach-guide)：从找达人到持续跟进的六个步骤。
+- [关于 OneCrew](__ONECREW_SITE_ORIGIN__/zh/about)：产品定位、工作方式、AI 服务边界与人工控制原则。
+- [定价与体验](__ONECREW_SITE_ORIGIN__/zh/pricing)：当前开放方式、体验范围与未来方案的主要配置因素。
+- [服务条款](__ONECREW_SITE_ORIGIN__/zh/terms)：账户责任、合理使用、AI 输出和第三方服务规则。
+- [隐私政策](__ONECREW_SITE_ORIGIN__/zh/privacy)：信息收集、使用、共享、保存、安全和用户权利。
+
+- [中文使用指南](__ONECREW_SITE_ORIGIN__/zh/resources/user-guide)：完整操作内容和连接配图。
+- [English user guide](__ONECREW_SITE_ORIGIN__/resources/user-guide): Account setup and outreach workflows.
+
+## 官方联系
+
+- X: https://x.com/onecrewai
+- Email: __ONECREW_CONTACT_EMAIL__
+
+## 产品对比
+
+- [OneCrew 与 Lev8 对比](__ONECREW_SITE_ORIGIN__/zh/compare/lev8)
+- [OneCrew 与 Modash 对比](__ONECREW_SITE_ORIGIN__/zh/compare/modash)
+- [OneCrew 与 HypeAuditor 对比](__ONECREW_SITE_ORIGIN__/zh/compare/hypeauditor)
+- [OneCrew 与 Upfluence 对比](__ONECREW_SITE_ORIGIN__/zh/compare/upfluence)
+- [OneCrew 与 SARAL 对比](__ONECREW_SITE_ORIGIN__/zh/compare/saral)
+- [OneCrew 与 Influencity 对比](__ONECREW_SITE_ORIGIN__/zh/compare/influencity)
+- [OneCrew 与 Aspire 对比](__ONECREW_SITE_ORIGIN__/zh/compare/aspire)
+
+## 已确认边界
+
+- OneCrew 不是只有名单的 KOL 数据库，而是连接发现、记录、联系、跟进和审核的执行工作台。
+- 网站不承诺未经确认的平台覆盖、数据库规模、固定 ROI、客户数量或无人审核的自动谈判。
+- 具体渠道支持、自动化权限和发布范围以正式产品版本为准。

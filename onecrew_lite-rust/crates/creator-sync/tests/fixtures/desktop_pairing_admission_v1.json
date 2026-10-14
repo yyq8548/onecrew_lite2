@@ -1,0 +1,13 @@
+{
+  "source": "Access A desktop-pairing-admission-contract.ts",
+  "request": {
+    "code": "reacher_pairing_v1.E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
+    "codeVerifier": "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"
+  },
+  "admitted": {
+    "admission": "admitted",
+    "userId": "access-user-fixture",
+    "deviceId": "dev_000000000000000000000001",
+    "pairingId": "pair_000000000000000000000001"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "exactOptionalPropertyTypes": true,
+    "lib": ["ES2023", "WebWorker"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "noEmit": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "target": "ES2023",
+    "types": ["@cloudflare/workers-types", "vitest/globals"]
+  },
+  "include": ["src/**/*.ts", "vitest.config.ts"]
+}

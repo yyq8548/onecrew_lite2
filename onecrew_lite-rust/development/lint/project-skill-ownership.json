@@ -1,0 +1,1061 @@
+{
+  "schemaVersion": 2,
+  "skills": {
+    "to-spec": {
+      "invocation": "explicit",
+      "upstream": {
+        "repository": "https://github.com/mattpocock/skills",
+        "revision": "3cca18b368ae95cdbdebbff572ccafa662551015",
+        "path": "skills/engineering/to-spec"
+      },
+      "ownerConcern": "conversation-specification",
+      "what": "Synthesize a requested spec, agree test seams, and publish within user authorization. Missing tracker configuration does not authorize setup.",
+      "concerns": [
+        "conversation-specification"
+      ],
+      "positiveCases": [
+        "explicit-conversation-to-spec",
+        "spec-missing-tracker-configuration"
+      ],
+      "negativeCases": [
+        "ordinary-product-implementation",
+        "resume-authorized-provider-implementation"
+      ],
+      "pathScopes": {
+        "owns": [
+          ".skillshare/skills/to-spec/**"
+        ],
+        "appliesTo": [
+          ".scratch/**"
+        ],
+        "governs": [],
+        "observes": [
+          "docs/agents/issue-tracker.md"
+        ]
+      },
+      "references": {},
+      "requiredReferences": [],
+      "verificationOwner": "onecrew-verify",
+      "effects": {
+        "mutation": true,
+        "externalEffect": true,
+        "review": false,
+        "package": false
+      },
+      "relationships": [
+        {
+          "to": "setup-matt-pocock-skills",
+          "kind": "handoff",
+          "when": "Tracker configuration is missing; identify the prerequisite without running setup or authorizing writes.",
+          "sourceEvidence": "The issue tracker and triage label vocabulary should have been provided to you. If not, tell the user to run `/setup-matt-pocock-skills`."
+        }
+      ],
+      "stopCondition": "authorized_specification_delivered_or_configuration_missing"
+    },
+    "to-tickets": {
+      "invocation": "explicit",
+      "upstream": {
+        "repository": "https://github.com/mattpocock/skills",
+        "revision": "3cca18b368ae95cdbdebbff572ccafa662551015",
+        "path": "skills/engineering/to-tickets"
+      },
+      "ownerConcern": "tracer-bullet-ticket-planning",
+      "what": "Create approved tickets and blocking edges within authorization. Upstream expand-contract suggestions do not override project restrictions on unrequested compatibility.",
+      "concerns": [
+        "tracer-bullet-ticket-planning"
+      ],
+      "positiveCases": [
+        "explicit-spec-to-tickets",
+        "ticket-wide-refactor-without-compatibility",
+        "tickets-missing-tracker-configuration"
+      ],
+      "negativeCases": [
+        "ordinary-product-implementation",
+        "resume-authorized-provider-implementation"
+      ],
+      "pathScopes": {
+        "owns": [
+          ".skillshare/skills/to-tickets/**"
+        ],
+        "appliesTo": [
+          ".scratch/**"
+        ],
+        "governs": [],
+        "observes": [
+          "docs/agents/issue-tracker.md"
+        ]
+      },
+      "references": {},
+      "requiredReferences": [],
+      "verificationOwner": "onecrew-verify",
+      "effects": {
+        "mutation": true,
+        "externalEffect": true,
+        "review": false,
+        "package": false
+      },
+      "relationships": [
+        {
+          "to": "setup-matt-pocock-skills",
+          "kind": "handoff",
+          "when": "Tracker configuration is missing; identify the prerequisite without running setup or authorizing writes.",
+          "sourceEvidence": "The issue tracker and triage label vocabulary should have been provided to you. If not, tell the user to run `/setup-matt-pocock-skills`."
+        }
+      ],
+      "stopCondition": "approved_tickets_delivered_or_configuration_missing"
+    },
+    "implement": {
+      "invocation": "explicit",
+      "upstream": {
+        "repository": "https://github.com/mattpocock/skills",
+        "revision": "3cca18b368ae95cdbdebbff572ccafa662551015",
+        "path": "skills/engineering/implement"
+      },
+      "ownerConcern": "specification-driven-implementation",
+      "what": "Implement an explicit spec or tickets through existing application owners, agreed TDD seams where possible, and bounded final review. Commit and external writes require authorization; ordinary implementation does not require this chain.",
+      "concerns": [
+        "specification-driven-implementation"
+      ],
+      "positiveCases": [
+        "explicit-implement-agreed-spec",
+        "explicit-implement-without-test-first-seam"
+      ],
+      "negativeCases": [
+        "ordinary-product-implementation",
+        "resume-authorized-provider-implementation"
+      ],
+      "pathScopes": {
+        "owns": [
+          ".skillshare/skills/implement/**"
+        ],
+        "appliesTo": [],
+        "governs": [],
+        "observes": [
+          "crates/**",
+          "apps/**"
+        ]
+      },
+      "references": {},
+      "requiredReferences": [],
+      "verificationOwner": "onecrew-verify",
+      "effects": {
+        "mutation": true,
+        "externalEffect": false,
+        "review": true,
+        "package": false
+      },
+      "relationships": [
+        {
+          "to": "tdd",
+          "kind": "pair",
+          "when": "Explicit implementation admits TDD at pre-agreed public seams where possible.",
+          "sourceEvidence": "Use /tdd where possible, at pre-agreed seams."
+        },
+        {
+          "to": "code-review",
+          "kind": "review",
+          "when": "Implementation is complete and final review is due under the existing finite review and evidence-reuse budget.",
+          "sourceEvidence": "Once done, use /code-review to review the work."
+        }
+      ],
+      "stopCondition": "authorized_implementation_verified_and_bounded_review_reported"
+    },
+    "code-review": {
+      "invocation": "implicit",
+      "upstream": {
+        "repository": "https://github.com/mattpocock/skills",
+        "revision": "3cca18b368ae95cdbdebbff572ccafa662551015",
+        "path": "skills/engineering/code-review"
+      },
+      "ownerConcern": "standards-and-spec-review",
+      "what": "Report separate Standards and Spec axes for a requested fixed-point diff. Preserve onecrew-review risk, review identity, evidence reuse, and finite review-budget ownership.",
+      "concerns": [
+        "standards-and-spec-review"
+      ],
+      "positiveCases": [
+        "two-axis-fixed-point-review",
+        "review-missing-tracker-configuration"
+      ],
+      "negativeCases": [
+        "ordinary-product-implementation",
+        "resume-authorized-provider-implementation"
+      ],
+      "pathScopes": {
+        "owns": [
+          ".skillshare/skills/code-review/**"
+        ],
+        "appliesTo": [],
+        "governs": [],
+        "observes": [
+          "docs/agents/issue-tracker.md",
+          "crates/**",
+          "apps/**"
+        ]
+      },
+      "references": {},
+      "requiredReferences": [],
+      "verificationOwner": "onecrew-verify",
+      "effects": {
+        "mutation": false,
+        "externalEffect": false,
+        "review": true,
+        "package": false
+      },
+      "relationships": [
+        {
+          "to": "setup-matt-pocock-skills",
+          "kind": "handoff",
+          "when": "Tracker configuration is missing; identify the prerequisite without running setup or authorizing writes.",
+          "sourceEvidence": "The issue tracker should have been provided to you. If `docs/agents/issue-tracker.md` is missing, tell the user to run `/setup-matt-pocock-skills`."
+        }
+      ],
+      "stopCondition": "standards_and_spec_findings_reported_or_missing_input_identified"
+    },
+    "tdd": {
+      "invocation": "implicit",
+      "upstream": {
+        "repository": "https://github.com/mattpocock/skills",
+        "revision": "3cca18b368ae95cdbdebbff572ccafa662551015",
+        "path": "skills/engineering/tdd"
+      },
+      "ownerConcern": "behavioral-test-first-loop",
+      "what": "Run requested red-green loops at pre-agreed public seams; consult design vocabulary for unresolved interfaces and preserve project verification ownership.",
+      "concerns": [
+        "behavioral-test-first-loop"
+      ],
+      "positiveCases": [
+        "test-first-public-behavior",
+        "test-first-unresolved-interface"
+      ],
+      "negativeCases": [
+        "ordinary-product-implementation",
+        "resume-authorized-provider-implementation"
+      ],
+      "pathScopes": {
+        "owns": [
+          ".skillshare/skills/tdd/**"
+        ],
+        "appliesTo": [],
+        "governs": [],
+        "observes": [
+          "crates/**",
+          "apps/**"
+        ]
+      },
+      "references": {
+        "tests.md": {
+          "kind": "pattern"
+        },
+        "mocking.md": {
+          "kind": "pattern"
+        }
+      },
+      "requiredReferences": [],
+      "verificationOwner": "onecrew-verify",
+      "effects": {
+        "mutation": true,
+        "externalEffect": false,
+        "review": false,
+        "package": false
+      },
+      "relationships": [
+        {
+          "to": "codebase-design",
+          "kind": "pair",
+          "when": "The public interface shape or location of the agreed seam is unresolved.",
+          "sourceEvidence": "When the shape of that interface is itself in question (how deep the module is, where the seam belongs, what the interface should expose), call the Skill tool with \"codebase-design\" for the vocabulary. It is the shared source of the module, interface, depth, seam, adapter, leverage and locality terms, and it is a reference to consult, not a session to run."
+        }
+      ],
+      "stopCondition": "agreed_behavioral_slices_pass_and_evidence_reported"
+    },
+    "codebase-design": {
+      "invocation": "implicit",
+      "upstream": {
+        "repository": "https://github.com/mattpocock/skills",
+        "revision": "3cca18b368ae95cdbdebbff572ccafa662551015",
+        "path": "skills/engineering/codebase-design"
+      },
+      "ownerConcern": "deep-module-design-vocabulary",
+      "what": "Supply module, interface, depth, seam, and adapter vocabulary for requested design and deepening. Existing application placement and Rust owners retain their responsibilities.",
+      "concerns": [
+        "deep-module-design-vocabulary"
+      ],
+      "positiveCases": [
+        "deepen-module-interface",
+        "compare-alternative-interface-designs"
+      ],
+      "negativeCases": [
+        "ordinary-product-implementation",
+        "resume-authorized-provider-implementation"
+      ],
+      "pathScopes": {
+        "owns": [
+          ".skillshare/skills/codebase-design/**"
+        ],
+        "appliesTo": [],
+        "governs": [],
+        "observes": [
+          "crates/**",
+          "apps/**"
+        ]
+      },
+      "references": {
+        "DEEPENING.md": {
+          "kind": "pattern"
+        },
+        "DESIGN-IT-TWICE.md": {
+          "kind": "workflow"
+        }
+      },
+      "requiredReferences": [],
+      "verificationOwner": "onecrew-verify",
+      "effects": {
+        "mutation": false,
+        "externalEffect": false,
+        "review": false,
+        "package": false
+      },
+      "relationships": [],
+      "stopCondition": "requested_interface_design_or_vocabulary_explained"
+    },
+    "setup-matt-pocock-skills": {
+      "invocation": "explicit",
+      "upstream": {
+        "repository": "https://github.com/mattpocock/skills",
+        "revision": "3cca18b368ae95cdbdebbff572ccafa662551015",
+        "path": "skills/engineering/setup-matt-pocock-skills"
+      },
+      "ownerConcern": "upstream-engineering-configuration",
+      "what": "Configure tracker and domain documentation only on explicit request and approved drafts. Triage label configuration is conditional on triage already being installed; installation does not run setup.",
+      "concerns": [
+        "upstream-engineering-configuration"
+      ],
+      "positiveCases": [
+        "explicit-engineering-skill-setup-github",
+        "explicit-engineering-skill-setup-gitlab",
+        "explicit-engineering-skill-setup-local",
+        "setup-triage-labels-only-if-installed"
+      ],
+      "negativeCases": [
+        "ordinary-product-implementation",
+        "resume-authorized-provider-implementation"
+      ],
+      "pathScopes": {
+        "owns": [
+          ".skillshare/skills/setup-matt-pocock-skills/**"
+        ],
+        "appliesTo": [
+          "CLAUDE.md",
+          "AGENTS.md",
+          "docs/agents/**"
+        ],
+        "governs": [],
+        "observes": []
+      },
+      "references": {
+        "domain.md": {
+          "kind": "pattern"
+        },
+        "issue-tracker-github.md": {
+          "kind": "pattern"
+        },
+        "issue-tracker-gitlab.md": {
+          "kind": "pattern"
+        },
+        "issue-tracker-local.md": {
+          "kind": "pattern"
+        },
+        "triage-labels.md": {
+          "kind": "pattern"
+        }
+      },
+      "requiredReferences": [],
+      "verificationOwner": "onecrew-verify",
+      "effects": {
+        "mutation": true,
+        "externalEffect": false,
+        "review": false,
+        "package": false
+      },
+      "relationships": [],
+      "stopCondition": "approved_configuration_written_or_required_choice_reported"
+    },
+    "onecrew-architecture-placement": {
+      "invocation": "implicit",
+      "ownerConcern": "architecture-placement",
+      "what": "Choose the owning layer, trust boundary, dependency direction, lifecycle owner, and canonical call path before implementation.",
+      "concerns": ["capability-placement", "owner-hierarchy", "cross-runtime-wiring"],
+      "positiveCases": ["place-cross-layer-capability"],
+      "negativeCases": ["rust-structure-only-refactor"],
+      "pathScopes": {
+        "owns": ["ARCHITECTURE.md", ".skillshare/skills/onecrew-architecture-placement/**"],
+        "appliesTo": ["crates/**", "apps/**"],
+        "governs": [],
+        "observes": ["Cargo.toml", "crates/**/Cargo.toml", "apps/**/Cargo.toml"]
+      },
+      "references": {"references/capability-placement-and-wiring.md": {"kind": "pattern"}},
+      "requiredReferences": ["references/capability-placement-and-wiring.md"],
+      "verificationOwner": "onecrew-verify",
+      "effects": {"mutation": false, "externalEffect": false, "review": false, "package": false},
+      "relationships": [
+        {"to": "onecrew-rust-architecture", "kind": "handoff", "when": "Placement is settled and Rust module or API structure changes."},
+        {"to": "onecrew-peer-adapters", "kind": "handoff", "when": "The chosen use case needs a HTTP or MCP projection."},
+        {"to": "onecrew-local-data-evolution", "kind": "pair", "when": "The placement changes a durable persisted shape."},
+        {"to": "onecrew-native-cli", "kind": "pair", "when": "The decision crosses an OS or native distribution boundary."}
+      ],
+      "stopCondition": "placement_decision_and_handoffs_recorded"
+    },
+    "onecrew-capability": {
+      "invocation": "implicit",
+      "ownerConcern": "provider-capability",
+      "what": "Implement one typed provider operation through transport, client, facade and runtime toolkit functions.",
+      "concerns": ["toolkit-capability", "provider-facades", "telegram-target-semantics"],
+      "positiveCases": ["provider-typed-operation", "telegram-target-resolution", "ordinary-x-read", "ordinary-product-implementation", "resume-authorized-provider-implementation"],
+      "negativeCases": ["creator-local-policy-only"],
+      "pathScopes": {
+        "owns": [".skillshare/skills/onecrew-capability/**"],
+        "appliesTo": ["crates/*-transport/**", "crates/*-client/**", "crates/*-platform/**", "crates/platform-runtime/src/toolkits/**", "crates/platform-runtime/src/credentials/email_gateway.rs", "crates/platform-runtime/src/credentials/email_gateway/**", "crates/platform-runtime/src/direct_message_access.rs"],
+        "governs": [],
+        "observes": []
+      },
+      "references": {"references/telegram-target-semantics.md": {"kind": "pattern"}},
+      "requiredReferences": [],
+      "verificationOwner": "onecrew-verify",
+      "effects": {"mutation": true, "externalEffect": true, "review": false, "package": false},
+      "relationships": [
+        {"to": "onecrew-creator", "kind": "pair", "when": "Provider behavior serves a Creator use case or durable fact."},
+        {"to": "onecrew-operator-sessions", "kind": "pair", "when": "Human authentication, account identity, proxy, or session lifecycle changes."},
+        {"to": "onecrew-x-chat-crypto-vendor", "kind": "handoff", "when": "X Chat cryptography or vendored compatibility changes."},
+        {"to": "onecrew-peer-adapters", "kind": "handoff", "when": "The operation becomes a public HTTP or MCP projection."}
+      ],
+      "stopCondition": "typed_provider_operation_and_owner_evidence_complete"
+    },
+    "onecrew-code-commentary": {
+      "invocation": "implicit",
+      "ownerConcern": "code-commentary",
+      "what": "Keep code comments and owner READMEs aligned with the mechanism they explain.",
+      "concerns": ["code-comments", "owner-readmes", "mechanism-replacement-commentary"],
+      "positiveCases": ["mechanism-comment-sweep"],
+      "negativeCases": ["standing-guidance-audit"],
+      "pathScopes": {
+        "owns": [".skillshare/skills/onecrew-code-commentary/**"],
+        "appliesTo": ["**/README.md", "**/*.{rs,ts,tsx}"],
+        "governs": [],
+        "observes": []
+      },
+      "references": {},
+      "requiredReferences": [],
+      "verificationOwner": "onecrew-verify",
+      "effects": {"mutation": true, "externalEffect": false, "review": false, "package": false},
+      "relationships": [
+        {"to": "onecrew-verify", "kind": "verify", "when": "The commentary sweep or named-anchor claim needs executable evidence."},
+        {"to": "onecrew-review", "kind": "review", "when": "The final logical delivery still meets the independent-review trigger."}
+      ],
+      "stopCondition": "invalidated_explanations_reconciled"
+    },
+    "onecrew-codex-plugin": {
+      "invocation": "implicit",
+      "ownerConcern": "codex-plugin-distribution",
+      "what": "Maintain the bundled Codex plugin source, staging digest, install cache, and session reload contract.",
+      "concerns": ["codex-plugin-packaging", "plugin-install-cache", "plugin-version-stamping"],
+      "positiveCases": ["plugin-cache-update"],
+      "negativeCases": ["mcp-tool-contract-change"],
+      "pathScopes": {
+        "owns": ["integrations/codex-marketplace/**", "crates/codex/**", ".skillshare/skills/onecrew-codex-plugin/**"],
+        "appliesTo": ["crates/onecrew/src/**"],
+        "governs": [],
+        "observes": []
+      },
+      "references": {"references/install-cache-and-updates.md": {"kind": "workflow"}},
+      "requiredReferences": ["references/install-cache-and-updates.md"],
+      "verificationOwner": "onecrew-verify",
+      "effects": {"mutation": true, "externalEffect": false, "review": false, "package": false},
+      "relationships": [
+        {"to": "onecrew-peer-adapters", "kind": "handoff", "when": "The underlying MCP tools, schemas, or adapter surface changes."},
+        {"to": "onecrew-capability", "kind": "pair", "when": "The local setup capability or loopback token lifecycle changes."}
+      ],
+      "stopCondition": "plugin_bytes_digest_and_reload_contract_verified"
+    },
+    "onecrew-creator": {
+      "invocation": "implicit",
+      "ownerConcern": "creator-runtime",
+      "what": "Implement Creator use cases, canonical DTOs, persistence, and guarded external-action policy.",
+      "concerns": ["creator-use-cases", "canonical-creator-identity", "creator-transactions", "candidate-save"],
+      "positiveCases": ["creator-confirmed-external-action", "creator-local-policy-only", "current-schema-query"],
+      "negativeCases": ["provider-typed-operation"],
+      "pathScopes": {
+        "owns": ["crates/creator-runtime/**", ".skillshare/skills/onecrew-creator/**"],
+        "appliesTo": ["crates/platform-runtime/src/credentials/email_gateway.rs", "crates/platform-runtime/src/credentials/email_gateway/**", "crates/platform-runtime/src/direct_message_access.rs"],
+        "governs": [],
+        "observes": []
+      },
+      "references": {},
+      "requiredReferences": [],
+      "verificationOwner": "onecrew-verify",
+      "effects": {"mutation": true, "externalEffect": true, "review": false, "package": false},
+      "relationships": [
+        {"to": "onecrew-capability", "kind": "pair", "when": "The use case requires provider behavior."},
+        {"to": "onecrew-peer-adapters", "kind": "handoff", "when": "HTTP or MCP exposes the use case."},
+        {"to": "onecrew-local-data-evolution", "kind": "pair", "when": "A persisted schema, marker, fingerprint, or encoding changes."},
+        {"to": "onecrew-service-credentials", "kind": "pair", "when": "The workflow consumes a service credential or mailbox reference."}
+      ],
+      "stopCondition": "creator_state_transition_and_authorized_effect_proven"
+    },
+    "onecrew-web-ui": {
+      "invocation": "implicit",
+      "ownerConcern": "web-react-ui",
+      "what": "Build Web React surfaces with shared primitives, typed HTTP clients, pure state, and deliberate freshness.",
+      "concerns": ["web-react-surfaces", "shadcn-composition", "chat-transcript-ui", "frontend-state-derivation"],
+      "positiveCases": ["web-react-surface", "observe-desktop-defect", "react-overlay-only", "react-consumer-only"],
+      "negativeCases": ["mcp-app-widget-ui", "http-command-only", "web-i18n-catalog-copy"],
+      "pathScopes": {
+        "owns": ["apps/web/src/**", ".skillshare/skills/onecrew-web-ui/**"],
+        "appliesTo": ["crates/local-service/src/*.rs"],
+        "governs": [],
+        "observes": []
+      },
+      "references": {
+        "references/desktop-composition-and-shadcn.md": {"kind": "pattern"},
+        "references/observing-a-defect-you-cannot-see.md": {"kind": "workflow"}
+      },
+      "requiredReferences": [],
+      "verificationOwner": "onecrew-verify",
+      "effects": {"mutation": true, "externalEffect": false, "review": false, "package": false},
+      "relationships": [
+        {"to": "onecrew-peer-adapters", "kind": "pair", "when": "A public HTTP command, DTO, or typed Web client contract changes."},
+        {"to": "onecrew-i18n", "kind": "pair", "when": "Fixed UI copy, accessible text, or locale-aware rendering changes."},
+        {"to": "onecrew-mcp-app-ui", "kind": "pair", "when": "The Web iframe Host and MCP App iframe source change together."},
+        {"to": "onecrew-native-cli", "kind": "pair", "when": "The surface depends on native window, OS, permission, or launch behavior."},
+        {"to": "onecrew-verify", "kind": "verify", "when": "The final UI diff needs focused and commit-level evidence."},
+        {"to": "onecrew-local-service", "kind": "handoff", "when": "A spinner or stalled command is caused by host-side blocking rather than React."}
+      ],
+      "stopCondition": "typed_accessible_surface_and_freshness_behavior_verified"
+    },
+    "onecrew-i18n": {
+      "invocation": "implicit",
+      "ownerConcern": "desktop-internationalization",
+      "what": "Maintain typed Web copy, locale selection, and reactive language-aware display without changing business data.",
+      "concerns": ["desktop-translation-catalogs", "desktop-locale-selection", "locale-aware-presentation"],
+      "positiveCases": ["web-i18n-catalog-copy", "web-i18n-rendered-copy", "web-i18n-startup-locale", "web-i18n-formatting", "web-i18n-template-boundary"],
+      "negativeCases": ["mcp-app-localization", "provider-typed-operation"],
+      "pathScopes": {
+        "owns": [".skillshare/skills/onecrew-i18n/**"],
+        "appliesTo": ["apps/web/src/i18n/**", "apps/web/src/**/*.ts", "apps/web/src/**/*.tsx"],
+        "governs": [],
+        "observes": ["apps/web/package.json"]
+      },
+      "references": {
+        "references/catalogs-and-locale.md": {"kind": "map"},
+        "references/display-boundaries-and-verification.md": {"kind": "workflow"}
+      },
+      "requiredReferences": [],
+      "verificationOwner": "onecrew-verify",
+      "effects": {"mutation": true, "externalEffect": false, "review": false, "package": false},
+      "relationships": [
+        {"to": "onecrew-web-ui", "kind": "pair", "when": "React copy, layout, or locale-dependent rendering changes; catalog-only edits stay here."},
+        {"to": "onecrew-mcp-app-ui", "kind": "handoff", "when": "The requested localization belongs to an MCP iframe, outside Web catalogs."},
+        {"to": "onecrew-peer-adapters", "kind": "pair", "when": "A public Host locale projection or contract changes."},
+        {"to": "onecrew-verify", "kind": "verify", "when": "The affected consumers require evidence beyond focused catalog or locale tests."}
+      ],
+      "stopCondition": "localized_display_and_data_boundaries_verified"
+    },
+    "onecrew-mcp-app-ui": {
+      "invocation": "implicit",
+      "ownerConcern": "mcp-app-react-ui",
+      "what": "Build isolated MCP App iframe sources, Host SDK state, strict result clients, local tests, and self-contained widget bundles.",
+      "concerns": ["mcp-app-iframe-ui", "host-sdk-state", "result-card-composition", "self-contained-widget-build"],
+      "positiveCases": ["mcp-app-widget-ui", "mcp-app-widget-build", "mcp-app-localization"],
+      "negativeCases": ["web-react-surface", "mcp-tool-contract-change", "http-command-only"],
+      "pathScopes": {
+        "owns": ["apps/mcp-ui/**", ".skillshare/skills/onecrew-mcp-app-ui/**"],
+        "appliesTo": ["crates/mcp-adapter/assets/apps/**"],
+        "governs": [],
+        "observes": ["crates/mcp-adapter/src/apps.rs"]
+      },
+      "references": {
+        "references/structure-and-host-boundaries.md": {"kind": "pattern"},
+        "references/build-and-verification.md": {"kind": "workflow"}
+      },
+      "requiredReferences": [],
+      "verificationOwner": "onecrew-verify",
+      "effects": {"mutation": true, "externalEffect": false, "review": false, "package": false},
+      "relationships": [
+        {"to": "onecrew-peer-adapters", "kind": "pair", "when": "An MCP tool, resource, App-only route, schema, or Host projection contract changes."},
+        {"to": "onecrew-web-ui", "kind": "pair", "when": "The Web transcript, sandboxed iframe Host, or embedded resource selection changes."},
+        {"to": "onecrew-verify", "kind": "verify", "when": "Package tests, typecheck, self-contained assets, and affected consumer evidence are due."}
+      ],
+      "stopCondition": "isolated_mcp_app_source_and_deterministic_bundle_verified"
+    },
+    "onecrew-local-data-evolution": {
+      "invocation": "implicit",
+      "ownerConcern": "local-data-evolution",
+      "what": "Evolve released or potentially persisted local formats through explicit adjacent upgrades and recovery.",
+      "concerns": ["schema-versioning", "data-migration", "backup-and-recovery"],
+      "positiveCases": ["persisted-format-evolution", "upgrade-recovery-flow"],
+      "negativeCases": ["current-schema-query"],
+      "pathScopes": {
+        "owns": [".skillshare/skills/onecrew-local-data-evolution/**"],
+        "appliesTo": ["crates/creator-runtime/src/repository/sqlite/schema/**", "crates/local-vault/src/store/schema.rs", "crates/platform-runtime/src/data_upgrade.rs", "crates/local-service/src/lib.rs", "apps/web/src/**"],
+        "governs": [],
+        "observes": []
+      },
+      "references": {
+        "references/schema-path-and-impact.md": {"kind": "pattern"},
+        "references/recovery-transaction-and-lifecycle.md": {"kind": "pattern"},
+        "references/verification-matrix.md": {"kind": "workflow"}
+      },
+      "requiredReferences": ["references/verification-matrix.md"],
+      "featurePacket": {
+        "readiness": "scripts/check-readiness.mjs",
+        "template": "templates/feature-packet.md",
+        "evalManifest": "evals/manifest.yaml",
+        "caseTypes": ["golden", "negative", "verification"],
+        "passThreshold": 90
+      },
+      "verificationOwner": "onecrew-verify",
+      "effects": {"mutation": true, "externalEffect": false, "review": false, "package": false},
+      "relationships": [
+        {"to": "onecrew-creator", "kind": "pair", "when": "Creator preservation semantics or repository behavior changes."},
+        {"to": "onecrew-native-cli", "kind": "pair", "when": "Backup permissions, native paths, or lifecycle differ by OS."},
+        {"to": "onecrew-web-ui", "kind": "pair", "when": "The explicit upgrade or recovery gate changes."},
+        {"to": "onecrew-verify", "kind": "verify", "when": "The final diff requires the complete evolution evidence lane."}
+      ],
+      "stopCondition": "adjacent_upgrade_recovery_and_preservation_matrix_complete"
+    },
+    "onecrew-local-dev-release": {
+      "invocation": "implicit",
+      "ownerConcern": "local-cli-development-release",
+      "what": "Build, package, replace, and verify a local OneCrew CLI development release and bundled Codex plugin.",
+      "concerns": ["local-release-build", "bootstrap-replacement", "plugin-refresh"],
+      "positiveCases": ["local-dev-release"],
+      "negativeCases": ["local-dev-release-negative"],
+      "pathScopes": {
+        "owns": [".skillshare/skills/onecrew-local-dev-release/**"],
+        "appliesTo": ["development/scripts/build.sh", "development/scripts/install-local-build.sh", "crates/onecrew/**", "crates/codex/**"],
+        "governs": [],
+        "observes": ["development/release/**", "dist/onecrew/**"]
+      },
+      "references": {},
+      "requiredReferences": [],
+      "verificationOwner": "onecrew-verify",
+      "effects": {"mutation": true, "externalEffect": false, "review": false, "package": true},
+      "relationships": [
+        {"to": "onecrew-native-cli", "kind": "pair", "when": "Target-specific native packaging or bootstrap mechanics change."},
+        {"to": "onecrew-codex-plugin", "kind": "pair", "when": "The bundled plugin source or reload contract changes."},
+        {"to": "onecrew-verify", "kind": "verify", "when": "A local artifact, replacement, or post-restart status is claimed."}
+      ],
+      "stopCondition": "dist_manifest_local_replacement_plugin_install_and_restart_boundary_reported"
+    },
+    "onecrew-native-cli": {
+      "invocation": "implicit",
+      "ownerConcern": "native-desktop-mechanics",
+      "what": "Implement and validate OS-specific desktop mechanics and HTTP distribution boundaries.",
+      "concerns": ["cli-packaging", "os-permissions", "native-distribution", "cross-build"],
+      "positiveCases": ["native-platform-mechanics", "cli-distribution", "windows-browser-security", "windows-cross-build"],
+      "negativeCases": ["react-overlay-only"],
+      "pathScopes": {
+        "owns": ["crates/onecrew/build.rs", "crates/local-service/src/paths.rs", "crates/chrome/**", "development/scripts/build.sh", ".skillshare/skills/onecrew-native-cli/**"],
+        "appliesTo": ["crates/local-service/**", "crates/local-vault/**"],
+        "governs": [],
+        "observes": []
+      },
+      "references": {
+        "references/platform-boundaries.md": {"kind": "pattern"},
+        "references/raw-cli-distribution.md": {"kind": "pattern"},
+        "references/windows-browser-and-security.md": {"kind": "pattern"},
+        "references/windows-cross-build-diagnostics.md": {"kind": "workflow"},
+        "references/verification-matrix.md": {"kind": "workflow"}
+      },
+      "requiredReferences": ["references/verification-matrix.md"],
+      "verificationOwner": "onecrew-verify",
+      "effects": {"mutation": true, "externalEffect": false, "review": false, "package": true},
+      "relationships": [
+        {"to": "onecrew-architecture-placement", "kind": "handoff", "when": "Native work changes ownership or a public contract."},
+        {"to": "onecrew-web-ui", "kind": "pair", "when": "Native prerequisites or presentation appear in React."},
+        {"to": "onecrew-local-data-evolution", "kind": "pair", "when": "Native paths, permissions, or lifecycle affect an upgrade."},
+        {"to": "onecrew-rust-quality", "kind": "pair", "when": "Unsafe proof or safe-wrapper quality changes without moving native mechanics out of this owner."},
+        {"to": "onecrew-verify", "kind": "verify", "when": "Host, target, runtime, or distribution evidence is claimed."}
+      ],
+      "stopCondition": "authorized_native_target_evidence_or_blocker_reported"
+    },
+    "onecrew-operator-sessions": {
+      "invocation": "implicit",
+      "ownerConcern": "operator-session-lifecycle",
+      "what": "Connect, reauthenticate, verify, and clean up human operator sessions.",
+      "concerns": ["operator-login", "browser-profiles", "proxied-sessions"],
+      "positiveCases": ["human-operator-session"],
+      "negativeCases": ["service-api-key"],
+      "pathScopes": {
+        "owns": ["crates/platform-runtime/src/account/**", "crates/platform-sessions/**", "crates/local-service/src/operator_accounts.rs", ".skillshare/skills/onecrew-operator-sessions/**"],
+        "appliesTo": ["apps/web/src/pages/accounts/**"],
+        "governs": [],
+        "observes": []
+      },
+      "references": {},
+      "requiredReferences": [],
+      "verificationOwner": "onecrew-verify",
+      "effects": {"mutation": true, "externalEffect": true, "review": false, "package": false},
+      "relationships": [
+        {"to": "onecrew-native-cli", "kind": "pair", "when": "Browser, Keychain, profile, path, or permission mechanics change."},
+        {"to": "onecrew-capability", "kind": "pair", "when": "Provider identity transport behavior changes after authentication."},
+        {"to": "onecrew-web-ui", "kind": "pair", "when": "Interactive onboarding or reauthentication UI changes."},
+        {"to": "onecrew-service-credentials", "kind": "handoff", "when": "The connection is a service API credential rather than a human session."}
+      ],
+      "stopCondition": "operator_identity_and_session_lifecycle_verified"
+    },
+    "onecrew-peer-adapters": {
+      "invocation": "implicit",
+      "ownerConcern": "peer-adapter-projections",
+      "what": "Project one runtime use case through matched typed HTTP and MCP adapter contracts and deterministic Rust-to-TypeScript contract generation.",
+      "concerns": ["http-commands", "mcp-tools", "adapter-parity", "mcp-app-host-contracts", "adapter-contract-codegen"],
+      "positiveCases": ["http-mcp-projection", "mcp-failure-classification", "mcp-app-host-result-normalization", "mcp-tool-contract-change", "http-command-only", "cross-boundary-contract-codegen"],
+      "negativeCases": ["mcp-app-widget-ui", "react-consumer-only"],
+      "pathScopes": {
+        "owns": ["crates/mcp-adapter/**", "crates/schema-manifest/**", "development/schema-codegen/**", ".skillshare/skills/onecrew-peer-adapters/**"],
+        "appliesTo": ["crates/local-service/src/*.rs", "apps/web/src/lib/**", "crates/platform-runtime/src/catalog/**"],
+        "governs": ["apps/web/creator-sync-contracts.config.json", "apps/web/src/lib/generated/creator-sync-contracts/**", "apps/mcp-ui/contracts.config.json", "apps/mcp-ui/src/lib/generated/contracts/**"],
+        "observes": []
+      },
+      "references": {
+        "references/cross-boundary-contract-codegen.md": {"kind": "pattern"},
+        "references/mcp-failure-guidance.md": {"kind": "pattern"},
+        "references/mcp-app-host-contract-cases.md": {"kind": "pattern"}
+      },
+      "requiredReferences": [],
+      "featurePacket": {
+        "readiness": "scripts/check-readiness.mjs",
+        "template": "templates/feature-packet.md",
+        "evalManifest": "evals/manifest.yaml",
+        "caseTypes": ["golden", "negative", "verification"],
+        "passThreshold": 90
+      },
+      "verificationOwner": "onecrew-verify",
+      "effects": {"mutation": true, "externalEffect": false, "review": false, "package": false},
+      "relationships": [
+        {"to": "onecrew-creator", "kind": "pair", "when": "The projection exposes a Creator use case."},
+        {"to": "onecrew-web-ui", "kind": "pair", "when": "A typed Web frontend client or React consumer changes."},
+        {"to": "onecrew-mcp-app-ui", "kind": "pair", "when": "An iframe client consumes or presents the public MCP Apps contract."},
+        {"to": "onecrew-verify", "kind": "verify", "when": "Schema, serialization, write-safety, and parity evidence is due."},
+        {"to": "onecrew-local-service", "kind": "handoff", "when": "Command execution threads, blocking dispatch, or host lifecycle change."}
+      ],
+      "stopCondition": "peer_contract_parity_and_write_safety_verified"
+    },
+    "grill-with-docs": {
+      "invocation": "explicit",
+      "upstream": {"repository": "https://github.com/mattpocock/skills", "revision": "3cca18b368ae95cdbdebbff572ccafa662551015", "path": "skills/engineering/grill-with-docs"},
+      "ownerConcern": "design-interview-with-documentation",
+      "what": "Compose an explicitly requested design interview with live glossary and ADR documentation; ordinary implementation does not invoke this interview.",
+      "concerns": ["documented-design-interview"],
+      "positiveCases": ["explicit-design-interview-with-docs"],
+      "negativeCases": ["skill-taxonomy-change", "ordinary-product-implementation", "resume-authorized-provider-implementation"],
+      "pathScopes": {
+        "owns": [".skillshare/skills/grill-with-docs/**"],
+        "appliesTo": [],
+        "governs": [],
+        "observes": []
+      },
+      "references": {},
+      "requiredReferences": [],
+      "verificationOwner": "onecrew-verify",
+      "effects": {"mutation": true, "externalEffect": false, "review": false, "package": false},
+      "relationships": [
+        {"to": "grilling", "kind": "pair", "when": "The user explicitly invokes the combined design interview.", "sourceEvidence": "Call the Skill tool twice, for \"grilling\" and \"domain-modeling\"."},
+        {"to": "domain-modeling", "kind": "pair", "when": "The combined interview captures resolved terminology and qualifying decisions.", "sourceEvidence": "Call the Skill tool twice, for \"grilling\" and \"domain-modeling\"."}
+      ],
+      "stopCondition": "interview_frontier_empty_shared_understanding_confirmed_and_docs_captured"
+    },
+    "grilling": {
+      "invocation": "implicit",
+      "upstream": {"repository": "https://github.com/mattpocock/skills", "revision": "3cca18b368ae95cdbdebbff572ccafa662551015", "path": "skills/productivity/grilling"},
+      "ownerConcern": "design-decision-interview",
+      "what": "Stress-test a requested plan or decision by interviewing the current decision frontier until shared understanding is confirmed.",
+      "concerns": ["decision-frontier-interview"],
+      "positiveCases": ["stress-test-design-decisions"],
+      "negativeCases": ["ordinary-product-implementation", "resume-authorized-provider-implementation"],
+      "pathScopes": {
+        "owns": [".skillshare/skills/grilling/**"],
+        "appliesTo": [],
+        "governs": [],
+        "observes": []
+      },
+      "references": {},
+      "requiredReferences": [],
+      "verificationOwner": "onecrew-verify",
+      "effects": {"mutation": false, "externalEffect": false, "review": false, "package": false},
+      "relationships": [],
+      "stopCondition": "decision_frontier_empty_and_shared_understanding_confirmed"
+    },
+    "domain-modeling": {
+      "invocation": "implicit",
+      "upstream": {"repository": "https://github.com/mattpocock/skills", "revision": "3cca18b368ae95cdbdebbff572ccafa662551015", "path": "skills/engineering/domain-modeling"},
+      "ownerConcern": "domain-language-and-decisions",
+      "what": "Sharpen canonical domain terminology and capture resolved glossary entries and qualifying architecture decisions.",
+      "concerns": ["domain-glossary", "domain-decision-records"],
+      "positiveCases": ["sharpen-domain-glossary", "record-domain-decision"],
+      "negativeCases": ["ordinary-product-implementation", "resume-authorized-provider-implementation"],
+      "pathScopes": {
+        "owns": [".skillshare/skills/domain-modeling/**"],
+        "appliesTo": ["**/CONTEXT.md", "CONTEXT-MAP.md", "**/docs/adr/**"],
+        "governs": [],
+        "observes": ["crates/**", "apps/**"]
+      },
+      "references": {"CONTEXT-FORMAT.md": {"kind": "pattern"}, "ADR-FORMAT.md": {"kind": "pattern"}},
+      "requiredReferences": [],
+      "verificationOwner": "onecrew-verify",
+      "effects": {"mutation": true, "externalEffect": false, "review": false, "package": false},
+      "relationships": [],
+      "stopCondition": "resolved_domain_terms_and_qualifying_decisions_recorded"
+    },
+    "onecrew-review": {
+      "invocation": "implicit",
+      "ownerConcern": "independent-review",
+      "what": "Perform one independent, evidence-backed review of the uncovered risk surface for a logical delivery.",
+      "concerns": ["independent-review", "risk-based-review"],
+      "positiveCases": ["cross-boundary-final-review", "semantic-diff-review", "single-diff-review"],
+      "negativeCases": ["test-execution-request", "standing-guidance-audit"],
+      "pathScopes": {
+        "owns": [".skillshare/skills/onecrew-review/**"],
+        "appliesTo": [],
+        "governs": [],
+        "observes": ["**"]
+      },
+      "references": {},
+      "requiredReferences": [],
+      "verificationOwner": "onecrew-verify",
+      "effects": {"mutation": false, "externalEffect": false, "review": true, "package": false},
+      "relationships": [
+        {"to": "onecrew-local-data-evolution", "kind": "handoff", "when": "Review scope contains durable identity or persisted-shape risk."},
+        {"to": "onecrew-new-skill", "kind": "handoff", "when": "Review scope changes Skill ownership, triggers, or lifecycle."},
+        {"to": "onecrew-verify", "kind": "verify", "when": "A finding needs finding-specific executable evidence."},
+        {"to": "onecrew-rust-architecture", "kind": "handoff", "when": "Review scope changes Rust module, API, supervisor, or structure boundaries."}
+      ],
+      "stopCondition": "findings_reported_or_review_identity_reused"
+    },
+    "onecrew-rust-architecture": {
+      "invocation": "implicit",
+      "ownerConcern": "rust-architecture",
+      "what": "Design and refactor Rust module APIs, visibility, test placement, supervisors, cancellation, transactions, and structure-only boundaries.",
+      "concerns": ["crate-structure", "module-layout", "async-supervision", "rust-api-shape", "rust-restricted-visibility", "rust-test-organization"],
+      "positiveCases": ["rust-module-api-boundary", "rust-internal-visibility-paths", "rust-async-supervisor", "rust-structure-only-refactor", "rust-test-organization", "rust-cohesive-module-no-split", "rust-test-visibility-boundary"],
+      "negativeCases": ["place-cross-layer-capability", "ordinary-product-implementation"],
+      "pathScopes": {
+        "owns": [".skillshare/skills/onecrew-rust-architecture/**"],
+        "appliesTo": ["crates/**/src/**", "crates/**/tests/**", "crates/local-service/src/**", "crates/local-service/tests/**"],
+        "governs": [],
+        "observes": []
+      },
+      "references": {
+        "references/rust-crate-module-and-api.md": {"kind": "pattern"},
+        "references/rust-visibility-and-reexports.md": {"kind": "pattern"},
+        "references/rust-async-supervision.md": {"kind": "pattern"},
+        "references/structure-only-rust.md": {"kind": "workflow"}
+      },
+      "requiredReferences": [],
+      "verificationOwner": "onecrew-verify",
+      "effects": {"mutation": true, "externalEffect": false, "review": false, "package": false},
+      "relationships": [
+        {"to": "onecrew-architecture-placement", "kind": "handoff", "when": "Ownership or dependency direction is not settled."},
+        {"to": "onecrew-local-data-evolution", "kind": "handoff", "when": "A persisted schema, marker, fingerprint, or encoding changes."},
+        {"to": "onecrew-rust-quality", "kind": "pair", "when": "The structural change also changes error, panic, unsafe, lint, rustdoc, trait, or Cargo quality."},
+        {"to": "onecrew-verify", "kind": "verify", "when": "The final Rust diff needs focused or commit-level evidence."}
+      ],
+      "stopCondition": "rust_boundary_and_lifecycle_invariants_verified"
+    },
+    "onecrew-rust-quality": {
+      "invocation": "implicit",
+      "ownerConcern": "rust-quality",
+      "what": "Improve Rust error, panic, unsafe, lint, public API, rustdoc, common-trait, and Cargo workspace quality without taking structural or domain ownership.",
+      "concerns": ["rust-error-boundaries", "rust-panic-quality", "rust-unsafe-proof", "rust-lint-policy", "rust-api-rustdoc-traits", "cargo-workspace-quality"],
+      "positiveCases": ["rust-error-boundary-quality", "rust-panic-context-quality", "rust-unsafe-proof-quality", "rust-api-rustdoc-trait-quality", "rust-cargo-quality-policy", "rust-lint-suppression-quality"],
+      "negativeCases": ["rust-module-api-boundary", "rust-internal-visibility-paths", "rust-async-supervisor", "rust-structure-only-refactor", "rust-test-organization", "rust-cohesive-module-no-split", "rust-test-visibility-boundary", "ordinary-product-implementation", "native-platform-mechanics", "cli-distribution", "windows-browser-security", "windows-cross-build", "x-chat-crypto-change", "final-diff-skill-gate", "targeted-owner-check", "test-execution-request", "mechanism-comment-sweep"],
+      "pathScopes": {
+        "owns": [".skillshare/skills/onecrew-rust-quality/**"],
+        "appliesTo": ["crates/**/*.rs", "crates/local-service/**/*.rs", "libs/**/*.rs"],
+        "governs": [],
+        "observes": ["Cargo.toml", "crates/**/Cargo.toml", "crates/local-service/Cargo.toml", "libs/**/Cargo.toml", ".cargo/**", "clippy.toml", ".clippy.toml", "rust-toolchain*", "rustfmt.toml", ".rustfmt.toml"]
+      },
+      "references": {
+        "references/error-panic-and-boundaries.md": {"kind": "pattern"},
+        "references/unsafe-proof-and-safe-abstractions.md": {"kind": "pattern"},
+        "references/api-rustdoc-and-traits.md": {"kind": "pattern"},
+        "references/cargo-lints-features-and-msrv.md": {"kind": "pattern"}
+      },
+      "requiredReferences": [],
+      "featurePacket": {
+        "readiness": "scripts/check-readiness.mjs",
+        "template": "templates/feature-packet.md",
+        "evalManifest": "evals/manifest.yaml",
+        "caseTypes": ["golden", "negative", "verification"],
+        "passThreshold": 90
+      },
+      "verificationOwner": "onecrew-verify",
+      "effects": {"mutation": true, "externalEffect": false, "review": false, "package": false},
+      "relationships": [
+        {"to": "onecrew-rust-architecture", "kind": "handoff", "when": "Module trees, visibility, re-exports, test placement, supervisor lifecycle, transactions, or structure-only boundaries change."},
+        {"to": "onecrew-native-cli", "kind": "pair", "when": "Generic unsafe proof sits inside OS-specific mechanics whose native contract remains the Native owner."},
+        {"to": "onecrew-x-chat-crypto-vendor", "kind": "pair", "when": "Generic Rust quality touches cryptographic code while wire, storage, binding, or vendor behavior remains the Crypto Vendor owner."},
+        {"to": "onecrew-code-commentary", "kind": "pair", "when": "A Rust-specific safety or failure contract also changes a general mechanism claim in comments or an owner README."},
+        {"to": "onecrew-verify", "kind": "verify", "when": "Focused or final quality evidence must be selected, run, reused, and reported."}
+      ],
+      "stopCondition": "rust_quality_contracts_scoped_and_owner_evidence_selected"
+    },
+    "onecrew-service-credentials": {
+      "invocation": "implicit",
+      "ownerConcern": "service-credential-lifecycle",
+      "what": "Capture, validate, rotate, disconnect, and project local service credentials without exposing secret material.",
+      "concerns": ["service-credentials", "mailbox-references", "vault-references"],
+      "positiveCases": ["service-api-key"],
+      "negativeCases": ["human-operator-session"],
+      "pathScopes": {
+        "owns": ["crates/platform-runtime/src/credentials/**", "crates/local-vault/src/store/service_credentials.rs", "crates/local-service/src/service_credentials.rs", ".skillshare/skills/onecrew-service-credentials/**"],
+        "appliesTo": ["apps/web/src/pages/accounts/**"],
+        "governs": [],
+        "observes": []
+      },
+      "references": {},
+      "requiredReferences": [],
+      "verificationOwner": "onecrew-verify",
+      "effects": {"mutation": true, "externalEffect": true, "review": false, "package": false},
+      "relationships": [
+        {"to": "onecrew-web-ui", "kind": "pair", "when": "Secure capture or status UI changes."},
+        {"to": "onecrew-peer-adapters", "kind": "handoff", "when": "A secret-free reference or status projection changes."},
+        {"to": "onecrew-creator", "kind": "pair", "when": "The Creator owner consumes a mailbox or credential reference."},
+        {"to": "onecrew-operator-sessions", "kind": "handoff", "when": "Authentication belongs to a human provider account or session."}
+      ],
+      "stopCondition": "credential_reference_lifecycle_and_secret_free_projection_verified"
+    },
+    "onecrew-local-service": {
+      "invocation": "implicit",
+      "ownerConcern": "local-service-runtime",
+      "what": "Keep the HTTP host responsive: blocking work off the async runtime, bounded lock holds, supervised background work whose outcome is recorded where its audience can reach it.",
+      "concerns": ["http-command-execution", "blocking-pool-dispatch", "host-lifecycle-locks", "background-work-supervision"],
+      "positiveCases": ["service-blocking-dispatch", "service-background-work", "service-startup-ownership"],
+      "negativeCases": ["http-command-only", "native-platform-mechanics", "rust-async-supervisor", "web-react-surface"],
+      "pathScopes": {
+        "owns": ["crates/local-service/src/state.rs", "crates/local-service/src/startup.rs", "crates/local-service/src/host.rs", "crates/local-service/src/ipc.rs", "crates/local-service/src/mcp.rs", "crates/local-service/src/creator_snapshot_supervisor.rs", ".skillshare/skills/onecrew-local-service/**"],
+        "appliesTo": ["crates/local-service/src/**", "crates/mcp-adapter/src/server/**", "crates/local-service/src/creator_snapshot_supervisor.rs"],
+        "governs": [],
+        "observes": ["crates/creator-runtime/src/repository/sqlite/mod.rs"]
+      },
+      "references": {
+        "references/command-execution-and-blocking.md": {"kind": "pattern"},
+        "references/background-work-supervision.md": {"kind": "workflow"},
+        "references/verification-matrix.md": {"kind": "workflow"}
+      },
+      "requiredReferences": ["references/verification-matrix.md"],
+      "verificationOwner": "onecrew-verify",
+      "effects": {"mutation": true, "externalEffect": false, "review": false, "package": false},
+      "relationships": [
+        {"to": "onecrew-rust-architecture", "kind": "pair", "when": "Supervisor mechanics or a lock crossing await change beyond host wiring."},
+        {"to": "onecrew-peer-adapters", "kind": "handoff", "when": "A command or MCP operation contract changes."},
+        {"to": "onecrew-creator", "kind": "handoff", "when": "The repository needs a batch query or a narrower lock scope."},
+        {"to": "onecrew-web-ui", "kind": "pair", "when": "The UI must render a background status projection."},
+        {"to": "onecrew-native-cli", "kind": "handoff", "when": "OS window, permission, or packaging mechanics change."},
+        {"to": "onecrew-verify", "kind": "verify", "when": "Host responsiveness evidence is claimed."}
+      ],
+      "stopCondition": "host_runtime_responsive_and_background_outcomes_recorded"
+    },
+    "onecrew-verify": {
+      "invocation": "implicit",
+      "ownerConcern": "verification-evidence",
+      "what": "Select, execute, reuse, and report targeted and final owner verification evidence.",
+      "concerns": ["acceptance-matrix", "verification-reporting"],
+      "positiveCases": ["final-diff-skill-gate", "targeted-owner-check", "test-execution-request"],
+      "negativeCases": ["semantic-diff-review"],
+      "pathScopes": {
+        "owns": ["development/scripts/agent-check.mjs", ".skillshare/skills/onecrew-verify/**"],
+        "appliesTo": ["crates/**", "apps/**", "libs/**", ".skillshare/**", "development/**"],
+        "governs": [],
+        "observes": []
+      },
+      "references": {"references/command-matrix.md": {"kind": "map"}},
+      "requiredReferences": ["references/command-matrix.md"],
+      "verificationOwner": "onecrew-verify",
+      "effects": {"mutation": false, "externalEffect": false, "review": false, "package": false},
+      "relationships": [
+        {"to": "onecrew-local-data-evolution", "kind": "handoff", "when": "The diff changes persisted identity or upgrade behavior."},
+        {"to": "onecrew-native-cli", "kind": "handoff", "when": "Native runtime, target, or distribution evidence is claimed."},
+        {"to": "onecrew-x-chat-crypto-vendor", "kind": "handoff", "when": "Vendored crypto or binding evidence is required."}
+      ],
+      "stopCondition": "required_evidence_passed_reused_or_reported_blocked"
+    },
+    "onecrew-x-chat-crypto-vendor": {
+      "invocation": "implicit",
+      "ownerConcern": "x-chat-crypto-vendor",
+      "what": "Maintain X Chat cryptographic integration and vendored Chat XDK and Juicebox compatibility.",
+      "concerns": ["x-chat-crypto", "vendored-chat-xdk", "juicebox-scope"],
+      "positiveCases": ["x-chat-crypto-change"],
+      "negativeCases": ["ordinary-x-read"],
+      "pathScopes": {
+        "owns": ["libs/chat-xdk/**", "libs/juicebox-sdk/**", "crates/x-chat/**", ".skillshare/skills/onecrew-x-chat-crypto-vendor/**"],
+        "appliesTo": ["crates/x-platform/**"],
+        "governs": [],
+        "observes": []
+      },
+      "references": {},
+      "requiredReferences": [],
+      "verificationOwner": "onecrew-verify",
+      "effects": {"mutation": true, "externalEffect": false, "review": false, "package": false},
+      "relationships": [
+        {"to": "onecrew-capability", "kind": "handoff", "when": "X provider acquisition or facade behavior changes outside cryptography."},
+        {"to": "onecrew-local-data-evolution", "kind": "pair", "when": "Stored ciphertext or key formats change."},
+        {"to": "onecrew-rust-quality", "kind": "pair", "when": "Generic unsafe, error, lint, public API, or rustdoc quality changes while cryptographic and vendor behavior stays here."},
+        {"to": "onecrew-verify", "kind": "verify", "when": "Parent, vendor, or affected binding evidence is due."}
+      ],
+      "stopCondition": "crypto_parity_and_vendor_boundary_evidence_complete"
+    }
+  },
+  "developmentSkills": {
+    "onecrew-guidance-drift": {
+      "invocation": "manual",
+      "ownerConcern": "guidance-drift-audit",
+      "what": "Audit standing project guidance against executable source and trace every contradictory rule to its owner.",
+      "positiveCases": ["standing-guidance-audit"],
+      "negativeCases": ["single-diff-review"],
+      "pathScopes": {
+        "owns": ["development/skills/onecrew-guidance-drift/**"],
+        "appliesTo": [],
+        "governs": [],
+        "observes": ["CLAUDE.md", "ARCHITECTURE.md", ".skillshare/skills/**", "development/skills/**", "docs/adr/**", "crates/**", "apps/**"]
+      },
+      "references": {"references/mechanical-checks.md": {"kind": "workflow"}},
+      "requiredReferences": ["references/mechanical-checks.md"],
+      "verificationOwner": "onecrew-verify",
+      "effects": {"mutation": true, "externalEffect": false, "review": false, "package": false},
+      "relationships": [
+        {"to": "onecrew-code-commentary", "kind": "handoff", "when": "The drift is in a code comment or owner README."},
+        {"to": "onecrew-new-skill", "kind": "handoff", "when": "The correction changes Skill ownership, triggers, or lifecycle."},
+        {"to": "onecrew-review", "kind": "review", "when": "The final logical delivery still meets the single-review trigger."},
+        {"to": "onecrew-verify", "kind": "verify", "when": "A claimed gate result needs executable evidence."}
+      ],
+      "stopCondition": "contradictions_classified_and_owned_corrections_verified"
+    },
+    "onecrew-new-skill": {
+      "invocation": "manual",
+      "ownerConcern": "skill-system-governance",
+      "what": "Decide whether to create, merge, split, rename, or retire a project Skill and update the canonical graph atomically.",
+      "positiveCases": ["skill-taxonomy-change", "skill-content-placement", "skill-lifecycle-change"],
+      "negativeCases": ["ordinary-product-implementation"],
+      "pathScopes": {
+        "owns": ["development/skills/onecrew-new-skill/**", "development/lint/**", ".skillshare/README.md"],
+        "appliesTo": [],
+        "governs": [".skillshare/skills/**", "development/skills/**", ".skillshare/config.yaml"],
+        "observes": []
+      },
+      "references": {
+        "references/taxonomy.md": {"kind": "pattern"},
+        "references/content-placement.md": {"kind": "pattern"},
+        "references/lifecycle-and-verification.md": {"kind": "workflow"}
+      },
+      "requiredReferences": [],
+      "verificationOwner": "onecrew-verify",
+      "effects": {"mutation": true, "externalEffect": false, "review": false, "package": false},
+      "relationships": [
+        {"to": "onecrew-review", "kind": "review", "when": "The final taxonomy or trigger delta meets the single-review trigger."},
+        {"to": "onecrew-verify", "kind": "verify", "when": "The final Skill-system diff lacks reusable gate evidence."},
+        {"to": "onecrew-guidance-drift", "kind": "handoff", "when": "A taxonomy decision depends on confirmed standing-guidance drift."}
+      ],
+      "stopCondition": "canonical_graph_catalog_and_mirrors_agree"
+    }
+  }
+}

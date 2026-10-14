@@ -1,0 +1,95 @@
+{
+  "batch": {
+    "outcomes": [
+      {
+        "call_id": "prepare_beauty",
+        "disposition": {
+          "kind": "not_run",
+          "reason": "search_plan_confirmation_required"
+        },
+        "operation_id": "onecrew.search.plan.prepare",
+        "resource_refs": [],
+        "summary": "Search plan awaits user review. No search has run."
+      }
+    ]
+  },
+  "binding": {
+    "fingerprint": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "origin": "mcp:full",
+    "result_ref": "rr_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "revision": 2,
+    "view": {
+      "identity": "rv_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "kind": "confirmation"
+    }
+  },
+  "completed_sections_count": 0,
+  "continuation": {
+    "continuation_revision": 1,
+    "dispatch_not_after_ms": null,
+    "dispatch_started_at_ms": null,
+    "state": "not_requested"
+  },
+  "locale": "en-US",
+  "pending_action": {
+    "draft": {
+      "description": "在 X 和 YouTube 寻找美妆创作者，先检索候选并实际查看 5 个个人主页；根据公开简介确认美妆、化妆或护肤相关性，提供主页链接和简要依据。未限定地区、语言和粉丝量。仅查看主页，不扩展帖子分析或联系，不创建或更新任何 OneCrew 记录。",
+      "keywords": [
+        "beauty blogger"
+      ],
+      "scopes": [
+        {
+          "arguments": {
+            "any_words": [
+              "beauty blogger"
+            ],
+            "count": 10
+          },
+          "connection": {
+            "kind": "operator_account",
+            "operator_account_id": "11111111-1111-4111-8111-111111111111",
+            "toolkit": "x"
+          },
+          "operation_id": "x.posts.search.advanced",
+          "schema_revision": "5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a"
+        },
+        {
+          "arguments": {
+            "count": 10,
+            "query": "beauty blogger"
+          },
+          "connection": {
+            "credential_id": "22222222-2222-4222-8222-222222222222",
+            "kind": "service_credential",
+            "toolkit": "youtube"
+          },
+          "operation_id": "youtube.channels.search",
+          "schema_revision": "6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b"
+        }
+      ]
+    },
+    "draft_digest": "sha256:4e0d1a7c4e0d1a7c4e0d1a7c4e0d1a7c4e0d1a7c4e0d1a7c4e0d1a7c4e0d1a7c",
+    "kind": "search_plan"
+  },
+  "presentation": {
+    "kind": "search_plan_editor",
+    "sections": [
+      {
+        "fields": [
+          {
+            "label": "Acceptance criteria",
+            "value": "在 X 和 YouTube 寻找美妆创作者，先检索候选并实际查看 5 个个人主页；根据公开简介确认美妆、化妆或护肤相关性，提供主页链接和简要依据。未限定地区、语言和粉丝量。仅查看主页，不扩展帖子分析或联系，不创建或更新任何 OneCrew 记录。"
+          }
+        ],
+        "heading": "Search plan",
+        "kind": "fields"
+      }
+    ],
+    "summary": "Edit acceptance criteria and keywords, then confirm before searching.",
+    "title": "Review search plan"
+  },
+  "presented": true,
+  "state": {
+    "kind": "available"
+  }
+}

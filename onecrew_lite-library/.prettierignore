@@ -1,0 +1,11 @@
+node_modules
+**/node_modules
+**/dist
+.data
+.run
+tmp
+pnpm-lock.yaml
+web/pnpm-lock.yaml
+
+.cache/
+vendor/

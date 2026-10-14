@@ -1,0 +1,18 @@
+id: rust-quality-golden-error-boundary
+type: golden
+prompt: Replace an owner method returning Result<CreatorRecord, String> with a typed error while keeping the existing HTTP wire response stable and secret-free.
+expected:
+  must_include:
+    - inventory caller recovery decisions and existing wire failure semantics
+    - keep typed variants and safe sources inside the owner
+    - map once at the HTTP boundary without exposing secrets or debug payloads
+    - classify each affected unwrap expect or panic by invariant and recovery owner
+    - select focused owner and adapter evidence through Verify
+  must_not_include:
+    - make the adapter string the canonical owner error
+    - change product behavior public codes or retry meaning incidentally
+score:
+  pass: 90
+  critical_fail_if:
+    - required unknown-effect or retry distinctions are erased
+    - a secret path token or provider payload enters the public error

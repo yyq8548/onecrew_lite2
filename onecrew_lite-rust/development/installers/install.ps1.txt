@@ -1,0 +1,72 @@
+# Access renders validated release metadata; invoke with native PowerShell.
+Set-PSDebug -Off
+$ErrorActionPreference = 'Stop'
+$ProgressPreference = 'SilentlyContinue'
+$VerbosePreference = 'SilentlyContinue'
+$DebugPreference = 'SilentlyContinue'
+$version = '__ONECREW_VERSION__'
+$bootstrapUpdate = '__ONECREW_BOOTSTRAP_UPDATE__'
+$url = '__ONECREW_WINDOWS_URL__'
+$sha = '__ONECREW_WINDOWS_SHA256__'
+$size = '__ONECREW_WINDOWS_SIZE__'
+$stage = $null
+try {
+    if ([Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT) { throw 'platform' }
+    $nativeArch = $env:PROCESSOR_ARCHITEW6432
+    if (-not $nativeArch) { $nativeArch = $env:PROCESSOR_ARCHITECTURE }
+    # OSArchitecture identifies ARM even when PowerShell runs under x64 emulation.
+    if ('System.Runtime.InteropServices.RuntimeInformation' -as [type]) {
+        $nativeArch = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString()
+    }
+    if (-not [Environment]::Is64BitOperatingSystem -or $nativeArch -notin @('AMD64', 'X64')) { throw 'architecture' }
+    $uri = [Uri]$url
+    if ($uri.Scheme -ne 'https' -or $uri.UserInfo -or $uri.Fragment) { throw 'url' }
+    if ($sha -cnotmatch '^[0-9a-f]{64}$' -or $size -notmatch '^[1-9][0-9]*$') { throw 'metadata' }
+    if ($bootstrapUpdate -cnotmatch '^[01]$') { throw 'bootstrap capability' }
+    if (-not $env:LOCALAPPDATA) { throw 'localappdata' }
+    $dest = Join-Path $env:LOCALAPPDATA 'onecrew_lite\bin'
+    $installed = Join-Path $dest 'onecrew_lite.exe'
+    [IO.Directory]::CreateDirectory($dest) | Out-Null
+    $stage = Join-Path $dest ('.onecrew-install.' + [Guid]::NewGuid().ToString('N'))
+    [IO.Directory]::CreateDirectory($stage) | Out-Null
+    $candidate = Join-Path $stage 'onecrew_lite.exe'
+    # No redirect may forward the scoped ticket; never render exception details.
+    Invoke-WebRequest -UseBasicParsing -Uri $uri -OutFile $candidate -MaximumRedirection 0 -TimeoutSec 600 -ErrorAction Stop | Out-Null
+    if ((Get-Item -LiteralPath $candidate).Length -ne [long]$size) { throw 'size' }
+    if ((Get-FileHash -LiteralPath $candidate -Algorithm SHA256).Hash.ToLowerInvariant() -cne $sha) { throw 'hash' }
+    # Verify PE machine type before executing the authenticated candidate.
+    $stream = [IO.File]::OpenRead($candidate)
+    $reader = [IO.BinaryReader]::new($stream)
+    try {
+        if ($reader.ReadUInt16() -ne 0x5a4d) { throw 'PE' }
+        $stream.Position = 0x3c
+        $peOffset = $reader.ReadUInt32()
+        if ($peOffset -gt $stream.Length - 6) { throw 'PE' }
+        $stream.Position = $peOffset
+        if ($reader.ReadUInt32() -ne 0x4550 -or $reader.ReadUInt16() -ne 0x8664) { throw 'PE architecture' }
+    } finally { $reader.Dispose() }
+    $reported = @(& $candidate --version 2>$null)
+    if ($LASTEXITCODE -ne 0 -or $reported.Count -ne 1 -or $reported[0] -cne "onecrew_lite $version") { throw 'version' }
+    if ($bootstrapUpdate -eq '1') {
+        # Execute the authenticated candidate, never a possibly older installed CLI.
+        & $candidate __bootstrap-update --install-path $installed --expected-version $version --expected-sha256 $sha --expected-size $size --json
+        exit $LASTEXITCODE
+    }
+    if ([IO.File]::Exists($installed)) {
+        [IO.File]::Replace($candidate, $installed, $null)
+    } else {
+        [IO.File]::Move($candidate, $installed)
+    }
+    Write-Output 'action=installed'
+    Write-Output ('installed_path="' + $installed + '"')
+    Write-Output ('next_action="& ''' + $installed.Replace("'", "''") + ''' login --json"')
+    Write-Output 'Complete authorization in the browser opened by the login command.'
+    Write-Output 'Wait for the login command to finish and return its final JSON before continuing.'
+} catch {
+    Write-Output 'onecrew_lite installation failed; existing installation preserved. Retry from Access.'
+    exit 1
+} finally {
+    if ($stage -and [IO.Directory]::Exists($stage)) {
+        Remove-Item -LiteralPath $stage -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}

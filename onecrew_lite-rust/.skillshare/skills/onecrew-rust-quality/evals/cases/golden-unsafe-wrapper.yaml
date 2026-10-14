@@ -1,0 +1,18 @@
+id: rust-quality-golden-unsafe-wrapper
+type: golden
+prompt: Tighten an existing Win32 raw-buffer wrapper whose OS behavior is unchanged but whose unsafe block has no proof or safe lifetime boundary.
+expected:
+  must_include:
+    - keep Win32 status buffer and cleanup mechanics with OneCrew Native CLI
+    - validate pointer length initialization ownership and lifetime before unsafe
+    - use one narrow unsafe block with a complete adjacent SAFETY proof
+    - copy or bind data before native cleanup and expose only a safe abstraction
+    - add error cleanup and observable behavior evidence without claiming soundness proof
+  must_not_include:
+    - redesign native discovery permissions or process behavior
+    - treat a SAFETY comment test or lint as sufficient proof
+score:
+  pass: 90
+  critical_fail_if:
+    - a raw pointer or borrowed slice escapes its allocation lifetime
+    - cleanup or ownership becomes ambiguous on an error path

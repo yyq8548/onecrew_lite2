@@ -1,0 +1,18 @@
+id: rust-quality-negative-structure-only
+type: negative
+prompt: Split a cohesive private Rust parent module, change restricted visibility and re-exports, and move unit tests without changing behavior.
+expected:
+  must_include:
+    - route the request to onecrew-rust-architecture
+    - preserve restricted visibility and re-export design with real caller evidence
+    - keep private cohesive parents free to retain implementation
+    - avoid loading error unsafe lint rustdoc or Cargo quality workflows without a separate quality delta
+  must_not_include:
+    - activate rust-quality as the owner
+    - impose trait documentation lint or panic changes on the structure-only move
+score:
+  pass: 90
+  critical_fail_if:
+    - public or restricted paths are changed under a quality-only rationale
+    - product behavior is altered during the structure-only refactor
+

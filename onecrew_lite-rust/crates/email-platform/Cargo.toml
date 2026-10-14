@@ -1,0 +1,17 @@
+[package]
+name = "onecrew-email"
+version = "0.1.0"
+edition = "2024"
+rust-version.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+onecrew-email-contracts = { path = "../email-contracts" }
+onecrew-resend-platform = { path = "../resend-platform" }
+onecrew-gmail-platform = { path = "../gmail-platform" }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["test-util"] }

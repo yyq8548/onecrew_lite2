@@ -1,0 +1,7 @@
+{
+  "target": "web-creator-sync",
+  "cargoPackage": "onecrew-local-service",
+  "cargoTest": "login::contract_manifest_tests::web_creator_sync_contract_manifest_is_exact_and_exportable",
+  "manifestEnvironment": "ONECREW_WEB_CONTRACT_MANIFEST_OUT",
+  "output": "src/lib/generated/creator-sync-contracts"
+}

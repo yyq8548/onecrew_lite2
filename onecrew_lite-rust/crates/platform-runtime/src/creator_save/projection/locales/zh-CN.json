@@ -1,0 +1,11 @@
+{
+  "title": "达人保存结果",
+  "lead": "达人保存完成：",
+  "saved": "已保存 {count} 个",
+  "failed": "失败 {count} 个",
+  "unknown": "结果不确定 {count} 个",
+  "not_run": "未执行 {count} 个",
+  "not_selected": "未选择 {count} 个",
+  "separator": "，",
+  "tail": "。不要重复已完成或结果不确定的保存。"
+}

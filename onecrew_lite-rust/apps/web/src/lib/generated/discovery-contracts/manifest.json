@@ -1,0 +1,3083 @@
+{
+  "schema_version": 1,
+  "target": "web-discovery",
+  "roots": [
+    {
+      "name": "CollectEvidenceInput",
+      "direction": "deserialize",
+      "id": "https://reacher.local/contracts/CollectEvidenceInput.schema.json",
+      "revision": "sha256:4632c665dce1641a3996b0a6dace1e6ba5cafb52eae2d0e49092e66dc7fcbcb0",
+      "schema": {
+        "$id": "https://reacher.local/contracts/CollectEvidenceInput.schema.json",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "campaign_id": {
+            "type": "string"
+          },
+          "expected_revision": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "kind": {
+            "enum": [
+              "transcript",
+              "profile",
+              "content"
+            ],
+            "type": "string"
+          },
+          "profile_ref": {
+            "type": "string"
+          },
+          "search_hit_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "expected_revision",
+          "search_hit_id",
+          "profile_ref",
+          "kind"
+        ],
+        "title": "CollectEvidenceInput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "ComponentsReport",
+      "direction": "serialize",
+      "id": "https://reacher.local/contracts/ComponentsReport.schema.json",
+      "revision": "sha256:d4b9af6522e67c62596256a20f8aa185507fd3cb685319746e5a1b3e6144a948",
+      "schema": {
+        "$id": "https://reacher.local/contracts/ComponentsReport.schema.json",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "binary_sha256": {
+            "type": "string"
+          },
+          "built_at": {
+            "format": "uint64",
+            "maximum": 9007199254740991,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "checked_at": {
+            "format": "uint64",
+            "maximum": 9007199254740991,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "library_state": {
+            "type": "string"
+          },
+          "library_version": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "opencli_state": {
+            "type": "string"
+          },
+          "opencli_version": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "plugin_state": {
+            "type": "string"
+          },
+          "plugin_version": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "version": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "built_at",
+          "binary_sha256",
+          "checked_at",
+          "plugin_version",
+          "plugin_state",
+          "library_version",
+          "library_state",
+          "opencli_version",
+          "opencli_state"
+        ],
+        "title": "ComponentsReport",
+        "type": "object"
+      }
+    },
+    {
+      "name": "DiscoveryIdentityGroupsSnapshot",
+      "direction": "serialize",
+      "id": "https://reacher.local/contracts/DiscoveryIdentityGroupsSnapshot.schema.json",
+      "revision": "sha256:ea9711873f19cb7f36f16b79b3d7af2eb58d749423acca38af72326020ae8b82",
+      "schema": {
+        "$id": "https://reacher.local/contracts/DiscoveryIdentityGroupsSnapshot.schema.json",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "description": "Shared by peer adapters and Library. Identity-group counts do not certify that\nall groups are distinct natural people; missing identity evidence stays visible.",
+        "properties": {
+          "campaign_id": {
+            "type": "string"
+          },
+          "counts": {
+            "properties": {
+              "identity_groups": {
+                "format": "uint32",
+                "minimum": 0,
+                "type": "integer"
+              },
+              "native_accounts": {
+                "format": "uint32",
+                "minimum": 0,
+                "type": "integer"
+              },
+              "qualified_identity_groups": {
+                "format": "uint32",
+                "minimum": 0,
+                "type": "integer"
+              },
+              "qualified_native_accounts": {
+                "format": "uint32",
+                "minimum": 0,
+                "type": "integer"
+              },
+              "qualified_native_only_groups": {
+                "format": "uint32",
+                "minimum": 0,
+                "type": "integer"
+              },
+              "stale_identity_reviews": {
+                "format": "uint32",
+                "minimum": 0,
+                "type": "integer"
+              },
+              "unbound_source_hits": {
+                "format": "uint32",
+                "minimum": 0,
+                "type": "integer"
+              }
+            },
+            "required": [
+              "native_accounts",
+              "qualified_native_accounts",
+              "identity_groups",
+              "qualified_identity_groups",
+              "qualified_native_only_groups",
+              "unbound_source_hits",
+              "stale_identity_reviews"
+            ],
+            "type": "object"
+          },
+          "criteria_revision": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "groups": {
+            "items": {
+              "properties": {
+                "decision_ids": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "group_id": {
+                  "description": "Deterministic membership key, not a persisted person fact or an editable note key.",
+                  "type": "string"
+                },
+                "has_same_author_review": {
+                  "type": "boolean"
+                },
+                "members": {
+                  "items": {
+                    "properties": {
+                      "candidate_id": {
+                        "type": "string"
+                      },
+                      "display_name": {
+                        "type": "string"
+                      },
+                      "native_author_id": {
+                        "type": "string"
+                      },
+                      "platform": {
+                        "type": "string"
+                      },
+                      "profile_url": {
+                        "type": "string"
+                      },
+                      "reasons": {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      "sources": {
+                        "items": {
+                          "properties": {
+                            "candidate_id": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "contacts": {
+                              "items": {
+                                "additionalProperties": false,
+                                "properties": {
+                                  "attribution": {
+                                    "description": "A source observation does not establish the destination's owner or purpose.",
+                                    "enum": [
+                                      "author_published",
+                                      "unconfirmed"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "captured_at": {
+                                    "format": "int64",
+                                    "maximum": 9007199254740991,
+                                    "minimum": -9007199254740991,
+                                    "type": "integer"
+                                  },
+                                  "kind": {
+                                    "enum": [
+                                      "email",
+                                      "telegram",
+                                      "hidden_email",
+                                      "social_profile",
+                                      "whatsapp",
+                                      "wechat",
+                                      "wechat_official"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "native_author_id": {
+                                    "type": "string"
+                                  },
+                                  "normalized_value": {
+                                    "type": "string"
+                                  },
+                                  "original_value": {
+                                    "type": "string"
+                                  },
+                                  "source_excerpt": {
+                                    "type": "string"
+                                  },
+                                  "source_url": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "original_value",
+                                  "normalized_value",
+                                  "source_url",
+                                  "source_excerpt",
+                                  "captured_at",
+                                  "native_author_id",
+                                  "attribution"
+                                ],
+                                "type": "object"
+                              },
+                              "type": "array"
+                            },
+                            "evidence_version": {
+                              "type": "string"
+                            },
+                            "hit": {
+                              "properties": {
+                                "author_id": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
+                                "author_label": {
+                                  "type": "string"
+                                },
+                                "author_observed_at": {
+                                  "format": "int64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": -9007199254740991,
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ]
+                                },
+                                "author_url": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
+                                "campaign_id": {
+                                  "type": "string"
+                                },
+                                "captured_at": {
+                                  "format": "int64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": -9007199254740991,
+                                  "type": "integer"
+                                },
+                                "id": {
+                                  "type": "string"
+                                },
+                                "platform": {
+                                  "type": "string"
+                                },
+                                "profile_ref": {
+                                  "type": "string"
+                                },
+                                "search_keyword": {
+                                  "type": "string"
+                                },
+                                "source_url": {
+                                  "type": "string"
+                                },
+                                "title": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "campaign_id",
+                                "platform",
+                                "profile_ref",
+                                "search_keyword",
+                                "source_url",
+                                "title",
+                                "author_label",
+                                "captured_at",
+                                "author_id",
+                                "author_url",
+                                "author_observed_at"
+                              ],
+                              "type": "object"
+                            },
+                            "match_rating": {
+                              "anyOf": [
+                                {
+                                  "properties": {
+                                    "level": {
+                                      "description": "Evidence-based fit, independent of eligibility. Unknown fit has no level.",
+                                      "enum": [
+                                        "excellent",
+                                        "good",
+                                        "medium",
+                                        "low"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    "reason": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "level",
+                                    "reason"
+                                  ],
+                                  "type": "object"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "native_author_id": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "native_platform": {
+                              "description": "Actual creator platform for an identity bound through a search-engine source.",
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "reasons": {
+                              "items": {
+                                "type": "string"
+                              },
+                              "type": "array"
+                            },
+                            "verdict": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "hit",
+                            "candidate_id",
+                            "native_author_id",
+                            "verdict",
+                            "reasons",
+                            "evidence_version"
+                          ],
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      "verdict": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "candidate_id",
+                      "platform",
+                      "native_author_id",
+                      "display_name",
+                      "profile_url",
+                      "verdict",
+                      "reasons",
+                      "sources"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "qualified_member_count": {
+                  "format": "uint32",
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "group_id",
+                "has_same_author_review",
+                "qualified_member_count",
+                "members",
+                "decision_ids"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "reviews": {
+            "items": {
+              "properties": {
+                "receipt": {
+                  "properties": {
+                    "campaign_id": {
+                      "type": "string"
+                    },
+                    "candidate_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "maxItems": 2,
+                      "minItems": 2,
+                      "type": "array"
+                    },
+                    "created_at": {
+                      "format": "int64",
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    },
+                    "criteria_revision": {
+                      "format": "uint32",
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "decision_id": {
+                      "type": "string"
+                    },
+                    "kind": {
+                      "enum": [
+                        "same_author",
+                        "different_authors",
+                        "insufficient",
+                        "revoke"
+                      ],
+                      "type": "string"
+                    },
+                    "material_hash": {
+                      "type": "string"
+                    },
+                    "native_author_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "maxItems": 2,
+                      "minItems": 2,
+                      "type": "array"
+                    },
+                    "operator_account_id": {
+                      "type": "string"
+                    },
+                    "platforms": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "maxItems": 2,
+                      "minItems": 2,
+                      "type": "array"
+                    },
+                    "policy_version": {
+                      "type": "string"
+                    },
+                    "revokes_decision_id": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "campaign_id",
+                    "criteria_revision",
+                    "decision_id",
+                    "operator_account_id",
+                    "policy_version",
+                    "kind",
+                    "revokes_decision_id",
+                    "candidate_ids",
+                    "native_author_ids",
+                    "platforms",
+                    "material_hash",
+                    "created_at"
+                  ],
+                  "type": "object"
+                },
+                "state": {
+                  "enum": [
+                    "current",
+                    "evidence_changed",
+                    "revoked",
+                    "previous_criteria"
+                  ],
+                  "type": "string"
+                }
+              },
+              "required": [
+                "receipt",
+                "state"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "snapshot_hash": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "criteria_revision",
+          "snapshot_hash",
+          "groups",
+          "reviews",
+          "counts"
+        ],
+        "title": "DiscoveryIdentityGroupsSnapshot",
+        "type": "object"
+      }
+    },
+    {
+      "name": "DiscoveryIdentityMergeMaterial",
+      "direction": "serialize",
+      "id": "https://reacher.local/contracts/DiscoveryIdentityMergeMaterial.schema.json",
+      "revision": "sha256:ab8ada212486877b60d2913fc806932bc9d6893f29e0755694cb0c535e12ee32",
+      "schema": {
+        "$id": "https://reacher.local/contracts/DiscoveryIdentityMergeMaterial.schema.json",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "description": "Both accounts retain their native identity and full source-bound evidence.\nThis output cannot be submitted as client-provided facts or a verdict.",
+        "properties": {
+          "accounts": {
+            "items": {
+              "description": "A saved evidence snapshot, not a verdict. Source text must be treated as data.",
+              "properties": {
+                "approved_at": {
+                  "format": "int64",
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
+                },
+                "approved_scopes": {
+                  "items": {
+                    "properties": {
+                      "keywords": {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      "platform": {
+                        "type": "string"
+                      },
+                      "profile_ref": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "platform",
+                      "profile_ref",
+                      "keywords"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "campaign_id": {
+                  "type": "string"
+                },
+                "candidate_evidence_hash": {
+                  "description": "Changes to any saved candidate evidence invalidate a previously reviewed basis.",
+                  "type": "string"
+                },
+                "candidate_id": {
+                  "type": "string"
+                },
+                "criteria": true,
+                "criteria_revision": {
+                  "format": "uint32",
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "format_version": {
+                  "format": "uint32",
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "hit": {
+                  "properties": {
+                    "author_id": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "author_label": {
+                      "type": "string"
+                    },
+                    "author_observed_at": {
+                      "format": "int64",
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "author_url": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "campaign_id": {
+                      "type": "string"
+                    },
+                    "captured_at": {
+                      "format": "int64",
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "platform": {
+                      "type": "string"
+                    },
+                    "profile_ref": {
+                      "type": "string"
+                    },
+                    "search_keyword": {
+                      "type": "string"
+                    },
+                    "source_url": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "campaign_id",
+                    "platform",
+                    "profile_ref",
+                    "search_keyword",
+                    "source_url",
+                    "title",
+                    "author_label",
+                    "captured_at",
+                    "author_id",
+                    "author_url",
+                    "author_observed_at"
+                  ],
+                  "type": "object"
+                },
+                "language_samples": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "author_id": {
+                        "type": "string"
+                      },
+                      "comments": {
+                        "items": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "source_url": {
+                              "type": "string"
+                            },
+                            "text": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "source_url",
+                            "text"
+                          ],
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      "source_url": {
+                        "type": "string"
+                      },
+                      "text": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "author_id",
+                      "source_url",
+                      "text",
+                      "comments"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "material_hash": {
+                  "type": "string"
+                },
+                "native_author_id": {
+                  "type": "string"
+                },
+                "native_content": {
+                  "anyOf": [
+                    {
+                      "properties": {
+                        "captured_at": {
+                          "format": "int64",
+                          "maximum": 9007199254740991,
+                          "minimum": -9007199254740991,
+                          "type": "integer"
+                        },
+                        "claim": {
+                          "properties": {
+                            "author_id": {
+                              "type": "string"
+                            },
+                            "call_number": {
+                              "format": "uint32",
+                              "minimum": 0,
+                              "type": "integer"
+                            },
+                            "campaign_id": {
+                              "type": "string"
+                            },
+                            "expected_revision": {
+                              "format": "uint32",
+                              "minimum": 0,
+                              "type": "integer"
+                            },
+                            "platform": {
+                              "type": "string"
+                            },
+                            "profile_ref": {
+                              "type": "string"
+                            },
+                            "search_hit_id": {
+                              "type": "string"
+                            },
+                            "source_url": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "campaign_id",
+                            "expected_revision",
+                            "search_hit_id",
+                            "platform",
+                            "profile_ref",
+                            "author_id",
+                            "source_url",
+                            "call_number"
+                          ],
+                          "type": "object"
+                        },
+                        "language_sample": {
+                          "anyOf": [
+                            {
+                              "additionalProperties": false,
+                              "properties": {
+                                "author_id": {
+                                  "type": "string"
+                                },
+                                "comments": {
+                                  "items": {
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "source_url": {
+                                        "type": "string"
+                                      },
+                                      "text": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "source_url",
+                                      "text"
+                                    ],
+                                    "type": "object"
+                                  },
+                                  "type": "array"
+                                },
+                                "source_url": {
+                                  "type": "string"
+                                },
+                                "text": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "author_id",
+                                "source_url",
+                                "text",
+                                "comments"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Present only on a completed language-supplement response, not an initial caption receipt."
+                        },
+                        "native_content": true,
+                        "status": {
+                          "type": "string"
+                        },
+                        "stop_code": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "claim",
+                        "status",
+                        "native_content",
+                        "stop_code",
+                        "captured_at"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "native_follower_estimate": {
+                  "anyOf": [
+                    {
+                      "description": "Conservative bounds for a compact native display; never an exact count.",
+                      "properties": {
+                        "display": {
+                          "type": "string"
+                        },
+                        "lower": {
+                          "format": "uint64",
+                          "maximum": 9007199254740991,
+                          "minimum": 0,
+                          "type": "integer"
+                        },
+                        "nominal": {
+                          "format": "uint64",
+                          "maximum": 9007199254740991,
+                          "minimum": 0,
+                          "type": "integer"
+                        },
+                        "upper": {
+                          "format": "uint64",
+                          "maximum": 9007199254740991,
+                          "minimum": 0,
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "display",
+                        "nominal",
+                        "lower",
+                        "upper"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "native_followers": {
+                  "format": "uint64",
+                  "maximum": 9007199254740991,
+                  "minimum": 0,
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "native_platform": {
+                  "description": "Present only when a search-engine source established a distinct native platform.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "native_profile": {
+                  "anyOf": [
+                    {
+                      "description": "A saved native profile observation. Self-declared text is context, not residence proof.",
+                      "properties": {
+                        "bio": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "observed_at": {
+                          "format": "int64",
+                          "maximum": 9007199254740991,
+                          "minimum": -9007199254740991,
+                          "type": "integer"
+                        },
+                        "profile_url": {
+                          "type": "string"
+                        },
+                        "self_declared_location": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "web_text": {
+                          "description": "Visible homepage previews, never verified original post captions.",
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "profile_url",
+                        "observed_at"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "public_pages": {
+                  "items": {
+                    "properties": {
+                      "call_number": {
+                        "format": "uint32",
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "candidate_id": {
+                        "type": "string"
+                      },
+                      "captured_at": {
+                        "format": "int64",
+                        "maximum": 9007199254740991,
+                        "minimum": -9007199254740991,
+                        "type": "integer"
+                      },
+                      "document_url": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "markdown_excerpt": {
+                        "type": "string"
+                      },
+                      "platform_account_id": {
+                        "type": "string"
+                      },
+                      "profile_ref": {
+                        "type": "string"
+                      },
+                      "requested_url": {
+                        "type": "string"
+                      },
+                      "search_hit_id": {
+                        "type": "string"
+                      },
+                      "source_excerpt": {
+                        "type": "string"
+                      },
+                      "source_url": {
+                        "type": "string"
+                      },
+                      "status": {
+                        "type": "string"
+                      },
+                      "stop_code": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "title": {
+                        "type": "string"
+                      },
+                      "truncated": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "candidate_id",
+                      "requested_url",
+                      "search_hit_id",
+                      "source_url",
+                      "source_excerpt",
+                      "profile_ref",
+                      "platform_account_id",
+                      "call_number",
+                      "status",
+                      "document_url",
+                      "title",
+                      "markdown_excerpt",
+                      "truncated",
+                      "stop_code",
+                      "captured_at"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "transcript": {
+                  "anyOf": [
+                    {
+                      "properties": {
+                        "call_number": {
+                          "format": "uint32",
+                          "minimum": 0,
+                          "type": "integer"
+                        },
+                        "candidate_id": {
+                          "type": "string"
+                        },
+                        "captured_at": {
+                          "format": "int64",
+                          "maximum": 9007199254740991,
+                          "minimum": -9007199254740991,
+                          "type": "integer"
+                        },
+                        "platform_account_id": {
+                          "type": "string"
+                        },
+                        "profile_ref": {
+                          "type": "string"
+                        },
+                        "search_hit_id": {
+                          "type": "string"
+                        },
+                        "segments": {
+                          "items": {
+                            "properties": {
+                              "speaker": {
+                                "type": "string"
+                              },
+                              "text": {
+                                "type": "string"
+                              },
+                              "timestamp": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "timestamp",
+                              "speaker",
+                              "text"
+                            ],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
+                        "source_url": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string"
+                        },
+                        "stop_code": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "truncated": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "search_hit_id",
+                        "candidate_id",
+                        "source_url",
+                        "profile_ref",
+                        "platform_account_id",
+                        "status",
+                        "segments",
+                        "truncated",
+                        "stop_code",
+                        "call_number",
+                        "captured_at"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "video_description": {
+                  "description": "Only present when this exact hit is the saved metadata's source.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "format_version",
+                "campaign_id",
+                "criteria_revision",
+                "criteria",
+                "approved_scopes",
+                "approved_at",
+                "hit",
+                "candidate_id",
+                "native_author_id",
+                "candidate_evidence_hash",
+                "video_description",
+                "transcript",
+                "public_pages",
+                "material_hash"
+              ],
+              "type": "object"
+            },
+            "maxItems": 2,
+            "minItems": 2,
+            "type": "array"
+          },
+          "campaign_id": {
+            "type": "string"
+          },
+          "criteria_revision": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "format_version": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "material_hash": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "format_version",
+          "campaign_id",
+          "criteria_revision",
+          "accounts",
+          "material_hash"
+        ],
+        "title": "DiscoveryIdentityMergeMaterial",
+        "type": "object"
+      }
+    },
+    {
+      "name": "DiscoveryIdentityMergeMaterialInput",
+      "direction": "deserialize",
+      "id": "https://reacher.local/contracts/DiscoveryIdentityMergeMaterialInput.schema.json",
+      "revision": "sha256:134bc5a1ea388bc1b70729f623f3b41d8925fcdea2903dc55f29c44660e3ee49",
+      "schema": {
+        "$id": "https://reacher.local/contracts/DiscoveryIdentityMergeMaterialInput.schema.json",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "campaign_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          },
+          "expected_revision": {
+            "format": "uint32",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "left_search_hit_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          },
+          "right_search_hit_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "expected_revision",
+          "left_search_hit_id",
+          "right_search_hit_id"
+        ],
+        "title": "DiscoveryIdentityMergeMaterialInput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "DiscoveryIdentityReviewReceipt",
+      "direction": "serialize",
+      "id": "https://reacher.local/contracts/DiscoveryIdentityReviewReceipt.schema.json",
+      "revision": "sha256:50f8e423e10921375b5ca99527d0594ee273940af7000fd7ace5c276c7c2d538",
+      "schema": {
+        "$id": "https://reacher.local/contracts/DiscoveryIdentityReviewReceipt.schema.json",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "properties": {
+          "campaign_id": {
+            "type": "string"
+          },
+          "candidate_ids": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 2,
+            "minItems": 2,
+            "type": "array"
+          },
+          "created_at": {
+            "format": "int64",
+            "maximum": 9007199254740991,
+            "minimum": -9007199254740991,
+            "type": "integer"
+          },
+          "criteria_revision": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "decision_id": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "same_author",
+              "different_authors",
+              "insufficient",
+              "revoke"
+            ],
+            "type": "string"
+          },
+          "material_hash": {
+            "type": "string"
+          },
+          "native_author_ids": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 2,
+            "minItems": 2,
+            "type": "array"
+          },
+          "operator_account_id": {
+            "type": "string"
+          },
+          "platforms": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 2,
+            "minItems": 2,
+            "type": "array"
+          },
+          "policy_version": {
+            "type": "string"
+          },
+          "revokes_decision_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "campaign_id",
+          "criteria_revision",
+          "decision_id",
+          "operator_account_id",
+          "policy_version",
+          "kind",
+          "revokes_decision_id",
+          "candidate_ids",
+          "native_author_ids",
+          "platforms",
+          "material_hash",
+          "created_at"
+        ],
+        "title": "DiscoveryIdentityReviewReceipt",
+        "type": "object"
+      }
+    },
+    {
+      "name": "DiscoveryReviewMaterial",
+      "direction": "serialize",
+      "id": "https://reacher.local/contracts/DiscoveryReviewMaterial.schema.json",
+      "revision": "sha256:0e56a6d531e271c29227aa680aa239f1f923ac7202abd5d95b4c3a93f933c8c7",
+      "schema": {
+        "$id": "https://reacher.local/contracts/DiscoveryReviewMaterial.schema.json",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "description": "A saved evidence snapshot, not a verdict. Source text must be treated as data.",
+        "properties": {
+          "approved_at": {
+            "format": "int64",
+            "maximum": 9007199254740991,
+            "minimum": -9007199254740991,
+            "type": "integer"
+          },
+          "approved_scopes": {
+            "items": {
+              "properties": {
+                "keywords": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "platform": {
+                  "type": "string"
+                },
+                "profile_ref": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "platform",
+                "profile_ref",
+                "keywords"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "campaign_id": {
+            "type": "string"
+          },
+          "candidate_evidence_hash": {
+            "description": "Changes to any saved candidate evidence invalidate a previously reviewed basis.",
+            "type": "string"
+          },
+          "candidate_id": {
+            "type": "string"
+          },
+          "criteria": true,
+          "criteria_revision": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "format_version": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "hit": {
+            "properties": {
+              "author_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "author_label": {
+                "type": "string"
+              },
+              "author_observed_at": {
+                "format": "int64",
+                "maximum": 9007199254740991,
+                "minimum": -9007199254740991,
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "author_url": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "campaign_id": {
+                "type": "string"
+              },
+              "captured_at": {
+                "format": "int64",
+                "maximum": 9007199254740991,
+                "minimum": -9007199254740991,
+                "type": "integer"
+              },
+              "id": {
+                "type": "string"
+              },
+              "platform": {
+                "type": "string"
+              },
+              "profile_ref": {
+                "type": "string"
+              },
+              "search_keyword": {
+                "type": "string"
+              },
+              "source_url": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "campaign_id",
+              "platform",
+              "profile_ref",
+              "search_keyword",
+              "source_url",
+              "title",
+              "author_label",
+              "captured_at",
+              "author_id",
+              "author_url",
+              "author_observed_at"
+            ],
+            "type": "object"
+          },
+          "language_samples": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "author_id": {
+                  "type": "string"
+                },
+                "comments": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "source_url": {
+                        "type": "string"
+                      },
+                      "text": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "source_url",
+                      "text"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "source_url": {
+                  "type": "string"
+                },
+                "text": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "author_id",
+                "source_url",
+                "text",
+                "comments"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "material_hash": {
+            "type": "string"
+          },
+          "native_author_id": {
+            "type": "string"
+          },
+          "native_content": {
+            "anyOf": [
+              {
+                "properties": {
+                  "captured_at": {
+                    "format": "int64",
+                    "maximum": 9007199254740991,
+                    "minimum": -9007199254740991,
+                    "type": "integer"
+                  },
+                  "claim": {
+                    "properties": {
+                      "author_id": {
+                        "type": "string"
+                      },
+                      "call_number": {
+                        "format": "uint32",
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "campaign_id": {
+                        "type": "string"
+                      },
+                      "expected_revision": {
+                        "format": "uint32",
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "platform": {
+                        "type": "string"
+                      },
+                      "profile_ref": {
+                        "type": "string"
+                      },
+                      "search_hit_id": {
+                        "type": "string"
+                      },
+                      "source_url": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "campaign_id",
+                      "expected_revision",
+                      "search_hit_id",
+                      "platform",
+                      "profile_ref",
+                      "author_id",
+                      "source_url",
+                      "call_number"
+                    ],
+                    "type": "object"
+                  },
+                  "language_sample": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": false,
+                        "properties": {
+                          "author_id": {
+                            "type": "string"
+                          },
+                          "comments": {
+                            "items": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "source_url": {
+                                  "type": "string"
+                                },
+                                "text": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "source_url",
+                                "text"
+                              ],
+                              "type": "object"
+                            },
+                            "type": "array"
+                          },
+                          "source_url": {
+                            "type": "string"
+                          },
+                          "text": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "author_id",
+                          "source_url",
+                          "text",
+                          "comments"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Present only on a completed language-supplement response, not an initial caption receipt."
+                  },
+                  "native_content": true,
+                  "status": {
+                    "type": "string"
+                  },
+                  "stop_code": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "claim",
+                  "status",
+                  "native_content",
+                  "stop_code",
+                  "captured_at"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "native_follower_estimate": {
+            "anyOf": [
+              {
+                "description": "Conservative bounds for a compact native display; never an exact count.",
+                "properties": {
+                  "display": {
+                    "type": "string"
+                  },
+                  "lower": {
+                    "format": "uint64",
+                    "maximum": 9007199254740991,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "nominal": {
+                    "format": "uint64",
+                    "maximum": 9007199254740991,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "upper": {
+                    "format": "uint64",
+                    "maximum": 9007199254740991,
+                    "minimum": 0,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "display",
+                  "nominal",
+                  "lower",
+                  "upper"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "native_followers": {
+            "format": "uint64",
+            "maximum": 9007199254740991,
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "native_platform": {
+            "description": "Present only when a search-engine source established a distinct native platform.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "native_profile": {
+            "anyOf": [
+              {
+                "description": "A saved native profile observation. Self-declared text is context, not residence proof.",
+                "properties": {
+                  "bio": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "observed_at": {
+                    "format": "int64",
+                    "maximum": 9007199254740991,
+                    "minimum": -9007199254740991,
+                    "type": "integer"
+                  },
+                  "profile_url": {
+                    "type": "string"
+                  },
+                  "self_declared_location": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "web_text": {
+                    "description": "Visible homepage previews, never verified original post captions.",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "profile_url",
+                  "observed_at"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "public_pages": {
+            "items": {
+              "properties": {
+                "call_number": {
+                  "format": "uint32",
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "candidate_id": {
+                  "type": "string"
+                },
+                "captured_at": {
+                  "format": "int64",
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
+                },
+                "document_url": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "markdown_excerpt": {
+                  "type": "string"
+                },
+                "platform_account_id": {
+                  "type": "string"
+                },
+                "profile_ref": {
+                  "type": "string"
+                },
+                "requested_url": {
+                  "type": "string"
+                },
+                "search_hit_id": {
+                  "type": "string"
+                },
+                "source_excerpt": {
+                  "type": "string"
+                },
+                "source_url": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string"
+                },
+                "stop_code": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "title": {
+                  "type": "string"
+                },
+                "truncated": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "candidate_id",
+                "requested_url",
+                "search_hit_id",
+                "source_url",
+                "source_excerpt",
+                "profile_ref",
+                "platform_account_id",
+                "call_number",
+                "status",
+                "document_url",
+                "title",
+                "markdown_excerpt",
+                "truncated",
+                "stop_code",
+                "captured_at"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "transcript": {
+            "anyOf": [
+              {
+                "properties": {
+                  "call_number": {
+                    "format": "uint32",
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "candidate_id": {
+                    "type": "string"
+                  },
+                  "captured_at": {
+                    "format": "int64",
+                    "maximum": 9007199254740991,
+                    "minimum": -9007199254740991,
+                    "type": "integer"
+                  },
+                  "platform_account_id": {
+                    "type": "string"
+                  },
+                  "profile_ref": {
+                    "type": "string"
+                  },
+                  "search_hit_id": {
+                    "type": "string"
+                  },
+                  "segments": {
+                    "items": {
+                      "properties": {
+                        "speaker": {
+                          "type": "string"
+                        },
+                        "text": {
+                          "type": "string"
+                        },
+                        "timestamp": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "timestamp",
+                        "speaker",
+                        "text"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "source_url": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string"
+                  },
+                  "stop_code": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "truncated": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "search_hit_id",
+                  "candidate_id",
+                  "source_url",
+                  "profile_ref",
+                  "platform_account_id",
+                  "status",
+                  "segments",
+                  "truncated",
+                  "stop_code",
+                  "call_number",
+                  "captured_at"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "video_description": {
+            "description": "Only present when this exact hit is the saved metadata's source.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "format_version",
+          "campaign_id",
+          "criteria_revision",
+          "criteria",
+          "approved_scopes",
+          "approved_at",
+          "hit",
+          "candidate_id",
+          "native_author_id",
+          "candidate_evidence_hash",
+          "video_description",
+          "transcript",
+          "public_pages",
+          "material_hash"
+        ],
+        "title": "DiscoveryReviewMaterial",
+        "type": "object"
+      }
+    },
+    {
+      "name": "DiscoveryReviewMaterialInput",
+      "direction": "deserialize",
+      "id": "https://reacher.local/contracts/DiscoveryReviewMaterialInput.schema.json",
+      "revision": "sha256:1f0b9d56351ac3d91abc29061e90f82798a8dbed82f2e0dd753ec8fbdef9b390",
+      "schema": {
+        "$id": "https://reacher.local/contracts/DiscoveryReviewMaterialInput.schema.json",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "campaign_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          },
+          "expected_revision": {
+            "format": "uint32",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "search_hit_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "expected_revision",
+          "search_hit_id"
+        ],
+        "title": "DiscoveryReviewMaterialInput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "DiscoveryReviewReceipt",
+      "direction": "serialize",
+      "id": "https://reacher.local/contracts/DiscoveryReviewReceipt.schema.json",
+      "revision": "sha256:d267199e655562335a27756c41620c73e74f429cf3ce42684b1ea1066a7a9ea3",
+      "schema": {
+        "$id": "https://reacher.local/contracts/DiscoveryReviewReceipt.schema.json",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "description": "A committed historical receipt, not a promise that the candidate has not since changed.",
+        "properties": {
+          "campaign_id": {
+            "type": "string"
+          },
+          "candidate_id": {
+            "type": "string"
+          },
+          "created_at": {
+            "format": "int64",
+            "maximum": 9007199254740991,
+            "minimum": -9007199254740991,
+            "type": "integer"
+          },
+          "criteria_revision": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "judgments": {
+            "items": {
+              "properties": {
+                "criterion": {
+                  "enum": [
+                    "own_ai_tool_demo",
+                    "public_tool_url",
+                    "apparel_business_content",
+                    "category_content",
+                    "creator_residence_outside_mainland",
+                    "content_language",
+                    "match_fit"
+                  ],
+                  "type": "string"
+                },
+                "outcome": {
+                  "enum": [
+                    "supported",
+                    "contradicted",
+                    "insufficient"
+                  ],
+                  "type": "string"
+                }
+              },
+              "required": [
+                "criterion",
+                "outcome"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "material_hash": {
+            "type": "string"
+          },
+          "native_author_id": {
+            "type": "string"
+          },
+          "operator_account_id": {
+            "type": "string"
+          },
+          "policy_version": {
+            "type": "string"
+          },
+          "profile_ref": {
+            "type": "string"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "request_id": {
+            "type": "string"
+          },
+          "review_id": {
+            "type": "string"
+          },
+          "search_hit_id": {
+            "type": "string"
+          },
+          "subscribers": {
+            "format": "uint64",
+            "maximum": 9007199254740991,
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "verdict": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "review_id",
+          "operator_account_id",
+          "campaign_id",
+          "criteria_revision",
+          "search_hit_id",
+          "candidate_id",
+          "native_author_id",
+          "profile_ref",
+          "request_id",
+          "material_hash",
+          "policy_version",
+          "judgments",
+          "verdict",
+          "reasons",
+          "subscribers",
+          "created_at"
+        ],
+        "title": "DiscoveryReviewReceipt",
+        "type": "object"
+      }
+    },
+    {
+      "name": "DraftProgress",
+      "direction": "serialize",
+      "id": "https://reacher.local/contracts/DraftProgress.schema.json",
+      "revision": "sha256:59a85aa1e365596e1fecd41e84a9d3c142c1896d5f98739336c880ce1f5d2f0c",
+      "schema": {
+        "$id": "https://reacher.local/contracts/DraftProgress.schema.json",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "elapsed_ms": {
+            "format": "uint64",
+            "maximum": 9007199254740991,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "error_code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "phase": {
+            "enum": [
+              "checking_connection",
+              "checking_codex",
+              "planning",
+              "validating_plan",
+              "saving_plan",
+              "finished",
+              "failed"
+            ],
+            "type": "string"
+          },
+          "phase_elapsed_ms": {
+            "format": "uint64",
+            "maximum": 9007199254740991,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "timings": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "elapsed_ms": {
+                  "format": "uint64",
+                  "maximum": 9007199254740991,
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "phase": {
+                  "enum": [
+                    "checking_connection",
+                    "checking_codex",
+                    "planning",
+                    "validating_plan",
+                    "saving_plan",
+                    "finished",
+                    "failed"
+                  ],
+                  "type": "string"
+                }
+              },
+              "required": [
+                "phase",
+                "elapsed_ms"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "unsupported_conditions": {
+            "description": "Validated excerpts of the customer's request, never raw model output.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "phase",
+          "elapsed_ms",
+          "phase_elapsed_ms",
+          "timings",
+          "error_code",
+          "unsupported_conditions"
+        ],
+        "title": "DraftProgress",
+        "type": "object"
+      }
+    },
+    {
+      "name": "EvidenceCollection",
+      "direction": "serialize",
+      "id": "https://reacher.local/contracts/EvidenceCollection.schema.json",
+      "revision": "sha256:b781c2f49b219e94486d3e94d2655796331490161f5491321ff7f85ee7a33c46",
+      "schema": {
+        "$id": "https://reacher.local/contracts/EvidenceCollection.schema.json",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "campaign_id": {
+            "type": "string"
+          },
+          "search_hit_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "search_hit_id",
+          "status"
+        ],
+        "title": "EvidenceCollection",
+        "type": "object"
+      }
+    },
+    {
+      "name": "ExecutionInput",
+      "direction": "deserialize",
+      "id": "https://reacher.local/contracts/ExecutionInput.schema.json",
+      "revision": "sha256:a30d41d0163578f5eaedc00193edf97729bfce70b821340cb71d273e09831bb0",
+      "schema": {
+        "$id": "https://reacher.local/contracts/ExecutionInput.schema.json",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "campaign_id": {
+            "type": "string"
+          },
+          "excluded_platforms": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "expected_revision": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "profile_ref": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "expected_revision",
+          "profile_ref"
+        ],
+        "title": "ExecutionInput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "ExecutionStatus",
+      "direction": "serialize",
+      "id": "https://reacher.local/contracts/ExecutionStatus.schema.json",
+      "revision": "sha256:74418483e82bf3195eaa724ca80face9dd45f85febf4ba2f02b1ed7c106f3179",
+      "schema": {
+        "$id": "https://reacher.local/contracts/ExecutionStatus.schema.json",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "campaign_id": {
+            "type": "string"
+          },
+          "deferred_hits": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "reason": {
+                  "type": "string"
+                },
+                "search_hit_id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "search_hit_id",
+                "reason"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "deferred_scores": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "excluded_platforms": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "failure_code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "failure_phase": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "library": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "campaign_id": {
+                    "type": "string"
+                  },
+                  "inserted_rows": {
+                    "format": "uint",
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "table_id": {
+                    "type": "string"
+                  },
+                  "total_hits": {
+                    "format": "uint",
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "web_url": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "campaign_id",
+                  "table_id",
+                  "web_url",
+                  "total_hits",
+                  "inserted_rows"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "revision": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "stage": {
+            "enum": [
+              "ready",
+              "searching",
+              "verifying",
+              "pausing",
+              "paused",
+              "finished",
+              "budget_exhausted",
+              "needs_evidence",
+              "error"
+            ],
+            "type": "string"
+          },
+          "sync_error": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sync_pending": {
+            "type": "boolean"
+          },
+          "synced_at": {
+            "format": "uint64",
+            "maximum": 9007199254740991,
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "updated_at": {
+            "format": "uint64",
+            "maximum": 9007199254740991,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "used": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "revision",
+          "stage",
+          "updated_at",
+          "used",
+          "reason",
+          "failure_phase",
+          "failure_code",
+          "sync_error",
+          "synced_at",
+          "deferred_scores",
+          "sync_pending",
+          "excluded_platforms",
+          "deferred_hits",
+          "library"
+        ],
+        "title": "ExecutionStatus",
+        "type": "object"
+      }
+    },
+    {
+      "name": "GetDiscoveryIdentityGroupsInput",
+      "direction": "deserialize",
+      "id": "https://reacher.local/contracts/GetDiscoveryIdentityGroupsInput.schema.json",
+      "revision": "sha256:4336b487ec2dd62ad28083a383651d1b2dd5301b46598ad22a40b468ac906254",
+      "schema": {
+        "$id": "https://reacher.local/contracts/GetDiscoveryIdentityGroupsInput.schema.json",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "campaign_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          },
+          "expected_revision": {
+            "format": "uint32",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "expected_revision"
+        ],
+        "title": "GetDiscoveryIdentityGroupsInput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "GetDiscoveryIdentityReviewInput",
+      "direction": "deserialize",
+      "id": "https://reacher.local/contracts/GetDiscoveryIdentityReviewInput.schema.json",
+      "revision": "sha256:4edf68d99a1a4a65379ceec45c0042e171fe6cdf2ec6f770932a22148d2c583e",
+      "schema": {
+        "$id": "https://reacher.local/contracts/GetDiscoveryIdentityReviewInput.schema.json",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "campaign_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          },
+          "decision_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "decision_id"
+        ],
+        "title": "GetDiscoveryIdentityReviewInput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "GetDiscoveryReviewInput",
+      "direction": "deserialize",
+      "id": "https://reacher.local/contracts/GetDiscoveryReviewInput.schema.json",
+      "revision": "sha256:dd919ad8fc9b0f4e0f5fa41d2c9d8c6b874bdc83b6caf5f7c3f6c25ec9b947b1",
+      "schema": {
+        "$id": "https://reacher.local/contracts/GetDiscoveryReviewInput.schema.json",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "description": "Account identity is injected by the authenticated runtime, never the caller.",
+        "properties": {
+          "campaign_id": {
+            "type": "string"
+          },
+          "request_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "request_id"
+        ],
+        "title": "GetDiscoveryReviewInput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "RevokeDiscoveryIdentityReviewInput",
+      "direction": "deserialize",
+      "id": "https://reacher.local/contracts/RevokeDiscoveryIdentityReviewInput.schema.json",
+      "revision": "sha256:b1f26f982218f79e03d91b94e3c971dc0e33fdd0e2598a46ae99ff935e33fca2",
+      "schema": {
+        "$id": "https://reacher.local/contracts/RevokeDiscoveryIdentityReviewInput.schema.json",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "campaign_id": {
+            "type": "string"
+          },
+          "decision_id": {
+            "type": "string"
+          },
+          "expected_revision": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "rationale": {
+            "type": "string"
+          },
+          "reviewer": {
+            "additionalProperties": false,
+            "description": "The label/model is self-reported; authenticated account identity is injected separately.",
+            "properties": {
+              "kind": {
+                "enum": [
+                  "agent",
+                  "human"
+                ],
+                "type": "string"
+              },
+              "label": {
+                "maxLength": 256,
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "label"
+            ],
+            "type": "object"
+          },
+          "revokes_decision_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "expected_revision",
+          "decision_id",
+          "revokes_decision_id",
+          "reviewer",
+          "rationale"
+        ],
+        "title": "RevokeDiscoveryIdentityReviewInput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "SubmitDiscoveryIdentityReviewInput",
+      "direction": "deserialize",
+      "id": "https://reacher.local/contracts/SubmitDiscoveryIdentityReviewInput.schema.json",
+      "revision": "sha256:0a1dd29e7f295b5c51d103d19d754f8e4487dc8c5bf07eda753169fe21cf690c",
+      "schema": {
+        "$id": "https://reacher.local/contracts/SubmitDiscoveryIdentityReviewInput.schema.json",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "description": "Same-author needs reciprocal, author-owned account references and explicit reviewer\nownership judgments. A matching URL alone is not an ownership determination.",
+        "properties": {
+          "decision": {
+            "enum": [
+              "same_author",
+              "different_authors",
+              "insufficient"
+            ],
+            "type": "string"
+          },
+          "decision_id": {
+            "type": "string"
+          },
+          "findings": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "citation": {
+                  "description": "Only saved text owned by this exact native author can support account ownership.\nExternal target pages, search names, product URLs and sponsor URLs are excluded.",
+                  "oneOf": [
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "kind": {
+                          "const": "description",
+                          "type": "string"
+                        },
+                        "quote": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "quote"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "kind": {
+                          "const": "transcript",
+                          "type": "string"
+                        },
+                        "quote": {
+                          "type": "string"
+                        },
+                        "segment_index": {
+                          "format": "uint32",
+                          "minimum": 0,
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "segment_index",
+                        "quote"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "kind": {
+                          "const": "native_content",
+                          "type": "string"
+                        },
+                        "quote": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "quote"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "kind": {
+                          "const": "native_profile_bio",
+                          "type": "string"
+                        },
+                        "quote": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "quote"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                },
+                "relationship": {
+                  "description": "Self-reported reviewer interpretation of a quoted relationship, not a native fact.",
+                  "enum": [
+                    "self_owned_account",
+                    "other_person",
+                    "unclear"
+                  ],
+                  "type": "string"
+                },
+                "source_search_hit_id": {
+                  "description": "One of the pair's saved hit IDs; the target is always the other bound account.",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "source_search_hit_id",
+                "relationship",
+                "citation"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "material_hash": {
+            "type": "string"
+          },
+          "pair": {
+            "additionalProperties": false,
+            "properties": {
+              "campaign_id": {
+                "maxLength": 128,
+                "minLength": 1,
+                "type": "string"
+              },
+              "expected_revision": {
+                "format": "uint32",
+                "minimum": 1,
+                "type": "integer"
+              },
+              "left_search_hit_id": {
+                "maxLength": 128,
+                "minLength": 1,
+                "type": "string"
+              },
+              "right_search_hit_id": {
+                "maxLength": 128,
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "campaign_id",
+              "expected_revision",
+              "left_search_hit_id",
+              "right_search_hit_id"
+            ],
+            "type": "object"
+          },
+          "rationale": {
+            "type": "string"
+          },
+          "reviewer": {
+            "additionalProperties": false,
+            "description": "The label/model is self-reported; authenticated account identity is injected separately.",
+            "properties": {
+              "kind": {
+                "enum": [
+                  "agent",
+                  "human"
+                ],
+                "type": "string"
+              },
+              "label": {
+                "maxLength": 256,
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "label"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "pair",
+          "material_hash",
+          "decision_id",
+          "reviewer",
+          "decision",
+          "rationale",
+          "findings"
+        ],
+        "title": "SubmitDiscoveryIdentityReviewInput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "SubmitDiscoveryReviewInput",
+      "direction": "deserialize",
+      "id": "https://reacher.local/contracts/SubmitDiscoveryReviewInput.schema.json",
+      "revision": "sha256:b3dd5b926b9cc81a48e6f7920d5645f34a66933892aec3b4e1fa9e70cb8d5869",
+      "schema": {
+        "$id": "https://reacher.local/contracts/SubmitDiscoveryReviewInput.schema.json",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "description": "Judgments reference the previously read owner material. No account, policy, proof or verdict input.",
+        "properties": {
+          "campaign_id": {
+            "type": "string"
+          },
+          "expected_revision": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "findings": {
+            "items": {
+              "additionalProperties": false,
+              "description": "Supported demo requires first-hand actions/results in saved transcript, not a title,\nadvertisement, list, third-party retelling or mere tool mention. Text is not visual proof.\nSupported tool requires an author-observed link and a successful target-page quotation.\nLanguage requires exact saved author text; spoken language requires transcript.\nMatchFit is optional: excellent = strong relevant evidence and an advantage;\ngood = clear supported relevance; medium = partial fit with a limitation;\nlow = a cited significant weakness. Missing optional data never lowers fit.\nFit cannot override required eligibility. Unknown fit has insufficient outcome\nand no match_level. Absence in one sample cannot reject the whole creator.",
+              "properties": {
+                "citations": {
+                  "items": {
+                    "oneOf": [
+                      {
+                        "additionalProperties": false,
+                        "properties": {
+                          "kind": {
+                            "const": "description",
+                            "type": "string"
+                          },
+                          "quote": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "quote"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "additionalProperties": false,
+                        "properties": {
+                          "kind": {
+                            "const": "search_caption",
+                            "type": "string"
+                          },
+                          "quote": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "quote"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "additionalProperties": false,
+                        "properties": {
+                          "kind": {
+                            "const": "transcript",
+                            "type": "string"
+                          },
+                          "quote": {
+                            "type": "string"
+                          },
+                          "segment_index": {
+                            "format": "uint32",
+                            "minimum": 0,
+                            "type": "integer"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "segment_index",
+                          "quote"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "additionalProperties": false,
+                        "properties": {
+                          "kind": {
+                            "const": "native_profile",
+                            "type": "string"
+                          },
+                          "profile_url": {
+                            "type": "string"
+                          },
+                          "quote": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "profile_url",
+                          "quote"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "additionalProperties": false,
+                        "properties": {
+                          "kind": {
+                            "const": "native_content",
+                            "type": "string"
+                          },
+                          "quote": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "quote"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "additionalProperties": false,
+                        "properties": {
+                          "kind": {
+                            "const": "public_page",
+                            "type": "string"
+                          },
+                          "quote": {
+                            "type": "string"
+                          },
+                          "requested_url": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "requested_url",
+                          "quote"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  "maxItems": 8,
+                  "type": "array"
+                },
+                "country_code": {
+                  "description": "ISO 3166-1 alpha-2 location identified by the reviewer from cited evidence.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "criterion": {
+                  "enum": [
+                    "own_ai_tool_demo",
+                    "public_tool_url",
+                    "apparel_business_content",
+                    "category_content",
+                    "creator_residence_outside_mainland",
+                    "content_language",
+                    "match_fit"
+                  ],
+                  "type": "string"
+                },
+                "match_level": {
+                  "anyOf": [
+                    {
+                      "description": "Evidence-based fit, independent of eligibility. Unknown fit has no level.",
+                      "enum": [
+                        "excellent",
+                        "good",
+                        "medium",
+                        "low"
+                      ],
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "outcome": {
+                  "enum": [
+                    "supported",
+                    "contradicted",
+                    "insufficient"
+                  ],
+                  "type": "string"
+                },
+                "rationale": {
+                  "maxLength": 4000,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "tool": {
+                  "anyOf": [
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "requested_url": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "requested_url"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "criterion",
+                "outcome",
+                "rationale",
+                "citations"
+              ],
+              "type": "object"
+            },
+            "maxItems": 6,
+            "type": "array"
+          },
+          "material_hash": {
+            "type": "string"
+          },
+          "request_id": {
+            "type": "string"
+          },
+          "reviewer": {
+            "additionalProperties": false,
+            "description": "The label/model is self-reported; authenticated account identity is injected separately.",
+            "properties": {
+              "kind": {
+                "enum": [
+                  "agent",
+                  "human"
+                ],
+                "type": "string"
+              },
+              "label": {
+                "maxLength": 256,
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "label"
+            ],
+            "type": "object"
+          },
+          "search_hit_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "expected_revision",
+          "search_hit_id",
+          "material_hash",
+          "request_id",
+          "reviewer",
+          "findings"
+        ],
+        "title": "SubmitDiscoveryReviewInput",
+        "type": "object"
+      }
+    }
+  ],
+  "manifest_revision": "sha256:569809180a076d9682404e7d634ed7d3c8b09066b1c540454bbf1269212b183b"
+}

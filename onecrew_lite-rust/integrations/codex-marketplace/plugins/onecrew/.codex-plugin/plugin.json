@@ -1,0 +1,31 @@
+{
+  "name": "onecrew_lite",
+  "version": "0.7.0",
+  "description": "onecrew_lite native CLI and stdio MCP with a live business capability router. Packaged artifacts include the native executable.",
+  "homepage": "https://onecrewai.io",
+  "author": {
+    "name": "onecrew_lite"
+  },
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "onecrew_lite",
+    "shortDescription": "KOL relationship workflows over the local onecrew_lite MCP server.",
+    "longDescription": "Connect Codex to onecrew_lite through the bundled native CLI and stdio MCP, discover live toolkit capabilities and exact operation contracts, and use onecrew_lite business action cards when supported.",
+    "developerName": "onecrew_lite",
+    "category": "Productivity",
+    "websiteURL": "https://onecrewai.io",
+    "composerIcon": "./assets/onecrew-favicon.svg",
+    "logo": "./assets/onecrew-favicon.svg",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Discover creators with onecrew_lite: prepare a search plan I can review and confirm before any search runs.",
+      "Prepare outreach to a saved onecrew_lite Creator through their selected contact route.",
+      "Explain how to find creators, enrich profiles, or prepare outreach with onecrew_lite."
+    ]
+  }
+}

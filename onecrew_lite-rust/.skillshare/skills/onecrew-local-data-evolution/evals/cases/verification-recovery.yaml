@@ -1,0 +1,17 @@
+id: local-data-verification-recovery
+type: verification
+prompt: Verify a final local-data evolution diff after focused migration tests passed, including restart and recovery behavior.
+expected:
+  must_include:
+    - run or reuse one final complete evolution evidence identity
+    - cover fresh current predecessor failure backup recovery and postflight states
+    - cover Web lifecycle gate and prove MCP has no upgrade surface
+    - report unavailable native or live-data checks as blocked
+  must_not_include:
+    - repeat the unchanged final matrix after review wording changes
+    - claim a real user database was upgraded without authorized runtime evidence
+score:
+  pass: 90
+  critical_fail_if:
+    - FAIL or BLOCKED evidence is reused as PASS
+    - backup or recovery coverage is omitted from final acceptance

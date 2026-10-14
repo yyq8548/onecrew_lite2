@@ -1,0 +1,314 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+/* Widget entry roots and app-owned primitives are separate Tailwind sources.
+   Keep this source package-local: an MCP App is built and tested without the
+   Desktop source tree or its node_modules. */
+@source "../components/ui";
+@source "../app";
+@source "../features";
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* One colour source for the whole App.
+ *
+ * Every semantic token resolves the Host's own palette variable first (the
+ * closed `McpUiStyleVariableKey` set the Host writes onto the document root via
+ * `applyHostStyleVariables`) and falls back to the package value only for the
+ * keys this Host did not send. Nothing downstream may restate a colour: views
+ * use the Tailwind utilities mapped from these tokens in `@theme inline`, and
+ * the sole deliberate exception is the `.channel-mark` platform palette, which
+ * is channel identity rather than theme. */
+:root {
+  --radius: var(--border-radius-md, 0.5rem);
+  --background: var(--color-background-primary, oklch(1 0 0));
+  --foreground: var(--color-text-primary, oklch(0.19 0.006 70));
+  --card: var(--color-background-primary, oklch(1 0 0));
+  --card-foreground: var(--color-text-primary, oklch(0.19 0.006 70));
+  --primary: var(--color-background-inverse, oklch(0.24 0.006 70));
+  --primary-foreground: var(--color-text-inverse, oklch(0.985 0.001 70));
+  --secondary: var(--color-background-secondary, oklch(0.94 0.0024 70));
+  --secondary-foreground: var(--color-text-secondary, oklch(0.28 0.006 70));
+  --muted: var(--color-background-secondary, oklch(0.94 0.0024 70));
+  --muted-foreground: var(--color-text-secondary, oklch(0.52 0.006 70));
+  --accent: var(--color-background-secondary, oklch(0.94 0.0024 70));
+  --accent-foreground: var(--color-text-secondary, oklch(0.28 0.006 70));
+  --destructive: var(--color-text-danger, oklch(0.505 0.19 18));
+  --success-background: var(--color-background-success, oklch(0.96 0.035 160));
+  --success-foreground: var(--color-text-success, oklch(0.32 0.08 160));
+  --success-border: var(--color-border-success, oklch(0.72 0.08 160));
+  --warning-background: var(--color-background-warning, oklch(0.96 0.04 85));
+  --warning-foreground: var(--color-text-warning, oklch(0.34 0.07 70));
+  --warning-border: var(--color-border-warning, oklch(0.74 0.08 80));
+  --border: var(--color-border-primary, oklch(0.895 0.0042 70));
+  --input: var(--color-border-secondary, oklch(0.895 0.0042 70));
+  /* The one brand accent, declared once and reused as hover, selection and
+     focus ring; the Host's own ring colour still wins where it sends one. */
+  --brand-hue: #FFD23B;
+  --brand-hover: color-mix(in srgb, var(--brand-hue) 10%, var(--background));
+  --brand-selected: color-mix(in srgb, var(--brand-hue) 18%, var(--background));
+  --ring: var(--color-ring-primary, var(--brand-hue));
+  --icon-color: var(--foreground);
+}
+
+/* Dark replaces only the package fallbacks; a Host that sends its own dark
+   palette still wins, because each token reads the Host variable first. */
+:root[data-theme="dark"] {
+  --background: var(--color-background-primary, oklch(0.196 0.005 70));
+  --foreground: var(--color-text-primary, oklch(0.955 0.002 70));
+  --card: var(--color-background-primary, oklch(0.232 0.006 70));
+  --card-foreground: var(--color-text-primary, oklch(0.955 0.002 70));
+  --primary: var(--color-background-inverse, oklch(0.945 0.002 70));
+  --primary-foreground: var(--color-text-inverse, oklch(0.19 0.006 70));
+  --secondary: var(--color-background-secondary, oklch(0.278 0.006 70));
+  --secondary-foreground: var(--color-text-secondary, oklch(0.955 0.002 70));
+  --muted: var(--color-background-secondary, oklch(0.278 0.006 70));
+  --muted-foreground: var(--color-text-secondary, oklch(0.708 0.006 70));
+  --accent: var(--color-background-secondary, oklch(0.278 0.006 70));
+  --accent-foreground: var(--color-text-secondary, oklch(0.955 0.002 70));
+  --destructive: var(--color-text-danger, oklch(0.66 0.17 22));
+  --success-background: var(--color-background-success, oklch(0.27 0.035 160));
+  --success-foreground: var(--color-text-success, oklch(0.78 0.17 150));
+  --success-border: var(--color-border-success, oklch(0.5 0.07 160));
+  --warning-background: var(--color-background-warning, oklch(0.29 0.04 75));
+  --warning-foreground: var(--color-text-warning, oklch(0.91 0.05 85));
+  --warning-border: var(--color-border-warning, oklch(0.53 0.07 80));
+  --border: var(--color-border-primary, oklch(1 0 0 / 11%));
+  --input: var(--color-border-secondary, oklch(1 0 0 / 16%));
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --radius-xl: calc(var(--radius) + 6px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-success-background: var(--success-background);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-border: var(--success-border);
+  --color-warning-background: var(--warning-background);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-border: var(--warning-border);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
+@layer base {
+  * { border-color: var(--border); }
+}
+
+/* Vertical overflow stays reachable. A Host that ignores the height the App
+   reports keeps its own frame, so whatever does not fit has to be scrollable
+   or it is simply gone. `overflow` on the root propagates to the viewport, so
+   suppressing it here made the iframe itself unscrollable; the clip belongs on
+   the card wrapper, not on the document. The scrollbar stays invisible so no
+   page-level bar appears next to the Host's own. */
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 0;
+  height: auto;
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+#root::-webkit-scrollbar {
+  display: none;
+}
+
+body {
+  margin: 0;
+  /* The document's scrollport: vertical scroll lives here (it propagates to
+     the viewport), horizontal stays clipped so a wide row never adds a
+     sideways bar. */
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: transparent;
+  /* Host-provided font first (SEP-1865 styles.variables), system stack as
+     the fallback — never a webfont the CSP would block. */
+  font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+}
+
+/* Product-owned channel identity; colors do not encode operation status. */
+.channel-mark { display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; border-radius:50%; background:#17191c; color:#fff; }
+.channel-mark[data-platform="instagram"] { background:radial-gradient(circle at 28% 100%,#ffd76a,#ef357b 48%,#a22ed2 75%,#644bd5); }
+.channel-mark[data-platform="telegram"] { background:#2aabee; }
+.channel-mark[data-platform="youtube"] { background:#f00; }
+.channel-mark[data-platform="email"] { background:#ffde65; color:#17191c; }
+.channel-mark[data-platform="tiktok"] svg { filter:drop-shadow(-.6px -.3px 0 #25f4ee) drop-shadow(.6px .3px 0 #fe2c55); }
+summary:focus-visible, a:focus-visible { outline:none;text-decoration:underline;text-underline-offset:3px; }
+@media (pointer:coarse) { button[data-slot="button"], summary { min-height:44px; } }
+.onecrew-brand { color: var(--foreground); }
+.onecrew-brand svg { display: block; width: 100%; height: auto; }
+
+/* Reading rhythm: distinguish task, subject, review content, and final action. */
+.result-shell-header { padding:24px 24px 18px; gap:12px; }
+.result-shell-header [data-slot="card-title"] { font-size:20px; line-height:1.4; font-weight:600; }
+.result-shell-header [data-slot="badge"] { margin-top:3px; font-weight:400; }
+/* A card fits its content and adds no scrollport of its own inline: an inner
+   scroll region hid the very message the card existed to show. What the Host's
+   frame cannot show is reached by scrolling the document instead — this Host
+   keeps its own frame height whatever height the App reports. */
+.result-shell-content { padding:0 24px 24px; }
+.result-shell-footer { padding:18px 24px; gap:12px; }
+/* One action bar for every card. It wraps rather than overflowing, so a long
+   label or a narrow dialog moves a button to the next line instead of letting
+   the card's own overflow clip it away. */
+.result-shell-footer button { min-height:40px; padding-inline:18px; max-width:100%; white-space:normal; overflow-wrap:anywhere; }
+.creator-confirmation { display:grid; gap:24px; font-size:14px; line-height:1.65; }
+.creator-profile { padding:4px 0 0; }
+.creator-profile > div:first-child { gap:14px; }
+.creator-profile > div:first-child > span:first-child { width:44px; height:44px; }
+.creator-profile > div:first-child > span:last-child > span:first-child { font-size:17px; line-height:1.5; }
+.creator-facts { display:flex; flex-wrap:wrap; gap:8px 20px; margin:16px 0 0 58px; color:var(--muted-foreground); font-size:13px; }
+.creator-facts strong { margin-left:5px; color:var(--foreground); font-weight:500; }
+.creator-section-heading { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:baseline; gap:8px; margin-bottom:12px; }
+.creator-section-heading h2 { font-size:15px; font-weight:600; }
+.creator-section-heading > span { font-size:12px; color:var(--muted-foreground); }
+.creator-route { display:flex; gap:14px; padding:15px 0; border-bottom:1px solid var(--border); align-items:flex-start; }
+.creator-route:last-child { border-bottom:0; padding-bottom:0; }
+.creator-route > button { margin-top:4px; }
+.creator-route-label { display:flex; gap:10px; font-weight:400; line-height:1.6; align-items:center; }
+.creator-route-kind { margin-left:auto; color:var(--muted-foreground); font-size:12px; white-space:nowrap; }
+.creator-route-warning { margin:7px 0 0 30px; color:var(--warning-foreground); font-size:12px; }
+@media(max-width:480px) {
+ .result-shell-header { padding:20px 18px 16px; gap:12px; }
+ .result-shell-content { padding:0 18px 20px; }
+ .result-shell-footer { padding:16px 18px; }
+ .creator-facts { margin-left:0; gap:8px 16px; }
+ .creator-route-label { flex-wrap:wrap; }
+ .creator-route-kind { margin-left:30px; }
+}
+.processing-status { display:flex; align-items:center; gap:16px; padding:4px 0; }
+.processing-status > [data-result-status] { align-self:center; }
+/* Shared status glyphs: identical in result headings and table rows. Size only
+   — the tone-to-colour mapping belongs to ResultStatus and its theme tokens, so
+   nothing here can override the class the component already chose. */
+[data-result-status] svg { width:20px; height:20px; }
+.processing-status-copy { display:grid; gap:12px; min-width:0; }
+.processing-status-copy > p { color:var(--muted-foreground); font-size:14px; line-height:1.6; margin:0; }
+
+/* Search plan: compact input and aligned preview rows. */
+.plan-assist {display:grid;gap:10px;min-width:0;padding-bottom:20px;border-bottom:1px solid var(--border);}
+.plan-assist-footer {display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.plan-assist-footer p {margin:0;}
+.plan-assist textarea {background:var(--background);box-shadow:none;}
+.search-plan-overview {display:grid;gap:0;}
+.search-plan-overview > section {display:grid;grid-template-columns:max-content minmax(0,1fr);align-items:start;gap:12px;min-width:0;padding:14px 0;}
+.search-plan-overview > section + section {border-top:1px solid var(--border);}
+.search-plan-overview > section > div:first-child {align-items:flex-start;flex-wrap:wrap;}
+.search-plan-overview h2 {font-size:12px;line-height:24px;}
+.search-scope-list {display:grid;gap:10px;min-width:0;}
+.search-scope-row {display:flex;align-items:center;gap:16px;min-width:0;}
+.search-scope-facts {display:flex;flex:1 1 0%;flex-wrap:wrap;align-items:center;gap:4px 16px;font-size:14px;line-height:1.6;min-width:0;overflow-wrap:anywhere;}
+@media(max-width:480px){.search-plan-overview > section{grid-template-columns:1fr;gap:6px;padding:12px 0;}.search-scope-row{align-items:flex-start;flex-wrap:wrap;gap:8px;}.plan-assist-footer button{margin-left:auto;}}
+
+
+.score-rule-dialog {margin:auto;max-width:560px;width:calc(100% - 32px);max-height:85vh;overflow:auto;padding:24px;border:1px solid var(--border);border-radius:16px;background:var(--card);color:var(--foreground);font-size:14px;line-height:1.6;}
+.score-rule-overlay {position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:rgb(0 0 0 / .35);padding:16px;}
+.score-rule-dialog header,.score-rule-dialog footer {display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.score-rule-dialog h2 {font-size:20px;font-weight:600;}.score-rule-dialog h3 {font-weight:600;}
+.score-rule-dialog section,.score-rule-dialog form {display:grid;gap:16px;margin-top:20px;}
+.score-rule-dialog ul {display:grid;gap:12px;}.score-rule-dialog li {padding:10px 0;border-bottom:1px solid var(--border);}
+.score-rule-dialog label {display:grid;gap:6px;}.score-rule-dialog input,.score-rule-dialog textarea,.score-rule-dialog select {width:100%;min-width:0;border:1px solid var(--border);border-radius:8px;background:var(--background);color:var(--foreground);padding:8px;}
+.score-rule-dialog fieldset {border:1px solid var(--border);padding:12px;border-radius:10px;display:grid;gap:10px;}
+.score-rule-dialog footer {margin-top:20px;justify-content:flex-end;}
+
+/* A creator row's supplementary actions and contact values, read in the detail
+   view that replaces the list rather than unfolded beneath the row. */
+.creator-supplement { display: grid; gap: 14px; padding: 4px 0; }
+@media (max-width: 480px) { .creator-supplement { gap: 12px; } }
+
+/* One shared brand header, separated from each card's business content. */
+.onecrew-header { display:flex; align-items:center; justify-content:flex-start; min-height:56px; padding:16px 24px; border-bottom:1px solid var(--border); flex-shrink:0; }
+@media (max-width:480px) { .onecrew-header { padding-inline:18px; } }
+
+/* Empty result bodies must not contribute a second bottom padding. */
+.result-shell-content:has([data-result-body]:empty) { display:none; }
+.result-shell:has(.result-shell-content [data-result-body]:empty) > .result-shell-header,
+.result-shell > .result-shell-header:last-child { padding-block:24px; }
+.processing-status { padding-block:0; }
+@media(max-width:480px) {
+ .result-shell:has(.result-shell-content [data-result-body]:empty) > .result-shell-header,
+ .result-shell > .result-shell-header:last-child { padding-block:20px; }
+}
+
+/* Fullscreen is the one mode where this card owns a scrollport.
+   Inline it must not: the Host caps inline height and clips what exceeds the
+   cap, so content past it is gone rather than scrollable, and an inner scroll
+   region there would also swallow the conversation's own pan gesture. When a
+   card genuinely has more to show it asks for this mode instead.
+   One scroll owner, and only here: the header and the action bar stay put
+   while the content between them scrolls. */
+.result-shell[data-display-mode="fullscreen"] { height:100vh; border:0; border-radius:0; }
+.result-shell[data-display-mode="fullscreen"] > .result-shell-content { flex:1; min-height:0; overflow-y:auto; }
+
+/* Avatar badge uses the same channel asset at its original compact size. */
+.creator-platform-badge .channel-mark { width:16px; height:16px; }
+.creator-platform-badge .channel-mark svg { width:10px; height:10px; }
+
+.channel-stack > [data-channel] + [data-channel], .channel-stack > .channel-overflow { margin-left:-4px; }
+.channel-stack .channel-mark { box-shadow:0 0 0 2px var(--card); }
+.channel-overflow { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; background:var(--muted); box-shadow:0 0 0 2px var(--card); position:relative; }
+
+/* Match the left edge of contact headers and cells; retain tight overlap. */
+.channel-stack { justify-content:flex-start; }
+.channel-stack > [data-channel] + [data-channel], .channel-stack > .channel-overflow { margin-left:-7px; }
+
+.channel-overflow { flex-shrink:0; line-height:1; }
+.channel-overflow > svg { display:block; width:12px; height:12px; }
+
+/* The table may pan sideways on a narrow card, but it never owns a vertical
+   scrollport inline. The document remains the only inline vertical reader. */
+[data-creator-list-scroll="true"] { overflow-x:auto; overflow-y:clip; }
+
+
+/* Consistent text-field insets across both card previews. */
+.result-shell :is(input:not([type="checkbox"]):not([type="radio"]),textarea,select){padding-inline:8px;}
+
+[data-slot="card-header"]>[data-slot="card-description"],.processing-status-copy>[data-slot="card-description"]{margin:0;}
+
+/* Fixed title-group rhythm, including narrow layouts; empty cards retain shell padding. */
+.result-shell:not(:has([data-result-body]:empty)) > .result-shell-header:has(+ .result-shell-content){padding-bottom:32px;}
+.result-shell > .result-shell-header + .result-shell-content{padding-top:0;}
+
+.lucide,.country__indicators svg,.country__multi-value__remove svg{color:var(--icon-color)}
+.channel-mark .lucide,[data-slot="checkbox"] .lucide,[data-slot="button"] .lucide{color:inherit}
+
+/* A prepared message reads as a message: one sender line, its recipients, and
+   the body below a rule. Every colour here is a theme token. */
+.mail-preview{display:grid;gap:12px;min-width:0;padding:16px;border:1px solid var(--border);border-radius:12px;background:var(--card);color:var(--card-foreground);}
+.mail-preview-head{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:start;gap:12px;min-width:0;}
+.mail-avatar{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--muted);color:var(--foreground);font-size:15px;font-weight:600;}
+.mail-identity{display:grid;gap:4px;min-width:0;}
+.mail-sender{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px;min-width:0;font-size:15px;line-height:1.5;}
+.mail-sender-address{color:var(--muted-foreground);font-size:14px;overflow-wrap:anywhere;}
+/* The address wraps inside its own box; the row itself never wraps, so the
+   control that opens the details stays on the first line beside the label
+   instead of dropping below a long address on a narrow card. */
+.mail-recipients{display:flex;flex-wrap:nowrap;align-items:flex-start;gap:4px 6px;min-width:0;color:var(--muted-foreground);font-size:13px;}
+.mail-recipients .mail-detail-trigger{flex:none;margin-top:-2px;}
+.mail-recipients strong{min-width:0;color:var(--foreground);font-weight:400;overflow-wrap:anywhere;}
+.mail-time{color:var(--muted-foreground);font-size:13px;white-space:nowrap;}
+.mail-body{margin:0;padding-top:12px;border-top:1px solid var(--border);font-size:14px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere;}
+/* Details open in place, under the message they belong to. A fixed overlay
+   would fight the Host's own modal and gesture handling: this App is a
+   component inside that surface, not the foreground application. */
+.mail-details{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:8px 16px;margin:0;min-width:0;padding-top:12px;border-top:1px solid var(--border);font-size:13px;line-height:1.6;}
+.mail-details dt{color:var(--muted-foreground);}
+.mail-details dd{margin:0;min-width:0;white-space:pre-wrap;overflow-wrap:anywhere;}
+@media(max-width:480px){.mail-preview{padding:12px;}.mail-preview-head{grid-template-columns:auto minmax(0,1fr);}.mail-time{grid-column:2;}}

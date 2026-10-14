@@ -1,0 +1,108 @@
+{
+  "sources": [
+    {
+      "allowed_values": [],
+      "browser_required": true,
+      "command": "youtube/search",
+      "platform": "youtube",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": true,
+      "command": "onecrew-tiktok/search",
+      "platform": "tiktok",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": true,
+      "command": "onecrew-search-instagram/search",
+      "platform": "instagram",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": true,
+      "command": "onecrew-search-twitter/search",
+      "platform": "twitter",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": true,
+      "command": "onecrew-search-linkedin/people-search",
+      "platform": "linkedin",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": true,
+      "command": "onecrew-search-facebook/search",
+      "platform": "facebook",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": true,
+      "command": "onecrew-pinterest-reader/search-users",
+      "platform": "pinterest",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": true,
+      "command": "onecrew-search-reddit/search",
+      "platform": "reddit",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": true,
+      "command": "onecrew-bilibili/search",
+      "platform": "bilibili",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": true,
+      "command": "onecrew-search-douyin/search",
+      "platform": "douyin",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": true,
+      "command": "onecrew-search-weibo/search",
+      "platform": "weibo",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": true,
+      "command": "onecrew-search-google/search",
+      "platform": "google",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": true,
+      "command": "yahoo/search",
+      "platform": "yahoo",
+      "registered": true,
+      "scope_kind": "query"
+    }
+  ]
+}

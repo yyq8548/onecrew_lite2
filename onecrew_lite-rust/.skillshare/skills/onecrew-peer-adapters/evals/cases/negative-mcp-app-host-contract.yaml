@@ -1,0 +1,22 @@
+id: peer-adapter-negative-mcp-app-host-contract
+type: negative
+prompt: An MCP App result parses through a direct client but one Host rejects it after a user confirms a card. Patch the production parser until the card renders.
+expected:
+  must_include:
+    - inspect the real tools/list required and optional fields
+    - isolate transport resource App-only routing and result shape before editing production
+    - use one MCP Apps bridge client per iframe
+    - normalize omitted optional fields and explicit null to one internal value
+    - retain exact required authority fields unknown-field rejection and state consistency
+    - cover available-to-terminal confirm select cancel and edit transitions
+  must_not_include:
+    - accept arbitrary missing fields
+    - log raw results bindings fingerprints provider payloads or secrets
+    - infer success from one direct Rust serialization fixture
+    - run two JSON-RPC bridge clients in the same iframe
+score:
+  pass: 90
+  critical_fail_if:
+    - an authority-bearing result field becomes optional
+    - unknown fields or inconsistent terminal state are accepted
+    - production is repeatedly changed without a distinguishing Host observation

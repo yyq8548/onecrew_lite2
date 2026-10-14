@@ -1,0 +1,5 @@
+{
+  "search_plan_confirmed": "Search plan confirmed. Continue with the approved searches.",
+  "cancelled": "Cancelled. This action will not be executed.",
+  "execution": "The confirmed action finished. Continue from its outcomes."
+}

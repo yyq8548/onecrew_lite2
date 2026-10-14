@@ -1,0 +1,31 @@
+Declaration: If the folder I belong to changes, please update me, especially core domain concepts. Add examples or example file paths for abstract concepts when needed.
+
+# domain/table/fields/visitors Architecture Notes
+
+## Responsibilities
+
+- Field visitor interfaces and default implementations.
+- Enable subtype-specific dispatch logic.
+
+## Files
+
+- `ARCHITECTURE.md` - Role: folder architecture note; Purpose: describe field visitor role.
+- `AbstractFieldVisitor.ts` - Role: abstract visitor; Purpose: base class with default lookup handling.
+- `FieldCellValueSchemaVisitor.ts` - Role: visitor; Purpose: generate zod schema for cell value validation.
+- `FieldCreationSideEffectVisitor.ts` - Role: visitor; Purpose: compute cross-table side effects for field creation.
+- `FieldDeletionSideEffectVisitor.ts` - Role: visitor; Purpose: compute cross-table side effects for field deletion.
+- `FieldDeletionSideEffectVisitor.spec.ts` - Role: tests; Purpose: verify delete side effects for link fields.
+- `FieldFormVisibilityVisitor.ts` - Role: visitor; Purpose: decide form view visibility by field type.
+- `FieldClipboardValueVisitor.ts` - Role: visitor; Purpose: format stored v2 Field values for
+  clipboard output without delegating to legacy Field instances.
+- `FieldValueTypeVisitor.ts` - Role: visitor; Purpose: derive cell value types and multiplicity.
+- `FieldValueTypeVisitor.spec.ts` - Role: tests; Purpose: verify value type visitor behavior.
+- `IFieldVisitor.ts` - Role: visitor interface; Purpose: declare per-field visit methods.
+- `LinkForeignTableReferenceVisitor.ts` - Role: visitor; Purpose: collect foreign table ids and optional cross-base ids from link, lookup, and conditional fields (`toLinkForeignTableReference`).
+- `LinkForeignTableReferenceVisitor.spec.ts` - Role: tests; Purpose: verify foreign-table reference collection including optional BaseId.
+- `NoopFieldVisitor.ts` - Role: no-op visitor; Purpose: default empty implementation.
+- `SetFieldValueSpecFactoryVisitor.ts` - Role: visitor; Purpose: create SetValueSpec based on field type.
+
+## Examples
+
+- `packages/v2/core/src/ports/mappers/defaults/DefaultTableMapper.ts` - FieldVisitor implementation.

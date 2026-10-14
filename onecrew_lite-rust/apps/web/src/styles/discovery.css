@@ -1,0 +1,63 @@
+.discovery-surface { gap: 0; padding: 0; box-shadow: none; }
+.discovery-surface [data-slot="card-content"] { padding: 24px; }
+.discovery-surface [data-slot="button"] { min-height: 44px; font-size: 16px; }
+.discovery-surface input, .discovery-surface select, .discovery-surface textarea { min-height: 44px; font-size: 16px; }
+.discovery-surface [data-slot="label"] { font-size: 16px; }
+.discovery-surface .text-xs { font-size: 14px; line-height: 1.5; }
+.discovery-disclosure { border: 0; border-bottom: 1px solid var(--border); border-radius: 0; padding: 0; }
+.discovery-disclosure > summary,
+.discovery-disclosure > [data-slot="collapsible-trigger"] {
+  min-height: 48px; width: 100%; padding: 12px 0; text-align: left;
+  white-space: normal; font-size: 18px; font-weight: 600; cursor: pointer;
+}
+.discovery-disclosure > [data-slot="collapsible-trigger"] { justify-content: flex-start; }
+.discovery-disclosure > [data-slot="collapsible-trigger"]::before {
+  content: ""; width: 7px; height: 7px; flex-shrink: 0; margin-right: 8px;
+  border-top: 2px solid currentColor; border-right: 2px solid currentColor; transform: rotate(45deg);
+}
+.discovery-disclosure > [data-slot="collapsible-trigger"][data-state="open"]::before { transform: rotate(135deg); }
+.discovery-disclosure > summary:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
+.discovery-adjustment { padding-block: 16px; font-size: 16px; }
+.discovery-adjustment + .discovery-adjustment { border-top: 1px solid var(--border); }
+.discovery-adjustment > p:first-child { font-size: 18px; font-weight: 600; }
+.discovery-adjustment input { width: min(100%, 180px); }
+.discovery-surface a { text-underline-offset: 3px; }
+@media (max-width: 640px) {
+  .discovery-surface [data-slot="card-content"] { padding: 16px; }
+}
+
+/* Search keeps its existing structure and interactions; only its palette changes. */
+.discovery-surface {
+  --background: #ffffff;
+  --foreground: #17191c;
+  --card: #ffffff;
+  --card-foreground: #17191c;
+  --primary: #17191c;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f2f4;
+  --secondary-foreground: #17191c;
+  --accent: #eceef1;
+  --accent-foreground: #17191c;
+  --muted: #f5f6f7;
+  --muted-foreground: #686c73;
+  --border: #e5e7eb;
+  --input: #e5e7eb;
+  --ring: #6b7280;
+}
+.dark .discovery-surface {
+  --background: #17191c;
+  --foreground: #f5f6f7;
+  --card: #17191c;
+  --card-foreground: #f5f6f7;
+  --primary: #f5f6f7;
+  --primary-foreground: #17191c;
+  --secondary: #282b30;
+  --secondary-foreground: #f5f6f7;
+  --accent: #34383e;
+  --accent-foreground: #f5f6f7;
+  --muted: #282b30;
+  --muted-foreground: #b5bac2;
+  --border: #41464e;
+  --input: #41464e;
+  --ring: #a1a8b2;
+}

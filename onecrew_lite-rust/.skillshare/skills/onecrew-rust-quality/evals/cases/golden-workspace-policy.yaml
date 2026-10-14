@@ -1,0 +1,18 @@
+id: rust-quality-golden-workspace-policy
+type: golden
+prompt: Audit workspace lint MSRV feature resolver and publish quality, then recommend policy only; do not edit any manifest or run a release.
+expected:
+  must_include:
+    - inventory workspace members default-members and member inheritance
+    - distinguish explicit inherited effective implicit and unresolved policy
+    - analyze feature unification resolver and package-specific MSRV evidence
+    - report publish absence as unresolved intent rather than release approval
+    - provide scoped recommendations and affected packages without mutation
+  must_not_include:
+    - enable all clippy restriction or treat pedantic as mandatory and exception-free
+    - edit Cargo.toml Cargo.lock dependencies rust-version publish or resolver
+score:
+  pass: 90
+  critical_fail_if:
+    - current defaults or one successful build are claimed as deliberate policy
+    - package publish or release execution begins without authorization

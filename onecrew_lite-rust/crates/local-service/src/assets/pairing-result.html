@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="zh-CN" data-result="__RESULT__">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="robots" content="noindex,nofollow,noarchive" />
+    <title>__TITLE__ · OneCrew</title>
+    <style nonce="__NONCE__">
+      :root {
+        color-scheme: light dark;
+        --background: #f4f5ef;
+        --surface: #ffffff;
+        --border: #cfd7ce;
+        --foreground: #101712;
+        --muted: #58655d;
+        --brand: #ffde65;
+        --brand-soft: #fff8dc;
+        --danger: #c43108;
+        --danger-soft: #fff0e9;
+        --success: #26734a;
+        --success-soft: #dceade;
+        --shadow: 0 24px 70px rgba(25, 24, 20, 0.1);
+        font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: var(--foreground);
+        background: var(--background);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --background: #11110f;
+          --surface: rgba(28, 28, 25, 0.94);
+          --border: rgba(255, 255, 255, 0.1);
+          --foreground: #f5f4ef;
+          --muted: #a9a69f;
+          --brand: #ffde65;
+          --brand-soft: rgba(255, 222, 101, 0.14);
+          --danger: #ff7040;
+          --danger-soft: rgba(196, 49, 8, 0.2);
+          --success: #62d59b;
+          --success-soft: rgba(22, 121, 75, 0.2);
+          --shadow: 0 28px 80px rgba(0, 0, 0, 0.38);
+        }
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(circle at 50% 18%, var(--brand-soft), transparent 32rem),
+          var(--background);
+      }
+
+      main {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 32px 20px;
+      }
+
+      .card {
+        width: min(100%, 460px);
+        padding: 40px 38px 34px;
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+        text-align: center;
+        backdrop-filter: blur(18px);
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 34px;
+        font-size: 14px;
+        font-weight: 650;
+        letter-spacing: -0.01em;
+      }
+
+      .mark {
+        display: block;
+        width: 34px;
+        height: 34px;
+        flex: none;
+        border-radius: 22%;
+        box-shadow: 0 6px 16px rgba(24, 24, 22, 0.1);
+      }
+
+      .status-icon {
+        display: grid;
+        width: 56px;
+        height: 56px;
+        margin: 0 auto 22px;
+        place-items: center;
+        border-radius: 50%;
+        background: var(--success-soft);
+        color: var(--success);
+        font-size: 26px;
+        font-weight: 750;
+      }
+
+      html[data-result="rejected"] .status-icon {
+        background: var(--danger-soft);
+        color: var(--danger);
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(26px, 6vw, 34px);
+        font-weight: 680;
+        letter-spacing: -0.04em;
+        line-height: 1.15;
+      }
+
+      .message {
+        margin: 16px auto 0;
+        max-width: 340px;
+        color: var(--muted);
+        font-size: 15px;
+        line-height: 1.7;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 24px;
+        padding: 8px 12px;
+        border: 1px solid color-mix(in srgb, var(--success) 24%, transparent);
+        border-radius: 999px;
+        color: var(--success);
+        background: var(--success-soft);
+        font-size: 13px;
+        font-weight: 620;
+      }
+
+      html[data-result="rejected"] .status {
+        border-color: color-mix(in srgb, var(--danger) 24%, transparent);
+        color: var(--danger);
+        background: var(--danger-soft);
+      }
+
+      .status::before {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: currentColor;
+        content: "";
+      }
+
+      .divider {
+        height: 1px;
+        margin: 30px 0 22px;
+        background: var(--border);
+      }
+
+      .hint,
+      .privacy {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.6;
+      }
+
+      .privacy { margin-top: 7px; opacity: 0.72; }
+
+      @media (max-width: 520px) {
+        .card { padding: 34px 24px 28px; border-radius: 20px; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="card" aria-labelledby="result-title">
+        <div class="brand">
+          <img class="mark" src="data:image/png;base64,__BRAND_MARK__" alt="" aria-hidden="true" />
+          <span>OneCrew</span>
+        </div>
+        <div class="status-icon" aria-hidden="true">__ICON__</div>
+        <h1 id="result-title">__TITLE__</h1>
+        <p class="message">__MESSAGE__</p>
+        <div class="status">__STATUS__</div>
+        <div class="divider"></div>
+        <p class="hint">__HINT__</p>
+        <p class="privacy">此页面不会显示或保存授权信息。</p>
+      </section>
+    </main>
+    <script nonce="__NONCE__">
+      (() => {
+        const succeeded = document.documentElement.dataset.result === "success";
+        const cleanPath = succeeded
+          ? "/creator-sync/pairing-complete"
+          : "/creator-sync/pairing-failed";
+        window.history.replaceState(null, "", cleanPath);
+      })();
+    </script>
+  </body>
+</html>

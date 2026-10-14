@@ -1,0 +1,17 @@
+id: local-data-negative-current-query
+type: negative
+prompt: Add a read-only query over the current schema without changing schema identity, serialization, encoding, marker, or persisted interpretation.
+expected:
+  must_include:
+    - keep the work with the current application owner
+    - state that no persisted-format identity changes
+    - avoid loading migration and recovery workflows
+    - select only the current owner verification lane
+  must_not_include:
+    - create a schema version or migration
+    - activate local-data-evolution implementation
+score:
+  pass: 90
+  critical_fail_if:
+    - a speculative migration or compatibility field is introduced
+    - current query work is reported as upgrade acceptance

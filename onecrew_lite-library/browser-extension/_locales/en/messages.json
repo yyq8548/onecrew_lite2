@@ -1,0 +1,119 @@
+{
+  "extensionName": {
+    "message": "OneCrew Browser Bridge"
+  },
+  "extensionDescription": {
+    "message": "Connect your browser to the local OneCrew service."
+  },
+  "actionTitle": {
+    "message": "OneCrew Browser Bridge"
+  },
+  "brandName": {
+    "message": "OneCrew"
+  },
+  "bridgeLabel": {
+    "message": "Browser Bridge"
+  },
+  "reconnectButton": {
+    "message": "Reconnect service"
+  },
+  "disconnectButton": {
+    "message": "Disconnect"
+  },
+  "statusReading": {
+    "message": "Reading status…"
+  },
+  "statusConnected": {
+    "message": "Connected to OneCrew service"
+  },
+  "statusDisconnectedReconnect": {
+    "message": "Disconnected (click Reconnect service)"
+  },
+  "statusConnectingUnavailable": {
+    "message": "Connecting or service unavailable"
+  },
+  "statusConnecting": {
+    "message": "Connecting…"
+  },
+  "statusDisconnected": {
+    "message": "Disconnected"
+  },
+  "connectFailed": {
+    "message": "Connection failed. Try again later."
+  },
+  "serviceAddress": {
+    "message": "Service address: $actual_url$",
+    "placeholders": {
+      "actual_url": {
+        "content": "$1"
+      }
+    }
+  },
+  "serviceAddressDiscovering": {
+    "message": "Discovering local service address…"
+  },
+  "bridgeConnectHttp": {
+    "message": "Connection failed (HTTP $status$)",
+    "placeholders": {
+      "status": {
+        "content": "$1"
+      }
+    }
+  },
+  "bridgeMissingToken": {
+    "message": "Connection response did not include a token"
+  },
+  "bridgeLocalServiceUnavailable": {
+    "message": "Local service unavailable"
+  },
+  "youtubeUnsupportedYoutubePage": {
+    "message": "The tab is not a supported YouTube page"
+  },
+  "youtubeConsentRequired": {
+    "message": "YouTube requires consent or captcha before search results can be read safely"
+  },
+  "youtubeNotReady": {
+    "message": "YouTube page is not ready for search data"
+  },
+  "youtubePaginationTimeout": {
+    "message": "YouTube search pagination timed out"
+  },
+  "youtubeRepeatedCursor": {
+    "message": "YouTube search returned a repeated continuation cursor"
+  },
+  "youtubeSignedInCookie": {
+    "message": "YouTube is signed in but the SAPISID cookie is unavailable"
+  },
+  "youtubeSearchHttp": {
+    "message": "YouTube search request failed (HTTP $status$)",
+    "placeholders": {
+      "status": {
+        "content": "$1"
+      }
+    }
+  },
+  "youtubeLoggedOutContinuation": {
+    "message": "YouTube continuation logged out; refusing results that may be incomplete"
+  },
+  "youtubeQueryRequired": {
+    "message": "query is required"
+  },
+  "youtubeLimitRange": {
+    "message": "limit must be between 1 and 50"
+  },
+  "youtubeSearchReadinessTimeout": {
+    "message": "YouTube search page readiness timed out or was redirected"
+  },
+  "youtubeDiscoverKols": {
+    "message": "Discover YouTube KOL channels from video evidence"
+  },
+  "bridgeTabNotOwned": {
+    "message": "The tab does not belong to this extension"
+  },
+  "bridgeUnsupportedOperation": {
+    "message": "Unsupported operation"
+  },
+  "bridgeUnsupportedUrl": {
+    "message": "This URL is not supported by an enabled platform"
+  }
+}

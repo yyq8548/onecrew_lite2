@@ -1,0 +1,8 @@
+{
+  "title": "邮件结果",
+  "sent": "邮件服务已接受该邮件，OneCrew 已完成记录。",
+  "replayed": "OneCrew 返回了此前已记录的发送结果；未再次发送邮件。",
+  "batch_completed": "邮件批量发送已完成：已接受 {accepted} 封，已拒绝 {rejected} 封。",
+  "batch_replayed": "OneCrew 返回了此前已记录的批量发送结果：已接受 {accepted} 封，已拒绝 {rejected} 封；未再次发送邮件。",
+  "batch_unknown": "邮件批量发送完成，但结果不确定 {unknown} 封，已接受 {accepted} 封，已拒绝 {rejected} 封。再次发送前，请使用相同幂等键读取批次状态。"
+}

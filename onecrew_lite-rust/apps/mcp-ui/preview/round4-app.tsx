@@ -1,0 +1,25 @@
+import {useRef,useState,useEffect} from 'react';
+import {ResultCardView} from '../src/features/result-card/view';
+import {round4Cases,round4Initial,round4Change} from '../src/test-support/round4';
+import {round3Complete} from '../src/test-support/round3';
+import {DemoScoring} from './demo-scoring';
+import {FilterSelect} from '../src/components/ui/filter-select';
+import {TagInput} from '../src/components/ui/tag-input';
+import {AgentEditRequest} from '../src/features/result-card/components/editor-request';
+import {AppLocaleProvider} from '../src/lib/i18n';
+import {Card,CardHeader,CardTitle,CardContent,CardFooter} from '../src/components/ui/card';
+import {OneCrewHeader} from '../src/components/ui/onecrew-brand';
+import {normalizeEditInstruction} from '../src/lib/result-contract';
+import {Button} from '../src/components/ui/button';
+import '../src/styles/theme.css';
+import './preview.css';
+export function Round4Session({id}:{id:number}){
+ const [snapshot,setSnapshot]=useState(()=>round4Initial(id));const [busy,setBusy]=useState(false),[changed,setChanged]=useState(false),[events,setEvents]=useState<unknown[]>([]);
+ const [tags,setTags]=useState(()=>id===18?Array.from({length:50},(_,i)=>`keyword ${i+1}`):['cooking']);const [text,setText]=useState(''),[sent,setSent]=useState(false);
+ const lock=useRef(false),timer=useRef<ReturnType<typeof setTimeout>|undefined>(undefined);useEffect(()=>()=>clearTimeout(timer.current),[]);
+ function save(payload:unknown){if(lock.current)return;lock.current=true;setBusy(true);setEvents(e=>[...e,{action:'submit',payload}]);timer.current=setTimeout(()=>{setSnapshot(round3Complete(snapshot,0,payload));setBusy(false);},700);}
+ function cancel(){lock.current=true;setSnapshot(s=>({...s,pending_action:null,state:{kind:'resolved',code:'user_cancelled',summary:'已取消'},presentation:{...s.presentation,sections:[]}}));setEvents(e=>[...e,{action:'cancel'}]);}
+ const content=id<=15?<DemoScoring snapshot={snapshot} locale="zh-CN"><ResultCardView snapshot={snapshot} busy={busy} onConfirm={()=>save(null)} onSelect={save} onCancel={cancel} onRequestEdit={instruction=>{setEvents(e=>[...e,{action:'request_edit',instruction}]);}} onConfirmCreatorSaveBatch={save}/></DemoScoring>:<AppLocaleProvider locale="zh-CN"><Card className="result-shell gap-0 overflow-hidden py-0 shadow-none"><OneCrewHeader/><CardHeader className="result-shell-header" style={id>=19?{paddingBottom:24}:undefined}><CardTitle>{id<=18?'编辑关键词':'修改项目需求'}</CardTitle></CardHeader><CardContent className="result-shell-content">{id<=18?<TagInput value={tags} onChange={setTags} maxItems={50} maxLength={512} showHelp={false} lengthOf={value=>new TextEncoder().encode(value).length} copy={{label:'关键词',help:'',placeholder:'输入关键词',add:'添加',remove:v=>`删除 ${v}`,previous:'上一页',next:'下一页',page:(p,n)=>`${p} / ${n}`,duplicateError:'该关键词已添加，无需重复添加。',countError:'关键词数量已满，请先删除部分关键词。',lengthError:'关键词过长，请精简。'}}/>:sent?<p role="status">修改要求已提交，等待核对。</p>:<AgentEditRequest formId="round4-edit" value={text} onChange={setText} busy={false} error={null} onSubmit={instruction=>{setSent(true);setEvents(e=>[...e,{action:'request_edit',instruction}]);}}/>}</CardContent>{id>=19&&!sent&&<CardFooter className="result-shell-footer justify-end border-t"><Button type="submit" form="round4-edit" disabled={normalizeEditInstruction(text)==null}>发送修改请求</Button></CardFooter>}</Card></AppLocaleProvider>;
+ return <>{[5,6,7].includes(id)&&!changed&&snapshot.state.kind==='available'&&<div className="demo-notice"><Button variant="outline" onClick={()=>{setSnapshot(s=>round4Change(s,id));setChanged(true);setEvents(e=>[...e,{action:'external_revision_changed'}]);}}>模拟数据变化</Button></div>}{id===17&&<p className="demo-notice">粘贴样例：<code style={{whiteSpace:'pre-wrap'}}>{'home cooking, family meals\nquick recipes'}</code></p>}{id>=19&&!sent&&<div className="demo-notice"><Button variant="outline" onClick={()=>setText(id===19?'中'.repeat(1000):'  \n  ')}>填入{id===19?'超长':'空白'}样例</Button></div>}{content}<details className="demo-machine"><summary>模拟操作记录</summary><pre>{JSON.stringify({simulation:true,events,...(id<=15?{snapshot}:id<=18?{tags}:{text,sent})},null,2)}</pre></details></>;
+}
+export function Round4App(){const [id,setId]=useState(1),[seed,setSeed]=useState(0),[dark,setDark]=useState(false);const c=round4Cases[id-1];return <main><header className="demo-toolbar"><span>第四轮 · 20 个新增边界问题</span><button onClick={()=>{setDark(!dark);document.documentElement.dataset.theme=dark?'light':'dark';}}>{dark?'浅色模式':'深色模式'}</button></header><p className="demo-notice">本地模拟，复用现有组件；不写入 OneCrew、不发送消息。每题说明本轮新增的检查点。</p><FilterSelect label="选择测试问题" value={String(id)} options={round4Cases.map(c=>({value:String(c.id),label:`${c.id}. ${c.title}`}))} onChange={v=>setId(Number(v))}/><section className="demo-answer"><h1>{c.title}</h1><p>{c.steps}</p><p>新增检查：{c.added}</p><Button variant="outline" className="mt-3" onClick={()=>setSeed(s=>s+1)}>重新体验此问题</Button></section><Round4Session key={`${id}-${seed}`} id={id}/></main>;}

@@ -1,0 +1,20 @@
+node_modules/
+target/
+.agent-check/
+.artifacts/
+.scratch/
+.env
+.env.*
+!.env.example
+.dev.vars
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+*.log
+/dist/
+/audits/
+
+# Also ignore local dependency symlinks (not only directories).
+**/node_modules

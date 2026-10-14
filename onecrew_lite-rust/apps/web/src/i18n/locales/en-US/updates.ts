@@ -1,0 +1,53 @@
+import type { CatalogShape } from "../../catalog-shape";
+import type zhCNUpdates from "../zh-CN/updates";
+
+const updates = {
+  settings: "Settings",
+  settingsWithVersion: "Settings · onecrew_lite {{version}}",
+  title: "App updates",
+  description: "Check for a new onecrew_lite version. You confirm each download, installation, and restart.",
+  currentVersion: "Current version {{version}}",
+  newVersion: "Update to {{version}}",
+  publishedAt: "Published {{date}}",
+  releaseNotes: "Release notes",
+  noReleaseNotes: "No release notes were provided for this version.",
+  checkingStatus: "Reading update status…",
+  check: "Check for updates",
+  download: "Download update",
+  install: "Install update",
+  restart: "Restart onecrew_lite",
+  cancel: "Cancel",
+  later: "Later",
+  retry: "Check again",
+  open: "View update",
+  progress: "Downloaded {{downloaded}} / {{total}}",
+  progressUnknown: "Downloaded {{downloaded}}",
+  installConfirm: "Install this update?",
+  installDescription: "Finish any ongoing work first. You will need to restart onecrew_lite after installation.",
+  installExitsDescription: "Save your work and finish ongoing operations first. onecrew_lite will exit when the installer starts.",
+  restartConfirm: "Restart now?",
+  restartDescription: "onecrew_lite will close and reopen to finish the update. Finish any ongoing work first.",
+  requestFailed: "The update action could not be completed. Please retry.",
+  invalidResponse: "The update service returned an invalid status. Check again.",
+  states: {
+    idle: "Updates have not been checked",
+    unconfigured: "Official updates are not configured for this build. Contact your administrator for a new installer.",
+    checking: "Checking for a new version…",
+    available: "A new version is available",
+    up_to_date: "No updates available",
+    downloading: "Downloading update…",
+    downloaded: "Download complete. Ready for you to confirm installation",
+    installing: "Installing update…",
+    restart_required: "Update installed. Restart to apply it",
+    restarting: "Restarting…",
+    cancelled: "Update cancelled",
+    failed: "Update failed. Please retry.",
+  },
+  errors: {
+    authorization: "Update authorization failed. Check your onecrew_lite account and device authorization, then retry.",
+    network: "Cannot reach the update service. Check your network and retry.",
+    verification: "Update verification failed. Download the update again.",
+  },
+} satisfies CatalogShape<typeof zhCNUpdates>;
+
+export default updates;

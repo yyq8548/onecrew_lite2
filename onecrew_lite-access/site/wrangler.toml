@@ -1,0 +1,24 @@
+#:schema ../node_modules/wrangler/config-schema.json
+name = "site"
+main = "src/index.ts"
+compatibility_date = "2026-08-26"
+
+workers_dev = false
+preview_urls = false
+routes = [
+  { pattern = "onecrewai.io", custom_domain = true },
+  { pattern = "www.onecrewai.io", custom_domain = true },
+]
+
+[assets]
+directory = "./build/client"
+binding = "ASSETS"
+not_found_handling = "none"
+html_handling = "none"
+run_worker_first = true
+
+[vars]
+SITE_ORIGIN = "https://onecrewai.io"
+WWW_ORIGIN = "https://www.onecrewai.io"
+ACCESS_ORIGIN = "https://access.onecrewai.io"
+BLOG_ORIGIN = "https://blog.onecrewai.io"

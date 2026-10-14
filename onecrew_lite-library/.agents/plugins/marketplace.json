@@ -1,0 +1,20 @@
+{
+  "name": "onecrew-tables",
+  "interface": {
+    "displayName": "Onecrew Tables"
+  },
+  "plugins": [
+    {
+      "name": "onecrew-tables",
+      "source": {
+        "source": "local",
+        "path": "./plugins/onecrew-tables"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

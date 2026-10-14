@@ -1,0 +1,9 @@
+export type { ClaimedResultContinuation } from "./types/ClaimedResultContinuation";
+export type { CompletedResultContinuation } from "./types/CompletedResultContinuation";
+export type { DmFailure } from "./types/DmFailure";
+export type { ExactResultStateInput } from "./types/ExactResultStateInput";
+export type { ResultBinding } from "./types/ResultBinding";
+export type { ResultPresentResult } from "./types/ResultPresentResult";
+export type { ResultSnapshot } from "./types/ResultSnapshot";
+export type { ResultStateFailure } from "./types/ResultStateFailure";
+export type { ResultStateOutput } from "./types/ResultStateOutput";

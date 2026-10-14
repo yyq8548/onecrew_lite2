@@ -1,0 +1,17 @@
+[package]
+name = "onecrew-ig"
+version = "0.1.0"
+edition = "2024"
+rust-version.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+onecrew-dm-contracts = { path = "../dm-contracts" }
+onecrew-ig-transport = { path = "../ig-transport" }
+onecrew-ig-client = { path = "../ig-client" }
+async-trait.workspace = true
+serde_json.workspace = true
+url.workspace = true

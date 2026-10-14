@@ -1,0 +1,195 @@
+@import "tailwindcss";
+@import "./features/landing/landing.css";
+@import "./features/account/account.css";
+@import "./features/pairing/pairing-authorization-page.css";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  color-scheme: light;
+  --background: #f4f5ef;
+  --foreground: #101712;
+  --card: #ffffff;
+  --card-foreground: #101712;
+  --popover: #ffffff;
+  --popover-foreground: #101712;
+  --primary: #101712;
+  --primary-foreground: #ffffff;
+  --secondary: #fff8dc;
+  --secondary-foreground: #101712;
+  --muted: #eef0e9;
+  --muted-foreground: #58655d;
+  --accent: #ffde65;
+  --accent-foreground: #101712;
+  --destructive: oklch(0.58 0.22 27);
+  --border: #cfd7ce;
+  --input: #bfc8be;
+  --ring: #d6a900;
+  --radius: 0.75rem;
+}
+
+* {
+  border-color: var(--border);
+}
+
+html {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--background);
+}
+
+body {
+  min-width: 320px;
+  min-height: 100svh;
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  text-rendering: optimizeLegibility;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.auth-grid {
+  background-image:
+    linear-gradient(rgb(16 23 18 / 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(16 23 18 / 0.08) 1px, transparent 1px);
+  background-size: 36px 36px;
+  mask-image: linear-gradient(to bottom, black, transparent 85%);
+}
+
+.auth-shell {
+  min-height: 100svh;
+  overflow-x: clip;
+  background:
+    linear-gradient(rgb(16 23 18 / 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(16 23 18 / 0.035) 1px, transparent 1px),
+    var(--background);
+  background-size: 40px 40px;
+}
+
+.auth-showcase {
+  position: relative;
+  isolation: isolate;
+  background: #ffde65;
+  color: #101712;
+}
+
+.auth-showcase-watermark {
+  position: absolute;
+  z-index: -1;
+  top: 9%;
+  left: 50%;
+  width: min(88%, 760px);
+  aspect-ratio: 1;
+  background: rgb(255 255 255 / 0.24);
+  transform: translateX(-50%) rotate(-11deg);
+  mask: url("/onecrew-watermark-mark.svg") center / contain no-repeat;
+  pointer-events: none;
+}
+
+.auth-showcase-copy {
+  position: relative;
+  z-index: 3;
+  padding: clamp(2rem, 4vw, 4rem);
+}
+
+.auth-showcase-copy span {
+  display: inline-flex;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid rgb(16 23 18 / 0.22);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.35);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.auth-showcase-copy h2 {
+  max-width: 15ch;
+  margin: 1.5rem 0 0;
+  font-size: clamp(2.5rem, 4vw, 4.75rem);
+  line-height: 0.98;
+  letter-spacing: -0.05em;
+}
+
+.auth-showcase-copy p {
+  max-width: 48ch;
+  margin: 1.25rem 0 0;
+  color: rgb(16 23 18 / 0.7);
+  line-height: 1.65;
+}
+
+.auth-showcase-demo {
+  position: relative;
+  z-index: 2;
+  margin-top: auto;
+  padding-bottom: clamp(1.5rem, 4vw, 4rem);
+}
+
+.auth-showcase-demo .hero-prompt-stage {
+  width: 100%;
+  height: 500px;
+  min-height: 500px;
+  margin: 0;
+  padding: 54px 20px 0;
+  overflow: hidden;
+}
+
+.auth-showcase-demo .hero-prompt-demo {
+  width: min(620px, calc(100% - 36px));
+}
+
+.auth-showcase-demo .hero-kol-card {
+  width: 210px;
+}
+
+.auth-showcase-demo .hero-kol-card-one {
+  top: 348px;
+  left: 18px;
+  right: auto;
+}
+
+.auth-showcase-demo .hero-kol-card-two {
+  top: 394px;
+  right: 18px;
+  left: auto;
+}
+
+.auth-showcase-demo .hero-kol-card:nth-child(n + 3) {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

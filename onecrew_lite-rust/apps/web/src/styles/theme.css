@@ -1,0 +1,177 @@
+@font-face {
+  font-family: "Geist";
+  src: url("/fonts/geist/Geist-Variable.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+:root {
+  --radius: 0.5rem;
+  /* Shared with the OneCrew Access surface. */
+  --brand-accent: #17191C;
+  --brand-accent-foreground: #FFFFFF;
+  --brand-accent-hover: #30343A;
+  --brand-accent-active: #101214;
+  --brand-ink: #17191C;
+  --authority-surface: #17191C;
+  /* Browser preview has no native traffic lights. App.tsx overrides this to
+     2.25rem only when the UI is hosted by Tauri's overlay title bar. */
+  --background: #F5F6F7;
+  --foreground: #17191C;
+  --card: #FFFFFF;
+  --card-foreground: #17191C;
+  --popover: #FFFFFF;
+  --popover-foreground: #17191C;
+  --primary: #17191C;
+  --primary-foreground: #FFFFFF;
+  --secondary: #F1F2F4;
+  --secondary-foreground: #17191C;
+  --muted: #F1F2F4;
+  --muted-foreground: #686C73;
+  --accent: #ECEEF1;
+  --accent-foreground: #17191C;
+  --destructive: oklch(0.505 0.19 18);
+  --border: #E5E7EB;
+  --input: #CDD1D7;
+  --ring: #6B7280;
+  --chart-1: #FFDE65;
+  --chart-2: #26734A;
+  --chart-3: oklch(0.45 0.05 62);
+  --chart-4: oklch(0.72 0.13 62);
+  --chart-5: oklch(0.35 0.03 62);
+
+  --sidebar: #17191C;
+  --sidebar-foreground: #E4E7EB;
+  --sidebar-primary: #FFFFFF;
+  --sidebar-primary-foreground: #17191C;
+  --sidebar-accent: #30343A;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: #33363B;
+  --sidebar-ring: #A1A8B2;
+  --sidebar-glyph: #B5BAC2;
+  --sidebar-rail-hover: #30343A;
+
+  /* Semantic badge tones (soft bg + fg). Light values here, dark below — usages
+     reference these tokens so pages never hardcode bg-emerald-100 dark:... . */
+  --tone-success-bg: #DCEADE;
+  --tone-success-fg: #26734A;
+  --tone-danger-bg: oklch(94.1% 0.03 12.58);
+  --tone-danger-fg: oklch(51.4% 0.222 16.935);
+  --tone-info-bg: oklch(95.1% 0.026 236.824);
+  --tone-info-fg: oklch(50% 0.134 242.749);
+  --tone-report-bg: oklch(93% 0.034 272.788);
+  --tone-report-fg: oklch(45.7% 0.24 277.023);
+  --tone-warning-bg: #FFF8DC;
+  --tone-warning-fg: #7A5A00;
+  --tone-progress-bg: #ECEEF1;
+  --tone-progress-fg: #4B515A;
+  --tone-neutral-bg: #F1F2F4;
+  --tone-neutral-fg: #686C73;
+  /* Solid success dot (connection/online indicators). */
+  --tone-success-solid: #26734A;
+}
+
+.dark {
+  /* Preserve the established dark neutral ramp; only the brand accents change. */
+  --brand-accent: #FFDE65;
+  --brand-accent-foreground: #101712;
+  --brand-accent-hover: #F4CB45;
+  --brand-accent-active: #E6B82C;
+  --brand-ink: #FFDE65;
+  --authority-surface: #101712;
+  --background: oklch(0.196 0.005 70);
+  --foreground: oklch(0.955 0.002 70);
+  --card: oklch(0.232 0.006 70);
+  --card-foreground: oklch(0.955 0.002 70);
+  --popover: oklch(0.246 0.006 70);
+  --popover-foreground: oklch(0.955 0.002 70);
+  --primary: oklch(0.945 0.002 70);
+  --primary-foreground: oklch(0.19 0.006 70);
+  --secondary: oklch(0.278 0.006 70);
+  --secondary-foreground: oklch(0.955 0.002 70);
+  --muted: oklch(0.278 0.006 70);
+  --muted-foreground: oklch(0.708 0.006 70);
+  --accent: oklch(0.278 0.006 70);
+  --accent-foreground: oklch(0.955 0.002 70);
+  --destructive: oklch(0.66 0.17 22);
+  --border: oklch(1 0 0 / 11%);
+  --input: oklch(1 0 0 / 16%);
+  --ring: #FFDE65;
+  --chart-1: #FFDE65;
+  --chart-2: oklch(0.72 0.12 78);
+  --chart-3: oklch(0.62 0.05 62);
+  --chart-4: oklch(0.8 0.12 64);
+  --chart-5: oklch(0.45 0.03 62);
+
+  --sidebar: oklch(0.166 0.005 70);
+  --sidebar-foreground: oklch(0.9 0.003 70);
+  --sidebar-primary: #FFDE65;
+  --sidebar-primary-foreground: oklch(0.19 0.008 62);
+  --sidebar-accent: oklch(0.222 0.005 70);
+  --sidebar-accent-foreground: oklch(0.955 0.002 70);
+  --sidebar-border: oklch(1 0 0 / 11%);
+  --sidebar-ring: #FFDE65;
+  --sidebar-glyph: oklch(0.78 0.004 70);
+  --sidebar-rail-hover: oklch(0.268 0.006 70);
+
+  --tone-success-bg: oklch(26.2% 0.051 172.552);
+  --tone-success-fg: oklch(84.5% 0.143 164.978);
+  --tone-danger-bg: oklch(27.1% 0.105 12.094);
+  --tone-danger-fg: oklch(81% 0.117 11.638);
+  --tone-info-bg: oklch(29.3% 0.066 243.157);
+  --tone-info-fg: oklch(82.8% 0.111 230.318);
+  --tone-report-bg: oklch(25.7% 0.09 281.288);
+  --tone-report-fg: oklch(78.5% 0.115 274.713);
+  --tone-warning-bg: oklch(27.9% 0.077 45.635);
+  --tone-warning-fg: oklch(87.9% 0.169 91.605);
+  --tone-progress-bg: oklch(27.9% 0.077 45.635);
+  --tone-progress-fg: #FFDE65;
+  --tone-neutral-bg: oklch(28% 0.009 62);
+  --tone-neutral-fg: oklch(87% 0.01 78);
+  --tone-success-solid: oklch(69.6% 0.17 162.48);
+}
+
+@theme inline {
+  --font-sans: "Geist", "PingFang SC", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  /* One monotonic ladder, every step inside the token system: 4/6/8/10/14/20.
+     Reaching one step up must never be a jump in kind. */
+  --radius-xs: calc(var(--radius) - 4px);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --radius-xl: calc(var(--radius) + 6px);
+  --radius-2xl: calc(var(--radius) + 12px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}

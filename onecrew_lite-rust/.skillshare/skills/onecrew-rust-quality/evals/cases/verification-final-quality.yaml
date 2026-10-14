@@ -1,0 +1,19 @@
+id: rust-quality-verification-final-quality
+type: verification
+prompt: Verify a final Rust quality diff that changes one typed owner error, one public boundary mapping, and one justified lint expectation after focused tests passed.
+expected:
+  must_include:
+    - delegate exact commands and evidence identity to onecrew-verify
+    - run or reuse one final lane per touched owner and immediate consumer
+    - cover typed variants stable secret-free projection and the lint exception branch
+    - distinguish rustdoc doctest clippy test and format evidence actually selected
+    - report native live release or MSRV matrix gaps as blocked or not run
+  must_not_include:
+    - repeat an unchanged final gate after wording-only review closure
+    - claim readiness compilation or one lint lane proves overall quality
+score:
+  pass: 90
+  critical_fail_if:
+    - FAIL or BLOCKED evidence is reused as PASS
+    - verification mutates manifests packages release state or external systems
+

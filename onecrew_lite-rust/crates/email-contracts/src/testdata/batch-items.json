@@ -1,0 +1,56 @@
+[
+  {
+    "from_name": "OneCrew 测试",
+    "from_email": "sender@example.invalid",
+    "to": ["first@example.invalid", "second@example.invalid"],
+    "cc": ["copy@example.invalid"],
+    "bcc": ["blind@example.invalid"],
+    "reply_to": ["reply@example.invalid", "other-reply@example.invalid"],
+    "in_reply_to": "<parent-1@example.invalid>",
+    "references": ["<old-2@example.invalid>", "<old-1@example.invalid>"],
+    "subject": "Inline \"subject\"",
+    "text": "Line one\nLine two 世界",
+    "html": "<p>Line &amp; two</p>",
+    "template": null
+  },
+  {
+    "from_name": null,
+    "from_email": "sender@example.invalid",
+    "to": ["local@example.invalid"],
+    "cc": [],
+    "bcc": ["local-blind@example.invalid"],
+    "reply_to": ["local-reply@example.invalid"],
+    "in_reply_to": null,
+    "references": ["<local-ref@example.invalid>"],
+    "subject": "Rendered local subject",
+    "text": "Rendered local body",
+    "html": null,
+    "template": {
+      "kind": "local",
+      "template_id": "template-local",
+      "revision": 7,
+      "variables": {"zeta": "last", "alpha": "first", "unicode": "世界"}
+    }
+  },
+  {
+    "from_name": "Published sender",
+    "from_email": "sender@example.invalid",
+    "to": ["published@example.invalid"],
+    "cc": ["published-copy@example.invalid"],
+    "bcc": [],
+    "reply_to": [],
+    "in_reply_to": "<published-parent@example.invalid>",
+    "references": ["<published-ref@example.invalid>"],
+    "subject": null,
+    "text": null,
+    "html": null,
+    "template": {
+      "kind": "published",
+      "template_id_or_alias": "welcome-v7",
+      "variables": {"zeta": [3, 1], "alpha": {"z": false, "a": 42}, "nullable": null, "label": "你好"},
+      "from_override": "Override <override@example.invalid>",
+      "subject_override": "Published subject",
+      "reply_to_override": ["published-reply@example.invalid", "published-other@example.invalid"]
+    }
+  }
+]

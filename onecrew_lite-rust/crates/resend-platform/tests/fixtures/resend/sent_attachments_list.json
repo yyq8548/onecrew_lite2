@@ -1,0 +1,16 @@
+{
+  "object": "list",
+  "has_more": false,
+  "data": [
+    {
+      "id": "2a0c9ce0-3112-4728-976e-000000000002",
+      "filename": "brief.pdf",
+      "size": 4096,
+      "content_type": "application/pdf",
+      "content_disposition": "attachment",
+      "content_id": null,
+      "download_url": "https://outbound-cdn.resend.com/9a1c2b3d/attachments/2a0c9ce0?signature=sig-not-a-secret-fixture",
+      "expires_at": "2026-08-23T12:02:10.000Z"
+    }
+  ]
+}

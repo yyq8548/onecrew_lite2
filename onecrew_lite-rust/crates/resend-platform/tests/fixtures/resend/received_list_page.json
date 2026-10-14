@@ -1,0 +1,41 @@
+{
+  "object": "list",
+  "has_more": true,
+  "data": [
+    {
+      "id": "7b2d3e4f-1001-4c5d-9e6f-000000000001",
+      "to": ["hello@example-team.com"],
+      "from": "Creator One <creator-one@example.net>",
+      "created_at": "2026-08-23 11:02:10.000000+00",
+      "subject": "Re: Collab idea",
+      "bcc": [],
+      "cc": [],
+      "reply_to": ["creator-one@example.net"],
+      "message_id": "<reply-1@mailer.example.net>",
+      "received_for": ["hello@example-team.com"],
+      "attachments": [
+        {
+          "id": "2a0c9ce0-3112-4728-976e-000000000001",
+          "filename": "media-kit.pdf",
+          "content_type": "application/pdf",
+          "content_id": null,
+          "content_disposition": "attachment",
+          "size": 482133
+        }
+      ]
+    },
+    {
+      "id": "7b2d3e4f-1002-4c5d-9e6f-000000000002",
+      "to": ["someone-else@example-team.com"],
+      "from": "Other Sender <other@example.org>",
+      "created_at": "2026-08-23 10:59:59.000000+00",
+      "subject": "Team-scoped, different mailbox",
+      "bcc": [],
+      "cc": ["hello@example-team.com"],
+      "reply_to": [],
+      "message_id": "<other-1@mailer.example.org>",
+      "received_for": ["someone-else@example-team.com"],
+      "attachments": []
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+[package]
+name = "onecrew-creator-runtime"
+version = "0.1.0"
+edition = "2024"
+rust-version.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[features]
+test-support = []
+
+[dependencies]
+log = "0.4"
+regex.workspace = true
+onecrew-dm-contracts = { path = "../dm-contracts" }
+onecrew-email-contracts = { path = "../email-contracts" }
+async-trait.workspace = true
+base64.workspace = true
+chrono.workspace = true
+calamine.workspace = true
+fs2.workspace = true
+rusqlite.workspace = true
+rust_xlsxwriter.workspace = true
+r2d2_sqlite.workspace = true
+r2d2.workspace = true
+schemars.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+tokio.workspace = true
+url.workspace = true
+uuid.workspace = true
+zip.workspace = true
+quick-xml.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { workspace = true, features = ["Win32_Foundation", "Win32_Security", "Win32_Security_Authorization", "Win32_Storage_FileSystem"] }
+
+[dev-dependencies]
+# `trace` only binds SQLite's statement tracing (`sqlite3_trace`, which logs
+# expanded SQL) so tests can count executed statements; it adds no crate.
+rusqlite = { workspace = true, features = ["hooks", "trace"] }
+syn = { version = "2", features = ["full", "visit"] }
+tempfile.workspace = true

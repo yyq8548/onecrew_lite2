@@ -1,0 +1,172 @@
+[
+  {
+    "name": "http_with_credentials",
+    "input": {
+      "kind": "http",
+      "host": "proxy.example",
+      "port": 8080,
+      "username": "proxy-user",
+      "password": "proxy-password"
+    },
+    "decoded": {
+      "kind": "http",
+      "host": "proxy.example",
+      "port": 8080,
+      "username": "proxy-user",
+      "password": "proxy-password"
+    },
+    "debug": "ProxyConfig { kind: Http, host: \"proxy.example\", port: 8080, username: Some(\"proxy-user\"), password: Some(\"[REDACTED]\") }"
+  },
+  {
+    "name": "socks5_web_form_nulls",
+    "input": {
+      "kind": "socks5",
+      "host": "socks.example",
+      "port": 1080,
+      "username": null,
+      "password": null
+    },
+    "decoded": {
+      "kind": "socks5",
+      "host": "socks.example",
+      "port": 1080,
+      "username": null,
+      "password": null
+    },
+    "debug": "ProxyConfig { kind: Socks5, host: \"socks.example\", port: 1080, username: None, password: None }"
+  },
+  {
+    "name": "https_without_credentials",
+    "input": {
+      "kind": "https",
+      "host": "secure.example",
+      "port": 443
+    },
+    "decoded": {
+      "kind": "https",
+      "host": "secure.example",
+      "port": 443,
+      "username": null,
+      "password": null
+    },
+    "debug": "ProxyConfig { kind: Https, host: \"secure.example\", port: 443, username: None, password: None }"
+  },
+  {
+    "name": "password_without_username_decodes",
+    "input": {
+      "kind": "http",
+      "host": "proxy.example",
+      "port": 3128,
+      "password": "lonely-password"
+    },
+    "decoded": {
+      "kind": "http",
+      "host": "proxy.example",
+      "port": 3128,
+      "username": null,
+      "password": "lonely-password"
+    },
+    "debug": "ProxyConfig { kind: Http, host: \"proxy.example\", port: 3128, username: None, password: Some(\"[REDACTED]\") }"
+  },
+  {
+    "name": "empty_host_and_zero_port_decode",
+    "input": {
+      "kind": "socks5",
+      "host": "",
+      "port": 0
+    },
+    "decoded": {
+      "kind": "socks5",
+      "host": "",
+      "port": 0,
+      "username": null,
+      "password": null
+    },
+    "debug": "ProxyConfig { kind: Socks5, host: \"\", port: 0, username: None, password: None }"
+  },
+  {
+    "name": "unknown_field_is_ignored",
+    "input": {
+      "kind": "socks5",
+      "host": "socks.example",
+      "port": 65535,
+      "username": "socks-user",
+      "password": "socks-password",
+      "label": "ignored"
+    },
+    "decoded": {
+      "kind": "socks5",
+      "host": "socks.example",
+      "port": 65535,
+      "username": "socks-user",
+      "password": "socks-password"
+    },
+    "debug": "ProxyConfig { kind: Socks5, host: \"socks.example\", port: 65535, username: Some(\"socks-user\"), password: Some(\"[REDACTED]\") }"
+  },
+  {
+    "name": "uppercase_kind_is_rejected",
+    "input": { "kind": "HTTP", "host": "proxy.example", "port": 8080 },
+    "decoded": null
+  },
+  {
+    "name": "unsupported_kind_is_rejected",
+    "input": { "kind": "socks4", "host": "proxy.example", "port": 1080 },
+    "decoded": null
+  },
+  {
+    "name": "missing_kind_is_rejected",
+    "input": { "host": "proxy.example", "port": 8080 },
+    "decoded": null
+  },
+  {
+    "name": "missing_host_is_rejected",
+    "input": { "kind": "http", "port": 8080 },
+    "decoded": null
+  },
+  {
+    "name": "missing_port_is_rejected",
+    "input": { "kind": "http", "host": "proxy.example" },
+    "decoded": null
+  },
+  {
+    "name": "port_above_u16_is_rejected",
+    "input": { "kind": "http", "host": "proxy.example", "port": 65536 },
+    "decoded": null
+  },
+  {
+    "name": "negative_port_is_rejected",
+    "input": { "kind": "http", "host": "proxy.example", "port": -1 },
+    "decoded": null
+  },
+  {
+    "name": "fractional_port_is_rejected",
+    "input": { "kind": "http", "host": "proxy.example", "port": 8080.5 },
+    "decoded": null
+  },
+  {
+    "name": "string_port_is_rejected",
+    "input": { "kind": "http", "host": "proxy.example", "port": "8080" },
+    "decoded": null
+  },
+  {
+    "name": "numeric_password_is_rejected",
+    "input": {
+      "kind": "http",
+      "host": "proxy.example",
+      "port": 8080,
+      "username": "proxy-user",
+      "password": 42
+    },
+    "decoded": null
+  },
+  {
+    "name": "url_string_is_rejected",
+    "input": "http://proxy-user:proxy-password@proxy.example:8080",
+    "decoded": null
+  },
+  {
+    "name": "null_is_rejected_unless_optional",
+    "input": null,
+    "decoded": null
+  }
+]

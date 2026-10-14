@@ -1,0 +1,22 @@
+{
+  "name": "onecrew_lite-tables",
+  "version": "0.1.0+codex.20260922124923",
+  "description": "\u53d1\u73b0 YouTube \u521b\u4f5c\u8005\u5e76\u7ba1\u7406 OneCrew \u5de5\u4f5c\u533a\u6570\u636e\u3002",
+  "author": {
+    "name": "OneCrew"
+  },
+  "interface": {
+    "displayName": "OneCrew",
+    "shortDescription": "YouTube \u641c\u7d22\u4e0e\u52a8\u6001\u8868\u683c",
+    "longDescription": "\u901a\u8fc7\u672c\u673a Chrome \u6269\u5c55\u6309\u89c6\u9891\u5185\u5bb9\u53d1\u73b0 YouTube \u521b\u4f5c\u8005\uff0c\u5e76\u4f7f\u7528 MCP \u7ba1\u7406\u52a8\u6001\u8868\u683c\u4e0e\u8bb0\u5f55\u3002\u64cd\u4f5c\u6d41\u7a0b\u89c1 OneCrew skill\u3002",
+    "developerName": "OneCrew",
+    "category": "Productivity",
+    "capabilities": [],
+    "defaultPrompt": [
+      "\u641c\u7d22\u79d1\u6280\u8bc4\u6d4b\u76f8\u5173\u7684 YouTube \u9891\u9053\uff0c\u5e76\u4fdd\u5b58\u5230\u65b0\u8868\u3002",
+      "\u5217\u51fa\u6211\u7684\u8868\u683c\uff0c\u67e5\u770b\u5176\u4e2d\u4e00\u5f20\u8868\u7684\u5185\u5bb9\u3002"
+    ]
+  },
+  "mcpServers": "./.mcp.json",
+  "skills": "./skills/"
+}

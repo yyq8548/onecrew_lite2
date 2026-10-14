@@ -1,0 +1,12 @@
+{
+  "name": "onecrew_lite-cli",
+  "interface": { "displayName": "onecrew_lite Local Plugins" },
+  "plugins": [
+    {
+      "name": "onecrew_lite",
+      "source": { "source": "local", "path": "./plugins/onecrew" },
+      "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" },
+      "category": "Productivity"
+    }
+  ]
+}
