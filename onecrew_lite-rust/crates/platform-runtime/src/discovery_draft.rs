@@ -15,6 +15,7 @@ use crate::{LocalPlatform, OpenCliDiscoverySources};
 pub(crate) mod codex;
 mod progress;
 mod expansion;
+mod query_audit;
 pub use progress::DraftProgress;
 pub(crate) use progress::{DraftPhase, DraftProgressState};
 

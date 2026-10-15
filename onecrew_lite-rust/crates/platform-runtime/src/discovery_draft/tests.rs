@@ -2,6 +2,35 @@ use super::*;
 use crate::opencli::{OpenCliDiscoveryProfile, OpenCliDiscoverySource};
 
 #[tokio::test]
+#[ignore = "使用真实来源注册表和已登录 Codex 验证美妆需求，不执行平台搜索"]
+async fn live_beauty_plan_preserves_platform_followers_and_total() {
+    let directory = tempfile::tempdir().unwrap();
+    let platform = LocalPlatform::open(directory.path()).unwrap();
+    let inventory: OpenCliDiscoverySources = platform.opencli_setup_report().await.into();
+    assert!(inventory.issue.is_none(), "{:?}", inventory.issue);
+    let mut request = input();
+    request.brief = "我要找美妆博主，帮我在tiktok, x 和 youtube上找粉丝数不少于5000的100个\nDefault search entries when no platform is requested: youtube".into();
+    request.target_count = None;
+    request.max_calls = None;
+    request.profile_ref = inventory
+        .profiles
+        .first()
+        .expect("已连接的浏览器身份")
+        .context_id
+        .clone();
+    let proposal = codex::plan(&request.brief, &inventory).await.unwrap();
+    let draft = build_draft(&request, &inventory, proposal).unwrap();
+    assert_eq!(draft.target_count, 100);
+    assert_eq!(draft.criteria["min_subscribers"], 5000);
+    let platforms: BTreeSet<_> = draft.scopes.iter().map(|s| s.platform.as_str()).collect();
+    assert_eq!(platforms, BTreeSet::from(["tiktok", "twitter", "youtube"]));
+    for scope in draft.scopes {
+        assert!((6..=8).contains(&scope.keywords.len()));
+        println!("{}：{}", scope.platform, scope.keywords.join("；"));
+    }
+}
+
+#[tokio::test]
 #[ignore = "authorized native intent then query planning, no provider reads or customer writes"]
 async fn native_codex_headphone_intent_and_queries_acceptance() {
     let mut request = input();

@@ -192,6 +192,28 @@ fn classify_failure(code: Option<i32>, stdout: &[u8], stderr: &[u8]) -> OpenCliE
     } else if code == Some(75) && output.lines().any(|line| line.trim() == "code: timeout") {
         // Exit 75 also covers SESSION_BUSY; require OpenCLI's machine code.
         OpenCliError::Timeout
+    } else if let Some((_, failure)) = [
+        (
+            "onecrew_youtube_video_unavailable",
+            crate::YoutubeEvidenceFailure::Unavailable,
+        ),
+        (
+            "onecrew_youtube_layout_unsupported",
+            crate::YoutubeEvidenceFailure::Layout,
+        ),
+        (
+            "onecrew_youtube_identity_invalid",
+            crate::YoutubeEvidenceFailure::Identity,
+        ),
+        (
+            "onecrew_youtube_description_unavailable",
+            crate::YoutubeEvidenceFailure::Description,
+        ),
+    ]
+    .into_iter()
+    .find(|(marker, _)| output.contains(marker))
+    {
+        OpenCliError::YoutubeEvidence(failure)
     } else {
         OpenCliError::CommandFailed(code)
     }
@@ -276,6 +298,41 @@ async fn read_web_diagnostics(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn youtube_evidence_failures_keep_safe_specific_reasons() {
+        for (marker, failure) in [
+            (
+                "ONECREW_YOUTUBE_VIDEO_UNAVAILABLE",
+                crate::YoutubeEvidenceFailure::Unavailable,
+            ),
+            (
+                "ONECREW_YOUTUBE_LAYOUT_UNSUPPORTED",
+                crate::YoutubeEvidenceFailure::Layout,
+            ),
+            (
+                "ONECREW_YOUTUBE_IDENTITY_INVALID",
+                crate::YoutubeEvidenceFailure::Identity,
+            ),
+            (
+                "ONECREW_YOUTUBE_DESCRIPTION_UNAVAILABLE",
+                crate::YoutubeEvidenceFailure::Description,
+            ),
+        ] {
+            assert_eq!(
+                classify_failure(Some(1), b"", marker.as_bytes()),
+                OpenCliError::YoutubeEvidence(failure)
+            );
+        }
+        assert_eq!(
+            classify_failure(Some(1), b"", b"AUTH_REQUIRED"),
+            OpenCliError::AuthRequired
+        );
+        assert_eq!(
+            classify_failure(Some(1), b"", b"captcha ONECREW_YOUTUBE_LAYOUT_UNSUPPORTED"),
+            OpenCliError::RiskControl
+        );
+    }
     #[cfg(windows)]
     #[tokio::test]
     #[ignore = "requires Node.js; verifies the real daemon launch directory"]

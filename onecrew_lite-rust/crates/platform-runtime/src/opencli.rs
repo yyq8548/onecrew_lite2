@@ -160,6 +160,7 @@ fn setup_issue(error: &OpenCliError) -> &'static str {
         OpenCliError::Timeout => "timeout",
         OpenCliError::OutputTooLarge => "output_too_large",
         OpenCliError::CommandFailed(_)
+        | OpenCliError::YoutubeEvidence(_)
         | OpenCliError::RiskControl
         | OpenCliError::InvalidOutput => "check_failed",
         OpenCliError::AuthRequired => "auth_required",
@@ -1079,6 +1080,7 @@ impl LocalPlatform {
                     OpenCliError::InvalidInput(_) => "opencli_invalid_input",
                     OpenCliError::Unavailable => "opencli_unavailable",
                     OpenCliError::CommandFailed(_) => "opencli_command_failed",
+                    OpenCliError::YoutubeEvidence(failure) => failure.code(),
                     OpenCliError::RiskControl => "opencli_risk_control",
                     OpenCliError::AuthRequired => "opencli_auth_required",
                 };
@@ -1437,6 +1439,7 @@ impl LocalPlatform {
                     OpenCliError::InvalidInput(_) => "opencli_invalid_input",
                     OpenCliError::Unavailable => "opencli_unavailable",
                     OpenCliError::CommandFailed(_) => "opencli_command_failed",
+                    OpenCliError::YoutubeEvidence(failure) => failure.code(),
                     OpenCliError::RiskControl => "opencli_risk_control",
                     OpenCliError::AuthRequired => "opencli_auth_required",
                 };
@@ -1522,6 +1525,7 @@ pub fn provider_stop_code(error: &OpenCliError) -> &'static str {
         OpenCliError::InvalidInput(_) => "opencli_invalid_input",
         OpenCliError::Unavailable => "opencli_unavailable",
         OpenCliError::CommandFailed(_) => "opencli_command_failed",
+        OpenCliError::YoutubeEvidence(failure) => failure.code(),
         OpenCliError::RiskControl => "opencli_risk_control",
         OpenCliError::AuthRequired => "opencli_auth_required",
     }

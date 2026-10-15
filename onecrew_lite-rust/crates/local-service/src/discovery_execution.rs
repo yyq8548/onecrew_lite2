@@ -913,18 +913,35 @@ async fn run(
                         input.excluded_platforms.clone(),
                     )
                     .await
-                    .map_err(|e| e.to_string())
-            }
-            .await;
+                    .map_err(|e| e.read_failure_code().to_string())
+            };
+            let remaining = tokio::select! {
+                biased;
+                _ = cancel.cancelled() => continue,
+                _ = state.shutdown.cancelled() => continue,
+                remaining = remaining => remaining,
+            };
             // A failed capacity read permits no additional provider dispatch.
             let capacity = match remaining {
                 Ok(remaining) => pipeline::score_capacity(remaining),
-                Err(_) => {
+                Err(code) => {
+                    crate::discovery_metrics::enqueue_failure(
+                        &state.data_dir,
+                        &input.campaign_id,
+                        crate::discovery_metrics::ReadFailure {
+                            recorded_at: now(),
+                            step: "capacity".into(),
+                            platform: None,
+                            target_id: None,
+                            call_number: None,
+                            code: safe_failure_code(&code),
+                        },
+                    );
                     state.discovery_execution.change(|s| {
                         s.stage = WorkspaceStage::Error;
                         s.reason = Some("request_failed".into());
                         s.failure_phase = Some("score".into());
-                        s.failure_code = Some("initial_match_campaign_unavailable".into());
+                        s.failure_code = Some(safe_failure_code(&code));
                     });
                     break;
                 }
@@ -1630,6 +1647,16 @@ fn safe_failure_code(code: &str) -> String {
     if matches!(
         code,
         "score_queue_unavailable"
+            | "creator_repository_read_failed"
+            | "creator_repository_campaign_missing"
+            | "creator_repository_locked"
+            | "creator_repository_read_pool_unavailable"
+            | "creator_repository_overloaded"
+            | "creator_repository_closed"
+            | "creator_repository_cancelled"
+            | "creator_repository_outcome_unknown"
+            | "discovery_draft_intent_invalid"
+            | "discovery_draft_scope_invalid"
             | "query_round_authentication_required"
             | "query_round_campaign_changed"
             | "query_round_no_available_platform"
@@ -1661,6 +1688,10 @@ fn safe_failure_code(code: &str) -> String {
             | "opencli_invalid_input"
             | "opencli_unavailable"
             | "opencli_command_failed"
+            | "youtube_video_unavailable"
+            | "youtube_watch_layout_unsupported"
+            | "youtube_author_identity_invalid"
+            | "youtube_description_unavailable"
             | "opencli_risk_control"
             | "opencli_auth_required"
             | "search_completion_failed"

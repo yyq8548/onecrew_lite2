@@ -157,7 +157,21 @@ pub(super) async fn plan_with_progress(
         .await?
         .into_domain()?;
     plan.table_subject = understanding.product_or_topic;
+    super::query_audit::audit(
+        brief,
+        serde_json::json!({"plan": plan, "manual_scopes": manual_scopes}),
+        &plan.scopes,
+        progress,
+    )
+    .await?;
     Ok(plan)
+}
+
+pub(super) async fn structured_planning<T: schemars::JsonSchema + serde::de::DeserializeOwned>(
+    request: String,
+    progress: &(dyn Fn(super::DraftPhase) + Sync),
+) -> Result<T, DiscoveryDraftError> {
+    structured_with_effort(request, true, progress, &mut |_, _| {}).await
 }
 
 #[cfg(test)]

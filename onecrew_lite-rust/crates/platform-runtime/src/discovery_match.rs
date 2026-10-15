@@ -274,7 +274,7 @@ impl LocalPlatform {
         let campaign = creators
             .get_discovery_campaign_async(input.campaign_id.clone())
             .await
-            .map_err(|_| "initial_match_campaign_unavailable")?;
+            .map_err(|error| error.read_failure_code())?;
         if let Some((observed, minimum)) = rules::below_minimum(&material.criteria, count) {
             if self.library_access_user().await? != account {
                 return Err("initial_match_account_changed".into());

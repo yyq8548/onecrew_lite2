@@ -139,6 +139,21 @@ impl LocalPlatform {
             if !valid {
                 continue;
             }
+            let audit_scopes = additions
+                .iter()
+                .map(|s| DraftScope {
+                    platform: s.platform.clone(),
+                    keywords: s.keywords.clone(),
+                })
+                .collect::<Vec<_>>();
+            super::query_audit::audit(
+                &campaign.brief,
+                json!({"frozen_criteria":campaign.criteria,"target":campaign.target_count,"approved_scopes":campaign.scopes,"next_round":audit_scopes}),
+                &audit_scopes,
+                &|_| {},
+            )
+            .await
+            .map_err(|e| e.code().to_string())?;
             self.check_draft_account(&account)
                 .await
                 .map_err(|e| e.code().to_string())?;

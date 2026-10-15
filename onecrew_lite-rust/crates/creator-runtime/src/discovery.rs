@@ -89,6 +89,10 @@ pub(crate) fn source_local_read_failure(code: Option<&str>) -> bool {
         code,
         Some(
             "opencli_command_failed"
+                | "youtube_video_unavailable"
+                | "youtube_watch_layout_unsupported"
+                | "youtube_author_identity_invalid"
+                | "youtube_description_unavailable"
                 | "opencli_invalid_output"
                 | "opencli_output_too_large"
                 | "opencli_timeout"
@@ -474,8 +478,10 @@ impl CreatorRuntime {
         campaign: String,
     ) -> Result<Vec<DiscoveryReadStop>, CreatorRepositoryCallError<String>> {
         let owner = self.clone();
-        self.repository_read_segment(move || owner.repository.discovery_read_stops(&campaign))
-            .await
+        self.repository_discovery_read_segment(move || {
+            owner.repository.discovery_read_stops(&campaign)
+        })
+        .await
     }
     pub async fn plan_discovery_step_async(
         &self,
@@ -483,7 +489,7 @@ impl CreatorRuntime {
         expected_revision: u32,
     ) -> Result<DiscoveryStep, CreatorRepositoryCallError<String>> {
         let owner = self.clone();
-        self.repository_read_segment(move || {
+        self.repository_discovery_read_segment(move || {
             owner.plan_discovery_step(&campaign_id, expected_revision)
         })
         .await
@@ -504,7 +510,7 @@ impl CreatorRuntime {
         excluded_platforms: Vec<String>,
     ) -> Result<DiscoveryStep, CreatorRepositoryCallError<String>> {
         let owner = self.clone();
-        self.repository_read_segment(move || {
+        self.repository_discovery_read_segment(move || {
             owner.plan_discovery_step_excluding(
                 &campaign_id,
                 expected_revision,
@@ -531,7 +537,7 @@ impl CreatorRuntime {
         deferred_platforms: Vec<String>,
     ) -> Result<DiscoveryStep, CreatorRepositoryCallError<String>> {
         let owner = self.clone();
-        self.repository_read_segment(move || {
+        self.repository_discovery_read_segment(move || {
             owner.plan_discovery_step_deferred(
                 &campaign_id,
                 expected_revision,
@@ -551,7 +557,7 @@ impl CreatorRuntime {
         scoring_hits: Vec<String>,
     ) -> Result<DiscoveryStep, CreatorRepositoryCallError<String>> {
         let owner = self.clone();
-        self.repository_read_segment(move || {
+        self.repository_discovery_read_segment(move || {
             let fallback = owner.plan_discovery_step_deferred(
                 &campaign_id,
                 expected_revision,
@@ -974,7 +980,7 @@ impl CreatorRuntime {
         excluded_platforms: Vec<String>,
     ) -> Result<u32, CreatorRepositoryCallError<String>> {
         let owner = self.clone();
-        self.repository_read_segment(move || {
+        self.repository_discovery_read_segment(move || {
             let campaign = owner.get_discovery_campaign(&campaign_id)?;
             let counts = owner
                 .repository
@@ -989,8 +995,10 @@ impl CreatorRuntime {
         campaign_id: String,
     ) -> Result<DiscoveryCandidateCounts, CreatorRepositoryCallError<String>> {
         let owner = self.clone();
-        self.repository_read_segment(move || owner.count_discovery_candidates(&campaign_id))
-            .await
+        self.repository_discovery_read_segment(move || {
+            owner.count_discovery_candidates(&campaign_id)
+        })
+        .await
     }
 
     pub fn count_discovery_candidates(
@@ -1008,7 +1016,7 @@ impl CreatorRuntime {
         input: ListDiscoverySearchHitsInput,
     ) -> Result<Vec<DiscoverySearchHit>, CreatorRepositoryCallError<String>> {
         let owner = self.clone();
-        self.repository_read_segment(move || owner.list_discovery_search_hits(input))
+        self.repository_discovery_read_segment(move || owner.list_discovery_search_hits(input))
             .await
     }
 
@@ -1179,7 +1187,7 @@ impl CreatorRuntime {
         id: String,
     ) -> Result<DiscoveryCampaign, CreatorRepositoryCallError<String>> {
         let owner = self.clone();
-        self.repository_read_segment(move || owner.get_discovery_campaign(&id))
+        self.repository_discovery_read_segment(move || owner.get_discovery_campaign(&id))
             .await
     }
 
@@ -1192,16 +1200,20 @@ impl CreatorRuntime {
         id: String,
     ) -> Result<crate::DiscoveryLibraryTableName, CreatorRepositoryCallError<String>> {
         let owner = self.clone();
-        self.repository_read_segment(move || owner.repository.discovery_library_table_name(&id))
-            .await
+        self.repository_discovery_read_segment(move || {
+            owner.repository.discovery_library_table_name(&id)
+        })
+        .await
     }
 
     pub async fn recent_discovery_campaigns_async(
         &self,
     ) -> Result<Vec<DiscoveryCampaignSummary>, CreatorRepositoryCallError<String>> {
         let owner = self.clone();
-        self.repository_read_segment(move || owner.repository.recent_discovery_campaigns())
-            .await
+        self.repository_discovery_read_segment(move || {
+            owner.repository.recent_discovery_campaigns()
+        })
+        .await
     }
 
     pub async fn upsert_discovery_candidate_async(
@@ -1250,7 +1262,7 @@ impl CreatorRuntime {
         input: ListDiscoveryCandidatesInput,
     ) -> Result<Vec<DiscoveryCandidate>, CreatorRepositoryCallError<String>> {
         let owner = self.clone();
-        self.repository_read_segment(move || owner.list_discovery_candidates(input))
+        self.repository_discovery_read_segment(move || owner.list_discovery_candidates(input))
             .await
     }
 
