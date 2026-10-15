@@ -631,9 +631,7 @@ impl CreatorSyncRuntime {
     ) -> Result<CredentialProbe, ReadbackFailure> {
         let response = self
             .send(HttpRequest {
-                creator_bundle_version: Some(
-                    crate::ACCESS_BUNDLE_FORMAT_VERSION,
-                ),
+                creator_bundle_version: Some(crate::ACCESS_BUNDLE_FORMAT_VERSION),
                 method: Method::GET,
                 endpoint: self.inner.endpoints.credential_probe(),
                 authorization: Some(candidate.bearer.authorization()),

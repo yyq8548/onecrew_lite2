@@ -201,6 +201,20 @@ pub fn default_cli_installation() -> Result<PathBuf, String> {
     Ok(UserInstallLayout::current()?.executable().to_owned())
 }
 
+/// Called under the service owner lease before startup, and before opening
+/// Library. Interrupted or in-progress whole-package replacements stay closed.
+pub(crate) fn require_complete_workspace(package: &Path) -> Result<(), String> {
+    let marker = package
+        .parent()
+        .ok_or("workspace_install_directory_unavailable")?
+        .join(".onecrew_lite-install");
+    match fs::symlink_metadata(marker) {
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Ok(_) => Err("workspace_installation_pending: complete installation or recovery before starting onecrew_lite".into()),
+        Err(_) => Err("workspace_installation_state_unavailable".into()),
+    }
+}
+
 #[derive(Clone, PartialEq, Eq)]
 struct FileStamp {
     path: PathBuf,

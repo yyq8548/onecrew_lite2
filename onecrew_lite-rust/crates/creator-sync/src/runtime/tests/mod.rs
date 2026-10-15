@@ -1,11 +1,11 @@
 //! Shared Creator Sync runtime test support and invariant suites.
 
-mod table_sync;
 mod coordinator;
 mod encoding;
 mod enrollment;
 mod snapshot;
 mod store;
+mod table_sync;
 
 use std::{
     collections::BTreeMap,
@@ -910,7 +910,12 @@ fn runtime(
     transport: Arc<dyn HttpTransport>,
     store: Arc<dyn CreatorSyncCredentialStore>,
 ) -> CreatorSyncRuntime {
-    CreatorSyncRuntime::from_parts(true, Some(transport), store)
+    let mut runtime = CreatorSyncRuntime::from_parts(true, Some(transport), store);
+    // Historical protocol fixtures use a non-production endpoint. Production
+    // retirement is covered separately and cannot be bypassed by admission.
+    Arc::get_mut(&mut runtime.inner).unwrap().endpoints =
+        CreatorSyncEndpoints::with_sync_origin_for_test("http://127.0.0.1:1", true).unwrap();
+    runtime
 }
 
 fn runtime_with_clock(

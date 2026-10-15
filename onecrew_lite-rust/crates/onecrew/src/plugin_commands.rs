@@ -96,7 +96,7 @@ fn explicit_codex_cli(path: Option<&Path>) -> Result<Option<PathBuf>, String> {
 /// fails. Discovery checks PATH and supported desktop application layouts;
 /// an explicit path remains available for other installations.
 fn print_codex_cli_hint() {
-    eprintln!("onecrew could not find the Codex CLI. Paths tried, in order:");
+    eprintln!("onecrew_lite could not find the Codex CLI. Paths tried, in order:");
     let candidates = onecrew_codex::codex_cli_candidates();
     if candidates.is_empty() {
         eprintln!("  (none: this process has no PATH)");
@@ -106,11 +106,11 @@ fn print_codex_cli_hint() {
     }
     if cfg!(windows) {
         eprintln!(
-            "Rerun naming the CLI explicitly, for example:\n  onecrew plugin install --codex (Get-Command codex.exe).Source"
+            "Rerun naming the CLI explicitly, for example:\n  onecrew_lite plugin install --codex (Get-Command codex.exe).Source"
         );
     } else {
         eprintln!(
-            "Rerun naming the CLI explicitly, for example:\n  onecrew plugin install --codex \"$(command -v codex)\""
+            "Rerun naming the CLI explicitly, for example:\n  onecrew_lite plugin install --codex \"$(command -v codex)\""
         );
     }
 }
@@ -121,7 +121,7 @@ fn print_codex_cli_hint() {
 /// reads, so a second way to say it could disagree with the CLI being driven.
 fn print_codex_home_hint() {
     eprintln!(
-        "onecrew could not resolve the Codex home directory. It reads CODEX_HOME, and otherwise uses the .codex directory in your home directory."
+        "onecrew_lite could not resolve the Codex home directory. It reads CODEX_HOME, and otherwise uses the .codex directory in your home directory."
     );
     if let Some(home) = dirs::home_dir() {
         eprintln!(
@@ -151,7 +151,7 @@ async fn join_plugin_operation(
 /// longer maintains; only an explicit install regenerates and re-registers it.
 fn print_marketplace_repair_hint() {
     eprintln!(
-        "Codex's onecrew_lite-cli marketplace registration points to a missing or relocated source, so new Codex tasks may not load the OneCrew plugin. Run onecrew plugin install, then fully quit and restart Codex."
+        "Codex's onecrew_lite-cli marketplace registration points to a missing or relocated source, so new Codex tasks may not load the onecrew_lite plugin. Run onecrew_lite plugin install, then fully quit and restart Codex."
     );
 }
 
@@ -176,7 +176,7 @@ fn print_status(status: PluginStatus) -> Result<(), String> {
 fn print_install_status(status: PluginStatus) -> Result<(), String> {
     if status.diagnostic_code.as_deref() == Some("plugin_identity_change_required") {
         eprintln!(
-            "Automatic replacement of a retired OneCrew plugin could not be verified. In Codex, remove the old onecrew-local plugin from onecrew_lite-cli or onecrew_lite-local, then run onecrew plugin install and fully quit and restart Codex. Installation has not been verified complete."
+            "Automatic replacement of a retired OneCrew plugin could not be verified. In Codex, remove the old onecrew-local plugin from onecrew_lite-cli or onecrew_lite-local, then run onecrew_lite plugin install and fully quit and restart Codex. Installation has not been verified complete."
         );
     }
     if status.state != PluginState::Installed || status.enabled != Some(true) {

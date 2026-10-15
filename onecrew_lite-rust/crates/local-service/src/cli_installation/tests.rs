@@ -1,6 +1,26 @@
 use super::*;
 
 #[test]
+fn partial_workspace_cannot_start_until_transaction_is_finished() {
+    let temp = tempfile::tempdir().unwrap();
+    let package = temp.path().join("onecrew_lite");
+    let marker = temp.path().join(".onecrew_lite-install");
+    require_complete_workspace(&package).unwrap();
+    fs::create_dir(&marker).unwrap();
+    assert!(
+        require_complete_workspace(&package)
+            .unwrap_err()
+            .contains("installation_pending")
+    );
+    fs::remove_dir(&marker).unwrap();
+    // Even a malformed marker cannot silently bypass recovery.
+    fs::write(&marker, b"interrupted").unwrap();
+    assert!(require_complete_workspace(&package).is_err());
+    fs::remove_file(&marker).unwrap();
+    require_complete_workspace(&package).unwrap();
+}
+
+#[test]
 fn unix_layout_keeps_integration_state_beside_the_installed_cli() {
     let layout = UserInstallLayout::for_host(HostFamily::Unix, Path::new("/home/someone"));
     assert_eq!(

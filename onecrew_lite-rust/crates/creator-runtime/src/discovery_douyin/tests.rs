@@ -514,6 +514,8 @@ fn douyin_rounded_followers_use_conservative_bounds_for_review() {
             .prepare_discovery_review_material(CAMPAIGN, 1, &hit)
             .unwrap();
         assert_eq!(material.native_followers, None);
+        let snapshot = owner.prepare_discovery_library_snapshot(CAMPAIGN, 1).unwrap();
+        assert_eq!(snapshot.rows[0].followers.as_deref(), Some("~43.9万"));
         let estimate = material.native_follower_estimate.unwrap();
         assert_eq!(
             (estimate.nominal, estimate.lower, estimate.upper),

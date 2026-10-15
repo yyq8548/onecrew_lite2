@@ -664,7 +664,7 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
       {checkingStartLogin && <p role="status" className="flex items-center gap-2 text-sm"><Loader2 className="size-4 animate-spin" aria-hidden />{t("opencli.authCheckAll")}</p>}
       {current && <div className="space-y-6">
         {execution.isError && <Alert><AlertDescription>{t("opencliPilot.executionConnectionFailed")}</AlertDescription></Alert>}
-        {(startExecution.isError || pauseExecution.isError) && <Alert variant="destructive"><AlertDescription>{t("opencliPilot.executionControlFailed")}</AlertDescription></Alert>}
+        {(startExecution.isError || pauseExecution.isError) && <Alert variant="destructive"><AlertDescription>{t(startExecution.isError && discoveryLibraryFailureKey(startExecution.error) !== "librarySyncFailed" ? `opencliPilot.${discoveryLibraryFailureKey(startExecution.error)}` : "opencliPilot.executionControlFailed")}</AlertDescription></Alert>}
         <DiscoveryOverview campaign={current} counts={counts.data} stage={stage} running={running}
           busy={verify.isPending || recoverSearch.isPending} profileChanged={profileChanged} syncing={librarySync.isPending}
           library={libraryResult} syncFailed={currentExecution ? !!currentExecution.sync_error && currentExecution.sync_error !== "library_source_stale" : syncFailure?.campaignId === current.id}
@@ -687,7 +687,6 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
           </li>)}</ul>
         </details>}
         {execution.isError && <Alert><AlertDescription>{t("opencliPilot.statusDisconnected")}</AlertDescription></Alert>}
-        {(startExecution.isError || pauseExecution.isError) && <Alert><AlertDescription>{t("opencliPilot.executionRequestFailed")}</AlertDescription></Alert>}
         {counts.isError && <Alert variant="destructive"><AlertDescription>{t("opencliPilot.candidatesFailed")}</AlertDescription></Alert>}
         {current.phase === "draft" && <div className="rounded-md border p-3 text-sm"><p className="font-medium">{t("opencliPilot.approvalBounds")}</p><p>{current.scopes.map(scope => platformDisplayName(scope.platform)).join(", ")}</p><p>{t("opencliPilot.frozenThreshold", { count: current.criteria.min_subscribers ?? current.criteria.min_followers ?? 0 })}</p>{current.criteria.region && <p>{t("opencliPilot.frozenRegion", { value: current.criteria.region })}</p>}<p>{t("opencliPilot.frozenLanguage", { value: current.criteria.language || t("opencliPilot.any") })}</p><p>{t("opencliPilot.frozenCategory", { value: current.criteria.category || t("opencliPilot.any") })}</p>{current.scopes.map(scope => <p key={`${scope.platform}:${scope.profile_ref}`}>{t("opencliPilot.frozenKeywords", { value: `${platformDisplayName(scope.platform)}: ${scope.keywords.join(", ")}` })}</p>)}<p>{t("opencliPilot.frozenBudget", { target: current.target_count, calls: current.max_calls ?? "∞", version: current.opencli_version })}</p></div>}
         {current.phase === "active" && <Button variant="secondary" className="h-11 border font-semibold" disabled={running || pausing || verify.isPending || recoverSearch.isPending || current.platform_runs.some(run => run.status === "searching")} onClick={editPlan}><Settings2 className="size-4" />{t("opencliPilot.editPlan")}</Button>}

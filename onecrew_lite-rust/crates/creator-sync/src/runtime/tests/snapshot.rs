@@ -1,6 +1,30 @@
 use super::*;
 
 #[tokio::test]
+async fn production_snapshots_are_retired_before_credentials_or_network() {
+    let (metadata, bearer) = sample_credential();
+    let transport = Arc::new(SnapshotFake::new(SnapshotMode::Normal, metadata.clone()));
+    let store = Arc::new(FakeStore::with_credential(metadata.clone(), bearer));
+    let runtime = CreatorSyncRuntime::from_parts(true, Some(transport.clone()), store.clone());
+    mark_admission_validated(&runtime);
+    store.fail_load.store(true, Ordering::Release);
+    assert_eq!(
+        runtime.can_sync_now().await.unwrap_err().state,
+        CreatorSnapshotSyncState::Retired
+    );
+    assert_eq!(
+        runtime.sync_creator_bundle(fixture_bundle()).await.state,
+        CreatorSnapshotSyncState::Retired
+    );
+    assert!(transport.requests.lock().unwrap().is_empty());
+    store.fail_load.store(false, Ordering::Release);
+    match store.load().unwrap().unwrap() {
+        StoredCredentialState::Active(saved) => assert_eq!(saved.metadata, metadata),
+        StoredCredentialState::NonActive(_) => panic!("retirement must preserve pairing"),
+    }
+}
+
+#[tokio::test]
 async fn v3_upload_reprobes_released_enrollment_without_rewriting_credential_metadata() {
     for stored_version in [1, 2] {
         let (mut metadata, bearer) = sample_credential();

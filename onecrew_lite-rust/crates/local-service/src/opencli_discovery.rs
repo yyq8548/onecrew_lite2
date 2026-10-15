@@ -132,7 +132,9 @@ pub(crate) async fn sync_library(
     // Register only after the local receipt is published. The independent worker
     // checks the accepted policy before uploading.
     if result.is_ok()
-        && crate::table_sync::register_result(state, &campaign_id, &credential).await.is_err()
+        && crate::table_sync::register_result(state, &campaign_id, &credential)
+            .await
+            .is_err()
     {
         log::warn!("recommendation table background registration failed");
     }

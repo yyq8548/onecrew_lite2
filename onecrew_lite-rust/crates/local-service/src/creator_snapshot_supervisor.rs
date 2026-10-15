@@ -747,17 +747,14 @@ mod tests {
         );
 
         let fresh = sync_creator_snapshot(&platform).await;
-        assert_eq!(fresh.state, CreatorSnapshotSyncState::ValidationRequired);
-        assert_eq!(
-            fresh.issue,
-            Some(CreatorSyncIssue::AdmissionValidationRequired)
-        );
+        assert_eq!(fresh.state, CreatorSnapshotSyncState::Retired);
+        assert_eq!(fresh.issue, None);
         assert!(fresh.creator_count.is_none());
 
         let status = sync.ensure_admission_validated().await;
         assert_eq!(status.state, CreatorSyncAdmissionState::PairingRequired);
         let unpaired = sync_creator_snapshot(&platform).await;
-        assert_eq!(unpaired.state, CreatorSnapshotSyncState::ValidationRequired);
+        assert_eq!(unpaired.state, CreatorSnapshotSyncState::Retired);
         assert_ne!(unpaired.issue, Some(CreatorSyncIssue::VerificationFailed));
     }
 

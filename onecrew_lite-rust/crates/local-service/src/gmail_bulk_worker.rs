@@ -1,6 +1,6 @@
 //! Application-owned outbox loop. Closing a Web tab never owns its lifetime.
-use onecrew_creator_runtime::CreatorRuntime;
 use futures::FutureExt;
+use onecrew_creator_runtime::CreatorRuntime;
 use tokio_util::sync::CancellationToken;
 
 pub(crate) async fn run(runtime: CreatorRuntime, cancel: CancellationToken) {
@@ -11,15 +11,22 @@ pub(crate) async fn run(runtime: CreatorRuntime, cancel: CancellationToken) {
         }
         // Do not cancel a provider attempt halfway through. Shutdown joins this task
         // with a bound; a forced termination leaves the durable attempt uncertain.
-        match std::panic::AssertUnwindSafe(runtime.run_gmail_bulk_item()).catch_unwind().await {
-            Ok(Ok(_))=>{},
-            Ok(Err(error))=>{
+        match std::panic::AssertUnwindSafe(runtime.run_gmail_bulk_item())
+            .catch_unwind()
+            .await
+        {
+            Ok(Ok(_)) => {}
+            Ok(Err(error)) => {
                 log::error!("gmail bulk item failed: {error}");
-                if let Err(error)=runtime.interrupt_gmail_bulk().await { log::error!("gmail bulk recovery failed: {error}"); }
-            },
-            Err(_)=>{
+                if let Err(error) = runtime.interrupt_gmail_bulk().await {
+                    log::error!("gmail bulk recovery failed: {error}");
+                }
+            }
+            Err(_) => {
                 log::error!("gmail bulk item panicked; pausing queue");
-                if let Err(error)=runtime.interrupt_gmail_bulk().await { log::error!("gmail bulk panic recovery failed: {error}"); }
+                if let Err(error) = runtime.interrupt_gmail_bulk().await {
+                    log::error!("gmail bulk panic recovery failed: {error}");
+                }
             }
         }
     }

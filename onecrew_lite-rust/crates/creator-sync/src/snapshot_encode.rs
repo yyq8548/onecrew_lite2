@@ -1,8 +1,7 @@
 //! Canonical private manifest planning and delta snapshot encoding.
 
 use onecrew_creator_runtime::{
-    CREATOR_BUNDLE_FORMAT, CREATOR_BUNDLE_MAX_CREATORS,
-    CreatorBundle, CreatorTransferCreator,
+    CREATOR_BUNDLE_FORMAT, CREATOR_BUNDLE_MAX_CREATORS, CreatorBundle, CreatorTransferCreator,
 };
 use serde::Serialize;
 use serde_json::json;

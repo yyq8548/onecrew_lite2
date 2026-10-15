@@ -1,5 +1,4 @@
-// Assemble verified, self-contained workbench and Library artifacts. No runtime
-// downloads, dependency installation, account copying or release publication.
+// Offline assembly. Core installation and client adapters have separate entries.
 import { createHash } from 'node:crypto';
 import { chmod, cp, lstat, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -7,243 +6,124 @@ import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 
 const libraryTargets = {
-  'aarch64-apple-darwin': 'darwin-arm64',
-  'x86_64-apple-darwin': 'darwin-x64',
-  'x86_64-pc-windows-msvc': 'win32-x64',
-  'x86_64-pc-windows-gnu': 'win32-x64',
+  'aarch64-apple-darwin': 'darwin-arm64', 'x86_64-apple-darwin': 'darwin-x64',
+  'x86_64-pc-windows-msvc': 'win32-x64', 'x86_64-pc-windows-gnu': 'win32-x64',
 };
-
 async function digest(file) {
   const bytes = await readFile(file);
   return { size: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') };
 }
-
 async function verify(file, expected) {
-  if (!(await lstat(file)).isFile()) throw new Error('Artifact must be a regular file');
-  if (!Number.isSafeInteger(expected.size) || expected.size <= 0 || !/^[a-f0-9]{64}$/.test(expected.sha256))
-    throw new Error('Invalid artifact size or SHA-256');
+  if (!(await lstat(file)).isFile()) throw Error('Artifact must be a regular file');
   const actual = await digest(file);
-  if (actual.size !== expected.size || actual.sha256 !== expected.sha256)
-    throw new Error(`Artifact integrity mismatch: ${path.basename(file)}`);
+  if (!Number.isSafeInteger(expected.size) || expected.size <= 0 || !/^[a-f0-9]{64}$/.test(expected.sha256) ||
+      actual.size !== expected.size || actual.sha256 !== expected.sha256) throw Error('Artifact integrity mismatch');
 }
-
 function safeRelative(value) {
-  if (typeof value !== 'string' || !value || value.includes('\\') || value.includes('\0') ||
-      path.posix.normalize(value) !== value || value.startsWith('/') ||
-      value.split('/').some(part => part === '..' || part === '.'))
-    throw new Error('Invalid Library manifest path');
+  if (typeof value !== 'string' || !value || value.includes('\\') || value.includes(':') || value.includes('\0') ||
+      value.startsWith('/') || value.split('/').some(p => !p || p === '..' || p === '.')) throw Error('Invalid Library manifest path');
   return value;
 }
-
+async function verifyParents(root, relative) {
+  let current = root;
+  for (const part of relative.split('/').slice(0, -1)) {
+    current = path.join(current, part);
+    if (!(await lstat(current)).isDirectory()) throw Error('Library parent must be a real directory');
+  }
+}
 export async function packageWorkspace(cliDir, libraryDir, output) {
+  if (!(await lstat(cliDir)).isDirectory() || !(await lstat(libraryDir)).isDirectory()) throw Error('Real artifact directories required');
   const cli = JSON.parse(await readFile(path.join(cliDir, 'manifest.json'), 'utf8'));
   const library = JSON.parse(await readFile(path.join(libraryDir, 'manifest.json'), 'utf8'));
-  if (cli.product !== 'onecrew_lite-cli' || cli.schema_version !== 1 ||
-      !libraryTargets[cli.target] || library.target !== libraryTargets[cli.target])
-    throw new Error('Workbench and Library targets must match');
-  if (!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.test(cli.version))
-    throw new Error('Invalid workbench version');
+  if (cli.product !== 'onecrew_lite-cli' || cli.schema_version !== 1 || !libraryTargets[cli.target] || library.target !== libraryTargets[cli.target]) throw Error('Workbench and Library targets must match');
+  if (!/^\d+\.\d+\.\d+$/.test(cli.version) || !/^\d+\.\d+\.\d+$/.test(library.version)) throw Error('Invalid component version');
   const windows = cli.target.includes('windows');
-  const name = windows ? 'onecrew_lite.exe' : 'onecrew_lite';
-  await verify(path.join(cliDir, name), cli);
-  if (!Array.isArray(library.files) || !library.files.some(file => file.path === name))
-    throw new Error('Library executable missing from manifest');
-  const paths = new Set();
-  for (const entry of library.files) {
-    const relative = safeRelative(entry.path);
-    if (paths.has(relative)) throw new Error('Duplicate Library manifest path');
-    paths.add(relative);
-    await verify(path.join(libraryDir, relative), entry);
+  const binary = windows ? 'onecrew_lite.exe' : 'onecrew_lite';
+  await verify(path.join(cliDir, binary), cli);
+  if (!Array.isArray(library.files) || !library.files.some(f => f.path === binary)) throw Error('Library executable missing from manifest');
+  const seen = new Set();
+  for (const file of library.files) {
+    const relative = safeRelative(file.path);
+    if (seen.has(relative)) throw Error('Duplicate Library manifest path');
+    seen.add(relative);
+    await verifyParents(libraryDir, relative);
+    await verify(path.join(libraryDir, relative), file);
   }
-  // Never replace an existing download/install directory.
-  await mkdir(output);
-  await cp(path.join(cliDir, name), path.join(output, name));
+  await mkdir(output); // Refuse overwriting an existing artifact.
+  await cp(path.join(cliDir, binary), path.join(output, binary));
   await cp(path.join(cliDir, 'manifest.json'), path.join(output, 'workbench-manifest.json'));
-  const libraryOutput = path.join(output, 'onecrew_lite_library');
-  await mkdir(libraryOutput);
-  // The companion needs its standalone binary and notices. Its separate
-  // historical installer, extension and marketplace are not customer entrypoints.
-  const companionFiles = library.files.filter(entry => entry.path === name || entry.path.startsWith('licenses/'));
-  for (const { path: relative } of companionFiles) {
-    const dest = path.join(libraryOutput, relative);
-    await mkdir(path.dirname(dest), { recursive: true });
-    await cp(path.join(libraryDir, relative), dest);
+  const companion = path.join(output, 'onecrew_lite_library');
+  await mkdir(companion);
+  const companionFiles = library.files.filter(f => f.path === binary || f.path.startsWith('licenses/'));
+  for (const file of companionFiles) {
+    await mkdir(path.dirname(path.join(companion, file.path)), {recursive: true});
+    await cp(path.join(libraryDir, file.path), path.join(companion, file.path));
   }
-  await writeFile(path.join(libraryOutput, 'manifest.json'),
-    `${JSON.stringify({ ...library, files: companionFiles }, null, 2)}\n`);
-  const launcher = windows ? '打开 onecrew_lite.cmd' : '安装并打开 onecrew_lite.command';
-  const libraryBinary = companionFiles.find(entry => entry.path === name);
-  const launchText = windows
-    ? '@echo off\r\n"%~dp0onecrew_lite.exe" workspace >nul\r\nif errorlevel 1 pause\r\n'
-    : `#!/bin/sh
-set -eu
-WORKSPACE_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)"
-INSTALL_BIN="$HOME/.local/bin"
-STAGED_LIBRARY=''
-cleanup() { if [ -n "$STAGED_LIBRARY" ]; then /bin/rm -f "$STAGED_LIBRARY"; fi; }
-trap cleanup EXIT
-trap 'exit 1' HUP INT TERM
-fail() {
-  printf '\\n安装或启动未完成。请保留本窗口，将上方报错截图发给提供安装包的人。\\n' >&2
-  if [ -t 0 ]; then printf '按回车关闭窗口。'; read -r reply || :; fi
-  exit 1
-}
-case "\${1-}" in ''|--no-browser) ;; *) printf '不支持此启动选项。\\n' >&2; exit 1 ;; esac
-printf '正在安装并打开 onecrew_lite 工作台和动态表格，请稍等。\\n'
-if [ -L "$HOME/.local" ] || [ -L "$INSTALL_BIN" ] || [ -L "$INSTALL_BIN/onecrew_lite_library" ] || [ -L "$INSTALL_BIN/onecrew_lite_library/onecrew_lite" ]; then
-  printf '安装目录包含符号链接，请联系提供安装包的人核对。\\n' >&2; fail
-fi
-/bin/mkdir -p "$INSTALL_BIN/onecrew_lite_library" || fail
-SOURCE_HASH="$(/usr/bin/shasum -a 256 "$WORKSPACE_DIR/onecrew_lite_library/onecrew_lite" | /usr/bin/awk '{print $1}')"
-if [ "$SOURCE_HASH" != '${libraryBinary.sha256}' ]; then printf '动态表格程序校验失败。\\n' >&2; fail; fi
-"$WORKSPACE_DIR/onecrew_lite" __bootstrap-update --expected-version '${cli.version}' --expected-sha256 '${cli.sha256}' --expected-size '${cli.size}' --install-path "$INSTALL_BIN/onecrew_lite" --json >/dev/null || fail
-CURRENT_HASH=''
-if [ -f "$INSTALL_BIN/onecrew_lite_library/onecrew_lite" ]; then
-  CURRENT_HASH="$(/usr/bin/shasum -a 256 "$INSTALL_BIN/onecrew_lite_library/onecrew_lite" | /usr/bin/awk '{print $1}')"
-fi
-if [ "$CURRENT_HASH" != "$SOURCE_HASH" ]; then
-  if [ -f "$INSTALL_BIN/onecrew_lite_library/onecrew_lite" ]; then "$INSTALL_BIN/onecrew_lite_library/onecrew_lite" stop >/dev/null || fail; fi
-  STAGED_LIBRARY="$(/usr/bin/mktemp "$INSTALL_BIN/onecrew_lite_library/.onecrew_lite.XXXXXX")" || fail
-  /bin/cp "$WORKSPACE_DIR/onecrew_lite_library/onecrew_lite" "$STAGED_LIBRARY" || fail
-  /bin/chmod 755 "$STAGED_LIBRARY" || fail
-  STAGED_HASH="$(/usr/bin/shasum -a 256 "$STAGED_LIBRARY" | /usr/bin/awk '{print $1}')"
-  if [ "$STAGED_HASH" != "$SOURCE_HASH" ]; then printf '动态表格安装副本校验失败。\\n' >&2; fail; fi
-  /bin/mv -f "$STAGED_LIBRARY" "$INSTALL_BIN/onecrew_lite_library/onecrew_lite" || fail
-  STAGED_LIBRARY=''
-fi
-if [ "\${1-}" = '--no-browser' ]; then
-  "$INSTALL_BIN/onecrew_lite" workspace --no-browser || fail
-elif "$INSTALL_BIN/onecrew_lite" workspace >/dev/null; then
-  printf '页面已请求打开。请在浏览器完成登录和连接设置，可以关闭本窗口。\\n'
-else
-  fail
-fi
-`;
-  await writeFile(path.join(output, launcher), launchText);
+  await writeFile(path.join(companion, 'manifest.json'), JSON.stringify({...library, files: companionFiles}, null, 2) + '\n');
+  const libraryBinary = companionFiles.find(f => f.path === binary);
+  const installerName = windows ? 'install-core.ps1' : 'install-core.sh';
+  let installer = await readFile(new URL(`../installers/${installerName}`, import.meta.url), 'utf8');
+  for (const [key, value] of Object.entries({VERSION: cli.version, TARGET: cli.target, CLI_SHA: cli.sha256,
+    CLI_SIZE: cli.size, LIB_SHA: libraryBinary.sha256, LIB_SIZE: libraryBinary.size})) {
+    installer = installer.replaceAll(`__${key}__`, String(value));
+  }
+  if (/__[A-Z_]+__/.test(installer)) throw Error('Unresolved installer substitution');
+  await writeFile(path.join(output, installerName), installer, {mode: 0o755});
   if (windows) {
-    await cp(fileURLToPath(new URL('../installers/windows-first-use.cmd', import.meta.url)), path.join(output, '首次使用.cmd'));
-    await cp(fileURLToPath(new URL('../installers/WINDOWS_TEST_GUIDE.zh-CN.txt', import.meta.url)),
-      path.join(output, 'Windows测试版使用说明.txt'));
-    if (cli.target.endsWith('-gnu')) {
-      const notices = fileURLToPath(new URL('../installers/runtime-licenses/', import.meta.url));
-      await mkdir(path.join(output, 'licenses'));
-      for (const notice of ['GCC-RUNTIME-EXCEPTION-3.1.txt', 'GPL-3.0.txt'])
-        await cp(path.join(notices, notice), path.join(output, 'licenses', notice));
+    let steps = await readFile(new URL('../installers/windows-setup-step.ps1', import.meta.url), 'utf8');
+    for (const [key, value] of Object.entries({CLI_SHA: cli.sha256, CLI_SIZE: cli.size,
+      LIB_SHA: libraryBinary.sha256, LIB_SIZE: libraryBinary.size})) steps = steps.replaceAll(`__${key}__`, String(value));
+    await writeFile(path.join(output, 'windows-setup-step.ps1'), steps);
+    const windowsSteps = [['verify', '01-校验安装文件'], ['service', '02-注册服务'],
+      ['start', '03-启动主程序'], ['opencli', '04-安装OpenCLI'], ['codex', '05-安装Codex插件'], ['library', '06-检查Library']];
+    for (const [step, name] of windowsSteps) {
+      await writeFile(path.join(output, `${name}.cmd`), `@echo off\r\n"%SystemRoot%\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -NoProfile -File "%~dp0windows-setup-step.ps1" -Step ${step}\r\nexit /b %errorlevel%\r\n`);
     }
-    await writeFile(path.join(output, '连接 Codex.cmd'), '@echo off\r\nchcp 65001 >nul\r\n"%~dp0onecrew_lite.exe" plugin install\r\nif errorlevel 1 (\r\n  echo 连接未完成。请确认已安装 Codex，将上方报错截图发给提供安装包的人。\r\n  pause\r\n  exit /b 1\r\n)\r\necho 插件已安装。请完全退出并重新打开 Codex，新建对话输入“使用 onecrew_lite”。\r\npause\r\n');
+    await writeFile(path.join(output, '首次使用.cmd'), '@echo off\r\nchcp 65001 >nul\r\necho onecrew_lite: 一次执行一步，失败后停止。\r\n' +
+      windowsSteps.map(([, name]) => `echo ${name}\r\n`).join('') +
+      'choice /c 123456Q /n /m "选择步骤 1-6，Q 退出："\r\nif errorlevel 7 exit /b 0\r\n' +
+      [...windowsSteps].reverse().map(([, name], index) => `if errorlevel ${6-index} goto step${6-index}\r\n`).join('') +
+      'exit /b 1\r\n' + windowsSteps.map(([, name], index) => `:step${index+1}\r\ncall "%~dp0${name}.cmd"\r\nexit /b %errorlevel%\r\n`).join(''));
+    await writeFile(path.join(output, '连接 Codex.cmd'), '@echo off\r\ncall "%~dp005-安装Codex插件.cmd"\r\nexit /b %errorlevel%\r\n');
+    await writeFile(path.join(output, 'connect-codex.ps1'), `$ErrorActionPreference = 'Stop'\n& (Join-Path $PSScriptRoot 'windows-setup-step.ps1') -Step codex\n`);
+    await writeFile(path.join(output, 'open-onecrew_lite.cmd'), '@echo off\r\n"%LOCALAPPDATA%\\onecrew_lite\\bin\\onecrew_lite.exe" workspace\r\nif errorlevel 1 exit /b 1\r\n');
+    if (cli.target.endsWith('-gnu')) {
+      await mkdir(path.join(output, 'licenses'));
+      for (const name of ['GCC-RUNTIME-EXCEPTION-3.1.txt', 'GPL-3.0.txt']) await cp(new URL(`../installers/runtime-licenses/${name}`, import.meta.url), path.join(output, 'licenses', name));
+    }
+  } else {
+    await chmod(path.join(output, binary), 0o755);
+    await chmod(path.join(companion, binary), 0o755);
+    await writeFile(path.join(output, 'connect-codex.sh'), `#!/bin/sh\nset -eu\nCLI="$HOME/.local/bin/onecrew_lite"\n[ -f "$CLI" ] && [ ! -L "$CLI" ] || { printf 'Install onecrew_lite core first.\\n' >&2; exit 1; }\n"$CLI" plugin install\nprintf 'Restart Codex, then verify onecrew_lite tools in the client.\\n'\n`, {mode: 0o755});
+    await writeFile(path.join(output, 'open-onecrew_lite.command'), '#!/bin/sh\nset -eu\nexec "$HOME/.local/bin/onecrew_lite" workspace "$@"\n', {mode: 0o755});
   }
-  if (!windows) {
-    await chmod(path.join(output, launcher), 0o755);
-    await chmod(path.join(output, name), 0o755);
-    await chmod(path.join(libraryOutput, name), 0o755);
-    const connect = path.join(output, '连接 Codex.command');
-    await writeFile(connect, `#!/bin/sh
-set -eu
-WORKSPACE_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)"
-INSTALLED_ONECREW="$HOME/.local/bin/onecrew_lite"
-if [ ! -f "$INSTALLED_ONECREW" ]; then printf '请先双击“安装并打开 onecrew_lite.command”。\\n' >&2; exit 1; fi
-printf '正在为当前 Mac 用户安装 onecrew_lite 的 Codex 插件，请稍等。\\n'
-if "$INSTALLED_ONECREW" plugin install >/dev/null; then
-  printf '插件已安装并启用。请完全退出并重新打开 Codex，再新建对话输入“使用 onecrew_lite”。\\n'
-  printf '可以关闭本窗口。工作台中的连接状态会在重新检测后更新。\\n'
-else
-  printf '\\n连接未完成。请确认 Codex 已安装；将上方报错截图发给提供安装包的人。\\n' >&2
-  if [ -t 0 ]; then printf '按回车关闭窗口。'; read -r reply || :; fi
-  exit 1
-fi
-`);
-    await chmod(connect, 0o755);
-    const firstInstall = path.join(output, '首次安装 onecrew_lite.command');
-    await writeFile(firstInstall, `#!/bin/sh
-set -eu
-WORKSPACE_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)"
-case "\${1-}" in ''|--no-browser) ;; *) printf '不支持此启动选项。\\n' >&2; exit 1 ;; esac
-printf '首次安装：准备工作台、动态表格和 Codex 状态卡。\\n'
-# Each existing owner handles installation and startup; no second install path.
-if [ "\${1-}" = '--no-browser' ]; then
-  /bin/sh "$WORKSPACE_DIR/安装并打开 onecrew_lite.command" --no-browser || exit 1
-else
-  /bin/sh "$WORKSPACE_DIR/安装并打开 onecrew_lite.command" || exit 1
-fi
-printf '正在自动安装并核验搜索组件，首次安装需要联网，请稍等。\\n'
-if ! "$HOME/.local/bin/onecrew_lite" opencli repair --json; then
-  printf '\\n搜索组件安装未完成。请检查网络后重试；也可在已打开的工作台点击“一键安装／修复连接”。\\n' >&2
-  if [ -t 0 ]; then printf '按回车关闭窗口。'; read -r reply || :; fi
-  exit 1
-fi
-/bin/sh "$WORKSPACE_DIR/连接 Codex.command" || exit 1
-printf '\\n下一步：完全退出并重新打开 Codex，新建对话输入“使用 onecrew_lite”。\\n'
-printf '看到聊天状态卡、工作台和动态表格三个界面后，在工作台完成设置和搜索。\\n'
-printf '状态卡由 Codex 对话生成；安装窗口本身不能生成卡片。\\n'
-`);
-    await chmod(firstInstall, 0o755);
-  }
-  const instructions = `onecrew_lite 工作台 ${cli.version}
-
-开始使用
-1. 解压 ZIP，把整个文件夹放到方便找到的位置。保留文件夹里的所有内容。
-2. ${windows ? `双击「${launcher}」。` : '先安装并登录 Codex，再双击「首次安装 onecrew_lite.command」。此入口会安装两个程序、打开工作台和动态表格，并为当前用户安装、启用 onecrew_lite 的 Codex 插件。'}${windows ? '' : '程序会安装到当前用户的 ~/.local/bin，已有不同版本会通过程序自己的更新流程替换；计划与账号数据保留。'}无需安装 Node.js、输入命令或填写网址。
-3. ${windows ? '' : '完全退出并重新打开 Codex，新建对话输入“使用 onecrew_lite”。Codex 会生成只读状态卡，并打开工作台和动态表格。请确认这三个界面都在；目标和操作在工作台完成。'}首次使用，在两个页面分别登录你的 onecrew_lite 账号。
-4. ${windows ? '首次搜索前，在工作台「连接登录」点击「一键安装／修复连接」，联网准备 OpenCLI 和运行环境。' : '首次安装会自动准备兼容的 OpenCLI 和运行环境，需联网。旧命令不会再被 onecrew_lite 使用，已有登录和计划保留。安装失败时，在工作台「连接登录」点击「一键安装／修复连接」。'}然后按提示为搜索用的 Chrome 身份授权扩展、选择身份并登录平台账号。
-5. 点击「搜索」，描述商品和需求，确认计划后开始搜索。新结果会同步到动态表格；点击「打开搜索结果表格」查看当前计划的结果。
-
-${windows ? '' : `三个界面的作用
-工作台：连接账号、创建计划、确认条件、开始或暂停搜索。
-动态表格：查看实时同步的线索、合格结果和证据。尚未创建计划时显示表格列表。
-Codex 状态卡：只读显示当前阶段、进度和异常。安装程序不能直接在聊天里生成卡片；需要 Codex 加载插件后，在对话里输入“使用 onecrew_lite”。
-如果只看到两个网页，请确认已重启 Codex，并在对话中输入“使用 onecrew_lite”；如果仍缺界面，输入“检查 onecrew_lite 启动，补齐状态卡、工作台和动态表格”，并将异常截图发给提供安装包的人。
-
-单独修复 Codex 连接
-已安装程序的用户可双击「连接 Codex.command」，安装成功后完全退出并重新打开 Codex，再输入“使用 onecrew_lite”。连接失败会保留报错，不代表三个界面已就绪。
-如果使用网页的一句话生成计划，仍需本机 Codex 模型登录可用；账号或连接缺失时，请按工作台提示处理。
-
-` }日常使用
-再次双击「${launcher}」即可重新打开两个页面。启动不会自动开始搜索或增加预算。
-${windows ? '' : '使用 Codex 时，在每个新对话输入“使用 onecrew_lite”，让 Codex 生成本对话的状态卡并补齐两个页面。\n'}
-没有搜索结果时，动态表格页面显示表格列表。搜索命中和待核实线索不计入合格人数。
-计划与表格保存在当前系统用户的数据目录。移动完整程序文件夹不会删除这些数据；首次在另一台电脑使用需要重新登录和配置连接。
-
-安装包信息
-目标：${cli.target === 'aarch64-apple-darwin' ? 'Apple 芯片 Mac（M 系列），不适用于 Intel Mac' : cli.target}。
-${windows ? '' : '当前随包的动态表格程序要求 macOS 13.5 或更高版本。\n'}工作台：${cli.version}；动态表格：${library.version}。
-${windows ? '这是供同事测试的内测包，尚未经过代码签名，首次打开可能被系统拦截。' : '这是供同事测试的内测包，未经过 Apple 开发者签名和公证，首次打开可能被 macOS 拦截。'}请将拦截提示或启动报错截图发给提供安装包的人。
-本包仅含程序和说明，不含开发者的登录信息、平台账号、计划或搜索结果。
-`;
+  const instructions = `onecrew_lite ${cli.version}\n\n目标：${cli.target}；Library：${library.version}。\n本体安装：${installerName}。先验证完整 ZIP 和 manifest.json，再运行。\n本体安装不依赖 Codex，不登录账号、不打开浏览器、不下载额外依赖。\n安装后使用已安装的 onecrew_lite opencli repair 准备搜索依赖（需联网），再运行 connect-codex.${windows ? 'ps1' : 'sh'} 接入 Codex。\n首次正式支持 Codex；其他客户端尚未验收。插件注册后可能需要完全退出并重启 Codex，再验证真实工具调用。\n使用 open-onecrew_lite.${windows ? 'cmd' : 'command'} 打开工作台与 Library，按提示分别完成登录和浏览器授权。\n${windows ? 'Windows 原生 x64；最低支持系统需以发布验收记录为准。' : 'macOS 13.5 或更新；芯片架构必须与包一致。'}\n不删除旧 OneCrew、Pro 或用户业务数据；不单独更新 CLI。失败时保留报错和恢复目录。\n包是否完成签名/公证以发布验收记录为准，不关闭系统安全保护。\n`;
   await writeFile(path.join(output, 'README.md'), instructions);
   await writeFile(path.join(output, '使用说明.txt'), instructions);
-  if (!windows) {
-    await writeFile(path.join(output, '交给Codex安装.txt'), `把解压后的整个文件夹拖进 Codex，再发送下面这段话：
-
-请帮我安装这个文件夹中的 onecrew_lite ${cli.version} 测试版。我不懂技术，请完成你能自动完成的步骤，再清楚告诉我需要自己点击什么。
-先阅读使用说明，核对 Mac 是 Apple 芯片、macOS 13.5 或以上，并按 manifest.json 校验包内文件。使用包内“首次安装 onecrew_lite.command”完成安装；已有 onecrew_lite 时使用其自带更新流程，保留账号、计划和表格数据。
-检查工作台、动态表格服务及 Codex 插件，分别报告实际结果。需要完全退出并重新打开 Codex 时，明确提示我重启后输入“使用 onecrew_lite”；不要把插件安装成功说成聊天状态卡已经打开。
-Chrome 扩展授权、选择浏览器身份和平台登录需要我操作时，请逐步提示并核对连接状态。任何步骤失败都保留具体报错，不要继续宣称安装完成。
-这是未公证测试版。若 macOS 拦截，说明如何在系统设置中仅允许这个应用；不要关闭系统整体安全保护。
-`);
+  if (windows) {
+    const windowsInstructions = `\nWindows 本体安装后按顺序执行 windows-setup-step.ps1 -Step 参数：\n1. verify：校验两份程序后读取版本。\n2. service：注册当前用户后台服务，记录物理安装目录。\n3. start：启动主程序。\n4. opencli：联网准备搜索运行环境。\n5. codex：安装插件，再验证实际工具调用；必要时保存进度、退出并重开宿主应用。\n6. library：检查工作台和 Library 页面。\n每次只运行一步，失败立即停止；日志位于安装目录 installation-logs。不要关闭安全策略，不自动结束 Codex/ChatGPT 或后台服务。\n完成命令不等于插件连接、账号登录或真实搜索验收通过。\n`;
+    await writeFile(path.join(output, 'README.md'), instructions + windowsInstructions);
+    await writeFile(path.join(output, '使用说明.txt'), instructions + windowsInstructions);
+    await writeFile(path.join(output, 'Windows测试版使用说明.txt'), instructions + windowsInstructions);
   }
   const files = [];
-  async function list(dir, relative = '') {
-    for (const entry of await readdir(dir, { withFileTypes: true })) {
-      const item = path.posix.join(relative, entry.name);
-      if (entry.isDirectory()) await list(path.join(dir, entry.name), item);
-      else if (entry.isFile()) files.push({ path: item, ...await digest(path.join(dir, entry.name)) });
-      else throw new Error('Workspace artifacts must not contain symlinks');
+  async function list(dir, prefix = '') {
+    for (const entry of await readdir(dir, {withFileTypes: true})) {
+      const relative = path.posix.join(prefix, entry.name);
+      if (entry.isDirectory()) await list(path.join(dir, entry.name), relative);
+      else if (entry.isFile()) files.push({path: relative, ...await digest(path.join(dir, entry.name))});
+      else throw Error('Workspace artifacts must not contain symlinks');
     }
   }
   await list(output);
   files.sort((a, b) => a.path.localeCompare(b.path));
-  const manifest = { schema_version: 1, product: 'onecrew_lite-workspace', version: cli.version,
-    target: cli.target, library_version: library.version, files };
-  await writeFile(path.join(output, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
+  const manifest = {schema_version: 1, product: 'onecrew_lite-workspace', version: cli.version,
+    target: cli.target, library_version: library.version, files};
+  await writeFile(path.join(output, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
   return manifest;
 }
-
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const { values } = parseArgs({ options: {
-    'cli-dir': { type: 'string' }, 'library-dir': { type: 'string' }, output: { type: 'string' },
-  } });
-  if (!values['cli-dir'] || !values['library-dir'] || !values.output)
-    throw new Error('Usage: node package-workspace.mjs --cli-dir DIR --library-dir DIR --output NEW_DIR');
+  const {values} = parseArgs({options: {'cli-dir': {type: 'string'}, 'library-dir': {type: 'string'}, output: {type: 'string'}}});
+  if (!values['cli-dir'] || !values['library-dir'] || !values.output) throw Error('Usage: package-workspace.mjs --cli-dir DIR --library-dir DIR --output NEW_DIR');
   await packageWorkspace(path.resolve(values['cli-dir']), path.resolve(values['library-dir']), path.resolve(values.output));
-  console.log(`Workspace package: ${path.resolve(values.output)}`);
 }

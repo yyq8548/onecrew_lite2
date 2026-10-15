@@ -17,9 +17,24 @@ const table = {
     { id: 'verdict', name: 'OneCrew qualification', data_type: 'string', read_only: true },
   ],
 } as Table;
+test('all platform accounts retain exact and approximate follower counts from synchronized rows', () => {
+  const countedTable = { ...table, columns: [...table.columns, { id: 'Followers', name: 'Followers', data_type: 'string' as const }] };
+  for (const platform of ['youtube', 'twitter', 'tiktok', 'instagram', 'facebook', 'linkedin', 'bilibili', 'douyin', 'weibo', 'reddit']) {
+    for (const followers of ['4029', '~12400', '~22.9万', null]) {
+      const state = material(false);
+      state.projection!.groups[0].members[0].platform = platform;
+      state.sources[0].row.values.Followers = followers;
+      const result = groupedCreators(countedTable, state);
+      const account = result.creators.flatMap(group => group.accounts).find(account => account.nativeId === 'UCZPqG0yh_xPm2AyLjffbDvw');
+      assert.equal(account?.followers, followers, `${platform}: ${followers}`);
+    }
+  }
+});
+
 function material(merged = true): CreatorMaterial {
   const sources = ['hit-a', 'hit-b'].map((hit, index) => ({
     search_hit_id: hit,
+    contacts: [],
     verdict: index === 0 ? 'qualified' : 'rejected',
     reasons: index === 0 ? [] : ['min_subscribers_not_met'],
     row: {
@@ -45,6 +60,7 @@ function material(merged = true): CreatorMaterial {
   }));
   return {
     state: 'current',
+    recommendations: [],
     sources,
     projection: {
       table_id: table.id,
@@ -83,7 +99,7 @@ function material(merged = true): CreatorMaterial {
 test('reviewed cross-platform author is one row and preserves each account qualification, source and manual note', () => {
   const result = groupedCreators(table, material());
   assert.equal(result.creators.length, 1);
-  assert.equal(result.creators[0].verdict, 'qualified');
+  assert.equal(result.creators[0].verdict, 'pending', 'source qualification does not replace an owner recommendation');
   assert.deepEqual(
     result.creators[0].accounts.map((account) => account.verdict),
     ['qualified', 'rejected'],
@@ -108,7 +124,8 @@ test('reviewed cross-platform author is one row and preserves each account quali
 test('same display name remains two rows without an owner same-author decision', () => {
   const result = groupedCreators(table, material(false));
   assert.equal(result.creators.length, 2);
-  assert.equal(filterCreators(result.creators, 'qualified').length, 1);
+  assert.equal(filterCreators(result.creators, 'qualified').length, 0);
+  assert.equal(filterCreators(result.creators, 'pending').length, 1);
   assert.equal(filterCreators(result.creators, 'rejected').length, 1);
 });
 

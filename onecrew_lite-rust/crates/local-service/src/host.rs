@@ -50,6 +50,20 @@ pub async fn run_service(options: ServiceOptions) -> Result<(), String> {
     let executable = options.executable;
     let (owner, binary_id, web_port) = run_blocking("service_owner", move || {
         let owner = paths::acquire_owner(&directory)?;
+        let package = if crate::is_managed_cli_copy(&executable) {
+            crate::default_cli_installation()?
+        } else {
+            executable.clone()
+        };
+        #[cfg(windows)]
+        let package = if let Some(installed) =
+            std::env::var_os("ONECREW_LITE_HOST_INSTALLED_EXECUTABLE")
+        {
+            crate::service_host::verified_package(&executable, std::path::Path::new(&installed))?
+        } else {
+            package
+        };
+        crate::cli_installation::require_complete_workspace(&package)?;
         Ok::<_, String>((
             owner,
             paths::executable_identity(&executable)?,

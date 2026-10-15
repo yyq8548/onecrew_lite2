@@ -1289,7 +1289,7 @@
       "name": "LocalServiceStatus",
       "direction": "serialize",
       "id": "https://reacher.local/contracts/LocalServiceStatus.schema.json",
-      "revision": "sha256:a7e0cb495c633afc20436ba56fc0238e775438c8545d07d5f101f73595d4ad09",
+      "revision": "sha256:3b8af1760987821b512c148f2b431045033ec45b2b9c038831207d49deff5b85",
       "schema": {
         "$id": "https://reacher.local/contracts/LocalServiceStatus.schema.json",
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1319,7 +1319,7 @@
                     "enum": [
                       "check_failed",
                       "timed_out",
-                      "unsupported_target"
+                      "workspace_update_required"
                     ],
                     "type": "string"
                   },
@@ -2889,5 +2889,5 @@
       }
     }
   ],
-  "manifest_revision": "sha256:681edb6a60c55516132256489d6782ff4ffd09e2fdbd7cc69d0a7bc9ebac6f09"
+  "manifest_revision": "sha256:2f82fab9163231cb301c72dec39007f61685a0b845e4284b16892490d2cb50ae"
 }

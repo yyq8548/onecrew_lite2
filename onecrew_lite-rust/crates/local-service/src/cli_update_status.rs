@@ -1,12 +1,11 @@
-//! On-demand, identity-scoped release hints. This owner cannot download or install assets.
-use crate::{blocking::run_blocking, login::LoginProjection};
-use onecrew_access_client::{CliReleaseClient, CliReleaseError, parse_cli_version};
+//! Identity-scoped update status. Lite requires complete workspace packages;
+//! this owner never reads credentials or contacts the retired CLI release endpoint.
+use crate::login::LoginProjection;
+use onecrew_access_client::parse_cli_version;
 use onecrew_creator_sync::CreatorSyncAdmissionState;
-use onecrew_local_vault::{LocalVault, VaultCreatorSyncCredentialState};
 use serde::Serialize;
 use std::{
     future::Future,
-    path::PathBuf,
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 use tokio::{
@@ -41,7 +40,7 @@ enum StatusSource {
 pub(crate) enum CheckFailure {
     CheckFailed,
     TimedOut,
-    UnsupportedTarget,
+    WorkspaceUpdateRequired,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -72,12 +71,6 @@ impl UpdateIdentity {
             installation_id: status.installation_id.clone()?,
             credential_id: status.credential_id.clone()?,
         })
-    }
-
-    fn matches(&self, authorization: &Authorization) -> bool {
-        let metadata = &authorization.0.credential().metadata;
-        self.installation_id == metadata.installation_id.to_string()
-            && self.credential_id == metadata.credential_id.to_string()
     }
 }
 
@@ -116,7 +109,9 @@ impl CliUpdateStatusOwner {
             && entry.stored_at.elapsed() < CACHE_TTL
         {
             let mut status = entry.status.clone();
-            status.source = Some(StatusSource::MemoryCache);
+            if status.source.is_some() {
+                status.source = Some(StatusSource::MemoryCache);
+            }
             return status;
         }
         // The bounded async mutex coalesces requests; no repository/vault lock crosses HTTP.
@@ -172,12 +167,13 @@ impl CliUpdateStatus {
     }
 
     fn failed(current: &str, diagnostic: CheckFailure) -> Self {
+        let checked = diagnostic != CheckFailure::WorkspaceUpdateRequired;
         Self {
             state: CliUpdateState::Unavailable,
             current_version: current.to_owned(),
             latest_version: None,
-            checked_at: checked_at(),
-            source: Some(StatusSource::FreshCheck),
+            checked_at: checked.then(checked_at).flatten(),
+            source: checked.then_some(StatusSource::FreshCheck),
             diagnostic_code: Some(diagnostic),
         }
     }
@@ -188,63 +184,6 @@ fn checked_at() -> Option<u64> {
         .duration_since(UNIX_EPOCH)
         .ok()
         .map(|time| time.as_secs())
-}
-
-struct Authorization(VaultCreatorSyncCredentialState);
-impl Authorization {
-    fn bearer(&self) -> &str {
-        match &self.0 {
-            VaultCreatorSyncCredentialState::Active { bearer, .. } => bearer.expose_secret(),
-            _ => unreachable!("active credential"),
-        }
-    }
-}
-
-async fn authorization(data_dir: PathBuf) -> Result<Authorization, CheckFailure> {
-    run_blocking("cli_update_identity", move || {
-        let vault = LocalVault::open_existing_read_only(data_dir.join("agent-platform.db"))
-            .map_err(|_| CheckFailure::CheckFailed)?;
-        match vault
-            .get_creator_sync_credential()
-            .map_err(|_| CheckFailure::CheckFailed)?
-        {
-            Some(state @ VaultCreatorSyncCredentialState::Active { .. }) => {
-                Ok(Authorization(state))
-            }
-            _ => Err(CheckFailure::CheckFailed),
-        }
-    })
-    .await
-    .map_err(|_| CheckFailure::CheckFailed)?
-}
-
-pub(crate) async fn fetch_version(
-    data_dir: PathBuf,
-    identity: UpdateIdentity,
-) -> Result<String, CheckFailure> {
-    let target = crate::cli_installation::current_cli_target()
-        .map_err(|_| CheckFailure::UnsupportedTarget)?;
-    let before = authorization(data_dir.clone()).await?;
-    if !identity.matches(&before) {
-        return Err(CheckFailure::CheckFailed);
-    }
-    let client = CliReleaseClient::new(onecrew_creator_sync::production_access_origin())
-        .map_err(|_| CheckFailure::CheckFailed)?;
-    let release = client
-        .latest(before.bearer(), target, CHECK_TIMEOUT)
-        .await
-        .map_err(|error| {
-            if error == CliReleaseError::Timeout {
-                CheckFailure::TimedOut
-            } else {
-                CheckFailure::CheckFailed
-            }
-        })?;
-    let after = authorization(data_dir).await?;
-    if before.0.credential() != after.0.credential() || before.bearer() != after.bearer() {
-        return Err(CheckFailure::CheckFailed);
-    }
-    Ok(release.version)
 }
 
 #[cfg(test)]

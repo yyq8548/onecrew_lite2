@@ -4,6 +4,9 @@ import { discoveryLibraryFailureKey } from "./discovery-library-error";
 describe("Library sync recovery", () => {
   it("distinguishes connection, account, and version failures", () => {
     expect(discoveryLibraryFailureKey("library_runtime_unavailable")).toBe("libraryUnavailable");
+    expect(discoveryLibraryFailureKey("library_login_required")).toBe("libraryLoginRequired");
+    expect(discoveryLibraryFailureKey("library_authorization_pending")).toBe("libraryAuthorizationPending");
+    expect(discoveryLibraryFailureKey("library_auth_unavailable")).toBe("libraryAuthUnavailable");
     expect(discoveryLibraryFailureKey(new Error("library_account_mismatch"))).toBe("libraryAccountRequired");
     expect(discoveryLibraryFailureKey("web_session_required")).toBe("libraryWebSessionRequired");
     expect(discoveryLibraryFailureKey("library_sync_upgrade_required")).toBe("libraryUpgradeRequired");

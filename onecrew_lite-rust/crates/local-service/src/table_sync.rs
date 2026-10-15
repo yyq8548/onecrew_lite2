@@ -99,8 +99,8 @@ fn atomic_save(path: PathBuf, bytes: &[u8]) -> Result<(), String> {
     crate::private_file::write_private_file(&tmp, bytes)
         .map_err(|_| "table_sync_store_unavailable")?;
     let result = std::fs::rename(&tmp, &path).map_err(|_| "table_sync_store_unavailable".into());
-    if result.is_err() {
-        let _ = std::fs::remove_file(tmp);
+    if result.is_err() && std::fs::remove_file(tmp).is_err() {
+        log::warn!("table sync temporary file cleanup failed");
     }
     result
 }
@@ -136,18 +136,18 @@ async fn send(
             .table_sync_request_for_user(request, user)
             .await
     };
-    if let Ok(reply) = &result {
-        if reply.status == 429 || reply.status == 503 {
-            let delay = reply
-                .retry_after
-                .as_deref()
-                .and_then(|s| s.parse::<u64>().ok())
-                .unwrap_or(300);
-            state
-                .table_sync
-                .retry_after
-                .fetch_max(now().saturating_add(delay), Ordering::AcqRel);
-        }
+    if let Ok(reply) = &result
+        && (reply.status == 429 || reply.status == 503)
+    {
+        let delay = reply
+            .retry_after
+            .as_deref()
+            .and_then(|s| s.parse::<u64>().ok())
+            .unwrap_or(300);
+        state
+            .table_sync
+            .retry_after
+            .fetch_max(now().saturating_add(delay), Ordering::AcqRel);
     }
     result
 }
@@ -274,24 +274,22 @@ pub(crate) async fn change_consent(
     let mut body = body;
     // Recover an unknown operation after a UI or service restart with the original ID.
     // Revocation always supersedes a pending grant after reading the latest consent.
-    if store.consent_user.as_deref() == Some(&user) {
-        if let Some(saved) = &store.consent_operation {
-            if saved["action"] == body["action"]
-                && saved["policy_fingerprint"] == body["policy_fingerprint"]
-            {
-                body = saved.clone();
-                if current["consent"]["operation_id"] == body["operation_id"] {
-                    store.consent_operation = None;
-                    store.consent_user = None;
-                    if input.action == "revoke" {
-                        disable_tables(&mut store);
-                    } else {
-                        resume_consent_tables(&mut store, &user);
-                    }
-                    save(state, &store).await?;
-                    return Ok(json!({"consent":current["consent"]}));
-                }
+    if store.consent_user.as_deref() == Some(&user)
+        && let Some(saved) = &store.consent_operation
+        && saved["action"] == body["action"]
+        && saved["policy_fingerprint"] == body["policy_fingerprint"]
+    {
+        body = saved.clone();
+        if current["consent"]["operation_id"] == body["operation_id"] {
+            store.consent_operation = None;
+            store.consent_user = None;
+            if input.action == "revoke" {
+                disable_tables(&mut store);
+            } else {
+                resume_consent_tables(&mut store, &user);
             }
+            save(state, &store).await?;
+            return Ok(json!({"consent":current["consent"]}));
         }
     }
     store.consent_operation = Some(body.clone());
@@ -301,7 +299,8 @@ pub(crate) async fn change_consent(
     let user = store
         .consent_user
         .as_deref()
-        .ok_or("table_sync_identity_missing")?.to_owned();
+        .ok_or("table_sync_identity_missing")?
+        .to_owned();
     let expected_operation = body["operation_id"].clone();
     let reply = remote_for_user(state, &user, Request::SetConsent { input: body, etag }).await?;
     if reply.status == 412 {
@@ -338,7 +337,11 @@ fn disable_tables(store: &mut Store) {
     }
 }
 fn resume_consent_tables(store: &mut Store, user: &str) {
-    for table in store.tables.values_mut().filter(|t| t.user_id == user && t.status == "consent_revoked") {
+    for table in store
+        .tables
+        .values_mut()
+        .filter(|t| t.user_id == user && t.status == "consent_revoked")
+    {
         table.enabled = true;
         table.status = "waiting".into();
         table.next_check = 0;
@@ -415,7 +418,9 @@ pub(crate) fn ensure_started(state: &Arc<ServiceState>) {
             if state.shutdown.is_cancelled() {
                 break;
             }
-            let _ = tick(&state).await;
+            if tick(&state).await.is_err() {
+                log::debug!("table sync background tick did not complete");
+            }
             let shutdown = state.shutdown.clone();
             drop(state);
             tokio::select! { _=shutdown.cancelled()=>break,_=tokio::time::sleep(std::time::Duration::from_secs(30))=>{} }
@@ -424,7 +429,11 @@ pub(crate) fn ensure_started(state: &Arc<ServiceState>) {
 }
 /// Register a successfully published local recommendation table. Upload admission
 /// remains in tick(): registration never creates or substitutes server consent.
-pub(crate) async fn register_result(state: &ServiceState, campaign_id: &str, expected_account: &str) -> Result<(), String> {
+pub(crate) async fn register_result(
+    state: &ServiceState,
+    campaign_id: &str,
+    expected_account: &str,
+) -> Result<(), String> {
     let user = state.sync().await?.table_sync_access_user_id().await?;
     let _lock = state.table_sync.lock.lock().await;
     if crate::discovery_execution::account(state).await? != expected_account {
@@ -459,10 +468,19 @@ fn register_table(store: &mut Store, user: &str, campaign_id: &str) -> bool {
         }
         Entry::Vacant(entry) => {
             entry.insert(Table {
-                campaign_id: campaign_id.into(), user_id: user.into(), enabled: true,
-                next_check: 0, committed_hash: None, committed_consent: None,
-                committed_source: None, failures: 0, previous_version: None,
-                sequence: 0, status: "waiting".into(), error: None, pending: None,
+                campaign_id: campaign_id.into(),
+                user_id: user.into(),
+                enabled: true,
+                next_check: 0,
+                committed_hash: None,
+                committed_consent: None,
+                committed_source: None,
+                failures: 0,
+                previous_version: None,
+                sequence: 0,
+                status: "waiting".into(),
+                error: None,
+                pending: None,
             });
             true
         }
@@ -495,13 +513,12 @@ async fn tick(state: &ServiceState) -> Result<(), String> {
         if changed {
             save(state, &store).await?;
         }
-        state.table_sync.startup_reconciled.store(true, Ordering::Release);
+        state
+            .table_sync
+            .startup_reconciled
+            .store(true, Ordering::Release);
     }
-    if !store
-        .tables
-        .values()
-        .any(queued)
-    {
+    if !store.tables.values().any(queued) {
         return Ok(());
     }
     let admitted = async {
@@ -513,11 +530,7 @@ async fn tick(state: &ServiceState) -> Result<(), String> {
     let (user, source, consent_id) = match admitted {
         Ok(v) => v,
         Err(error) => {
-            for table in store
-                .tables
-                .values_mut()
-                .filter(|t| queued(t))
-            {
+            for table in store.tables.values_mut().filter(|t| queued(t)) {
                 table.next_check =
                     (now() + 300).max(state.table_sync.retry_after.load(Ordering::Acquire));
                 table.error = Some(error.clone());
@@ -1095,7 +1108,10 @@ mod tests {
         let mut store = super::Store::default();
         assert!(super::register_table(&mut store, "user-a", "campaign"));
         assert!(store.tables[&super::key("user-a", "campaign")].enabled);
-        let table = store.tables.get_mut(&super::key("user-a", "campaign")).unwrap();
+        let table = store
+            .tables
+            .get_mut(&super::key("user-a", "campaign"))
+            .unwrap();
         table.enabled = false;
         table.status = "consent_revoked".into();
         assert!(!super::register_table(&mut store, "user-a", "campaign"));
@@ -1106,25 +1122,38 @@ mod tests {
         assert!(!store.tables[&super::key("user-a", "campaign")].enabled);
         super::resume_consent_tables(&mut store, "user-a");
         assert!(store.tables[&super::key("user-a", "campaign")].enabled);
-        assert!(super::consent(&serde_json::json!({"upload_enabled":true,"consent_current":false})).is_err());
+        assert!(
+            super::consent(&serde_json::json!({"upload_enabled":true,"consent_current":false}))
+                .is_err()
+        );
     }
     #[tokio::test]
     async fn registered_tables_wait_without_uploading_when_server_consent_is_missing() {
         let dir = tempfile::tempdir().unwrap();
-        let state = crate::ServiceState::new(dir.path().into(), &[], "/test/onecrew".into(), "test".into());
+        let state = crate::ServiceState::new(
+            dir.path().into(),
+            &[],
+            "/test/onecrew".into(),
+            "test".into(),
+        );
         let mut store = super::Store::default();
         super::register_table(&mut store, "user", "campaign");
         super::save(&state, &store).await.unwrap();
-        *state.table_sync.remote.lock().unwrap() = Some(std::collections::VecDeque::from(vec![Ok(
-            onecrew_creator_sync::TableSyncResponse {
-                status: 200, etag: None, retry_after: None,
+        *state.table_sync.remote.lock().unwrap() = Some(std::collections::VecDeque::from(vec![
+            Ok(onecrew_creator_sync::TableSyncResponse {
+                status: 200,
+                etag: None,
+                retry_after: None,
                 body: serde_json::json!({"protocol":"onecrew.dynamic_table_sync", "protocol_version":1,
                     "limits":{"part_bytes":8388608,"collection_interval_seconds":300},
                     "identity":{"access_user_id":"user","source_instance_id":uuid::Uuid::new_v4()},
                     "upload_enabled":false,"consent_current":false}),
-            }
-        )]));
-        assert_eq!(super::tick(&state).await.err().as_deref(), Some("table_sync_consent_required"));
+            }),
+        ]));
+        assert_eq!(
+            super::tick(&state).await.err().as_deref(),
+            Some("table_sync_consent_required")
+        );
         let requests = state.table_sync.requests.lock().unwrap();
         assert_eq!(requests.len(), 1);
         assert_eq!(requests[0]["operation"], "capabilities");
@@ -1349,7 +1378,12 @@ mod tests {
     #[tokio::test]
     async fn recovered_snapshot_reconciles_latest_result_once_without_duplicate_commit() {
         let dir = tempfile::tempdir().unwrap();
-        let state = ServiceState::new(dir.path().into(), &[], "/test/onecrew".into(), "test".into());
+        let state = ServiceState::new(
+            dir.path().into(),
+            &[],
+            "/test/onecrew".into(),
+            "test".into(),
+        );
         let mut pending = fixture(1);
         let receipt = committed(&mut pending);
         let header: Value = serde_json::from_str(pending.archive.lines().next().unwrap()).unwrap();
@@ -1358,14 +1392,28 @@ mod tests {
             "upload_enabled":true,"consent_current":true,
             "consent":{"status":"granted","consent_id":pending.input["consent_id"],"scopes":["dynamic_table_records","dynamic_table_schema"]},
             "limits":{"part_bytes":PART,"collection_interval_seconds":300}});
-        let response = |body| Ok(TableSyncResponse { status: 200, etag: None, retry_after: None, body });
+        let response = |body| {
+            Ok(TableSyncResponse {
+                status: 200,
+                etag: None,
+                retry_after: None,
+                body,
+            })
+        };
         *state.table_sync.remote.lock().unwrap() = Some(std::collections::VecDeque::from(vec![
-            response(cap.clone()), response(json!({"upload":receipt})), response(cap.clone()),
+            response(cap.clone()),
+            response(json!({"upload":receipt})),
+            response(cap.clone()),
         ]));
-        *state.table_sync.capture.lock().unwrap() = Some(json!({"content_hash":pending.content_hash}));
+        *state.table_sync.capture.lock().unwrap() =
+            Some(json!({"content_hash":pending.content_hash}));
         let mut store = Store::default();
         register_table(&mut store, "user", "campaign");
-        store.tables.get_mut(&key("user", "campaign")).unwrap().pending = Some(pending);
+        store
+            .tables
+            .get_mut(&key("user", "campaign"))
+            .unwrap()
+            .pending = Some(pending);
         save(&state, &store).await.unwrap();
         tick(&state).await.unwrap();
         let after_recovery = load(&state).await.unwrap();
@@ -1380,13 +1428,25 @@ mod tests {
         assert_eq!(table.previous_version, version);
         assert!(!queued(table));
         tick(&state).await.unwrap();
-        let requests = state.table_sync.requests.lock().unwrap();
-        assert_eq!(requests.len(), 3);
-        assert!(requests.iter().all(|r| matches!(r["operation"].as_str(), Some("capabilities" | "status"))));
-        drop(requests);
-        let restarted = ServiceState::new(dir.path().into(), &[], "/test/onecrew".into(), "test".into());
-        *restarted.table_sync.capture.lock().unwrap() = Some(json!({"content_hash":table.committed_hash}));
-        *restarted.table_sync.remote.lock().unwrap() = Some(std::collections::VecDeque::from(vec![response(cap)]));
+        {
+            let requests = state.table_sync.requests.lock().unwrap();
+            assert_eq!(requests.len(), 3);
+            assert!(
+                requests
+                    .iter()
+                    .all(|r| matches!(r["operation"].as_str(), Some("capabilities" | "status")))
+            );
+        }
+        let restarted = ServiceState::new(
+            dir.path().into(),
+            &[],
+            "/test/onecrew".into(),
+            "test".into(),
+        );
+        *restarted.table_sync.capture.lock().unwrap() =
+            Some(json!({"content_hash":table.committed_hash}));
+        *restarted.table_sync.remote.lock().unwrap() =
+            Some(std::collections::VecDeque::from(vec![response(cap)]));
         tick(&restarted).await.unwrap();
         tick(&restarted).await.unwrap();
         assert_eq!(restarted.table_sync.requests.lock().unwrap().len(), 1);
@@ -1394,19 +1454,34 @@ mod tests {
     #[tokio::test]
     async fn unchanged_success_resets_failures_without_upload_or_sequence_change() {
         let dir = tempfile::tempdir().unwrap();
-        let state = ServiceState::new(dir.path().into(), &[], "/test/onecrew".into(), "test".into());
+        let state = ServiceState::new(
+            dir.path().into(),
+            &[],
+            "/test/onecrew".into(),
+            "test".into(),
+        );
         let source = Uuid::new_v4();
         let consent = Uuid::new_v4();
         *state.table_sync.capture.lock().unwrap() = Some(json!({"content_hash":"same"}));
         let mut table = Table {
-            campaign_id: "campaign".into(), user_id: "user".into(), enabled: true,
-            next_check: 0, committed_hash: Some("same".into()),
-            committed_consent: Some(consent), committed_source: Some(source),
-            failures: 2, previous_version: Some(Uuid::new_v4()), sequence: 7,
-            status: "error".into(), error: Some("library_request_unavailable".into()), pending: None,
+            campaign_id: "campaign".into(),
+            user_id: "user".into(),
+            enabled: true,
+            next_check: 0,
+            committed_hash: Some("same".into()),
+            committed_consent: Some(consent),
+            committed_source: Some(source),
+            failures: 2,
+            previous_version: Some(Uuid::new_v4()),
+            sequence: 7,
+            status: "error".into(),
+            error: Some("library_request_unavailable".into()),
+            pending: None,
         };
         let previous_version = table.previous_version;
-        run_table(&state, &mut table, Uuid::new_v4(), source, consent).await.unwrap();
+        run_table(&state, &mut table, Uuid::new_v4(), source, consent)
+            .await
+            .unwrap();
         assert_eq!(table.failures, 0);
         assert_eq!(table.status, "up_to_date");
         assert!(table.error.is_none());
@@ -1416,7 +1491,10 @@ mod tests {
         assert!(table.pending.is_none());
         assert!(state.table_sync.requests.lock().unwrap().is_empty());
         checkpoint(&state, &table).await.unwrap();
-        assert_eq!(load(&state).await.unwrap().tables[&key("user", "campaign")].failures, 0);
+        assert_eq!(
+            load(&state).await.unwrap().tables[&key("user", "campaign")].failures,
+            0
+        );
     }
     #[tokio::test]
     async fn local_disable_works_even_when_cloud_unavailable() {

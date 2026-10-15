@@ -108,6 +108,7 @@ fn bilibili_contact_case(biography_email: bool) {
     let material = owner
         .prepare_discovery_review_material("bili-shoes", 1, &hit.id)
         .unwrap();
+    assert_eq!(owner.prepare_discovery_library_snapshot("bili-shoes", 1).unwrap().rows[0].followers.as_deref(), Some("15000"));
     assert_eq!(material.format_version, 2);
     assert_eq!(material.native_followers, Some(15000));
     assert_eq!(
@@ -566,6 +567,7 @@ fn x_review_requires_bound_native_post_and_keeps_residence_pending() {
     let material = owner
         .prepare_discovery_review_material("x-apparel", 1, &hit)
         .unwrap();
+    assert_eq!(owner.prepare_discovery_library_snapshot("x-apparel", 1).unwrap().rows[0].followers.as_deref(), Some("15000"));
     assert_eq!(material.format_version, 2);
     assert_eq!(material.native_followers, Some(15000));
     let profile = material.native_profile.as_ref().unwrap();
@@ -739,6 +741,7 @@ fn tiktok_caption_review_requires_native_author_profile_and_keeps_residence_pend
     let material = owner
         .prepare_discovery_review_material("tiktok-apparel", 1, &hit.id)
         .unwrap();
+    assert_eq!(owner.prepare_discovery_library_snapshot("tiktok-apparel", 1).unwrap().rows[0].followers.as_deref(), Some("15000"));
     assert_eq!(material.format_version, 2);
     assert_eq!(material.native_followers, Some(15000));
     assert_eq!(

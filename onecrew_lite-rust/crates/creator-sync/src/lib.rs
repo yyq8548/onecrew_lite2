@@ -25,10 +25,9 @@ pub use model::{
 };
 pub use onecrew_local_domain::CreatorSyncClientPlatform;
 pub use runtime::{
-    TableSyncRequest, TableSyncResponse,
     CodeVerifier, CreatorSyncPairingBeginInput, CreatorSyncPairingBeginResult,
     CreatorSyncPairingCancelInput, CreatorSyncPairingCompleteInput, CreatorSyncRuntime,
-    PairingAuthorizeUrl, PairingCode, PairingState,
+    PairingAuthorizeUrl, PairingCode, PairingState, TableSyncRequest, TableSyncResponse,
 };
 
 #[cfg(feature = "test-support")]

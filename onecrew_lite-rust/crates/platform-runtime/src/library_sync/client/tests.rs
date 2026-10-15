@@ -1,6 +1,16 @@
 use super::*;
 use serde_json::json;
 
+#[tokio::test]
+#[ignore = "读取隔离的真实 Library 进程，确认未登录错误，不创建账号或表格"]
+async fn live_signed_out_library_reports_login_required() {
+    let path = PathBuf::from(std::env::var("ONECREW_LIVE_LIBRARY_DESCRIPTOR").unwrap());
+    assert!(path.is_absolute());
+    let descriptor = read_descriptor(&path).unwrap();
+    let result = connect_descriptor(descriptor, "").await;
+    assert_eq!(result.err().as_deref(), Some("library_login_required"));
+}
+
 #[test]
 fn a_healthy_old_library_cannot_claim_sync_compatibility() {
     let mut health: Health = serde_json::from_value(json!({

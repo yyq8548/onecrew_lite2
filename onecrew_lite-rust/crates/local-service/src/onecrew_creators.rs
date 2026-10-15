@@ -73,7 +73,12 @@ pub(super) async fn onecrew_creator_import_file_prepare(
         .await
         .map_err(|error| error.to_string())?;
     let mut result = map_file_prepare_result(file_name, prepared);
-    if let CreatorImportFilePrepareResult::ConfirmationRequired { preview_rows: rows, .. } = &mut result { *rows = preview_rows; }
+    if let CreatorImportFilePrepareResult::ConfirmationRequired {
+        preview_rows: rows, ..
+    } = &mut result
+    {
+        *rows = preview_rows;
+    }
     Ok(result)
 }
 

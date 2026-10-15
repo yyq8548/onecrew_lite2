@@ -113,7 +113,11 @@ pub(super) fn next_search_keyword(
 }
 
 impl DiscoveryCampaignRepository for SqliteRepository {
-    fn append_discovery_queries(&self, account: &str, input: &crate::AppendDiscoveryQueries) -> Result<(), String> {
+    fn append_discovery_queries(
+        &self,
+        account: &str,
+        input: &crate::AppendDiscoveryQueries,
+    ) -> Result<(), String> {
         super::discovery_query_rounds::append(self, account, input)
     }
     fn discovery_read_stops(
@@ -176,9 +180,18 @@ impl DiscoveryCampaignRepository for SqliteRepository {
             "SELECT r.criteria_json,c.target_count FROM discovery_campaigns c JOIN discovery_campaign_revisions r ON r.discovery_campaign_id=c.id AND r.revision=c.current_revision WHERE c.id=?1",
             [campaign_id], |r| Ok((r.get(0)?,r.get(1)?))
         ).map_err(|e|e.to_string())?;
-        let criteria: serde_json::Value = serde_json::from_str(&criteria).map_err(|e| e.to_string())?;
-        let subject = criteria["table_subject"].as_str().filter(|s| !s.trim().is_empty()).unwrap_or(&product);
-        let subject: String = subject.trim().chars().filter(|c| !c.is_control()).take(40).collect();
+        let criteria: serde_json::Value =
+            serde_json::from_str(&criteria).map_err(|e| e.to_string())?;
+        let subject = criteria["table_subject"]
+            .as_str()
+            .filter(|s| !s.trim().is_empty())
+            .unwrap_or(&product);
+        let subject: String = subject
+            .trim()
+            .chars()
+            .filter(|c| !c.is_control())
+            .take(40)
+            .collect();
         Ok(crate::DiscoveryLibraryTableName {
             name: format!("{subject}{count}个"),
             previous_auto_name: format!("{product}_{date}_{ordinal}"),
@@ -394,16 +407,14 @@ impl DiscoveryCampaignRepository for SqliteRepository {
                 },
             ));
         }
-        if platform == "facebook" {
-            if let Some(search_hit_id) =
+        if platform == "facebook"
+            && let Some(search_hit_id) =
                 super::discovery_facebook_identity::next_hit(self, campaign, &[])?
-            {
-                if !held.contains(&search_hit_id) {
-                    return Ok(Some(crate::DiscoveryStep::ReadFacebookIdentity {
-                        search_hit_id,
-                    }));
-                }
-            }
+            && !held.contains(&search_hit_id)
+        {
+            return Ok(Some(crate::DiscoveryStep::ReadFacebookIdentity {
+                search_hit_id,
+            }));
         }
         Ok(None)
     }
@@ -1276,7 +1287,12 @@ impl DiscoveryCampaignRepository for SqliteRepository {
         if max_calls.is_some_and(|max| used_calls >= max) {
             return Err("Campaign search budget is exhausted".into());
         }
-        let scopes = super::discovery_query_rounds::effective_scopes(&transaction, campaign_id, expected_revision, &scope_json)?;
+        let scopes = super::discovery_query_rounds::effective_scopes(
+            &transaction,
+            campaign_id,
+            expected_revision,
+            &scope_json,
+        )?;
         let scope = scopes
             .iter()
             .find(|scope| scope.platform == platform && scope.profile_ref == profile_ref)
@@ -2124,7 +2140,8 @@ impl DiscoveryCampaignRepository for SqliteRepository {
             .collect::<Result<Vec<_>, _>>()
             .map_err(|error| error.to_string())?;
         drop(statement);
-        let scopes = super::discovery_query_rounds::effective_scopes(&snapshot, &id, revision, &scope_json)?;
+        let scopes =
+            super::discovery_query_rounds::effective_scopes(&snapshot, &id, revision, &scope_json)?;
         snapshot.commit().map_err(|error| error.to_string())?;
         Ok(DiscoveryCampaign {
             id,

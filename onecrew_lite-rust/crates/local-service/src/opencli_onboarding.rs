@@ -5,7 +5,10 @@ use onecrew_local_runtime::{
 };
 use serde_json::{Value, json};
 
-pub(crate) async fn auth_observations(state: &ServiceState, profile: String) -> Result<Vec<OpenCliAuthObservation>, String> {
+pub(crate) async fn auth_observations(
+    state: &ServiceState,
+    profile: String,
+) -> Result<Vec<OpenCliAuthObservation>, String> {
     state.platform().await?.opencli_auth_observations(&profile)
 }
 

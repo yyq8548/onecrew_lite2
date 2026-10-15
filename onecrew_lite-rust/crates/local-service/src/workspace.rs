@@ -52,12 +52,36 @@ fn companion_path(executable: &Path, installed: &Path) -> Result<PathBuf, String
 
 pub async fn library_workspace_url(executable: &Path) -> Result<String, String> {
     let installed = crate::UserInstallLayout::current()?;
-    let companion = companion_path(executable, installed.executable())?;
+    let installed = installed.executable().to_owned();
+    #[cfg(windows)]
+    let installed =
+        if let Some(package) = std::env::var_os("ONECREW_LITE_HOST_INSTALLED_EXECUTABLE") {
+            let service = executable.to_owned();
+            crate::blocking::run_blocking("workspace_package", move || {
+                crate::service_host::verified_package(&service, Path::new(&package))
+            })
+            .await??
+        } else {
+            installed
+        };
+    let companion = companion_path(executable, &installed)?;
     if !crate::blocking::run_blocking("workspace_companion", {
         let companion = companion.clone();
-        move || companion.is_file()
+        move || {
+            let package = companion
+                .parent()
+                .and_then(Path::parent)
+                .ok_or("workspace_package_directory_unavailable")?
+                .join(if cfg!(windows) {
+                    "onecrew_lite.exe"
+                } else {
+                    "onecrew_lite"
+                });
+            crate::cli_installation::require_complete_workspace(&package)?;
+            Ok::<_, String>(companion.is_file())
+        }
     })
-    .await?
+    .await??
     {
         return Err(
             "workspace_library_not_packaged: use the complete onecrew_lite download".into(),
