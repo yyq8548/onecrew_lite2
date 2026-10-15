@@ -1,5 +1,8 @@
 const mail = {
   bulk: {
+    senderReadFailed: "发件人列表读取失败，请重试。",
+    senderUnavailable: "本地 Gmail 邮箱当前不可发送。请关闭此窗口，刷新邮箱授权状态；如仍不可用，请重新授权原邮箱并允许发送和读取邮件。",
+    reloadSenders: "重新读取发件人",
     stepsLabel: "批量发送步骤",
     steps: { recipients: "选择名单", compose: "编辑邮件", confirm: "确认发送" },
     nextCompose: "下一步：编辑邮件",
@@ -37,6 +40,7 @@ const mail = {
 },
 
   gmail: {
+    partialAuthorization: "邮件权限不完整，请重新授权并允许发送和读取邮件",
     connect: "连接 Gmail",
     reauthorize: "重新授权原 Gmail",
     identityHelp: "提示 OneCrew 账号不一致，无法连接？",
@@ -44,7 +48,7 @@ const mail = {
     openAccount: "打开 OneCrew 网页账号页",
     connecting: "正在生成授权链接…",
     refreshing: "正在刷新邮箱…",
-    refreshed: "邮箱已刷新，可以发信。",
+    refreshed: "邮箱授权状态已刷新。具备发送和邮件读取权限的邮箱可在发件人列表中选择。",
     switchHint: "授权后点击“刷新邮箱”。重新授权请选择原邮箱。",
     authorize: "打开 Google 邮箱授权",
     expires: "链接 15 分钟内有效。完成授权后刷新状态。",

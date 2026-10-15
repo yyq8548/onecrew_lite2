@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
+import { QueryClient } from "@tanstack/react-query";
 
 import { EMAIL_TEMPLATE_LIST_QUERY_KEY, MAILBOX_QUERY_KEY } from "@/components/mail/queries";
 import {
   CONNECTED_ACCOUNTS_QUERY_KEY,
   CREATORS_QUERY_KEY,
 } from "@/lib/creator";
-import { queryKeysForRuntimeChangeScopes } from "@/lib/runtime-change";
+import { invalidateRuntimeChangeScopes, queryKeysForRuntimeChangeScopes } from "@/lib/runtime-change";
 import { CREATOR_GROUPS_QUERY_KEY } from "@/lib/creator-groups";
 import {
   RESEND_CREDENTIALS_QUERY_KEY,
@@ -13,6 +14,17 @@ import {
 } from "@/lib/runtime-query";
 
 describe("runtime change query invalidation mapping", () => {
+  it("invalidates the sender query in another window after Gmail reconciliation", async () => {
+    const client = new QueryClient();
+    const mailboxQuery = client.getQueryCache().build(client, { queryKey: MAILBOX_QUERY_KEY });
+    expect(mailboxQuery.state.isInvalidated).toBe(false);
+
+    await invalidateRuntimeChangeScopes(client, ["email_folders"]);
+
+    expect(mailboxQuery.state.isInvalidated).toBe(true);
+    client.clear();
+  });
+
   it("refreshes local credential projections and derived mailboxes together", () => {
     expect(queryKeysForRuntimeChangeScopes(["service_credentials"])).toEqual([
       YOUTUBE_CREDENTIALS_QUERY_KEY,
