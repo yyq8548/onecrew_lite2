@@ -2,7 +2,11 @@
 
 从一句话需求出发，寻找合适的创作者，整理资料，再通过 Gmail 联系。
 
-**当前版本：0.7.1** · macOS Apple Silicon · 中文 / English
+**当前版本：0.7.1** · Mac Apple Silicon r4 / Windows x64 r3 · 中文 / English
+
+## 迁移开发接手
+
+另一台电脑请克隆 `codex/typescript-migration-handoff` 分支，从 [完整分析、迁移计划与接手流程](docs/migration/README.md) 开始。该分支保留公司已发布 Mac r4 对应的全部受版本管理源码；TypeScript 统一程序迁移尚未实施。Windows r3 对应完整源码尚未核实，不能把本仓库描述为已能重建该包。
 
 ## 从需求到合作
 
@@ -20,12 +24,13 @@
 
 当前 Mac 安装包适用于 **Apple 芯片、macOS 13.5 及以上**。
 
-1. 解压完整安装包，双击 `安装或更新.command`。
-2. 安装完成后重启 Codex，输入「使用 onecrew_lite」。
-3. 按工作台提示完成登录、Chrome 扩展连接和浏览器身份选择。
-4. 输入需求，确认计划，开始搜索并查看结果表格。
+1. 从官网获取私人安装指引，核对 ZIP 大小、SHA256 和包内清单后完整解压。
+2. 在包目录执行 `sh install-core.sh` 安装本体，再通过已安装的 `onecrew_lite opencli repair` 准备搜索依赖。
+3. 执行包内 `sh connect-codex.sh` 接入 Codex，按提示重启 Codex 并验证真实 MCP 调用。
+4. 使用 `open-onecrew_lite.command` 打开工作台和 Library，完成两侧授权、Chrome 扩展连接及浏览器身份选择，确认同一账号且组件状态 ready。
+5. 输入需求，确认计划，开始搜索并查看结果表格。
 
-之后可使用 `打开 onecrew_lite.command` 启动。当前测试包未经 Apple 签名和公证。
+以上为 Mac r4 包的实际文件布局；Windows r3 按包内 PowerShell 分步说明安装。Mac 包使用 ad-hoc 签名，尚无 Developer ID 签名和公证。
 
 ## 完整源码
 
@@ -33,7 +38,7 @@
 | --- | --- |
 | [onecrew_lite-rust](onecrew_lite-rust/) | Rust CLI、本地服务、搜索与评分、平台适配器、React 工作台、Codex 插件 |
 | [onecrew_lite-library](onecrew_lite-library/) | 动态表格服务、结果同步、创作者视图与导出 |
-| [onecrew_lite-access](onecrew_lite-access/) | 账号授权与发行服务 |
+| [onecrew_lite-access](onecrew_lite-access/) | 账号授权与发行服务旧快照；当前生产来源见交接记录，勿直接部署 |
 
 仓库保留源码、测试、构建脚本、依赖锁文件和必要的技术说明。登录凭据、客户数据库、运行缓存和安装包不进入源码仓库。
 
@@ -48,7 +53,7 @@ cd onecrew_lite-rust
 bash development/scripts/build.sh --release --target aarch64-apple-darwin
 ```
 
-完整安装包还需包含 Library。其构建入口是 `onecrew_lite-library/scripts/build-release.mjs`，组合打包入口是 `onecrew_lite-rust/development/scripts/package-mac-trial.mjs`。打包脚本校验两个程序的清单、目标平台和文件摘要。
+完整安装包还需包含 Library。其构建入口是 `onecrew_lite-library/scripts/build-release.mjs`，组合打包入口是 `onecrew_lite-rust/development/scripts/package-workspace.mjs`。原生配套候选使用 `development/scripts/workspace-release.mjs`，打包脚本校验两个程序的清单、目标平台和文件摘要。
 
 进一步阅读：[主程序开发](onecrew_lite-rust/development/README.md) · [运行时架构](onecrew_lite-rust/ARCHITECTURE.md) · [动态表格](onecrew_lite-library/README.md) · [授权服务](onecrew_lite-access/README.md)
 

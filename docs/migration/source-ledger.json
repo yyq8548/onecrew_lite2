@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "analysis_date": "2026-10-15",
+  "github_repository": "https://github.com/yyq8548/onecrew_lite.git",
+  "handoff_branch": "codex/typescript-migration-handoff",
+  "lite": {
+    "company_main": "26eefcab4dab3b836937c2922ec33789c6c10975",
+    "mac_build_source": "8cedccf2a29433728e9c81f052c9d485df39a1ad",
+    "source_tree": "7bbe9f75a73c4ea8950a52fcf1c6d7529fae0298",
+    "tracked_files_before_handoff_docs": 5546,
+    "directory_files": {
+      "onecrew_lite-rust": 2720,
+      "onecrew_lite-library": 2419,
+      "onecrew_lite-access": 403
+    },
+    "source_coverage": "All tracked company main files; Windows r3 source is not verified",
+    "rust": "1.98.0",
+    "node": "26.7.0",
+    "pnpm": "10.32.1"
+  },
+  "published_mac": {
+    "version": "0.7.1",
+    "revision": "r4",
+    "library_version": "0.1.4",
+    "target": "aarch64-apple-darwin",
+    "minimum_os": "13.5",
+    "key": "onecrew_lite/releases/0.7.1/onecrew_lite-0.7.1-aarch64-apple-darwin-r4.zip",
+    "size": 86122281,
+    "sha256": "e3965841c90f201bafd5db9ba967138bfcc58e81808522ccc815f72d7432c09a"
+  },
+  "published_windows": {
+    "version": "0.7.1",
+    "revision": "r3",
+    "target": "x86_64-pc-windows-msvc",
+    "key": "onecrew_lite/releases/0.7.1/onecrew_lite-0.7.1-x86_64-pc-windows-msvc-r3.zip",
+    "size": 85563372,
+    "sha256": "48df24ba9ae3932139b4f852ba8a582edea217849b78cd97770cabe61923d28a",
+    "declared_source": "aef10db3c16754d39a5f1d424dd88541b412ee55",
+    "source_verified": false
+  },
+  "access": {
+    "repository": "git@git.digifinex.org:onecrew/onecrew-access.git",
+    "deployed_source": "3a40933f19c29de413687c4f839699de90bb7d9a",
+    "deployed_branch": "codex/release-lite-r3-preserve-pro",
+    "worker_version": "92154874-dc68-4fb9-a763-d42c80ac4fd6",
+    "release_docs_merge": "ff6da0c",
+    "embedded_snapshot_is_current_production": false
+  },
+  "pro_reference": {
+    "repository": "git@git.digifinex.org:onecrew/onecrew.git",
+    "branch": "onecrew-pro",
+    "commit": "6558828624368addba6b4583078e7928577da284",
+    "version": "0.1.8",
+    "implementation_copied": false
+  },
+  "migration_status": "analysis_and_plan_only"
+}
