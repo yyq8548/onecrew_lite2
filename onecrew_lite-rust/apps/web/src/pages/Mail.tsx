@@ -601,7 +601,7 @@ export const Mail = forwardRef<MailNavigationGuardHandle, { onManageMailboxes?: 
     <TooltipProvider delayDuration={0}>
       <div ref={setMailRoot} className="flex h-full min-h-0 flex-col overflow-hidden border-t-0 bg-card">
         <GmailConnection />
-        <GmailBulk mailboxes={mailboxes.data ?? []} />
+        <GmailBulk mailboxes={mailboxes.data ?? []} mailboxError={mailboxes.error} mailboxesLoading={mailboxes.isFetching} refreshMailboxes={() => { void mailboxes.refetch(); }} />
         <MailboxUnavailable mailbox={selectedMailbox} />
         {mailboxes.error && (
           <div className="border-b border-destructive/30 bg-destructive/5 px-4 py-3 text-xs text-destructive">

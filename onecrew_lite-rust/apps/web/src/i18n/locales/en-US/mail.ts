@@ -3,6 +3,9 @@ import type zhCNMail from "../zh-CN/mail";
 
 const mail = {
   bulk: {
+    senderReadFailed: "Could not load senders. Please retry.",
+    senderUnavailable: "Local Gmail mailboxes are currently unavailable for sending. Close this dialog and refresh mailbox authorization. If still unavailable, reauthorize the original mailbox with send and read permissions.",
+    reloadSenders: "Reload senders",
     stepsLabel: "Bulk email steps",
     steps: { recipients: "Select recipients", compose: "Compose", confirm: "Confirm send" },
     nextCompose: "Next: compose",
@@ -40,6 +43,7 @@ const mail = {
 },
 
   gmail: {
+    partialAuthorization: "Mail permissions are incomplete. Reauthorize with send and read permissions.",
     connect: "Connect Gmail",
     reauthorize: "Reauthorize original Gmail",
     identityHelp: "Unable to connect because OneCrew accounts differ?",
@@ -47,7 +51,7 @@ const mail = {
     openAccount: "Open OneCrew web account",
     connecting: "Creating authorization link…",
     refreshing: "Refreshing mailbox…",
-    refreshed: "Mailbox refreshed. Ready to send.",
+    refreshed: "Mailbox authorization refreshed. Mailboxes with send and read permissions can be selected in the sender list.",
     switchHint: "After authorization, click Refresh mailbox. Reauthorize with the same Gmail.",
     authorize: "Open Google mailbox authorization",
     expires: "Link expires in 15 minutes. Refresh status after authorization.",
