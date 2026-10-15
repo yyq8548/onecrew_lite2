@@ -98,13 +98,14 @@ export async function packageWorkspace(cliDir, libraryDir, output) {
     await writeFile(path.join(output, 'open-onecrew_lite.command'), '#!/bin/sh\nset -eu\nexec "$HOME/.local/bin/onecrew_lite" workspace "$@"\n', {mode: 0o755});
   }
   const instructions = `onecrew_lite ${cli.version}\n\n目标：${cli.target}；Library：${library.version}。\n本体安装：${installerName}。先验证完整 ZIP 和 manifest.json，再运行。\n本体安装不依赖 Codex，不登录账号、不打开浏览器、不下载额外依赖。\n安装后使用已安装的 onecrew_lite opencli repair 准备搜索依赖（需联网），再运行 connect-codex.${windows ? 'ps1' : 'sh'} 接入 Codex。\n首次正式支持 Codex；其他客户端尚未验收。插件注册后可能需要完全退出并重启 Codex，再验证真实工具调用。\n使用 open-onecrew_lite.${windows ? 'cmd' : 'command'} 打开工作台与 Library，按提示分别完成登录和浏览器授权。\n${windows ? 'Windows 原生 x64；最低支持系统需以发布验收记录为准。' : 'macOS 13.5 或更新；芯片架构必须与包一致。'}\n不删除旧 OneCrew、Pro 或用户业务数据；不单独更新 CLI。失败时保留报错和恢复目录。\n包是否完成签名/公证以发布验收记录为准，不关闭系统安全保护。\n`;
-  await writeFile(path.join(output, 'README.md'), instructions);
-  await writeFile(path.join(output, '使用说明.txt'), instructions);
+  const readinessInstructions = '\n下载安装要求：使用目标电脑的终端 HTTP 命令读取私人安装指引，确认 HTTP 200，禁止跟随重定向；不要将私人链接交给网页搜索，也不要把响应直接作为脚本执行。执行前校验 ZIP 大小、SHA256 和包内清单。\n登录验收：工作台与 Library 分别授权，确认登录有效且账号一致。不复制凭据或自动切换账号。通过 Codex 执行 onecrew_components_check，确认 library_state=ready，并验证真实 MCP 状态调用。页面打开、端口在线或命令退出成功不能替代这些检查。\n授权未完成、账号不同或组件检查失败时停止搜索，按具体错误恢复登录或连接，保留已有任务和数据。需要浏览器授权或重启 Codex 时明确提示，不自动发起搜索。\n';
+  await writeFile(path.join(output, 'README.md'), instructions + readinessInstructions);
+  await writeFile(path.join(output, '使用说明.txt'), instructions + readinessInstructions);
   if (windows) {
     const windowsInstructions = `\nWindows 本体安装后按顺序执行 windows-setup-step.ps1 -Step 参数：\n1. verify：校验两份程序后读取版本。\n2. service：注册当前用户后台服务，记录物理安装目录。\n3. start：启动主程序。\n4. opencli：联网准备搜索运行环境。\n5. codex：安装插件，再验证实际工具调用；必要时保存进度、退出并重开宿主应用。\n6. library：检查工作台和 Library 页面。\n每次只运行一步，失败立即停止；日志位于安装目录 installation-logs。不要关闭安全策略，不自动结束 Codex/ChatGPT 或后台服务。\n完成命令不等于插件连接、账号登录或真实搜索验收通过。\n`;
-    await writeFile(path.join(output, 'README.md'), instructions + windowsInstructions);
-    await writeFile(path.join(output, '使用说明.txt'), instructions + windowsInstructions);
-    await writeFile(path.join(output, 'Windows测试版使用说明.txt'), instructions + windowsInstructions);
+    await writeFile(path.join(output, 'README.md'), instructions + readinessInstructions + windowsInstructions);
+    await writeFile(path.join(output, '使用说明.txt'), instructions + readinessInstructions + windowsInstructions);
+    await writeFile(path.join(output, 'Windows测试版使用说明.txt'), instructions + readinessInstructions + windowsInstructions);
   }
   const files = [];
   async function list(dir, prefix = '') {
