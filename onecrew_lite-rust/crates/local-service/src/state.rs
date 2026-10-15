@@ -352,7 +352,10 @@ impl ServiceState {
             events,
             stop,
         ));
-        let gmail_bulk = tokio::spawn(crate::gmail_bulk_worker::run(platform.creators()?.clone(), cancel.clone()));
+        let gmail_bulk = tokio::spawn(crate::gmail_bulk_worker::run(
+            platform.creators()?.clone(),
+            cancel.clone(),
+        ));
         *application = Some(Application {
             platform: platform.clone(),
             catalog,
@@ -479,9 +482,17 @@ impl ServiceState {
             application.cancel.cancel();
             let mut gmail_bulk = application.gmail_bulk;
             match tokio::time::timeout(Duration::from_secs(40), &mut gmail_bulk).await {
-                Ok(Ok(())) => {},
+                Ok(Ok(())) => {}
                 Ok(Err(error)) => log::error!("gmail bulk worker join failed: {error}"),
-                Err(_) => { gmail_bulk.abort(); let _ = gmail_bulk.await; log::error!("gmail bulk worker shutdown timed out"); }
+                Err(_) => {
+                    gmail_bulk.abort();
+                    if let Err(error) = gmail_bulk.await
+                        && !error.is_cancelled()
+                    {
+                        log::error!("gmail bulk worker failed while aborting");
+                    }
+                    log::error!("gmail bulk worker shutdown timed out");
+                }
             }
             application
                 .changes
@@ -539,14 +550,12 @@ impl ServiceState {
             startup.phase == crate::startup::StartupPhase::Ready,
             login.as_ref(),
         );
-        let data_dir = self.data_dir.clone();
-        let identity_for_check = identity.clone();
         let cli_update = self
             .cli_update
             .read(identity, env!("CARGO_PKG_VERSION"), move || async move {
-                let identity = identity_for_check
-                    .ok_or(crate::cli_update_status::CheckFailure::CheckFailed)?;
-                crate::cli_update_status::fetch_version(data_dir, identity).await
+                // Lite updates replace the verified CLI + Library pair. Never
+                // send device credentials to the retired single-CLI endpoint.
+                Err(crate::cli_update_status::CheckFailure::WorkspaceUpdateRequired)
             })
             .await;
         let update_executable =

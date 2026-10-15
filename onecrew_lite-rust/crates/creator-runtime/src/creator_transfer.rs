@@ -207,7 +207,7 @@ impl CreatorBundle {
             .map_err(|_| "creator bundle is not valid canonical JSON")?;
         match wire.get("format_version").and_then(Value::as_u64) {
             Some(4) => Self::from_json_bytes(bytes),
-            Some(1 | 2 | 3) => {
+            Some(1..=3) => {
                 let bundle = Self::from_staged_import_json_bytes(bytes)?;
                 build_creator_bundle(bundle.creators)
             }
@@ -225,7 +225,7 @@ impl CreatorBundle {
         if version == Some(4) {
             return Self::from_json_bytes(bytes);
         }
-        if !matches!(version, Some(1 | 2 | 3)) {
+        if !matches!(version, Some(1..=3)) {
             return Err("unsupported staged Creator bundle version".into());
         }
         for creator in wire
@@ -258,7 +258,7 @@ impl CreatorBundle {
         if self.format_version == 4 {
             return self.to_json_bytes();
         }
-        if !matches!(self.format_version, 1 | 2 | 3)
+        if !matches!(self.format_version, 1..=3)
             || self.creators.iter().any(|creator| creator.notes.is_some())
             || (self.format_version < 3
                 && self.creators.iter().any(|creator| !creator.tags.is_empty()))

@@ -45,6 +45,10 @@ pub(crate) struct PairingAuthorizeRequest<'a> {
 }
 
 impl CreatorSyncEndpoints {
+    pub(crate) fn snapshot_uploads_retired(&self) -> bool {
+        self.sync_origin.origin().ascii_serialization() == PRODUCTION_ENDPOINTS.sync_origin
+    }
+
     pub(crate) fn production() -> Self {
         Self {
             access_origin: Url::parse(PRODUCTION_ENDPOINTS.access_origin)

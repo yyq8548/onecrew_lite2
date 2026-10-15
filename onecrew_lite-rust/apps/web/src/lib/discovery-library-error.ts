@@ -5,6 +5,9 @@ export function discoveryLibraryFailureKey(error: unknown) {
     case "library_runtime_unavailable":
     case "library_request_unavailable":
     case "library_service_unavailable": return "libraryUnavailable";
+    case "library_login_required": return "libraryLoginRequired";
+    case "library_authorization_pending": return "libraryAuthorizationPending";
+    case "library_auth_unavailable": return "libraryAuthUnavailable";
     case "library_account_mismatch":
     case "library_account_changed": return "libraryAccountRequired";
     case "web_session_required": return "libraryWebSessionRequired";

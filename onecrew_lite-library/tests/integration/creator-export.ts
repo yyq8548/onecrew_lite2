@@ -86,12 +86,15 @@ assert.deepEqual(read(material), [
 ]);
 const exported = XLSX.read(buildCreatorWorkbook(table, material, 'zh-CN'), {type: 'array'}).Sheets['推荐'];
 const followerTable = { ...table, columns: [...table.columns, { id: 'followers', name: 'Followers', data_type: 'string' as const }] };
-for (const [value, expected] of [['4029', '4029'], ['~1万', '约 1万'], [null, '未知']] as const) {
+for (const platform of ['youtube', 'twitter', 'tiktok', 'instagram', 'facebook', 'linkedin', 'bilibili', 'douyin', 'weibo', 'reddit']) {
+for (const [value, expected] of [['4029', '4029'], ['~12400', '约 12400'], ['~1万', '约 1万'], [null, '未知']] as const) {
   const counted = structuredClone(material);
+  counted.projection!.groups[0].members[0].platform = platform;
   counted.sources[0].row.values.followers = value;
   const sheet = XLSX.read(buildCreatorWorkbook(followerTable, counted, 'zh-CN'), { type: 'array' }).Sheets['推荐'];
   assert.equal(sheet.F1.v, '粉丝量');
-  assert.equal(sheet.F2.v, `X · 作者: ${expected}`);
+  assert.equal(sheet.F2.v, `${platform === 'twitter' ? 'X' : platform} · 作者: ${expected}`);
+}
 }
 assert.equal(exported.A2.l?.Target, member.profile_url);
 assert.equal(exported.D2.c?.[0].t, '已通过');

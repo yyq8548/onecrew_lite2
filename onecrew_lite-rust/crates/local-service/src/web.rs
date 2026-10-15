@@ -30,6 +30,7 @@ const CREATOR_SAVE_PREPARE_HTTP_MAX_BYTES: usize = 8 * 1024 * 1024;
 pub(crate) fn router(state: Arc<ServiceState>) -> Router {
     Router::new()
         .route("/api/session", get(session))
+        .route("/access/account", get(access_account))
         .route("/api/events", get(events))
         .route("/api/commands/{name}", post(command))
         .route(
@@ -105,6 +106,13 @@ async fn protect_origin(
 
 /// `protect_origin` has already given a session to a read that arrived without
 /// one, so this answers from the session cookie alone.
+async fn access_account() -> axum::response::Redirect {
+    axum::response::Redirect::temporary(&format!(
+        "{}/account?product=onecrew_lite",
+        onecrew_creator_sync::production_access_origin()
+    ))
+}
+
 async fn session(State(state): State<Arc<ServiceState>>, headers: HeaderMap) -> Response {
     match state.browser.csrf(&headers) {
         Ok(csrf) => Json(json!({"ok":true,"result":{"csrf":csrf,"version":env!("CARGO_PKG_VERSION"),"transport":"local_http"}})).into_response(),
@@ -348,6 +356,47 @@ async fn static_file(State(state): State<Arc<ServiceState>>, request: Request) -
 mod tests {
     use super::*;
     use tower::ServiceExt;
+
+    #[tokio::test]
+    async fn account_link_uses_canonical_lite_destination_and_origin_guard() {
+        let data = tempfile::tempdir().unwrap();
+        let state = ServiceState::new(
+            data.path().into(),
+            &[("index.html", b"test")],
+            "/test/onecrew_lite".into(),
+            "test".into(),
+        );
+        state.browser.set_port(23458).unwrap();
+        let app = router(state);
+        for (host, expected) in [
+            ("127.0.0.1:23458", StatusCode::TEMPORARY_REDIRECT),
+            ("untrusted.example", StatusCode::FORBIDDEN),
+        ] {
+            let response = app
+                .clone()
+                .oneshot(
+                    Request::builder()
+                        .uri("/access/account?next=https://untrusted.example&product=pro")
+                        .header("host", host)
+                        .body(Body::empty())
+                        .unwrap(),
+                )
+                .await
+                .unwrap();
+            assert_eq!(response.status(), expected);
+            if expected == StatusCode::TEMPORARY_REDIRECT {
+                assert_eq!(
+                    response.headers()[header::LOCATION],
+                    format!(
+                        "{}/account?product=onecrew_lite",
+                        onecrew_creator_sync::production_access_origin(),
+                    )
+                );
+            } else {
+                assert!(!response.headers().contains_key(header::LOCATION));
+            }
+        }
+    }
 
     #[tokio::test]
     async fn the_page_opens_without_a_session_while_a_write_still_needs_one() {

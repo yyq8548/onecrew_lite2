@@ -8,7 +8,7 @@ OutFile "${OneCrewOutput}\onecrew_lite-Test-Setup-${OneCrewVersion}-windows-x64-
 InstallDir "$LOCALAPPDATA\onecrew_lite\bin"
 RequestExecutionLevel user
 SetCompressor /SOLID zlib
-!define MUI_WELCOMEPAGE_TEXT "这是 onecrew_lite 未签名测试版，包含工作台和动态表格，无需安装开发工具。请先安装并登录 Codex，准备 Chrome。首次入口会联网安装只读搜索组件并连接 Codex，之后需要重启 Codex。平台登录由你自己完成，不会自动开始搜索。$\r$\n$\r$\n已有测试版请先卸载程序再安装，业务数据保留。"
+!define MUI_WELCOMEPAGE_TEXT "这是 onecrew_lite 未签名测试版，包含工作台和动态表格。安装后按菜单逐步完成文件校验、服务注册、启动、OpenCLI、Codex 接入和 Library 检查。每步失败立即停止。插件安装后需验证实际连接，必要时保存进度并退出、重开宿主应用。$\r$\n$\r$\n本测试安装器不覆盖已有程序；已有版本请联系提供者处理。业务数据保留。"
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_INSTFILES
 !define MUI_FINISHPAGE_RUN "$INSTDIR\首次使用.cmd"

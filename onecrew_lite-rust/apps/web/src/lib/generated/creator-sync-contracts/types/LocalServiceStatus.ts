@@ -5,7 +5,7 @@ export interface LocalServiceStatus {
   cli_update: {
     checked_at: number | null;
     current_version: string;
-    diagnostic_code: ("check_failed" | "timed_out" | "unsupported_target") | null;
+    diagnostic_code: ("check_failed" | "timed_out" | "workspace_update_required") | null;
     latest_version: string | null;
     source: ("fresh_check" | "memory_cache") | null;
     state: "not_checked" | "available" | "current" | "unavailable";

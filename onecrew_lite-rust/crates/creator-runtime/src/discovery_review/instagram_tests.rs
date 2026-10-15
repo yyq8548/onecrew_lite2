@@ -354,6 +354,7 @@ async fn verify_contacts(public_contacts: bool, link_only: bool) {
         .prepare_discovery_library_snapshot("instagram-flow", 1)
         .unwrap();
     assert_eq!(snapshot.rows[0].verdict, "qualified");
+    assert_eq!(snapshot.rows[0].followers.as_deref(), Some("15000"));
     assert_eq!(
         snapshot.rows[0].contacts.len(),
         if public_contacts {

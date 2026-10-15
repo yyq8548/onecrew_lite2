@@ -127,10 +127,10 @@ pub(super) fn decode(
             .unwrap_or_default(),
         b"Relationship",
     )? {
-        if rel.get("Type").is_some_and(|v| v.ends_with("/hyperlink")) {
-            if let (Some(id), Some(target)) = (rel.remove("Id"), rel.remove("Target")) {
-                targets.insert(id, target);
-            }
+        if rel.get("Type").is_some_and(|v| v.ends_with("/hyperlink"))
+            && let (Some(id), Some(target)) = (rel.remove("Id"), rel.remove("Target"))
+        {
+            targets.insert(id, target);
         }
     }
     let mut links = BTreeMap::new();

@@ -361,6 +361,7 @@ pub(crate) async fn start(
     if account(state).await? != credential {
         return Err("discovery_execution_account_changed".into());
     }
+    state.platform().await?.discovery_library_readiness().await?;
     state.discovery_execution.reap().await?;
     let sync_admission = state.table_sync.lock.lock().await;
     if account(state).await? != credential {
@@ -614,7 +615,10 @@ fn scoring_platforms(result: &onecrew_local_runtime::OpenCliDiscoveryAdvanceResu
     deferred
 }
 
-#[allow(clippy::too_many_arguments)]
+#[allow(
+    clippy::too_many_arguments,
+    reason = "Keeps score queue ownership and cancellation explicit at this single scheduling boundary"
+)]
 async fn enqueue_score(
     state: &Arc<ServiceState>,
     input: &ExecutionInput,
@@ -785,7 +789,7 @@ async fn enqueue_score(
             if cached {
                 publish_changed(
                     state,
-                    &input,
+                    input,
                     credential,
                     published_recommendations,
                     sync_lane,
@@ -1245,30 +1249,31 @@ async fn run(
             false
         };
         let hit = hit.filter(|_| !contact_only);
-        if let Some(hit) = hit.filter(|_| !cancel.is_cancelled()) {
-            if !cancel.is_cancelled() && !state.shutdown.is_cancelled() {
-                let prior_jobs = score_jobs.len();
-                if !enqueue_score(
-                    state,
-                    &input,
-                    credential,
-                    &stop_queued_scores,
-                    hit,
-                    scoring_platforms(&result),
-                    &mut score_jobs,
-                    &score_slots,
-                    &saved_scores,
-                    &mut attempted_materials,
-                    &mut published_recommendations,
-                    &mut sync_lane,
-                )
-                .await
-                {
-                    break;
-                }
-                if prior_jobs == 1 && score_jobs.len() == 2 {
-                    read_ahead = 0;
-                }
+        if let Some(hit) = hit.filter(|_| !cancel.is_cancelled())
+            && !cancel.is_cancelled()
+            && !state.shutdown.is_cancelled()
+        {
+            let prior_jobs = score_jobs.len();
+            if !enqueue_score(
+                state,
+                &input,
+                credential,
+                &stop_queued_scores,
+                hit,
+                scoring_platforms(&result),
+                &mut score_jobs,
+                &score_slots,
+                &saved_scores,
+                &mut attempted_materials,
+                &mut published_recommendations,
+                &mut sync_lane,
+            )
+            .await
+            {
+                break;
+            }
+            if prior_jobs == 1 && score_jobs.len() == 2 {
+                read_ahead = 0;
             }
         }
         if result.public_page.is_some() {
@@ -1300,9 +1305,20 @@ async fn run(
             continue;
         }
         if !advancing {
-            if matches!(result.step, DiscoveryStep::SearchExhausted | DiscoveryStep::NeedsEvidence) {
+            if matches!(
+                result.step,
+                DiscoveryStep::SearchExhausted | DiscoveryStep::NeedsEvidence
+            ) {
                 let expansion = async {
-                    state.platform().await?.expand_discovery_queries(input.campaign_id.clone(), input.expected_revision, input.excluded_platforms.clone()).await
+                    state
+                        .platform()
+                        .await?
+                        .expand_discovery_queries(
+                            input.campaign_id.clone(),
+                            input.expected_revision,
+                            input.excluded_platforms.clone(),
+                        )
+                        .await
                 };
                 let expanded = tokio::select! {
                     biased;
@@ -1318,13 +1334,21 @@ async fn run(
                 };
                 match expanded {
                     Ok(true) => continue,
-                    Ok(false) => {},
-                    Err(_) => {
+                    Ok(false) => {}
+                    Err(code) => {
                         state.discovery_execution.change(|s| {
-                            s.stage = WorkspaceStage::Error;
-                            s.reason = Some("query_expansion_failed".into());
+                            s.stage = if matches!(
+                                code.as_str(),
+                                "query_round_no_available_platform" | "query_round_no_new_queries"
+                            ) {
+                                WorkspaceStage::NeedsEvidence
+                            } else {
+                                WorkspaceStage::Error
+                            };
+                            let code = safe_failure_code(&code);
+                            s.reason = Some(code.clone());
                             s.failure_phase = Some("execution".into());
-                            s.failure_code = Some("query_expansion_failed".into());
+                            s.failure_code = Some(code);
                         });
                         break;
                     }
@@ -1336,7 +1360,9 @@ async fn run(
                     (WorkspaceStage::BudgetExhausted, "budget_exhausted")
                 }
                 DiscoveryStep::NeedsEvidence => (WorkspaceStage::NeedsEvidence, "needs_evidence"),
-                DiscoveryStep::SearchExhausted => (WorkspaceStage::NeedsEvidence, "search_exhausted"),
+                DiscoveryStep::SearchExhausted => {
+                    (WorkspaceStage::NeedsEvidence, "search_exhausted")
+                }
                 _ => (WorkspaceStage::Paused, "busy"),
             };
             state.discovery_execution.change(|s| {
@@ -1604,6 +1630,17 @@ fn safe_failure_code(code: &str) -> String {
     if matches!(
         code,
         "score_queue_unavailable"
+            | "query_round_authentication_required"
+            | "query_round_campaign_changed"
+            | "query_round_no_available_platform"
+            | "query_round_no_new_queries"
+            | "discovery_draft_codex_unavailable"
+            | "discovery_draft_codex_login_required"
+            | "discovery_draft_codex_failed"
+            | "discovery_draft_codex_timeout"
+            | "discovery_draft_plan_invalid"
+            | "discovery_draft_login_required"
+            | "discovery_draft_account_changed"
             | "review_submit_outcome_unknown"
             | "review_read_unavailable"
             | "initial_match_material_unavailable"
@@ -1644,6 +1681,9 @@ fn safe_failure_code(code: &str) -> String {
                 | "library_row_identity_changed"
                 | "library_write_outcome_unknown"
                 | "library_account_mismatch"
+                | "library_login_required"
+                | "library_authorization_pending"
+                | "library_auth_unavailable"
                 | "library_instance_changed"
                 | "library_invalid_response"
                 | "library_projection_conflict"
@@ -1808,6 +1848,13 @@ mod tests {
             "opencli_invalid_output",
             "library_request_invalid",
             "library_sync_upgrade_required",
+            "library_login_required",
+            "library_authorization_pending",
+            "library_auth_unavailable",
+            "query_round_no_available_platform",
+            "query_round_no_new_queries",
+            "discovery_draft_codex_login_required",
+            "discovery_draft_codex_timeout",
         ] {
             assert_eq!(safe_failure::<()>(&Ok(Err(code.into()))), code);
         }
@@ -1850,7 +1897,8 @@ mod tests {
             .unwrap()
             .tasks
             .push(tokio::spawn(async move {
-                let _ = wait.await;
+                wait.await
+                    .expect("test completion sender must remain available");
             }));
         supervisor.change(|s| s.stage = WorkspaceStage::Paused);
         assert!(supervisor.blocks_backend_sync());

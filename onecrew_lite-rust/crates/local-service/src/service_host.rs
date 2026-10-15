@@ -16,10 +16,21 @@ pub async fn run_service_host(executable: &Path, data: &Path) -> Result<(), Stri
             return Err("service_host_invalid_layout".into());
         }
         let local = root.parent().ok_or("service_host_invalid_layout")?;
+        // Task Scheduler's WorkingDirectory records the physical package path.
+        // Never infer it from the content-addressed service copy or AppData.
+        let package = std::env::current_dir()
+            .map_err(|_| "service_host_package_invalid")?
+            .join("onecrew_lite.exe");
+        let service = executable.clone();
+        let package = crate::blocking::run_blocking("service_host_package", move || {
+            verified_package(&service, &package)
+        })
+        .await??;
         let status = tokio::process::Command::new(&executable)
             .args(["__service", "--data-dir"])
             .arg(data)
             .env("LOCALAPPDATA", local)
+            .env("ONECREW_LITE_HOST_INSTALLED_EXECUTABLE", package)
             .creation_flags(0x08000000)
             .status()
             .await
@@ -49,6 +60,7 @@ pub fn configure_service_host(executable: &Path, data: &Path, action: &str) -> R
         // scheduler must receive the physical identity, not that virtual alias.
         let data = physical_path(data)
             .map_err(|error| format!("service_host_{action}_failed: {error}"))?;
+        let package = physical_path(executable)?;
         let stored;
         let executable = if action == "install" || action == "probe" {
             let digest = crate::paths::executable_identity(executable)?;
@@ -72,6 +84,7 @@ pub fn configure_service_host(executable: &Path, data: &Path, action: &str) -> R
                     include_str!("windows_service_host.ps1"),
                 ])
                 .env("ONECREW_HOST_BINARY", &executable)
+                .env("ONECREW_HOST_PACKAGE", &package)
                 .env("ONECREW_HOST_DATA", &data)
                 .env("ONECREW_HOST_ACTION", action)
                 .stdin(Stdio::null())
@@ -90,6 +103,63 @@ pub fn configure_service_host(executable: &Path, data: &Path, action: &str) -> R
     {
         let _ = (executable, data);
         Err("service_host_unsupported".into())
+    }
+}
+
+/// An installation path is usable only when it is the same build as the host.
+/// This check does not move or select a different business-data directory.
+#[cfg(any(windows, test))]
+pub(crate) fn verified_package(
+    service: &Path,
+    package: &Path,
+) -> Result<std::path::PathBuf, String> {
+    if !package.is_absolute()
+        || package.file_name().and_then(|name| name.to_str()) != Some("onecrew_lite.exe")
+        || crate::is_managed_cli_copy(package)
+    {
+        return Err("service_host_package_invalid".into());
+    }
+    let package = package
+        .canonicalize()
+        .map_err(|_| "service_host_package_unavailable")?;
+    if crate::is_managed_cli_copy(&package)
+        || crate::paths::executable_identity(&package)?
+            != crate::paths::executable_identity(service)?
+    {
+        return Err("service_host_package_mismatch: register the installed service again".into());
+    }
+    Ok(package)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn physical_package_must_match_service_even_outside_its_storage_root() {
+        let temp = tempfile::tempdir().unwrap();
+        let service = temp
+            .path()
+            .join("onecrew_lite/service-binaries/hash/onecrew_lite.exe");
+        let package = temp.path().join("separate package/onecrew_lite.exe");
+        std::fs::create_dir_all(service.parent().unwrap()).unwrap();
+        std::fs::create_dir_all(package.parent().unwrap()).unwrap();
+        std::fs::write(&service, b"build-r5").unwrap();
+        std::fs::write(&package, b"build-r5").unwrap();
+        assert_eq!(
+            verified_package(&service, &package).unwrap(),
+            package.canonicalize().unwrap()
+        );
+        assert!(verified_package(&service, &service).is_err());
+        assert!(verified_package(&service, Path::new("onecrew_lite.exe")).is_err());
+        std::fs::write(&package, b"other-build").unwrap();
+        assert!(
+            verified_package(&service, &package)
+                .unwrap_err()
+                .contains("package_mismatch")
+        );
+        std::fs::remove_file(&package).unwrap();
+        assert!(verified_package(&service, &package).is_err());
     }
 }
 

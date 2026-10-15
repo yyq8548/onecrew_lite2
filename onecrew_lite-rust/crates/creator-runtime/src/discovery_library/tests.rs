@@ -58,6 +58,49 @@ fn read_video(owner: &CreatorRuntime, hit: &str) {
 }
 
 #[test]
+fn youtube_followers_survive_canonical_video_url_in_library_snapshot() {
+    let (dir, owner, hit) = setup();
+    let db = Connection::open(dir.path().join("crm.db")).unwrap();
+    let canonical = "https://www.youtube.com/watch?v=LR04bU_yV5k";
+    let search_url = format!("{canonical}&pp=search");
+    db.execute("UPDATE discovery_search_hits SET source_url=?1 WHERE id=?2", params![search_url, hit]).unwrap();
+    let claim = owner.claim_discovery_video("library-proof", 1, "dedicated", &hit).unwrap();
+    owner.finish_discovery_video(FinishDiscoveryVideoInput {
+        candidate: Some(UpsertDiscoveryCandidateInput {
+            campaign_id: claim.campaign_id.clone(), expected_revision: 1,
+            platform: "youtube".into(), source_profile_ref: "dedicated".into(),
+            platform_account_id: "UC1234567890".into(), display_name: "Maker".into(),
+            profile_url: "https://www.youtube.com/channel/UC1234567890".into(),
+            evidence: serde_json::json!({"source_urls":[search_url, canonical],
+                "subscribers_source_url":canonical,"subscribers_raw":"12.4K subscribers","captured_at":1}),
+        }), claim, stop_code: None,
+    }).unwrap();
+    let snapshot = owner.prepare_discovery_library_snapshot("library-proof", 1).unwrap();
+    assert_eq!(snapshot.rows[0].followers.as_deref(), Some("~12400"));
+    // An unrelated video's evidence must not leak a count into this channel.
+    db.execute("UPDATE discovery_candidates SET evidence_json=json_set(evidence_json,'$.subscribers_source_url','https://www.youtube.com/watch?v=abcdefghijk')", []).unwrap();
+    let unknown = owner.prepare_discovery_library_snapshot("library-proof", 1).unwrap();
+    assert_eq!(unknown.rows[0].followers, None);
+    assert!(unknown.source_revision > snapshot.source_revision);
+    db.execute("UPDATE discovery_candidates SET evidence_json=json_set(evidence_json,'$.subscribers_source_url',?1)", [canonical]).unwrap();
+    let restored = owner.prepare_discovery_library_snapshot("library-proof", 1).unwrap();
+    assert_eq!(restored.rows[0].followers.as_deref(), Some("~12400"));
+    assert!(restored.source_revision > unknown.source_revision);
+}
+
+#[test]
+fn youtube_followers_are_shared_only_by_completed_videos_of_the_same_channel() {
+    let (dir, owner, hit) = setup();
+    read_video(&owner, &hit);
+    let db = Connection::open(dir.path().join("crm.db")).unwrap();
+    db.execute("INSERT INTO discovery_search_hits VALUES ('second','library-proof','youtube','dedicated','AI tools','https://www.youtube.com/watch?v=abcdefghijk','Review','Same display name',1)", []).unwrap();
+    read_video(&owner, "second");
+    let snapshot = owner.prepare_discovery_library_snapshot("library-proof", 1).unwrap();
+    assert_eq!(snapshot.rows.len(), 2);
+    assert!(snapshot.rows.iter().all(|row| row.followers.as_deref() == Some("20000")));
+}
+
+#[test]
 fn video_reads_prioritize_new_labels_without_merging_or_discarding_namesakes() {
     let (dir, owner, hit) = setup();
     read_video(&owner, &hit);

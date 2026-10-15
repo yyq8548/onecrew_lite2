@@ -2,7 +2,7 @@
 
 从一句话需求出发，寻找合适的创作者，整理资料，再通过 Gmail 联系。
 
-**当前版本：0.7.0** · macOS Apple Silicon · 中文 / English
+**当前版本：0.7.1** · macOS Apple Silicon · 中文 / English
 
 ## 从需求到合作
 

@@ -576,17 +576,17 @@ impl CreatorRuntime {
                 let source = owner.repository.read_discovery_review_basis(
                     &campaign_id,
                     expected_revision,
-                    &hit,
+                    hit,
                 )?;
-                if !excluded_platforms.contains(&source.hit.platform) {
-                    if let Some(step) = owner.repository.next_discovery_independent_read(
+                if !excluded_platforms.contains(&source.hit.platform)
+                    && let Some(step) = owner.repository.next_discovery_independent_read(
                         &campaign_id,
                         expected_revision,
-                        &hit,
+                        hit,
                         &scoring_hits,
-                    )? {
-                        return Ok(step);
-                    }
+                    )?
+                {
+                    return Ok(step);
                 }
             }
             Ok(fallback)

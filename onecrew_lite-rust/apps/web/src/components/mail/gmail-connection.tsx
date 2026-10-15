@@ -53,7 +53,7 @@ export function GmailConnection() {
       <details className="rounded-md border p-3">
         <summary className="cursor-pointer font-medium">{t("gmail.identityHelp")}</summary>
         <p className="mt-2 text-muted-foreground">{t("gmail.identitySteps")}</p>
-        <a className="mt-2 inline-block underline" href="https://access.onecrewai.io/account" target="_blank" rel="noopener noreferrer">{t("gmail.openAccount")}</a>
+        <a className="mt-2 inline-block underline" href="/access/account" target="_blank" rel="noopener noreferrer">{t("gmail.openAccount")}</a>
       </details>
     </div>
   );

@@ -285,6 +285,7 @@ async fn facebook_saved_targets_review_one_matched_post_and_library_preserve_pro
         let used = owner.get_discovery_campaign("fb").unwrap().used_calls;
         assert_eq!(used, 5);
         let snapshot = owner.prepare_discovery_library_snapshot("fb", 1).unwrap();
+        assert_eq!(snapshot.rows[0].followers.as_deref(), Some("15000"));
         assert!(snapshot.rows[0].candidate_id.is_some());
         assert_eq!(
             snapshot.rows[0].verdict,

@@ -1,4 +1,24 @@
 use super::*;
+
+#[tokio::test]
+async fn workspace_only_update_is_not_a_remote_version_check() {
+    let status = CliUpdateStatusOwner::default()
+        .read(Some(identity("workspace")), "0.7.1", || async {
+            Err(CheckFailure::WorkspaceUpdateRequired)
+        })
+        .await;
+    assert_eq!(status.state, CliUpdateState::Unavailable);
+    assert_eq!(
+        status.diagnostic_code,
+        Some(CheckFailure::WorkspaceUpdateRequired)
+    );
+    assert!(status.available_versions().is_none());
+    assert!(status.checked_at.is_none());
+    assert!(status.source.is_none());
+    let owner_source = include_str!("../cli_update_status.rs");
+    assert!(!owner_source.contains("CliReleaseClient"));
+    assert!(!owner_source.contains("LocalVault"));
+}
 use std::sync::{
     Arc,
     atomic::{AtomicUsize, Ordering},

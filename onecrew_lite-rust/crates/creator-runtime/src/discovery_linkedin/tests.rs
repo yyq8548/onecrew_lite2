@@ -366,6 +366,7 @@ fn linkedin_native_account_score_profile_email_recommendation_and_restart() {
         .unwrap();
     let row = &snapshot.rows[0];
     assert_eq!(row.native_author_id.as_deref(), Some(ACCOUNT));
+    assert_eq!(row.followers.as_deref(), Some("1606"));
     assert_ne!(row.native_author_id.as_deref(), Some(HANDLE));
     assert_eq!(row.verdict, "qualified");
     assert_eq!(row.contacts.len(), 2);

@@ -11,18 +11,43 @@ use onecrew_creator_runtime::{
 
 use crate::ServiceState;
 
-pub(super) async fn onecrew_gmail_bulk_recipients(state: &ServiceState) -> Result<Vec<onecrew_creator_runtime::GmailBulkRecipient>,String> {
-    state.platform().await?.creators()?.gmail_bulk_recipients().await
+pub(super) async fn onecrew_gmail_bulk_recipients(
+    state: &ServiceState,
+) -> Result<Vec<onecrew_creator_runtime::GmailBulkRecipient>, String> {
+    state
+        .platform()
+        .await?
+        .creators()?
+        .gmail_bulk_recipients()
+        .await
 }
 
-pub(super) async fn onecrew_gmail_bulk_list(state: &ServiceState) -> Result<Vec<onecrew_creator_runtime::GmailBulkBatch>,String> {
+pub(super) async fn onecrew_gmail_bulk_list(
+    state: &ServiceState,
+) -> Result<Vec<onecrew_creator_runtime::GmailBulkBatch>, String> {
     state.platform().await?.creators()?.list_gmail_bulk().await
 }
-pub(super) async fn onecrew_gmail_bulk_prepare(state: &ServiceState,input:onecrew_creator_runtime::PrepareGmailBulkInput) -> Result<onecrew_creator_runtime::GmailBulkBatch,String> {
-    state.platform().await?.creators()?.prepare_gmail_bulk(input).await
+pub(super) async fn onecrew_gmail_bulk_prepare(
+    state: &ServiceState,
+    input: onecrew_creator_runtime::PrepareGmailBulkInput,
+) -> Result<onecrew_creator_runtime::GmailBulkBatch, String> {
+    state
+        .platform()
+        .await?
+        .creators()?
+        .prepare_gmail_bulk(input)
+        .await
 }
-pub(super) async fn onecrew_gmail_bulk_control(state: &ServiceState,input:onecrew_creator_runtime::GmailBulkControlInput) -> Result<(),String> {
-    state.platform().await?.creators()?.control_gmail_bulk(input).await
+pub(super) async fn onecrew_gmail_bulk_control(
+    state: &ServiceState,
+    input: onecrew_creator_runtime::GmailBulkControlInput,
+) -> Result<(), String> {
+    state
+        .platform()
+        .await?
+        .creators()?
+        .control_gmail_bulk(input)
+        .await
 }
 
 pub(super) async fn onecrew_gmail_connect_url(state: &ServiceState) -> Result<String, String> {

@@ -449,9 +449,7 @@ impl CreatorSyncRuntime {
     ) -> Result<CredentialProbe, ValidationFailure> {
         let response = self
             .send(HttpRequest {
-                creator_bundle_version: Some(
-                    crate::ACCESS_BUNDLE_FORMAT_VERSION,
-                ),
+                creator_bundle_version: Some(crate::ACCESS_BUNDLE_FORMAT_VERSION),
                 method: Method::GET,
                 endpoint: self.inner.endpoints.credential_probe(),
                 authorization: Some(stored.bearer.authorization()),
@@ -585,8 +583,7 @@ pub(super) fn probe_accepts_current_bundle(
         && probe.access_pairing_id == metadata.access_pairing_id
         && probe.capabilities == ["creator_snapshots:write_chunked_quarantine"]
         && accepted.format == enrolled.format
-        && accepted.format_version
-            == u64::from(crate::ACCESS_BUNDLE_FORMAT_VERSION)
+        && accepted.format_version == u64::from(crate::ACCESS_BUNDLE_FORMAT_VERSION)
         && accepted.profile == "portable_public"
         && accepted.max_snapshot_bytes == enrolled.max_snapshot_bytes
         && accepted.max_chunk_bytes == enrolled.max_chunk_bytes

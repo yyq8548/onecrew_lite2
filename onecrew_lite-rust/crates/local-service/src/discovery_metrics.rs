@@ -244,7 +244,7 @@ mod tests {
             Some("author-private"),
         );
         // Other parallel tests can enqueue diagnostics for already removed temp dirs.
-        let _ = flush_pending();
+        drop(flush_pending());
         let path = dir
             .path()
             .join("discovery-metrics")

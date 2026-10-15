@@ -27,10 +27,12 @@ fi
   await writeFile(path.join(output, '安装或更新.command'), header + `
 printf '旧 OneCrew 无需卸载，程序和数据均保留。已有 onecrew_lite 将更新。\\n'
 printf '请先暂停正在运行的 Lite 搜索，并安装、登录 Codex 和 Chrome。\\n'
-/bin/sh "$ROOT/程序文件/首次安装 onecrew_lite.command" "$@"
+/bin/sh "$ROOT/程序文件/install-core.sh"
+"$HOME/.local/bin/onecrew_lite" opencli repair --json
+/bin/sh "$ROOT/程序文件/connect-codex.sh"
 `, { mode: 0o755 });
   await writeFile(path.join(output, '打开 onecrew_lite.command'), header + `
-/bin/sh "$ROOT/程序文件/安装并打开 onecrew_lite.command" "$@"
+/bin/sh "$ROOT/程序文件/open-onecrew_lite.command" "$@"
 `, { mode: 0o755 });
   await writeFile(path.join(output, '先看我.txt'), `onecrew_lite ${cli.version} · 同事测试包 · Apple 芯片 Mac
 

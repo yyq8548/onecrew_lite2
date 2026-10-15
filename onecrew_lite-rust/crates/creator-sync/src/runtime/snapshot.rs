@@ -134,6 +134,11 @@ impl CreatorSyncRuntime {
     }
 
     fn configured_for_sync(&self) -> Result<(), CreatorSnapshotSyncResult> {
+        // The production snapshot API is retired. Stop before credential
+        // reads, bundle export or upload; pairing and table sync are separate.
+        if self.inner.configured && self.inner.endpoints.snapshot_uploads_retired() {
+            return Err(sync_result(CreatorSnapshotSyncState::Retired, None));
+        }
         if self.inner.configured {
             Ok(())
         } else {

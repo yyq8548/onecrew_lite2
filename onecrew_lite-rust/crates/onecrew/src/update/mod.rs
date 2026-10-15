@@ -15,6 +15,14 @@ pub(super) async fn execute(
     arguments: &Arguments,
     executable: &Path,
 ) -> Result<UpdateOutcome, String> {
+    // The published unit is now the complete workspace. Keep bootstrap for the
+    // verified core installer, but never replace only the running CLI online.
+    if arguments.command == "update" {
+        return Err(format!(
+            "workspace_update_required: obtain a new onecrew_lite installation prompt from {}/account?product=onecrew_lite; install the complete package, then reconnect your client",
+            onecrew_creator_sync::production_access_origin()
+        ));
+    }
     if arguments.data_dir.to_str().is_none() || executable.to_str().is_none() {
         return Err("update_path_not_utf8".into());
     }

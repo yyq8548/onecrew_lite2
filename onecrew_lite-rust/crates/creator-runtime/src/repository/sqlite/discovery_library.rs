@@ -128,6 +128,38 @@ fn saved_contact_receipts_project_to_recommendations() {
     }
 }
 
+// Counts belong to a verified channel, even across tracking URLs or multiple
+// videos. Evidence alone cannot establish the video's channel ownership.
+fn youtube_followers(
+    connection: &Connection,
+    campaign: &str,
+    revision: u32,
+    candidate: &str,
+    author: &str,
+    evidence: &serde_json::Value,
+) -> Option<String> {
+    let source = evidence["subscribers_source_url"].as_str()?;
+    let video = crate::discovery_web_sources::video_id(source)?;
+    if evidence["captured_at"].as_u64()? == 0
+        || !evidence["source_urls"].as_array()?.iter().any(|url| url.as_str() == Some(source))
+    {
+        return None;
+    }
+    let mut statement = connection.prepare(
+        "SELECT h.source_url FROM discovery_video_identity_bindings b
+         JOIN discovery_search_hits h ON h.id=b.search_hit_id
+         JOIN discovery_video_completions done ON done.search_hit_id=h.id
+         WHERE b.discovery_campaign_id=?1 AND b.criteria_revision=?2
+           AND b.candidate_id=?3 AND b.native_author_id=?4
+           AND h.discovery_campaign_id=b.discovery_campaign_id"
+    ).ok()?;
+    let sources = statement.query_map(params![campaign, revision, candidate, author], |r| r.get::<_, String>(0)).ok()?;
+    let bound = sources.filter_map(Result::ok).any(|url| {
+        crate::discovery_web_sources::video_id(&url).as_deref() == Some(video.as_str())
+    });
+    bound.then(|| crate::discovery_qualification::subscriber_display(evidence["subscribers_raw"].as_str()?)).flatten()
+}
+
 pub(super) fn load_basis(
     connection: &Connection,
     campaign: &str,
@@ -196,9 +228,7 @@ pub(super) fn load_basis(
                             let platform: String = r.get(17).ok()?;
                             if platform != "youtube" { return None; }
                             let evidence: serde_json::Value = serde_json::from_str(&r.get::<_, String>(14).ok()?).ok()?;
-                            let source: String = r.get(4).ok()?;
-                            if evidence["subscribers_source_url"].as_str() != Some(source.as_str()) { return None; }
-                            crate::discovery_qualification::subscriber_display(evidence["subscribers_raw"].as_str()?)
+                            youtube_followers(connection, campaign, revision, &id, &r.get::<_, String>(12).ok()?, &evidence)
                         }),
                         native_platform: {
                             let native: String = r.get(17)?;

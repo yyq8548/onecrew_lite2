@@ -1,4 +1,5 @@
 import { discoveryProductBrief } from "@/lib/discovery-draft-preferences";
+import { discoveryExecutionFailureKey } from "@/lib/discovery-execution-error";
 import { ExternalLink, Loader2, MoreHorizontal, Pause, Play, AlertCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ export function DiscoveryOverview({ campaign, counts, stage, running, busy, prof
   const { t, i18n } = useTranslation("shell");
   const n = (value: number | undefined) => value === undefined ? "—" : new Intl.NumberFormat(i18n.resolvedLanguage).format(value);
   const runs = campaign.platform_runs;
+  const executionErrorKey = discoveryExecutionFailureKey(failureCode);
   const attempted = runs.filter(run => run.status !== "unsearched").length;
   const phase = ["read", "score", "admission", "readback", "execution"].includes(failurePhase ?? "") ? failurePhase as "read" | "score" | "admission" | "readback" | "execution" : "execution";
   return <section className="space-y-6" aria-label={t("opencliPilot.overview")}>
@@ -49,7 +51,7 @@ export function DiscoveryOverview({ campaign, counts, stage, running, busy, prof
       {stage === "needs_evidence" && <p role="status" className="text-sm leading-relaxed">{t(campaign.platform_runs.every(run => run.status === "completed") ? "opencliPilot.evidenceStopHelp" : "opencliPilot.evidenceBlockedHelp")}</p>}
     </div>
     {stage === "error" && !profileChanged && <div role="alert" className="space-y-2 rounded-md bg-warning/10 px-4 py-3 text-sm">
-      <p>{t(failureCode === "query_expansion_failed" ? "opencliPilot.queryExpansionFailed" : `opencliPilot.failure.${phase}`)}</p>
+      <p>{t(executionErrorKey ? `opencliPilot.${executionErrorKey}` : `opencliPilot.failure.${phase}`)}</p>
       {failureCode && failureCode !== "query_expansion_failed" && <p className="break-words font-mono text-xs">{failureCode}</p>}
       <Button variant="outline" onClick={() => (onFailure ?? onIssues)()}>{t("opencliPilot.inspectFailure")}</Button>
     </div>}

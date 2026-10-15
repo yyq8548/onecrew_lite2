@@ -1,6 +1,6 @@
 {
   "name": "onecrew_lite",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "onecrew_lite native CLI and stdio MCP with a live business capability router. Packaged artifacts include the native executable.",
   "homepage": "https://onecrewai.io",
   "author": {

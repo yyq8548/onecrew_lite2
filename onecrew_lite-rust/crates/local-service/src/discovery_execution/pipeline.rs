@@ -58,13 +58,17 @@ impl LatestWork {
     }
     pub(super) async fn reap(&mut self) {
         if self.active.as_ref().is_some_and(|task| task.is_finished()) {
-            let _ = self.active.take().unwrap().await;
+            if self.active.take().unwrap().await.is_err() {
+                log::error!("discovery projection worker failed");
+            }
             self.pump();
         }
     }
     pub(super) async fn drain(&mut self) {
         while let Some(task) = self.active.take() {
-            let _ = task.await;
+            if task.await.is_err() {
+                log::error!("discovery projection worker failed during drain");
+            }
             self.pump();
         }
     }

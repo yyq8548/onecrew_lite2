@@ -462,7 +462,15 @@ async fn connect_descriptor(
     let access: AccessStatus = library
         .request(Method::GET, "/api/v1/access/status", None)
         .await?;
-    if access.state != "signed_in" || access.user.is_none_or(|user| user.id != expected_user) {
+    match access.state.as_str() {
+        "signed_out" => return Err("library_login_required".into()),
+        "authorizing" => return Err("library_authorization_pending".into()),
+        "unavailable" => return Err("library_auth_unavailable".into()),
+        "signed_in" => {}
+        _ => return Err("library_invalid_response".into()),
+    }
+    let user = access.user.ok_or("library_invalid_response")?;
+    if user.id != expected_user {
         return Err("library_account_mismatch".into());
     }
     Ok(library)

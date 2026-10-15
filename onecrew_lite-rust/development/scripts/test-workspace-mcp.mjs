@@ -11,16 +11,18 @@ try {
   const { tools } = await client.listTools();
   const web = tools.find(tool => tool.name === 'onecrew_web');
   const uri = web?._meta?.ui?.resourceUri;
-  assert(typeof uri === 'string' && uri.startsWith('ui://onecrew_lite/operation-inspector/'), 'Workspace App metadata missing');
+  // These wire identifiers are retained by the host and embedded card; they
+  // are independent of the public onecrew_lite executable/product name.
+  assert(typeof uri === 'string' && uri.startsWith('ui://onecrew/operation-inspector/'), 'Workspace App metadata missing');
   const resource = await client.readResource({ uri });
-  assert(resource.contents.some(content => content.mimeType === 'text/html;profile=mcp-app' && content.text?.includes('onecrew_lite/workspace')), 'Workspace UI contract missing');
+  assert(resource.contents.some(content => content.mimeType === 'text/html;profile=mcp-app' && content.text?.includes('onecrew/workspace')), 'Workspace UI contract missing');
   const reply = await client.callTool({ name: 'onecrew_web', arguments: {} }, undefined, { timeout: 60000 });
   assert(!reply.isError, 'Workspace startup failed');
   const receipt = reply.structuredContent;
   assert(receipt?.kind === 'workspace' && receipt.startup === 'ready', 'Workbench not ready');
   assert(typeof receipt.library_url === 'string' && receipt.library_error === null,
     `Library not ready: ${receipt.library_error ?? 'missing URL'}`);
-  assert(JSON.stringify(reply._meta?.['onecrew_lite/workspace']) === JSON.stringify(receipt), 'Card and model receipt differ');
+  assert(JSON.stringify(reply._meta?.['onecrew/workspace']) === JSON.stringify(receipt), 'Card and model receipt differ');
   assert(typeof reply._meta?.viewUUID === 'string', 'Owner view identity missing');
   assert(Object.hasOwn(receipt, 'workspace_activity') && Object.hasOwn(receipt, 'workspace_activity_error'), 'Workspace progress contract missing');
   const statusReply = await client.callTool({ name: 'onecrew_status', arguments: {} }, undefined, { timeout: 60000 });

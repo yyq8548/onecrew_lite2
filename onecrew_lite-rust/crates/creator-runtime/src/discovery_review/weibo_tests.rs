@@ -175,6 +175,7 @@ async fn weibo_native_author_first_five_comments_contacts_library_and_restart() 
         .prepare_discovery_library_snapshot(CAMPAIGN, 1)
         .unwrap();
     assert_eq!(snapshot.rows[0].verdict, "qualified");
+    assert_eq!(snapshot.rows[0].followers.as_deref(), Some("15000"));
     assert_eq!(snapshot.rows[0].contacts.len(), 2);
     assert!(
         snapshot.rows[0]

@@ -27,7 +27,7 @@ Usage: onecrew_lite <command> [options]\n\n\
   stop                  Drain work and stop the shared service; preserve data\n\
   service host install  Register the Windows current-user service host; does not start it\n\
   service host remove   Remove that registration; does not stop the running service\n\
-  update                Explicitly download, verify and replace this CLI; never installs plugins\n\
+  update                Show complete-package update guidance; never replaces only the CLI\n\
   data status           Inspect local data versions without upgrading them\n\
   opencli repair        Install/verify the managed compatible search runtime\n\
   plugin install        Explicitly install/update the self-contained Codex plugin\n\
