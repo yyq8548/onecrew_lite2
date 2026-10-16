@@ -41,7 +41,7 @@ export type Account = {
 /** Safe service-credential metadata; the encrypted secret is never returned. */
 export type ServiceCredential = {
   id: string;
-  provider: "youtube" | "resend";
+  provider: "youtube";
   label: string;
   metadata: Record<string, unknown>;
   disabled: boolean;
@@ -73,23 +73,14 @@ export type YoutubeCredentialTest = {
   message: string;
 };
 
-export type ResendCredentialTest = {
-  credential_id: string;
-  ok: boolean;
-  checked_at: number;
-  email_address: string;
-  message: string;
-};
-
 /** Result of the validate-first service credential connection use case. */
 export type ServiceCredentialConnectResult = {
   credential: {
     credential_id: string;
-    provider: "youtube" | "resend";
+    provider: "youtube";
     label: string;
     /** Typed provider details; exactly one member is present per provider. */
     youtube?: { project?: string | null } | null;
-    mailbox?: { email_address: string; display_name?: string | null } | null;
     available: boolean;
   };
   health: {

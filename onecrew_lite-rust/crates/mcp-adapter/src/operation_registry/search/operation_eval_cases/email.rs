@@ -8,21 +8,6 @@ pub(super) const CASES: &[OperationEvalCase] = &[
         expected_id: "email.connection.check",
     },
     OperationEvalCase {
-        query: "Email connect Resend credential",
-        toolkit: ToolkitId::Email,
-        expected_id: "email.credential.connect",
-    },
-    OperationEvalCase {
-        query: "Email delete Resend credential",
-        toolkit: ToolkitId::Email,
-        expected_id: "email.credential.delete",
-    },
-    OperationEvalCase {
-        query: "Email rotate Resend credential",
-        toolkit: ToolkitId::Email,
-        expected_id: "email.credential.rotate",
-    },
-    OperationEvalCase {
         query: "Email prepare direct email",
         toolkit: ToolkitId::Email,
         expected_id: "email.direct.prepare",

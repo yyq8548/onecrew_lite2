@@ -303,7 +303,7 @@ pub(super) fn load_basis(
         rows.push(record);
     }
     Ok(DiscoveryLibraryBasis {
-        contact_required: connection.query_row("SELECT policy='score_and_contact_v1' FROM discovery_recommendation_policies WHERE discovery_campaign_id=?1 AND criteria_revision=?2", params![campaign,revision], |r| r.get(0)).map_err(|e| e.to_string())?,
+        contact_required: connection.query_row("SELECT p.policy='score_and_contact_v1' AND COALESCE(json_extract(r.criteria_json,'$.contact_preference'),'')!='public_email_first' FROM discovery_recommendation_policies p JOIN discovery_campaign_revisions r ON r.discovery_campaign_id=p.discovery_campaign_id AND r.revision=p.criteria_revision WHERE p.discovery_campaign_id=?1 AND p.criteria_revision=?2", params![campaign,revision], |r| r.get(0)).map_err(|e| e.to_string())?,
         campaign_id: campaign.into(),
         revision,
         criteria_json,

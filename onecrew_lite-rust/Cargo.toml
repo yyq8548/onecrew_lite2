@@ -12,9 +12,6 @@ members = [
   "crates/dm-contracts",
   "crates/email-contracts",
   "crates/gmail-platform",
-  "crates/resend-client",
-  "crates/resend-platform",
-  "crates/resend-transport",
   "crates/local-vault",
   "crates/platform-sessions",
   "crates/schema-manifest",
@@ -107,7 +104,6 @@ qrcode = { version = "0.14", default-features = false }
 quick-xml = { version = "=0.41.0", default-features = false, features = ["encoding"] }
 rand = "0.8"
 regex = "1"
-resend-rs = { version = "=0.32.0", default-features = false, features = ["rustls-tls"] }
 scraper = "0.23"
 # 一个版本,不是三个。0.13 把 rustls feature 从 "rustls-tls" 改名成 "rustls"。
 reqwest = { version = "0.13", default-features = false, features = ["json", "rustls", "system-proxy"] }

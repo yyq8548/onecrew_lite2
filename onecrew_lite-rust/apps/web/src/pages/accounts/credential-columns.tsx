@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { type ColumnDef } from "@tanstack/react-table";
 import type { TFunction } from "i18next";
-import { AlertCircle, BadgeCheck, KeyRound, Loader2, Mail, Pencil, Trash2 } from "lucide-react";
+import { AlertCircle, BadgeCheck, KeyRound, Loader2, Pencil, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { Badge } from "@/components/ui/badge";
@@ -98,7 +98,7 @@ function recentStatusColumn(t: AccountsT, locale: string | undefined): ColumnDef
   };
 }
 
-/** Test + delete, the two controls both credential tables share. The labels
+/** Test + delete controls. The labels
  *  come from the hook so the cell re-translates when the language changes. */
 function CredentialActions({
   row,
@@ -108,7 +108,7 @@ function CredentialActions({
   children,
 }: {
   row: CredentialRow;
-  testLabelKey: "credentials.actions.testApiKey" | "credentials.actions.testResend";
+  testLabelKey: "credentials.actions.testApiKey";
   onTest: (credential: ServiceCredential) => void;
   onDelete: (credential: ServiceCredential) => void;
   children?: ReactNode;
@@ -231,72 +231,6 @@ export function youtubeCredentialColumns({
         >
           <YoutubeEditAction row={row.original} onChanged={onChanged} />
         </CredentialActions>
-      ),
-    },
-  ];
-}
-
-export function resendCredentialColumns({
-  t,
-  locale,
-  onTest,
-  onDelete,
-}: CredentialColumnOptions): ColumnDef<CredentialRow>[] {
-  return [
-    {
-      id: "identity",
-      header: t("credentials.columns.identity"),
-      size: 200,
-      minSize: 160,
-      enableSorting: false,
-      cell: ({ row }) => {
-        const { credential } = row.original;
-        const displayName = typeof credential.metadata.display_name === "string"
-          ? credential.metadata.display_name
-          : null;
-        return (
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <Mail className="size-4 shrink-0 text-muted-foreground" />
-              <span className="truncate">{credential.label}</span>
-            </div>
-            <div className="mt-0.5 truncate text-xs text-muted-foreground">
-              {displayName ?? t("credentials.localApiKeyOnly")}
-            </div>
-          </div>
-        );
-      },
-    },
-    {
-      id: "senderEmail",
-      header: t("credentials.columns.senderEmail"),
-      size: 240,
-      minSize: 210,
-      enableSorting: false,
-      cell: ({ row }) => (
-        <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
-          {typeof row.original.credential.metadata.email_address === "string"
-            ? row.original.credential.metadata.email_address
-            : "—"}
-        </span>
-      ),
-    },
-    statusColumn(t),
-    recentStatusColumn(t, locale),
-    {
-      id: "actions",
-      header: () => <span className="w-full text-right">{t("credentials.columns.actions")}</span>,
-      size: 92,
-      minSize: 92,
-      enableHiding: false,
-      enableSorting: false,
-      cell: ({ row }) => (
-        <CredentialActions
-          row={row.original}
-          testLabelKey="credentials.actions.testResend"
-          onTest={onTest}
-          onDelete={onDelete}
-        />
       ),
     },
   ];

@@ -12,6 +12,60 @@ use crate::{
 
 use super::{SqliteRepository, now};
 
+fn refinement_source(
+    tx: &rusqlite::Connection,
+    criteria: &serde_json::Value,
+) -> Result<Option<crate::DiscoveryRefinement>, String> {
+    let Some(value) = criteria.get("refinement") else { return Ok(None) };
+    let source: crate::DiscoveryRefinement = serde_json::from_value(value.clone())
+        .map_err(|_| "Campaign refinement is invalid")?;
+    let valid: bool = tx.query_row(
+        "SELECT EXISTS(SELECT 1 FROM discovery_campaigns c
+         JOIN discovery_campaign_revisions r ON r.discovery_campaign_id=c.id AND r.revision=c.current_revision
+         WHERE c.id=?1 AND c.current_revision=?2 AND r.approved_at IS NOT NULL)",
+        params![source.campaign_id, source.expected_revision], |row| row.get(0),
+    ).map_err(|error| error.to_string())?;
+    if !valid { return Err("Campaign refinement source changed or is not approved".into()) }
+    Ok(Some(source))
+}
+
+fn seed_refinement_scope(
+    tx: &rusqlite::Connection,
+    campaign: &str,
+    source: &crate::DiscoveryRefinement,
+    scope: &DiscoveryPlatformScope,
+) -> Result<(), String> {
+    let saved = {
+        let mut statement = tx.prepare(
+            "SELECT h.search_keyword,h.source_url,h.title,h.author_label,h.captured_at,a.author_id,a.author_url,a.observed_at
+             FROM discovery_search_hits h LEFT JOIN discovery_search_authors a ON a.search_hit_id=h.id
+             WHERE h.discovery_campaign_id=?1 AND h.platform=?2 AND h.profile_ref=?3
+             AND EXISTS(SELECT 1 FROM json_each(?4) keyword WHERE keyword.value=h.search_keyword)
+             ORDER BY h.captured_at,h.id",
+        ).map_err(|error| error.to_string())?;
+        statement.query_map(params![source.campaign_id, scope.platform, scope.profile_ref,
+            serde_json::to_string(&scope.keywords).map_err(|error| error.to_string())?], |row| {
+                Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?, row.get::<_, String>(2)?,
+                    row.get::<_, String>(3)?, row.get::<_, i64>(4)?, row.get::<_, Option<String>>(5)?,
+                    row.get::<_, Option<String>>(6)?, row.get::<_, Option<i64>>(7)?))
+            }).map_err(|error| error.to_string())?
+            .collect::<Result<Vec<_>, _>>().map_err(|error| error.to_string())?
+    };
+    for (query, url, title, label, captured, author_id, author_url, observed_at) in saved {
+        let id = uuid::Uuid::new_v4().to_string();
+        tx.execute("INSERT INTO discovery_search_hits
+            (id,discovery_campaign_id,platform,profile_ref,search_keyword,source_url,title,author_label,captured_at)
+            VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9)",
+            params![id, campaign, scope.platform, scope.profile_ref, query, url, title, label, captured],
+        ).map_err(|error| error.to_string())?;
+        if let (Some(author_id), Some(author_url), Some(observed_at)) = (author_id, author_url, observed_at) {
+            tx.execute("INSERT INTO discovery_search_authors(search_hit_id,author_id,author_url,observed_at) VALUES(?1,?2,?3,?4)",
+                params![id, author_id, author_url, observed_at]).map_err(|error| error.to_string())?;
+        }
+    }
+    Ok(())
+}
+
 fn merge_with_audited_review_proofs(
     transaction: &rusqlite::Connection,
     current: serde_json::Value,
@@ -57,6 +111,19 @@ fn merge_with_audited_review_proofs(
             sources.truncate(20);
         }
         object.insert(key.into(), proof.clone());
+    }
+    if let Some(proofs) = previous.get("reviewed_requirements").and_then(serde_json::Value::as_array) {
+        let sources = object.get_mut("source_urls").and_then(serde_json::Value::as_array_mut)
+            .ok_or("Candidate source list is invalid")?;
+        for proof in proofs {
+            if let Some(source) = proof["source_url"].as_str()
+                && !sources.iter().any(|value| value.as_str() == Some(source))
+            {
+                sources.insert(1.min(sources.len()), serde_json::json!(source));
+                sources.truncate(20);
+            }
+        }
+        object.insert("reviewed_requirements".into(), serde_json::json!(proofs));
     }
     Ok(merged)
 }
@@ -1261,6 +1328,17 @@ impl DiscoveryCampaignRepository for SqliteRepository {
         platform: &str,
         profile_ref: &str,
     ) -> Result<DiscoverySearchClaim, String> {
+        self.claim_discovery_search_with_recovery(campaign_id, expected_revision, platform, profile_ref, None)
+    }
+
+    fn claim_discovery_search_with_recovery(
+        &self,
+        campaign_id: &str,
+        expected_revision: u32,
+        platform: &str,
+        profile_ref: &str,
+        recovery: Option<&crate::discovery::DiscoverySearchRecovery>,
+    ) -> Result<DiscoverySearchClaim, String> {
         let mut connection = self.lock()?;
         let transaction = connection
             .transaction_with_behavior(TransactionBehavior::Immediate)
@@ -1297,9 +1375,9 @@ impl DiscoveryCampaignRepository for SqliteRepository {
             .iter()
             .find(|scope| scope.platform == platform && scope.profile_ref == profile_ref)
             .ok_or_else(|| "Search is outside the approved Campaign scope".to_string())?;
-        let (status, calls_used, stop_code, active_query) = transaction
+        let (status, calls_used, stop_code, active_query, stopped_at) = transaction
             .query_row(
-                "SELECT status,calls_used,stop_code,active_query FROM discovery_platform_runs
+                "SELECT status,calls_used,stop_code,active_query,updated_at FROM discovery_platform_runs
                  WHERE discovery_campaign_id=?1 AND platform=?2 AND profile_ref=?3",
                 params![campaign_id, platform, profile_ref],
                 |row| {
@@ -1308,18 +1386,31 @@ impl DiscoveryCampaignRepository for SqliteRepository {
                         row.get::<_, u32>(1)?,
                         row.get::<_, Option<String>>(2)?,
                         row.get::<_, Option<String>>(3)?,
+                        row.get::<_, i64>(4)?,
                     ))
                 },
             )
             .map_err(|error| error.to_string())?;
         let retry_interrupted =
             status == "technical_stop" && stop_code.as_deref() == Some("interrupted_read");
+        if let Some(recovery) = recovery {
+            if !crate::discovery::can_recover_repaired_search(&recovery.expected_stop_code) {
+                return Err("Discovery repair recovery is not allowed".into());
+            }
+            if status != "technical_stop"
+                || stop_code.as_deref() != Some(recovery.expected_stop_code.as_str())
+                || stopped_at != recovery.expected_stopped_at
+            {
+                return Err("Discovery repair recovery checkpoint changed".into());
+            }
+        }
         let advance_after_failed_keyword = status == "technical_stop"
             && crate::discovery::can_advance_search_after_stop(stop_code.as_deref());
         if status != "unsearched"
             && status != "completed"
             && !retry_interrupted
             && !advance_after_failed_keyword
+            && recovery.is_none()
         {
             return Err("Platform search is already running or stopped".into());
         }
@@ -1333,7 +1424,13 @@ impl DiscoveryCampaignRepository for SqliteRepository {
             }
             query
         } else {
-            next_search_keyword(&transaction, campaign_id, scope)?
+            let mut remaining = scope.clone();
+            if recovery.is_some() && let Some(query) = active_query.as_ref() {
+                let start = scope.keywords.iter().position(|keyword| keyword == query)
+                    .ok_or("Discovery repair recovery checkpoint changed")? + 1;
+                remaining.keywords = scope.keywords.iter().skip(start).cloned().collect();
+            }
+            next_search_keyword(&transaction, campaign_id, &remaining)?
                 .ok_or_else(|| "Approved scope has no remaining search keywords".to_string())?
         };
         let next_call = calls_used
@@ -1493,7 +1590,8 @@ impl DiscoveryCampaignRepository for SqliteRepository {
             .map_err(|error| error.to_string())?;
         let timestamp = now();
         let preserve_failed_query = input.status == "technical_stop"
-            && crate::discovery::can_advance_search_after_stop(input.stop_code.as_deref());
+            && (crate::discovery::can_advance_search_after_stop(input.stop_code.as_deref())
+                || input.stop_code.as_deref().is_some_and(crate::discovery::can_recover_repaired_search));
         let affected = transaction
             .execute(
                 "UPDATE discovery_platform_runs SET status=?5,stop_code=?6,
@@ -1780,6 +1878,7 @@ impl DiscoveryCampaignRepository for SqliteRepository {
             .transaction_with_behavior(TransactionBehavior::Immediate)
             .map_err(|error| error.to_string())?;
         let timestamp = now();
+        refinement_source(&transaction, &input.criteria)?;
         transaction
             .execute(
                 "INSERT INTO discovery_campaigns
@@ -1846,6 +1945,12 @@ impl DiscoveryCampaignRepository for SqliteRepository {
             .map_err(|error| error.to_string())?;
         let scopes: Vec<DiscoveryPlatformScope> =
             serde_json::from_str(&scope_json).map_err(|error| error.to_string())?;
+        let criteria_json: String = transaction.query_row(
+            "SELECT criteria_json FROM discovery_campaign_revisions WHERE discovery_campaign_id=?1 AND revision=?2",
+            params![id, expected_revision], |row| row.get(0),
+        ).map_err(|error| error.to_string())?;
+        let criteria = serde_json::from_str(&criteria_json).map_err(|error| error.to_string())?;
+        let refinement = refinement_source(&transaction, &criteria)?;
         transaction
             .execute(
                 "UPDATE discovery_campaign_revisions SET approved_at=?3
@@ -1862,6 +1967,9 @@ impl DiscoveryCampaignRepository for SqliteRepository {
                     params![id, scope.platform, scope.profile_ref, timestamp],
                 )
                 .map_err(|error| error.to_string())?;
+            if let Some(source) = &refinement {
+                seed_refinement_scope(&transaction, id, source, &scope)?;
+            }
         }
         transaction.commit().map_err(|error| error.to_string())?;
         drop(connection);

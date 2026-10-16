@@ -171,13 +171,8 @@ impl LocalPlatform {
             Ok,
         )?;
         let result_store = interaction::ResultMemoryStore::new();
-        let email_transport = Arc::new(
-            onecrew_email::ResendAdmission::new()
-                .expect("static Resend transport configuration is always constructible"),
-        );
         let credential_services = Arc::new(credentials::services::CredentialServices::new(
             vault.clone(),
-            email_transport,
         ));
         let sessions = Arc::new(PlatformSessions::new(vault.clone()));
         let direct_messages = Arc::new(
@@ -231,7 +226,7 @@ impl LocalPlatform {
     pub(super) fn reconcile_vault_projections(&self) -> Result<(), String> {
         self.reconcile_vault_profile_refs()?;
         self.reconcile_vault_youtube_refs()?;
-        self.reconcile_vault_mailbox_refs()?;
+        self.creators.reconcile_mailbox_refs(Vec::new())?;
         Ok(())
     }
 }

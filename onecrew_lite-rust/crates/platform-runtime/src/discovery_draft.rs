@@ -15,6 +15,7 @@ use crate::{LocalPlatform, OpenCliDiscoverySources};
 pub(crate) mod codex;
 mod progress;
 mod expansion;
+mod query_audit;
 pub use progress::DraftProgress;
 pub(crate) use progress::{DraftPhase, DraftProgressState};
 
@@ -32,6 +33,8 @@ pub struct PrepareDiscoveryDraftInput {
     pub criteria_overrides: Option<DraftCriteriaOverrides>,
     #[serde(default)]
     pub scope_overrides: Vec<DraftScopeOverride>,
+    #[serde(default)]
+    pub refinement: Option<onecrew_creator_runtime::DiscoveryRefinement>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -124,7 +127,7 @@ fn validate_input(input: &PrepareDiscoveryDraftInput) -> Result<(), DiscoveryDra
             .bytes()
             .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'-' | b'_'))
         || input.brief.trim().is_empty()
-        || input.brief.len() > 4000
+        || input.brief.len() > if input.refinement.is_some() { 32_000 } else { 4_000 }
         || input.profile_ref.is_empty()
         || input.profile_ref.len() > 128
         || input.profile_ref.chars().any(char::is_control)
@@ -168,6 +171,7 @@ fn validate_input(input: &PrepareDiscoveryDraftInput) -> Result<(), DiscoveryDra
 fn matches_request(campaign: &DiscoveryCampaign, input: &PrepareDiscoveryDraftInput) -> bool {
     campaign.id == input.id
         && campaign.brief == input.brief
+        && input.refinement.as_ref().is_none_or(|source| campaign.criteria["refinement"] == json!(source))
         && campaign.opencli_version == input.opencli_version
         && campaign.phase == "draft"
         && campaign.criteria["region"].as_str() == Some("")
@@ -276,26 +280,9 @@ fn build_draft(
         .suggested_keywords
         .retain(|query| suggested.insert(query.trim().to_lowercase()));
     let issues = validate_discovery_intent_proposal(&input.brief, &plan.intent, &registered);
-    if issues
-        .iter()
-        .any(|i| i.code != "unsupported_hard_condition")
-    {
+    if !issues.is_empty() {
         log::warn!("discovery draft {} rejected intent: {:?}", input.id, issues);
         return Err(DiscoveryDraftError::InvalidIntent);
-    }
-    if issues
-        .iter()
-        .any(|i| i.code == "unsupported_hard_condition")
-    {
-        // Only validated quotations from this request cross the UI boundary.
-        // Never expose model descriptions or silently weaken qualifications.
-        let mut excerpts = Vec::new();
-        for condition in &plan.intent.other_hard_conditions {
-            if !excerpts.contains(&condition.excerpt) {
-                excerpts.push(condition.excerpt.clone());
-            }
-        }
-        return Err(DiscoveryDraftError::UnsupportedConditions(excerpts));
     }
     if plan.scopes.len() > registered.len() {
         return Err(DiscoveryDraftError::InvalidScope);
@@ -459,6 +446,13 @@ fn build_draft(
     let mut criteria = json!({"category":text_value(&plan.intent.category),
         "region":"", "language":text_value(&plan.intent.language),
         "min_subscribers":threshold, "requires_ai_tool_demo":false, "requires_public_tool_url":false});
+    if !plan.intent.other_hard_conditions.is_empty() {
+        criteria["requirements"] = json!(plan.intent.other_hard_conditions);
+    }
+    criteria["contact_preference"] = json!("public_email_first");
+    if let Some(source) = &input.refinement {
+        criteria["refinement"] = json!(source);
+    }
     if let Some(c) = &input.criteria_overrides {
         for (key, value) in [("language", &c.language), ("category", &c.category)] {
             if let Some(value) = value {
@@ -549,7 +543,7 @@ impl LocalPlatform {
     /// Lost responses reconcile against this stable draft ID before any new model call.
     pub async fn prepare_discovery_draft(
         &self,
-        input: PrepareDiscoveryDraftInput,
+        mut input: PrepareDiscoveryDraftInput,
     ) -> Result<DiscoveryCampaign, DiscoveryDraftError> {
         validate_input(&input)?;
         let account = self
@@ -569,6 +563,23 @@ impl LocalPlatform {
             let creators = self
                 .creators()
                 .map_err(|_| DiscoveryDraftError::ReadUnavailable)?;
+            if let Some(source) = &input.refinement {
+                let previous = creators.get_discovery_campaign_async(source.campaign_id.clone())
+                    .await.map_err(|_| DiscoveryDraftError::ReadUnavailable)?;
+                if previous.revision != source.expected_revision || previous.approved_at.is_none()
+                    || previous.id == input.id
+                {
+                    return Err(DiscoveryDraftError::DraftConflict);
+                }
+                input.brief = format!(
+                    "原任务需求：\n{}\n已确认的计划设定：\n{}\n本次修改（仅覆盖明确修改的条件）：\n{}",
+                    previous.brief,
+                    json!({"criteria": previous.criteria, "target_count": previous.target_count,
+                        "scopes": previous.scopes, "max_calls": previous.max_calls}),
+                    input.brief,
+                );
+                validate_input(&input)?;
+            }
             match creators
                 .get_discovery_campaign_async(input.id.clone())
                 .await

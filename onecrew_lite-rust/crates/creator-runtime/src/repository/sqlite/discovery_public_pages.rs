@@ -32,10 +32,15 @@ pub(super) fn next_public_page(
            AND a.approved_at IS NOT NULL AND c.criteria_revision=d.current_revision
            AND NOT EXISTS(SELECT 1 FROM json_each(?2) excluded WHERE excluded.value=c.platform)
            AND ((c.verdict='pending' AND (COALESCE(json_extract(a.criteria_json,'$.requires_public_tool_url'),1)=1
-                OR json_extract(a.criteria_json,'$.region')='中国大陆以外'))
+                OR json_extract(a.criteria_json,'$.region')='中国大陆以外'
+                OR (json_array_length(json_extract(a.criteria_json,'$.requirements'))>0
+                  AND (SELECT COUNT(*) FROM discovery_public_page_reads page WHERE page.candidate_id=c.id)<2)))
              OR (c.verdict='qualified' AND EXISTS(SELECT 1 FROM discovery_recommendation_policies policy
                  WHERE policy.discovery_campaign_id=d.id AND policy.criteria_revision=d.current_revision AND policy.policy='score_and_contact_v1')
-                 AND NOT EXISTS(SELECT 1 FROM discovery_contact_observations contact WHERE contact.candidate_id=c.id AND contact.criteria_revision=c.criteria_revision)))
+                 AND NOT EXISTS(SELECT 1 FROM discovery_contact_observations contact WHERE contact.candidate_id=c.id AND contact.criteria_revision=c.criteria_revision
+                    AND (COALESCE(json_extract(a.criteria_json,'$.contact_preference'),'')!='public_email_first' OR contact.kind='email'))
+                 AND (COALESCE(json_extract(a.criteria_json,'$.contact_preference'),'')!='public_email_first'
+                    OR NOT EXISTS(SELECT 1 FROM discovery_public_page_reads page WHERE page.candidate_id=c.id))))
            AND json_type(c.evidence_json,'$.video_description')='text' AND l.type='text'
            AND NOT EXISTS(SELECT 1 FROM discovery_platform_runs r WHERE r.discovery_campaign_id=d.id AND r.status='searching')
            AND ((p.status='completed' AND NOT EXISTS(
@@ -144,7 +149,8 @@ pub(super) fn claim_public_page(
          WHERE c.id=?1 AND c.discovery_campaign_id=?2 AND c.criteria_revision=?3 AND c.source_profile_ref=?4
            AND ((c.verdict='pending' AND EXISTS(SELECT 1 FROM discovery_campaign_revisions a
                 WHERE a.discovery_campaign_id=c.discovery_campaign_id AND a.revision=c.criteria_revision
-                  AND (COALESCE(json_extract(a.criteria_json,'$.requires_public_tool_url'),1)=1 OR json_extract(a.criteria_json,'$.region')='中国大陆以外')))
+                  AND (COALESCE(json_extract(a.criteria_json,'$.requires_public_tool_url'),1)=1 OR json_extract(a.criteria_json,'$.region')='中国大陆以外'
+                    OR json_array_length(json_extract(a.criteria_json,'$.requirements'))>0)))
              OR (c.verdict='qualified' AND EXISTS(SELECT 1 FROM discovery_recommendation_policies policy
                  WHERE policy.discovery_campaign_id=c.discovery_campaign_id AND policy.criteria_revision=c.criteria_revision AND policy.policy='score_and_contact_v1')
                  AND NOT EXISTS(SELECT 1 FROM discovery_contact_observations contact WHERE contact.candidate_id=c.id AND contact.criteria_revision=c.criteria_revision)))
@@ -271,7 +277,10 @@ pub(super) fn finish_public_page(
         "SELECT EXISTS(SELECT 1 FROM discovery_candidates c JOIN discovery_recommendation_policies p
          ON p.discovery_campaign_id=c.discovery_campaign_id AND p.criteria_revision=c.criteria_revision
          WHERE c.id=?1 AND c.discovery_campaign_id=?2 AND c.criteria_revision=?3
-         AND c.verdict='qualified' AND p.policy='score_and_contact_v1')",
+         AND (c.verdict='qualified' OR (c.verdict='pending' AND EXISTS(
+           SELECT 1 FROM discovery_campaign_revisions r WHERE r.discovery_campaign_id=c.discovery_campaign_id
+             AND r.revision=c.criteria_revision AND json_array_length(json_extract(r.criteria_json,'$.requirements'))>0)))
+         AND p.policy='score_and_contact_v1')",
         params![scope.candidate_id,scope.campaign_id,scope.expected_revision], |row|row.get(0),
     ).map_err(|error|error.to_string())?;
     let lookup_site_failure = contact_lookup_page

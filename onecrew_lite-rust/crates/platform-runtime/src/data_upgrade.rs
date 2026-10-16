@@ -1528,17 +1528,30 @@ mod tests {
     }
 
     #[test]
-    fn v3_v31_upgrade_restores_legacy_resend_as_a_typed_available_mailbox() {
+    fn v3_v31_upgrade_preserves_legacy_resend_as_an_unavailable_mailbox() {
         let directory = tempfile::tempdir().unwrap();
         let platform = crate::LocalPlatform::open(directory.path()).unwrap();
-        let credential = platform
-            .put_resend_credential(
+        let credential = platform.vault
+            .upsert_email_secret_record(
+                onecrew_local_vault::EmailSecretRecordKind::ResendApiKey,
                 "Legacy Resend",
-                "legacy@example.com",
-                Some("Legacy Sender".into()),
-                "re_preserved_across_upgrade",
+                serde_json::json!({
+                    "email_address": "legacy@example.com",
+                    "display_name": "Legacy Sender"
+                }),
+                &onecrew_local_vault::EmailSecretRecordSecret::new("re_preserved_across_upgrade"),
             )
             .unwrap();
+        platform.creators.reconcile_mailbox_refs(vec![onecrew_creator_runtime::MailboxRefInput {
+            id: onecrew_creator_runtime::MailboxRefId::new(credential.id.to_string()),
+            provider: "resend".into(),
+            label: credential.label.clone(),
+            email_address: "legacy@example.com".into(),
+            display_name: Some("Legacy Sender".into()),
+            capabilities: vec![onecrew_creator_runtime::EmailCapability::Send],
+            available: true,
+            last_error: None,
+        }]).unwrap();
         drop(platform);
 
         let vault_path = directory.path().join("agent-platform.db");
@@ -1577,26 +1590,24 @@ mod tests {
         assert_eq!(upgraded.status, LocalDataUpgradeStatus::Completed);
         assert_eq!(upgraded.results.len(), 2);
         let reopened = crate::LocalPlatform::open(directory.path()).unwrap();
-        let credentials = reopened.list_resend_credentials().unwrap();
+        let credentials = reopened.vault.list_email_secret_records(
+            onecrew_local_vault::EmailSecretRecordKind::ResendApiKey,
+            true,
+        ).unwrap();
         assert_eq!(credentials.len(), 1);
         assert_eq!(credentials[0].id, credential.id);
         let mailboxes = reopened.creators.list_mailboxes().unwrap();
         assert_eq!(mailboxes.len(), 1);
-        assert!(mailboxes[0].available);
+        assert!(!mailboxes[0].available);
         assert_eq!(mailboxes[0].email_address, "legacy@example.com");
-        let binding = reopened
-            .creators
-            .resolve_mailbox_auth_binding_blocking(&mailboxes[0].mailbox_ref_id)
-            .unwrap();
-        assert_eq!(
-            binding.auth_connection.auth_connection_id,
-            onecrew_creator_runtime::resend_auth_connection_id(credential.id)
-        );
-        assert_eq!(
-            binding.auth_connection.secret_record_id.as_str(),
-            credential.id.to_string()
-        );
-        assert!(binding.auth_connection.available);
+        let binding = reopened.creators.resolve_mailbox_auth_binding_blocking(
+            &mailboxes[0].mailbox_ref_id,
+        ).unwrap();
+        assert!(!binding.available);
+        assert!(!binding.auth_connection.available);
+        assert_eq!(binding.auth_connection.auth_connection_id,
+            onecrew_creator_runtime::resend_auth_connection_id(credential.id));
+        assert_eq!(binding.auth_connection.secret_record_id.as_str(), credential.id.to_string());
         drop(reopened);
 
         let vault = rusqlite::Connection::open(vault_path).unwrap();

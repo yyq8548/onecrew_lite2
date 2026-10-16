@@ -10,12 +10,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { BULK_KEY, listBulk, listBulkRecipients, prepareBulk, controlBulk, uniqueRecipients } from "@/lib/gmail-bulk";
 import type { MailboxDetail } from "@/lib/creator";
 import { useCanvasPortal } from "@/lib/canvas-portal";
+import { MAIL_ACCESS_CONNECTIONS_KEY, refreshGmailMailboxes } from "@/lib/gmail-connection";
 
 export function GmailBulk({ mailboxes, mailboxError, mailboxesLoading, refreshMailboxes }: {
   mailboxes: MailboxDetail[];
   mailboxError: unknown;
   mailboxesLoading: boolean;
-  refreshMailboxes: () => void;
+  refreshMailboxes: () => Promise<unknown>;
 }) {
   const { t } = useTranslation("mail");
   const client = useQueryClient();
@@ -28,15 +29,23 @@ export function GmailBulk({ mailboxes, mailboxError, mailboxesLoading, refreshMa
   const [filter, setFilter] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [preview, setPreview] = useState<string | null>(null);
+  const refreshSenders = useMutation({ mutationFn: async () => {
+    const connections = await refreshGmailMailboxes();
+    client.setQueryData(MAIL_ACCESS_CONNECTIONS_KEY, connections);
+    await refreshMailboxes();
+  } });
   const recipients = useQuery({ queryKey: [...BULK_KEY, "recipients"], queryFn: listBulkRecipients, enabled: open, retry: false });
   const batches = useQuery({ queryKey: [...BULK_KEY, "batches"], queryFn: listBulk, enabled: open, refetchInterval: open ? 2000 : false, retry: false });
   const choices = useMemo(() => uniqueRecipients(recipients.data ?? []), [recipients.data]);
   const visible = choices.filter(r => `${r.email} ${r.source}`.toLowerCase().includes(filter.toLowerCase()));
   const gmail = mailboxes.filter(m => m.provider === "gmail" && m.available && m.capabilities.includes("send"));
+  const gmailAccounts = mailboxes.filter(m => m.provider === "gmail");
+  const sendersLoading = mailboxesLoading || refreshSenders.isPending;
+  const sendersError = mailboxError || refreshSenders.error;
   const mailboxId = mailbox
     ? gmail.find(m => m.mailbox_ref_id === mailbox)?.mailbox_ref_id ?? ""
     : gmail[0]?.mailbox_ref_id ?? "";
-  const senderUnavailable = mailboxesLoading || Boolean(mailboxError) || !mailboxId;
+  const senderUnavailable = sendersLoading || Boolean(sendersError) || !mailboxId;
   const prepare = useMutation({ mutationFn: prepareBulk, onSuccess: async batch => { await client.invalidateQueries({ queryKey: BULK_KEY }); setPreview(batch.id); } });
   const control = useMutation({ mutationFn: ({ id, action }: { id: string; action: "confirm" | "pause" | "resume" | "cancel" }) => controlBulk(id, action), onSuccess: async () => { setPreview(null); await client.invalidateQueries({ queryKey: BULK_KEY }); } });
   const draft = batches.data?.find(b => b.id === preview);
@@ -44,7 +53,7 @@ export function GmailBulk({ mailboxes, mailboxError, mailboxesLoading, refreshMa
   return <>
     <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b bg-card px-5 py-3">
       <p className="max-w-prose text-sm text-muted-foreground">{t("bulk.description")}</p>
-      <Button onClick={() => { refreshMailboxes(); setOpen(true); }}><Send className="size-4" aria-hidden />{t("bulk.open")}</Button>
+      <Button onClick={() => { refreshSenders.mutate(); setOpen(true); }}><Send className="size-4" aria-hidden />{t("bulk.open")}</Button>
     </div>
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent container={canvas} className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
@@ -52,7 +61,7 @@ export function GmailBulk({ mailboxes, mailboxError, mailboxesLoading, refreshMa
         <ol className="flex flex-wrap gap-x-6 gap-y-2 border-b pb-4 text-sm" aria-label={t("bulk.stepsLabel")}>
           {(["recipients", "compose", "confirm"] as const).map((item, index) => <li key={item} aria-current={(draft ? item === "confirm" : item === step) ? "step" : undefined} className={(draft ? item === "confirm" : item === step) ? "font-semibold text-foreground" : "text-muted-foreground"}>{index + 1}. {t(`bulk.steps.${item}`)}</li>)}
         </ol>
-        {Boolean(mailboxError) && <p role="alert" className="text-destructive">{t("bulk.senderReadFailed")}</p>}
+        {Boolean(sendersError) && <p role="alert" className="text-destructive">{t("bulk.senderReadFailed")}</p>}
         {(recipients.isError || batches.isError || prepare.isError || control.isError) && <p role="alert" className="text-destructive">{String(recipients.error || batches.error || prepare.error || control.error)}</p>}
         {draft ? <section className="space-y-3">
           <h3 className="font-medium">{t("bulk.preview")}</h3>
@@ -60,14 +69,14 @@ export function GmailBulk({ mailboxes, mailboxError, mailboxesLoading, refreshMa
           <p className="font-medium">{draft.subject}</p><pre className="whitespace-pre-wrap font-sans text-sm">{draft.body}</pre>
           <ul className="max-h-48 overflow-auto text-sm">{draft.items.map(i => <li key={i.id} className="border-b py-2"><strong>{i.recipient}</strong><p className="whitespace-pre-wrap text-muted-foreground">{i.source}</p>{i.detail && <p className="text-destructive">{i.detail}</p>}</li>)}</ul>
           <p>{t("bulk.confirmHint", { count: draft.items.length })}</p>
-          <Button disabled={busy || mailboxesLoading || Boolean(mailboxError) || !gmail.some(m => m.mailbox_ref_id === draft.mailbox_ref_id)} onClick={() => control.mutate({ id: draft.id, action: "confirm" })}>{t("bulk.confirm")}</Button>
+          <Button disabled={busy || sendersLoading || Boolean(sendersError) || !gmail.some(m => m.mailbox_ref_id === draft.mailbox_ref_id)} onClick={() => control.mutate({ id: draft.id, action: "confirm" })}>{t("bulk.confirm")}</Button>
           <Button variant="ghost" disabled={busy} onClick={() => setPreview(null)}>{t("common.back")}</Button>
         </section> : <section className="space-y-4">
           {step === "recipients" ? <>
-          <label className="block text-sm">{t("common.sender")}<select className="mt-1 w-full rounded border bg-background p-2" value={mailboxId} disabled={mailboxesLoading || Boolean(mailboxError) || !gmail.length} onChange={e => setMailbox(e.target.value)}>{!mailboxId && <option value="" disabled>{t("common.selectMailbox")}</option>}{gmail.map(m => <option key={m.mailbox_ref_id} value={m.mailbox_ref_id}>{m.email_address}</option>)}</select></label>
-          {mailboxesLoading && <p role="status">{t("common.loading")}</p>}
-          {!mailboxesLoading && !mailboxError && !gmail.length && <p>{t(mailboxes.some(m => m.provider === "gmail") ? "bulk.senderUnavailable" : "bulk.connect")}</p>}
-          {(Boolean(mailboxError) || !mailboxId) && <Button variant="outline" disabled={mailboxesLoading} onClick={refreshMailboxes}>{t("bulk.reloadSenders")}</Button>}
+          <label className="block text-sm">{t("common.sender")}<select className="mt-1 w-full rounded border bg-background p-2" value={mailboxId} disabled={sendersLoading || Boolean(sendersError) || !gmailAccounts.length} onChange={e => setMailbox(e.target.value)}>{!mailboxId && <option value="" disabled>{t("common.selectMailbox")}</option>}{gmailAccounts.map(m => <option key={m.mailbox_ref_id} value={m.mailbox_ref_id} disabled={!gmail.some(sender => sender.mailbox_ref_id === m.mailbox_ref_id)}>{m.email_address}{!gmail.some(sender => sender.mailbox_ref_id === m.mailbox_ref_id) ? ` · ${t("mailbox.unavailable")}` : ""}</option>)}</select></label>
+          {sendersLoading && <p role="status">{t("common.loading")}</p>}
+          {!sendersLoading && !sendersError && !gmail.length && <p>{t(gmailAccounts.length ? "bulk.senderUnavailable" : "bulk.connect")}</p>}
+          {(Boolean(sendersError) || !mailboxId) && <Button variant="outline" disabled={sendersLoading} onClick={() => refreshSenders.mutate()}>{t("bulk.reloadSenders")}</Button>}
           <Input aria-label={t("bulk.search")} placeholder={t("bulk.search")} value={filter} onChange={e => setFilter(e.target.value)} />
           <p className="text-xs text-muted-foreground">{t("bulk.limit")}</p>
           <div className="flex gap-2"><Button size="sm" variant="outline" onClick={() => setSelected(new Set(visible.slice(0,100).map(r => r.email)))}>{t("bulk.select")}</Button><Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>{t("bulk.clear")}</Button><span>{t("bulk.selected", { count: selected.size })}</span></div>

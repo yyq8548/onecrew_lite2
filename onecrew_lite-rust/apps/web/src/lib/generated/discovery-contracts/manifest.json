@@ -122,7 +122,7 @@
       "name": "DiscoveryIdentityGroupsSnapshot",
       "direction": "serialize",
       "id": "https://reacher.local/contracts/DiscoveryIdentityGroupsSnapshot.schema.json",
-      "revision": "sha256:ea9711873f19cb7f36f16b79b3d7af2eb58d749423acca38af72326020ae8b82",
+      "revision": "sha256:2535e48341014e728fed6accb394b6cfbe38f276cd35ce67a2780f46dbe6cd47",
       "schema": {
         "$id": "https://reacher.local/contracts/DiscoveryIdentityGroupsSnapshot.schema.json",
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -296,6 +296,13 @@
                             },
                             "evidence_version": {
                               "type": "string"
+                            },
+                            "followers": {
+                              "description": "Owner-bound count; a leading ~ preserves a rounded public estimate.",
+                              "type": [
+                                "string",
+                                "null"
+                              ]
                             },
                             "hit": {
                               "properties": {
@@ -1998,7 +2005,7 @@
       "name": "DiscoveryReviewReceipt",
       "direction": "serialize",
       "id": "https://reacher.local/contracts/DiscoveryReviewReceipt.schema.json",
-      "revision": "sha256:d267199e655562335a27756c41620c73e74f429cf3ce42684b1ea1066a7a9ea3",
+      "revision": "sha256:0e370e9ad487eb6322efdb58a4b8f98ec58ce5f8b206885461722738687c7c2c",
       "schema": {
         "$id": "https://reacher.local/contracts/DiscoveryReviewReceipt.schema.json",
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2025,16 +2032,36 @@
             "items": {
               "properties": {
                 "criterion": {
-                  "enum": [
-                    "own_ai_tool_demo",
-                    "public_tool_url",
-                    "apparel_business_content",
-                    "category_content",
-                    "creator_residence_outside_mainland",
-                    "content_language",
-                    "match_fit"
-                  ],
-                  "type": "string"
+                  "oneOf": [
+                    {
+                      "enum": [
+                        "own_ai_tool_demo",
+                        "public_tool_url",
+                        "apparel_business_content",
+                        "category_content",
+                        "creator_residence_outside_mainland",
+                        "content_language",
+                        "match_fit"
+                      ],
+                      "type": "string"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "description": "当前已批准 requirements 数组中的索引，随 criteria_revision 固定。",
+                      "properties": {
+                        "requirement": {
+                          "format": "uint8",
+                          "maximum": 255,
+                          "minimum": 0,
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "requirement"
+                      ],
+                      "type": "object"
+                    }
+                  ]
                 },
                 "outcome": {
                   "enum": [
@@ -2804,7 +2831,7 @@
       "name": "SubmitDiscoveryReviewInput",
       "direction": "deserialize",
       "id": "https://reacher.local/contracts/SubmitDiscoveryReviewInput.schema.json",
-      "revision": "sha256:b3dd5b926b9cc81a48e6f7920d5645f34a66933892aec3b4e1fa9e70cb8d5869",
+      "revision": "sha256:58d561cfd78dae90edb9cfd471aaa5abe7025f4227a056cadbebfe71973b4178",
       "schema": {
         "$id": "https://reacher.local/contracts/SubmitDiscoveryReviewInput.schema.json",
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2822,7 +2849,7 @@
           "findings": {
             "items": {
               "additionalProperties": false,
-              "description": "Supported demo requires first-hand actions/results in saved transcript, not a title,\nadvertisement, list, third-party retelling or mere tool mention. Text is not visual proof.\nSupported tool requires an author-observed link and a successful target-page quotation.\nLanguage requires exact saved author text; spoken language requires transcript.\nMatchFit is optional: excellent = strong relevant evidence and an advantage;\ngood = clear supported relevance; medium = partial fit with a limitation;\nlow = a cited significant weakness. Missing optional data never lowers fit.\nFit cannot override required eligibility. Unknown fit has insufficient outcome\nand no match_level. Absence in one sample cannot reject the whole creator.",
+              "description": "Supported demo requires first-hand actions/results in saved transcript, not a title,\nadvertisement, list, third-party retelling or mere tool mention. Text is not visual proof.\nSupported tool requires an author-observed link and a successful target-page quotation.\nLanguage requires exact saved author text; spoken language requires transcript.\nMatchFit is optional: excellent = strong relevant evidence and an advantage;\ngood = clear supported relevance; medium = partial fit with a limitation;\nlow = a cited significant weakness. Missing optional data never lowers fit.\nFit cannot override required eligibility. Unknown fit has insufficient outcome\nand no match_level. Absence in one sample cannot reject the whole creator.\nmatch_fit 的 supported 表示证据支持所选等级，包括 low；\n未知匹配使用 insufficient 且不填等级，match_fit 不接受 contradicted。",
               "properties": {
                 "citations": {
                   "items": {
@@ -2956,16 +2983,36 @@
                   ]
                 },
                 "criterion": {
-                  "enum": [
-                    "own_ai_tool_demo",
-                    "public_tool_url",
-                    "apparel_business_content",
-                    "category_content",
-                    "creator_residence_outside_mainland",
-                    "content_language",
-                    "match_fit"
-                  ],
-                  "type": "string"
+                  "oneOf": [
+                    {
+                      "enum": [
+                        "own_ai_tool_demo",
+                        "public_tool_url",
+                        "apparel_business_content",
+                        "category_content",
+                        "creator_residence_outside_mainland",
+                        "content_language",
+                        "match_fit"
+                      ],
+                      "type": "string"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "description": "当前已批准 requirements 数组中的索引，随 criteria_revision 固定。",
+                      "properties": {
+                        "requirement": {
+                          "format": "uint8",
+                          "maximum": 255,
+                          "minimum": 0,
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "requirement"
+                      ],
+                      "type": "object"
+                    }
+                  ]
                 },
                 "match_level": {
                   "anyOf": [
@@ -3029,7 +3076,7 @@
               ],
               "type": "object"
             },
-            "maxItems": 6,
+            "maxItems": 40,
             "type": "array"
           },
           "material_hash": {
@@ -3079,5 +3126,5 @@
       }
     }
   ],
-  "manifest_revision": "sha256:569809180a076d9682404e7d634ed7d3c8b09066b1c540454bbf1269212b183b"
+  "manifest_revision": "sha256:b66f05dbd01264935f2168d6128d08339bc6698f43aa1dfa2465d6606440da12"
 }

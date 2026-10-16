@@ -149,7 +149,7 @@ fn historical_command(site: &str) -> Option<&'static str> {
         | "douyin" | "facebook" | "reddit" | "bluesky" | "medium" | "substack" | "jike"
         | "weixin" | "hackernews" | "linux-do" | "nowcoder" | "tieba" => Some("search"),
         "linkedin" => Some("people-search"),
-        "pinterest" => Some("search-pins"),
+        "pinterest" => Some("search-users"),
         "pinterest-pins" => Some("search-pins"),
         "pinterest-boards" => Some("search-boards"),
         "linkedin-salesnav" => Some("salesnav-search"),
@@ -1678,7 +1678,7 @@ mod tests {
         assert!(capabilities.iter().any(|item| item.platform == "linkedin"
             && item.command == "onecrew-search-linkedin/people-search"));
         assert!(capabilities.iter().any(|item| item.platform == "pinterest"
-            && item.command == "onecrew-pinterest-reader/search-pins"));
+            && item.command == "onecrew-pinterest-reader/search-users"));
         assert!(capabilities.iter().all(|item| item.platform != "weixin"));
         assert!(capabilities.iter().all(|item| item.platform != "substack"));
         assert!(

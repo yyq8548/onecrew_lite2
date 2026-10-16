@@ -1,7 +1,5 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use onecrew_email::ProviderFailure;
-
 use super::*;
 
 const PROXY_SECRET: &str = "PROXY_PASSWORD_SENTINEL";
@@ -390,78 +388,6 @@ fn youtube_test_outcomes_project_to_the_typed_check() {
     );
     assert_eq!(
         project_youtube_test(Err(YoutubePlatformTestError::Infrastructure)),
-        Err(ConnectionCheckError::Internal)
-    );
-}
-
-#[test]
-fn resend_test_outcomes_project_to_the_typed_check() {
-    let provider = |status, class| {
-        ResendCredentialTestError::Provider(EmailError::Provider(ProviderFailure {
-            status,
-            class,
-            message: "re_secret_key_sentinel".into(),
-            rate_limit: onecrew_email::ProviderRateLimitStatus {
-                limit: None,
-                remaining: None,
-                reset_seconds: None,
-                retry_after_seconds: None,
-            },
-        }))
-    };
-    for (result, expected) in [
-        (
-            Ok(ResendCredentialTest {
-                credential_id: "resend-1".into(),
-                ok: true,
-                checked_at: 1,
-                email_address: "team@example.com".into(),
-                message: "valid".into(),
-            }),
-            ConnectionCheckStatus::Ok,
-        ),
-        (
-            Err(ResendCredentialTestError::Provider(EmailError::Transport(
-                "error sending request".into(),
-            ))),
-            ConnectionCheckStatus::NetworkUnreachable,
-        ),
-        (
-            Err(provider(401, ProviderErrorClass::Auth)),
-            ConnectionCheckStatus::CredentialRejected,
-        ),
-        (
-            Err(ResendCredentialTestError::Provider(
-                EmailError::InvalidConfig("sender domain is not verified".into()),
-            )),
-            ConnectionCheckStatus::CredentialRejected,
-        ),
-        (
-            Err(provider(503, ProviderErrorClass::ProviderFault)),
-            ConnectionCheckStatus::ProviderUnavailable,
-        ),
-        (
-            Err(provider(429, ProviderErrorClass::DailyQuotaExceeded)),
-            ConnectionCheckStatus::ProviderUnavailable,
-        ),
-    ] {
-        let check = project_resend_test(result).unwrap();
-        assert_eq!(check.status, expected);
-        assert!(!check.proxy_configured);
-        let wire = serde_json::to_string(&check).unwrap();
-        assert!(!wire.contains("re_secret_key_sentinel"));
-        assert!(!wire.contains("team@example.com"));
-    }
-    assert_eq!(
-        project_resend_test(Err(ResendCredentialTestError::MailboxUnavailable(
-            "mailbox not found".into()
-        ))),
-        Err(ConnectionCheckError::ConnectionUnavailable)
-    );
-    assert_eq!(
-        project_resend_test(Err(ResendCredentialTestError::Local(
-            "vault unavailable".into()
-        ))),
         Err(ConnectionCheckError::Internal)
     );
 }

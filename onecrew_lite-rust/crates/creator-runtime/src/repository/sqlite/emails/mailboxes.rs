@@ -62,6 +62,13 @@ impl MailboxRepository for SqliteRepository {
         for id in stale_ids {
             mark_mailbox_credential_missing(&transaction, &MailboxRefId::new(id))?;
         }
+        if inputs.is_empty() {
+            transaction.execute(
+                "UPDATE email_auth_connections SET available=0,updated_at=?1
+                 WHERE provider_kind='resend' AND available=1",
+                [now()],
+            ).map_err(|error| error.to_string())?;
+        }
 
         let mailboxes = list_mailboxes(&transaction)?
             .into_iter()

@@ -1,7 +1,7 @@
 // This module is deliberately dependency-free. Only its bounded projection crosses
 // the official OpenCLI browser bridge; full HTML/player/network state never does.
 export function projectWatchHtml(html, videoId) {
-  const fail = () => { throw new Error('ONECREW_VIDEO_EVIDENCE_INVALID'); };
+  const fail = (code = '') => { throw new Error('ONECREW_VIDEO_EVIDENCE_INVALID' + (code ? ':' + code : '')); };
   if (!/^[A-Za-z0-9_-]{11}$/.test(videoId) || typeof html !== 'string'
       || html.length > 8 * 1024 * 1024) fail();
   function bootstrap(name) {
@@ -32,19 +32,21 @@ export function projectWatchHtml(html, videoId) {
     return value;
   }
   const player = bootstrap('ytInitialPlayerResponse');
-  const initial = bootstrap('ytInitialData');
   const details = player.videoDetails;
+  if (player.playabilityStatus?.status === 'LOGIN_REQUIRED') fail('AUTH_REQUIRED');
+  if (player.playabilityStatus?.status !== 'OK') fail('ONECREW_YOUTUBE_VIDEO_UNAVAILABLE');
   if (!details || details.videoId !== videoId
-      || !/^UC[A-Za-z0-9_-]{22}$/.test(details.channelId)
-      || player.playabilityStatus?.status !== 'OK') fail();
+      || !/^UC[A-Za-z0-9_-]{22}$/.test(details.channelId)) fail('ONECREW_YOUTUBE_IDENTITY_INVALID');
+  const initial = bootstrap('ytInitialData');
   const contents = initial.contents?.twoColumnWatchNextResults?.results?.results?.contents;
-  if (!Array.isArray(contents)) fail();
+  if (!Array.isArray(contents)) fail('ONECREW_YOUTUBE_LAYOUT_UNSUPPORTED');
   const secondary = contents.filter(c => c.videoSecondaryInfoRenderer)
     .map(c => c.videoSecondaryInfoRenderer);
-  if (secondary.length !== 1) fail();
+  if (secondary.length !== 1) fail('ONECREW_YOUTUBE_LAYOUT_UNSUPPORTED');
   const section = secondary[0];
   const owner = section.owner?.videoOwnerRenderer;
-  if (owner?.navigationEndpoint?.browseEndpoint?.browseId !== details.channelId) fail();
+  if (owner?.navigationEndpoint?.browseEndpoint?.browseId !== details.channelId) fail('ONECREW_YOUTUBE_IDENTITY_INVALID');
+  if (typeof details.shortDescription !== 'string' || !details.shortDescription.trim()) fail('ONECREW_YOUTUBE_DESCRIPTION_UNAVAILABLE');
   const description = text(details.shortDescription, 16000, true);
   const displayDescription = text(section.attributedDescription?.content ?? '', 16000);
   const links = [];

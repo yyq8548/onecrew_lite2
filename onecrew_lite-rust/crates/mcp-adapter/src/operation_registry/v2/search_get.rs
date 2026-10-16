@@ -183,7 +183,7 @@ fn infer_toolkits(query: &str) -> BTreeSet<ToolkitId> {
         (ToolkitId::Telegram, &["telegram"][..]),
         (ToolkitId::Youtube, &["youtube"][..]),
         (ToolkitId::OneCrew, &["onecrew"][..]),
-        (ToolkitId::Email, &["email", "mail", "resend"][..]),
+        (ToolkitId::Email, &["email", "mail", "gmail"][..]),
     ]
     .into_iter()
     .filter_map(|(toolkit, aliases)| {

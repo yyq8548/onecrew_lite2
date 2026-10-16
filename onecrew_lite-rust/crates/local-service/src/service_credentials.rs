@@ -1,7 +1,6 @@
 use onecrew_local_domain::ServiceCredential;
 use onecrew_local_runtime::{
-    RenameYoutubeCredentialInput, ResendCredentialConnectInput, ResendCredentialDeleteInput,
-    ResendCredentialDeletionError, ResendCredentialTest, RotateYoutubeCredentialInput,
+    RenameYoutubeCredentialInput, RotateYoutubeCredentialInput,
     ServiceCredentialConnectResult, ServiceCredentialProjection, YoutubeApiKeyConnectInput,
     YoutubeCredentialDeleteInput, YoutubeCredentialDeleteOutcome, YoutubePlatformTestInput,
     YoutubePlatformTestResult,
@@ -57,42 +56,6 @@ pub(super) async fn test_youtube_api_key(
         .map_err(|error| error.safe_message().to_string())
 }
 
-pub(super) async fn list_resend_credentials(
-    state: &ServiceState,
-) -> Result<Vec<ServiceCredential>, String> {
-    let platform = state.platform().await?;
-    run_web_blocking("list_resend_credentials", move || {
-        platform.list_resend_credentials()
-    })
-    .await?
-}
-
-pub(super) async fn connect_resend_credential(
-    state: &ServiceState,
-    input: ResendCredentialConnectInput,
-) -> Result<ServiceCredentialConnectResult, String> {
-    state
-        .platform()
-        .await?
-        .connect_resend_credential(input)
-        .await
-}
-
-pub(super) async fn delete_resend_credential(
-    state: &ServiceState,
-    input: ResendCredentialDeleteInput,
-) -> Result<bool, ResendCredentialDeletionError> {
-    let platform = state
-        .platform()
-        .await
-        .map_err(|message| ResendCredentialDeletionError::Runtime { message })?;
-    run_web_blocking("delete_resend_credential", move || {
-        platform.delete_resend_credential(input)
-    })
-    .await
-    .map_err(|message| ResendCredentialDeletionError::Runtime { message })?
-}
-
 pub(super) async fn rotate_youtube_api_key(
     state: &ServiceState,
     input: RotateYoutubeCredentialInput,
@@ -113,15 +76,4 @@ pub(super) async fn rename_youtube_api_key(
         platform.rename_youtube_credential(input)
     })
     .await?
-}
-
-pub(super) async fn test_resend_credential(
-    state: &ServiceState,
-    credential_id: String,
-) -> Result<ResendCredentialTest, String> {
-    state
-        .platform()
-        .await?
-        .test_resend_credential(&credential_id)
-        .await
 }

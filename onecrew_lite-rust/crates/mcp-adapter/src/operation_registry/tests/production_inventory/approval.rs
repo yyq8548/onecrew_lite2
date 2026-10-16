@@ -85,8 +85,6 @@ fn write_and_attended_sets_include_only_payload_confirmation_operations() {
     assert_eq!(
         attended,
         [
-            "email.credential.delete",
-            "email.credential.rotate",
             "email.direct.send",
             "email.draft.send",
             "email.manual.send",

@@ -289,7 +289,18 @@ fn advance_failure_code(error: &onecrew_local_runtime::OpenCliDiscoverySearchErr
         | OpenCliDiscoverySearchError::Provider(error) => {
             onecrew_local_runtime::discovery_provider_stop_code(error).into()
         }
-        OpenCliDiscoverySearchError::Campaign(_) => "discovery_read_outcome_unknown".into(),
+        OpenCliDiscoverySearchError::Campaign(error) => match error.as_str() {
+            "Creator repository capacity is temporarily full" => "creator_repository_overloaded",
+            "Creator repository intake is closed" => "creator_repository_closed",
+            "Creator repository work was cancelled before dispatch" => {
+                "creator_repository_cancelled"
+            }
+            "Creator repository work started but its outcome is unknown" => {
+                "creator_repository_outcome_unknown"
+            }
+            _ => "discovery_read_outcome_unknown",
+        }
+        .into(),
     }
 }
 
@@ -301,7 +312,7 @@ pub(crate) async fn create(
         .platform()
         .await?
         .creators()?
-        .create_discovery_campaign_async(input)
+        .create_discovery_campaign_async(input.with_default_delivery_preferences())
         .await
         .map_err(|error| error.to_string())
 }
@@ -395,6 +406,19 @@ pub(crate) async fn search_once(
         .map_err(|error| format!("{error:?}"))
 }
 
+pub(crate) async fn search_recover_once(
+    state: &ServiceState,
+    input: onecrew_local_runtime::OpenCliDiscoveryPlatformSearchInput,
+) -> Result<OpenCliDiscoverySearchResult, String> {
+    if input.recovery.is_none() {
+        return Err("Discovery repair recovery requires a saved checkpoint".into());
+    }
+    state.platform().await?
+        .search_discovery_once_with_recovery(&input.campaign_id, input.expected_revision,
+            &input.platform, &input.profile_ref, input.limit, input.recovery)
+        .await.map_err(|error| format!("{error:?}"))
+}
+
 pub(crate) async fn verify_youtube_hit_once(
     state: &ServiceState,
     id: String,
@@ -470,6 +494,34 @@ pub(crate) async fn draft_progress(
 
 #[cfg(test)]
 mod contract_manifest_tests {
+    #[test]
+    fn capacity_errors_keep_their_known_dispatch_state() {
+        use onecrew_local_runtime::OpenCliDiscoverySearchError;
+        for (message, code) in [
+            (
+                "Creator repository capacity is temporarily full",
+                "creator_repository_overloaded",
+            ),
+            (
+                "Creator repository intake is closed",
+                "creator_repository_closed",
+            ),
+            (
+                "Creator repository work was cancelled before dispatch",
+                "creator_repository_cancelled",
+            ),
+            (
+                "Creator repository work started but its outcome is unknown",
+                "creator_repository_outcome_unknown",
+            ),
+            ("unknown owner detail", "discovery_read_outcome_unknown"),
+        ] {
+            assert_eq!(
+                super::advance_failure_code(&OpenCliDiscoverySearchError::Campaign(message.into())),
+                code
+            );
+        }
+    }
     use onecrew_creator_runtime::{
         DiscoveryIdentityGroupsSnapshot, DiscoveryReviewMaterial, DiscoveryReviewMaterialInput,
         DiscoveryReviewReceipt, GetDiscoveryIdentityGroupsInput, GetDiscoveryReviewInput,

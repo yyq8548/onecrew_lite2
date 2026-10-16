@@ -97,6 +97,7 @@ fn prompt(brief: &str, sources: &OpenCliDiscoverySources) -> String {
     );
     request.push('\n');
     request.push_str(include_str!("search_query_guidance.txt"));
+    request.push_str("\nAdditional qualification requirements are executable evidence reviews: put every explicitly requested inclusion or exclusion in other_hard_conditions, with its exact quotation and a precise condition the candidate must satisfy. Do not demote exclusions to soft preferences. Conditions about private facts, guarantees or missing historical evidence may remain unverified; do not promise verification from silence. For iterative plan improvements, preserve the customer's current core goal and all unchanged conditions; later explicit changes supersede only the named conditions. The prior approved settings provide context, not a new user demand. Check those settings against the original customer wording; never copy unrelated legacy AI-demo or tool-link requirements without support in the customer's words. Preserve unchanged platform profiles and keywords for reusable saved sources. Prefer public business email as a soft delivery preference; no email requirement unless the customer explicitly makes it mandatory. Do not contaminate discovery keywords with email/Telegram terms. Use a bounded direct contact-page read rather than exhaustive contact crawling. Telegram expansion needs an explicit request.\n");
     format!(
         "{request}\nWhen the customer supplies a language or follower threshold, you MUST populate its intent constraint with state=specified, value and the exact request excerpt. Mentioning it in goal or keywords does not populate the constraint. Never mark an explicitly requested constraint unspecified. For example, Content language: 中文 requires language={{\"state\":\"specified\",\"value\":\"中文\",\"excerpt\":\"Content language: 中文\"}}. 粉丝至少 8000 requires min_subscribers={{\"state\":\"specified\",\"value\":8000,\"excerpt\":\"粉丝至少 8000\"}}. Use state=unrestricted with an excerpt only for explicitly unrestricted conditions.\nFor free-text queries the customer's CONTENT LANGUAGE takes priority over the platform's interface language and the language of preferred keywords. Translate preferred keyword hints into the requested content language without deleting or changing brand/model names. Manual free-text overrides follow the same target-language rule; only named site identifiers remain exact. On EVERY free-text source put relevant target-language queries first. For Chinese keyboard creators, use 键盘测评, 机械键盘测评, 键盘推荐 on YouTube as well as Bilibili, even when the preferred hints are keyboard review, mechanical keyboard review or best keyboards. Never use only English queries for a Chinese requirement. Preserve necessary brand/model names; manual queries must all follow the requested language. With unrestricted content language choose useful multilingual queries. Named categories, nodes, tags and communities must remain valid site identifiers, never translate them. Query language guides retrieval; it does not prove the author's content language."
     )
@@ -157,7 +158,21 @@ pub(super) async fn plan_with_progress(
         .await?
         .into_domain()?;
     plan.table_subject = understanding.product_or_topic;
+    super::query_audit::audit(
+        brief,
+        serde_json::json!({"audit_mode":"new_or_revised_draft", "plan": plan, "manual_scopes": manual_scopes, "registered_sources": sources}),
+        &plan.scopes,
+        progress,
+    )
+    .await?;
     Ok(plan)
+}
+
+pub(super) async fn structured_planning<T: schemars::JsonSchema + serde::de::DeserializeOwned>(
+    request: String,
+    progress: &(dyn Fn(super::DraftPhase) + Sync),
+) -> Result<T, DiscoveryDraftError> {
+    structured_with_effort(request, true, progress, &mut |_, _| {}).await
 }
 
 #[cfg(test)]

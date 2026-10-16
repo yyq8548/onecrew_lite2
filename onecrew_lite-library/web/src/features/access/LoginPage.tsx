@@ -36,6 +36,9 @@ export function LoginPage({ navigate, returnTo = '/library' }: LoginPageProps) {
     }
   };
   const unavailable = status?.state === 'unavailable';
+  const reauthorize =
+    status?.state === 'signed_out' &&
+    ['access.unauthorized', 'access.forbidden', 'access.revoked'].includes(status.issue ?? '');
   if (status?.state === 'signed_in') {
     return (
       <main className="login-page">
@@ -56,8 +59,14 @@ export function LoginPage({ navigate, returnTo = '/library' }: LoginPageProps) {
       <div className="login-card">
         <BrandLogo className="login-logo" />
         <h1>{t('account.loginTitle')}</h1>
-        <p>{unavailable ? t('account.unavailable') : t('account.loginDescription')}</p>
-        {(error || (status?.state === 'signed_out' && status.issue)) && (
+        <p>
+          {unavailable
+            ? t('account.unavailable')
+            : reauthorize
+              ? t('account.reauthorizationRequired')
+              : t('account.loginDescription')}
+        </p>
+        {(error || (status?.state === 'signed_out' && status.issue && !reauthorize)) && (
           <p className="account-error">{t('account.loginError')}</p>
         )}
         {popupBlocked && (
@@ -91,7 +100,7 @@ export function LoginPage({ navigate, returnTo = '/library' }: LoginPageProps) {
         ) : (
           <Button variant="default" onClick={() => void startLogin()}>
             <ExternalLink size={16} />
-            {t('account.login')}
+            {t(reauthorize ? 'account.reauthorize' : 'account.login')}
           </Button>
         )}
         <Button

@@ -62,6 +62,8 @@ impl ScoreGate {
 struct Proposal {
     finding: DiscoveryReviewFinding,
     language_only_pending: bool,
+    #[serde(default)]
+    requirement_findings: Vec<DiscoveryReviewFinding>,
 }
 
 const RUBRIC: &str = include_str!("discovery_match_rubric.txt");
@@ -274,7 +276,7 @@ impl LocalPlatform {
         let campaign = creators
             .get_discovery_campaign_async(input.campaign_id.clone())
             .await
-            .map_err(|_| "initial_match_campaign_unavailable")?;
+            .map_err(|error| error.read_failure_code())?;
         if let Some((observed, minimum)) = rules::below_minimum(&material.criteria, count) {
             if self.library_access_user().await? != account {
                 return Err("initial_match_account_changed".into());
@@ -388,6 +390,7 @@ impl LocalPlatform {
                 citations: findings[0].citations.clone(),
             });
         }
+        findings.extend(proposal.requirement_findings);
         let request = SubmitDiscoveryReviewInput {
             campaign_id: input.campaign_id,
             expected_revision: input.expected_revision,

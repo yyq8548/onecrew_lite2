@@ -26,6 +26,26 @@ pub(super) fn cleanup(platform: LocalPlatform, directory: std::path::PathBuf) {
     std::fs::remove_dir_all(directory).unwrap();
 }
 
+pub(super) fn legacy_mailbox(platform: &LocalPlatform, label: &str, email: &str, display_name: Option<String>, secret: &str) -> uuid::Uuid {
+    let record = platform.vault.upsert_email_secret_record(
+        EmailSecretRecordKind::ResendApiKey,
+        label,
+        serde_json::json!({"email_address": email, "display_name": display_name}),
+        &EmailSecretRecordSecret::new(secret),
+    ).unwrap();
+    platform.creators.sync_mailbox_ref(onecrew_creator_runtime::MailboxRefInput {
+        id: onecrew_creator_runtime::MailboxRefId::new(record.id.to_string()),
+        provider: "resend".into(),
+        label: label.into(),
+        email_address: email.into(),
+        display_name,
+        capabilities: vec![onecrew_creator_runtime::EmailCapability::Inbox],
+        available: false,
+        last_error: Some("lite_mailbox_provider_unsupported".into()),
+    }).unwrap();
+    record.id
+}
+
 pub(super) fn profile_secret(provider_account_id: &str, label: &str) -> ProfileSecret {
     ProfileSecret {
         provider_account_id: provider_account_id.into(),
@@ -100,14 +120,13 @@ fn wire_and_schema_keep_groups_and_platform_ids_independent() {
     platform
         .put_youtube_api_key("YouTube", None, "youtube-secret")
         .unwrap();
-    platform
-        .put_resend_credential(
+    legacy_mailbox(
+            &platform,
             "Mailbox",
             "sender@example.com",
             Some("Sender".into()),
             "resend-secret",
-        )
-        .unwrap();
+        );
 
     let value = serde_json::to_value(platform.platform_connection_list().unwrap()).unwrap();
     assert_eq!(
@@ -222,7 +241,16 @@ fn aggregate_wire_omits_secrets_metadata_and_owner_errors() {
             None,
         )
         .unwrap();
-    platform.reconcile_vault_mailbox_refs().unwrap();
+    platform.creators.sync_mailbox_ref(onecrew_creator_runtime::MailboxRefInput {
+        id: onecrew_creator_runtime::MailboxRefId::new(resend.id.to_string()),
+        provider: "resend".into(),
+        label: "Mailbox".into(),
+        email_address: "sender@example.com".into(),
+        display_name: Some("Sender".into()),
+        capabilities: vec![onecrew_creator_runtime::EmailCapability::Inbox],
+        available: false,
+        last_error: Some(OWNER_ERROR.into()),
+    }).unwrap();
 
     let wire = serde_json::to_string(&platform.platform_connection_list().unwrap()).unwrap();
     for forbidden in [

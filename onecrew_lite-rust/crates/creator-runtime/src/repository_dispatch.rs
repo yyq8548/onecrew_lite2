@@ -7,6 +7,7 @@ use tokio::sync::Semaphore;
 use crate::repository::SQLITE_READ_POOL_SIZE;
 
 const REPOSITORY_ADMISSION_WAIT: Duration = Duration::from_millis(100);
+const DISCOVERY_READ_ADMISSION_WAIT: Duration = Duration::from_secs(5);
 const REPOSITORY_WRITER_CAPACITY: usize = 1;
 const CPU_SEGMENT_CAPACITY: usize = 2;
 
@@ -22,6 +23,89 @@ mod typed_usecase_tests {
             tags: None,
             contact_routes: vec![],
         }
+    }
+
+    #[tokio::test]
+    async fn discovery_reads_survive_short_capacity_pressure() {
+        let directory = tempfile::tempdir().unwrap();
+        let owner = CreatorRuntime::open(directory.path(), CreatorGateways::default()).unwrap();
+        owner
+            .create_discovery_campaign(crate::CreateDiscoveryCampaignInput {
+                id: "beauty".into(),
+                brief: "TikTok beauty creators, at least 5000 followers, 100 total".into(),
+                opencli_version: "1.8.8".into(),
+                criteria: serde_json::json!({"min_subscribers":5000,"category":"beauty"}),
+                scopes: vec![crate::DiscoveryPlatformScope {
+                    platform: "tiktok".into(),
+                    profile_ref: "browser".into(),
+                    keywords: vec!["makeup tutorial".into()],
+                }],
+                target_count: 100,
+                max_calls: None,
+            })
+            .unwrap();
+        owner.approve_discovery_campaign("beauty", 1).unwrap();
+        let permits = owner
+            .repository_dispatch
+            .reads
+            .clone()
+            .acquire_many_owned(SQLITE_READ_POOL_SIZE)
+            .await
+            .unwrap();
+        let release = tokio::spawn(async move {
+            tokio::time::sleep(Duration::from_millis(200)).await;
+            drop(permits);
+        });
+        let result = owner
+            .discovery_remaining_slots_async("beauty".into(), vec![])
+            .await;
+        release.await.unwrap();
+        assert_eq!(result.unwrap(), 100);
+    }
+
+    #[tokio::test]
+    async fn discovery_reads_preserve_missing_campaign_and_shutdown_errors() {
+        let directory = tempfile::tempdir().unwrap();
+        let owner = CreatorRuntime::open(directory.path(), CreatorGateways::default()).unwrap();
+        let missing = owner
+            .get_discovery_campaign_async("missing".into())
+            .await
+            .unwrap_err();
+        assert_eq!(
+            missing.read_failure_code(),
+            "creator_repository_campaign_missing"
+        );
+        owner.close_repository_intake();
+        let closed = owner
+            .get_discovery_campaign_async("missing".into())
+            .await
+            .unwrap_err();
+        assert_eq!(closed.read_failure_code(), "creator_repository_closed");
+    }
+
+    #[tokio::test]
+    async fn cancelling_discovery_read_does_not_dispatch_later() {
+        let directory = tempfile::tempdir().unwrap();
+        let owner = CreatorRuntime::open(directory.path(), CreatorGateways::default()).unwrap();
+        let permits = owner
+            .repository_dispatch
+            .reads
+            .clone()
+            .acquire_many_owned(SQLITE_READ_POOL_SIZE)
+            .await
+            .unwrap();
+        let mut read = Box::pin(owner.discovery_remaining_slots_async("missing".into(), vec![]));
+        assert!(
+            tokio::time::timeout(Duration::from_millis(150), &mut read)
+                .await
+                .is_err()
+        );
+        drop(read);
+        drop(permits);
+        assert_eq!(
+            owner.repository_dispatch.reads.available_permits(),
+            SQLITE_READ_POOL_SIZE as usize
+        );
     }
 
     #[tokio::test]
@@ -244,6 +328,35 @@ pub enum CreatorRepositoryCallError<E> {
     Dispatch(CreatorRepositoryDispatchFailure),
 }
 
+impl CreatorRepositoryCallError<String> {
+    pub fn read_failure_code(&self) -> &'static str {
+        match self {
+            Self::Owner(error) if error == "Campaign not found" => {
+                "creator_repository_campaign_missing"
+            }
+            Self::Owner(error)
+                if error == "database is locked" || error == "database table is locked" =>
+            {
+                "creator_repository_locked"
+            }
+            Self::Owner(error) if error.starts_with("Creator read capacity is unavailable:") => {
+                "creator_repository_read_pool_unavailable"
+            }
+            Self::Owner(_) => "creator_repository_read_failed",
+            Self::Dispatch(CreatorRepositoryDispatchFailure::Overloaded) => {
+                "creator_repository_overloaded"
+            }
+            Self::Dispatch(CreatorRepositoryDispatchFailure::Closed) => "creator_repository_closed",
+            Self::Dispatch(CreatorRepositoryDispatchFailure::CancelledBeforeDispatch) => {
+                "creator_repository_cancelled"
+            }
+            Self::Dispatch(CreatorRepositoryDispatchFailure::OutcomeUnknown) => {
+                "creator_repository_outcome_unknown"
+            }
+        }
+    }
+}
+
 impl<E: fmt::Display> fmt::Display for CreatorRepositoryCallError<E> {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -309,13 +422,21 @@ impl RepositoryDispatch {
         T: Send + 'static,
         F: FnOnce() -> T + Send + 'static,
     {
+        Self::run_with_wait(admission, REPOSITORY_ADMISSION_WAIT, work).await
+    }
+
+    async fn run_with_wait<T, F>(
+        admission: Arc<Semaphore>,
+        wait: Duration,
+        work: F,
+    ) -> Result<T, CreatorRepositoryDispatchFailure>
+    where
+        T: Send + 'static,
+        F: FnOnce() -> T + Send + 'static,
+    {
         // Capacity is acquired before spawn_blocking, so overload never fills
         // Tokio's blocking queue with work that only waits for a DB slot.
-        let permit = match tokio::time::timeout(
-            REPOSITORY_ADMISSION_WAIT,
-            Arc::clone(&admission).acquire_owned(),
-        )
-        .await
+        let permit = match tokio::time::timeout(wait, Arc::clone(&admission).acquire_owned()).await
         {
             Ok(Ok(permit)) => permit,
             Ok(Err(_)) => return Err(CreatorRepositoryDispatchFailure::Closed),
@@ -390,6 +511,33 @@ impl RepositorySegmentTestHooks {
 }
 
 impl crate::CreatorRuntime {
+    pub(crate) async fn repository_discovery_read_segment<T, E, F>(
+        &self,
+        work: F,
+    ) -> Result<T, CreatorRepositoryCallError<E>>
+    where
+        T: Send + 'static,
+        E: Send + 'static,
+        F: FnOnce() -> Result<T, E> + Send + 'static,
+    {
+        #[cfg(test)]
+        let work = {
+            let hooks = Arc::clone(&self.repository_segment_test_hooks);
+            move || {
+                hooks.before_read();
+                work()
+            }
+        };
+        RepositoryDispatch::run_with_wait(
+            Arc::clone(&self.repository_dispatch.reads),
+            DISCOVERY_READ_ADMISSION_WAIT,
+            work,
+        )
+        .await
+        .map_err(CreatorRepositoryCallError::Dispatch)?
+        .map_err(CreatorRepositoryCallError::Owner)
+    }
+
     /// Reject new async Creator repository segments. Already-dispatched blocking
     /// work continues under Tokio ownership and remains recoverable through
     /// its business idempotency/readback path.

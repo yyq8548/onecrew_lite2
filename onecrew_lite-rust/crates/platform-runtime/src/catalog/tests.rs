@@ -167,7 +167,7 @@ fn production_navigation_matches_frozen_directory_content_and_order() {
         mask_search_plan_guidance(expected)
     );
     assert_eq!(catalog.toolkits().len(), 6);
-    assert_eq!(catalog.operations().len(), 160);
+    assert_eq!(catalog.operations().len(), 157);
     assert!(catalog.operation("onecrew.discovery.search_once").is_some());
     assert_eq!(
         catalog

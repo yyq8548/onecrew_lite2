@@ -1,55 +1,37 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import vm from 'node:vm';
-import {projectInstagramSearch,fetchInstagramSearch,readInstagramSearch} from './instagram-search.mjs';
-const fixture=()=>({users:[{user:{pk:'123456789',username:'Creator',full_name:'Name'}}]});
+import {readFile} from 'node:fs/promises';
+import {parseInstagramSearchCapture, projectInstagramSearch} from './instagram-search.mjs';
 
-test('known private search accounts are skipped before the result limit',()=>{
-  const payload={users:[
-    {user:{pk:'1',username:'private_mouse',full_name:'Mouse review',is_private:true}},
-    {user:{pk:'2',username:'public_mouse',full_name:'Mouse review',is_private:false}},
-    {user:{pk:'3',username:'unknown_mouse',full_name:'Mouse review'}},
-  ]};
-  assert.deepEqual(projectInstagramSearch(payload,1).map(row=>row.author_id),['2']);
-  assert.deepEqual(projectInstagramSearch(payload,3).map(row=>row.author_id),['2','3']);
+const capture = JSON.parse(await readFile(new URL('./instagram-search.capture.json', import.meta.url), 'utf8'));
+const entry = {
+  url: capture.url,
+  method: capture.method,
+  requestBodyPreview: new URLSearchParams({
+    fb_api_req_friendly_name: capture.operation,
+    variables: JSON.stringify(capture.variables),
+  }).toString(),
+  responseStatus: capture.status,
+  responsePreview: JSON.stringify(capture.response),
+};
+
+test('真实网页 GraphQL 响应保留原生账号绑定和返回顺序', () => {
+  const payload = parseInstagramSearchCapture(entry, 'makeup artist');
+  const rows = projectInstagramSearch(payload, 5);
+  assert.deepEqual(rows.map(row => [row.author_id, row.username]), [
+    ['4329622652', 'maribo003'], ['145399002', 'delinamedhin'], ['23379226', 'patrickta'],
+    ['14531636133', 'jedimakeupartist1'], ['397949184', 'melissa.hurkman'],
+  ]);
+  assert.equal(rows[2].url, 'https://www.instagram.com/patrickta/');
+  assert.ok(rows.every(row => !('followers' in row)));
 });
 
-test('search sends the exact query and rejects a response for a different query',async()=>{
-  const query='鼠标测评';let requested;
-  const context=vm.createContext({URL,AbortSignal,location:{origin:'https://www.instagram.com',pathname:'/'},fetch:async path=>{
-    requested=new URL(path,'https://www.instagram.com');
-    return {status:200,ok:true,url:'https://www.instagram.com/web/search/topsearch/?query=ping&context=user',json:async()=>fixture()};
-  }});
-  const result=await vm.runInContext(`(${fetchInstagramSearch.toString()})(${JSON.stringify(query)})`,context);
-  assert.equal(requested.searchParams.get('query'),query);
-  assert.equal(result.stop,'read');
+test('另一组关键词不能使用已捕获的美妆搜索响应', () => {
+  assert.equal(parseInstagramSearchCapture(entry, 'travel'), null);
+  assert.equal(parseInstagramSearchCapture(entry, 'instagram'), null);
 });
-test('search accepts the response bound to the exact Unicode query',async()=>{
-  const query='鼠标测评';
-  const context=vm.createContext({URL,AbortSignal,location:{origin:'https://www.instagram.com',pathname:'/'},fetch:async path=>({
-    status:200,ok:true,url:new URL(path,'https://www.instagram.com').href,json:async()=>fixture(),
-  })});
-  const result=await vm.runInContext(`(${fetchInstagramSearch.toString()})(${JSON.stringify(query)})`,context);
-  assert.equal(result.payload.users[0].user.pk,'123456789');
-});
-test('Instagram search keeps native account identity without inventing followers',()=>{
-  const rows=projectInstagramSearch(fixture(),5);
-  assert.deepEqual(rows,[{provider:'onecrew-instagram-native-v1',author_id:'123456789',username:'creator',name:'Name',url:'https://www.instagram.com/creator/'}]);
-});
-test('Instagram ambiguous or absent native identity cannot become an author binding',()=>{
-  for(const change of [u=>delete u.pk,u=>u.id='999',u=>u.pk=Number.MAX_SAFE_INTEGER+1,u=>u.username='../evil']){
-    const payload=fixture();change(payload.users[0].user);assert.throws(()=>projectInstagramSearch(payload,5));
-  }
-  assert.deepEqual(projectInstagramSearch({users:[]},5),[]);
-});
-test('Instagram auth and restrictions stop after one bounded request',async()=>{
-  for(const status of [401,403,429]){
-    let calls=0;
-    const context=vm.createContext({URL,AbortSignal,location:{origin:'https://www.instagram.com',pathname:'/'},fetch:async()=>{
-      calls++;return {status,ok:false,url:'https://www.instagram.com/web/search/topsearch/'};
-    }});
-    const result=await vm.runInContext(`(${fetchInstagramSearch.toString()})('shampoo')`,context);
-    assert.equal(result.stop,status===401?'auth':'risk');assert.equal(calls,1);
-  }
-  await assert.rejects(readInstagramSearch(null,{query:'',limit:5},()=>assert.fail('must not navigate')));
+
+test('返回上限只截取真实响应中的前两个账号', () => {
+  const rows = projectInstagramSearch(parseInstagramSearchCapture(entry, 'makeup artist'), 2);
+  assert.deepEqual(rows.map(row => row.author_id), ['4329622652', '145399002']);
 });

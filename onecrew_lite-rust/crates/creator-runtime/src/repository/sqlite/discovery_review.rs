@@ -155,6 +155,35 @@ pub(super) fn strip_unaudited_proofs(
             object.remove(key);
         }
     }
+    if let Some(proofs) = object.get("reviewed_requirements").cloned() {
+        let mut verified = Vec::new();
+        if let Some(proofs) = proofs.as_array() {
+            for proof in proofs {
+                let audited = proof["native_author_id"].as_str() == Some(native_author_id)
+                    && proof["criteria_revision"].as_u64() == Some(u64::from(revision))
+                    && connection.query_row(
+                        "SELECT EXISTS(SELECT 1 FROM discovery_evidence_reviews r
+                         JOIN discovery_search_hits h ON h.id=r.search_hit_id
+                         JOIN json_each(r.findings_json) f
+                         WHERE r.id=?1 AND r.candidate_id=?2 AND r.discovery_campaign_id=?3
+                           AND r.criteria_revision=?4 AND r.native_author_id=?5
+                           AND r.material_hash=?6 AND h.source_url=?7
+                           AND json_extract(f.value,'$.criterion.requirement')=?8
+                           AND json_extract(f.value,'$.outcome')=?9
+                           AND json_extract(f.value,'$.rationale')=?10
+                           AND json_extract(r.material_json,'$.criteria.requirements[' || ?8 || ']')=json(?11))",
+                        params![proof["review_id"].as_str(), candidate_id, campaign_id,
+                            revision, native_author_id, proof["material_hash"].as_str(),
+                            proof["source_url"].as_str(), proof["index"].as_u64(),
+                            proof["outcome"].as_str(), proof["reason"].as_str(),
+                            proof["requirement"].to_string()],
+                        |row| row.get::<_, bool>(0),
+                    ).map_err(|error| error.to_string())?;
+                verified.push(if audited { proof.clone() } else { Value::Null });
+            }
+        }
+        object.insert("reviewed_requirements".into(), Value::Array(verified));
+    }
     Ok(())
 }
 

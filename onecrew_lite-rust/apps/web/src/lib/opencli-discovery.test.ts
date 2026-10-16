@@ -621,7 +621,7 @@ describe("explicit interrupted-search recovery", () => {
   const interrupted: DiscoveryCampaign = { ...approved, used_calls: 1,
     platform_runs: [{ ...approved.platform_runs[0], calls_used: 1, status: "technical_stop", stop_code: "interrupted_read" }] };
 
-  it("requires an interrupted search, approved identity, finished coverage and available budget", () => {
+  it("requires an interrupted search, approved identity, no concurrent search and available budget", () => {
     expect(canRecoverDiscoverySearch(interrupted, "work-profile", "youtube")).toBe(true);
     expect(canRecoverDiscoverySearch(interrupted, "other-profile", "youtube")).toBe(false);
     expect(canRecoverDiscoverySearch({ ...interrupted, phase: "draft" }, "work-profile", "youtube")).toBe(false);
@@ -631,7 +631,7 @@ describe("explicit interrupted-search recovery", () => {
     }
     for (const status of ["unsearched", "searching"]) {
       expect(canRecoverDiscoverySearch({ ...interrupted, platform_runs: [...interrupted.platform_runs,
-        { platform: "twitter", profile_ref: "work-profile", status, calls_used: 0, stop_code: null }] }, "work-profile", "youtube")).toBe(false);
+        { platform: "twitter", profile_ref: "work-profile", status, calls_used: 0, stop_code: null }] }, "work-profile", "youtube")).toBe(status === "unsearched");
     }
   });
 

@@ -62,7 +62,7 @@ macro_rules! web_commands {
                             .map_err(|error| self.argument_error(error))?;)*
                         let $state = state;
                         let $origin = origin;
-                        encode($($handler)::+($($call),*).await)
+                        encode(Box::pin($($handler)::+($($call),*)).await)
                     }),*
                 }
             }
@@ -115,6 +115,8 @@ web_commands! {
         => |state, _origin| crate::opencli_discovery::search_youtube_once(state, a0, a1, a2, a3);
     onecrew_discovery_search_once: CreatorSegments ["id" => a0, "expectedRevision" => a1, "platform" => a2, "profileRef" => a3, "limit" => a4]
         => |state, _origin| crate::opencli_discovery::search_once(state, a0, a1, a2, a3, a4);
+    onecrew_discovery_search_recover_once: CreatorSegments ["input" => a0]
+        => |state, _origin| crate::opencli_discovery::search_recover_once(state, a0);
     onecrew_discovery_youtube_verify_hit_once: CreatorSegments ["id" => a0, "expectedRevision" => a1, "profileRef" => a2, "searchHitId" => a3]
         => |state, _origin| crate::opencli_discovery::verify_youtube_hit_once(state, a0, a1, a2, a3);
     onecrew_discovery_search_hits_list: CreatorRead ["input" => a0]
@@ -215,18 +217,10 @@ web_commands! {
         => |state, _origin| crate::service_credentials::delete_youtube_api_key(state, a0, a1, a2);
     test_youtube_api_key: BusinessOwnerAsync ["credentialId" => a0]
         => |state, _origin| crate::service_credentials::test_youtube_api_key(state, a0);
-    list_resend_credentials: BusinessBlockingSegment []
-        => |state, _origin| crate::service_credentials::list_resend_credentials(state);
-    connect_resend_credential: BusinessOwnerAsync ["input" => a0]
-        => |state, _origin| crate::service_credentials::connect_resend_credential(state, a0);
-    delete_resend_credential: BusinessBlockingSegment ["input" => a0]
-        => |state, _origin| crate::service_credentials::delete_resend_credential(state, a0);
     rotate_youtube_api_key: BusinessOwnerAsync ["input" => a0]
         => |state, _origin| crate::service_credentials::rotate_youtube_api_key(state, a0);
     rename_youtube_api_key: BusinessBlockingSegment ["input" => a0]
         => |state, _origin| crate::service_credentials::rename_youtube_api_key(state, a0);
-    test_resend_credential: BusinessOwnerAsync ["credentialId" => a0]
-        => |state, _origin| crate::service_credentials::test_resend_credential(state, a0);
     onecrew_telegram_community_administrators_read: BusinessOwnerAsync ["input" => a0]
         => |state, _origin| crate::creator_save::onecrew_creator_save_telegram_administrators_read(state, a0);
     onecrew_creator_save_prepare: CreatorSegments ["input" => a0]
@@ -458,7 +452,7 @@ mod tests {
             .iter()
             .map(|command| command.name())
             .collect::<std::collections::BTreeSet<_>>();
-        assert_eq!(names.len(), 155);
+        assert_eq!(names.len(), 152);
         assert_eq!(names.len(), CommandName::ALL.len());
         let mut wire = CommandName::ALL
             .iter()

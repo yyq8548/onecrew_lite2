@@ -35,27 +35,6 @@ declare_operations! {
         summary: "Run a live self-check of this connection: network/proxy reachability and account or key validity. Use it once after network_unreachable.",
         surfaces: [McpBinding, WebNavigation],
     },
-    EMAIL_CREDENTIAL_CONNECT => {
-        id: "email.credential.connect",
-        toolkit: Email,
-        title: "Connect Resend credential",
-        summary: "Validate and store one Resend API credential in the local vault.",
-        surfaces: [McpBinding, WebNavigation],
-    },
-    EMAIL_CREDENTIAL_DELETE => {
-        id: "email.credential.delete",
-        toolkit: Email,
-        title: "Delete Resend credential",
-        summary: "Delete one confirmed Resend credential from the local vault.",
-        surfaces: [McpBinding, WebNavigation],
-    },
-    EMAIL_CREDENTIAL_ROTATE => {
-        id: "email.credential.rotate",
-        toolkit: Email,
-        title: "Rotate Resend credential",
-        summary: "Validate and replace the secret for one stored Resend credential.",
-        surfaces: [McpBinding, WebNavigation],
-    },
     EMAIL_DIRECT_PREPARE => {
         id: "email.direct.prepare",
         toolkit: Email,

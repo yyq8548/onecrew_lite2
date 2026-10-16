@@ -60,6 +60,7 @@ pub struct OpenCliSetupReport {
 /// Secret-free, live source inventory for one-sentence Campaign planning.
 /// Registration is a local capability check, not proof of provider login.
 #[derive(Debug, Clone, Serialize, JsonSchema)]
+#[cfg_attr(test, derive(serde::Deserialize))]
 pub struct OpenCliDiscoverySources {
     pub version: Option<String>,
     pub daemon_running: bool,
@@ -70,12 +71,14 @@ pub struct OpenCliDiscoverySources {
 }
 
 #[derive(Debug, Clone, Serialize, JsonSchema)]
+#[cfg_attr(test, derive(serde::Deserialize))]
 pub struct OpenCliDiscoveryProfile {
     pub context_id: String,
     pub alias: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, JsonSchema)]
+#[cfg_attr(test, derive(serde::Deserialize))]
 pub struct OpenCliDiscoverySource {
     pub platform: String,
     pub command: String,
@@ -160,6 +163,8 @@ fn setup_issue(error: &OpenCliError) -> &'static str {
         OpenCliError::Timeout => "timeout",
         OpenCliError::OutputTooLarge => "output_too_large",
         OpenCliError::CommandFailed(_)
+        | OpenCliError::YoutubeEvidence(_)
+        | OpenCliError::NativeRead(_)
         | OpenCliError::RiskControl
         | OpenCliError::InvalidOutput => "check_failed",
         OpenCliError::AuthRequired => "auth_required",
@@ -210,6 +215,8 @@ pub struct OpenCliDiscoveryPlatformSearchInput {
     pub platform: String,
     pub profile_ref: String,
     pub limit: u8,
+    #[serde(default)]
+    pub recovery: Option<onecrew_creator_runtime::DiscoverySearchRecovery>,
 }
 
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
@@ -1079,6 +1086,8 @@ impl LocalPlatform {
                     OpenCliError::InvalidInput(_) => "opencli_invalid_input",
                     OpenCliError::Unavailable => "opencli_unavailable",
                     OpenCliError::CommandFailed(_) => "opencli_command_failed",
+                    OpenCliError::YoutubeEvidence(failure) => failure.code(),
+                    OpenCliError::NativeRead(failure) => failure.code(),
                     OpenCliError::RiskControl => "opencli_risk_control",
                     OpenCliError::AuthRequired => "opencli_auth_required",
                 };
@@ -1372,6 +1381,18 @@ impl LocalPlatform {
         profile_ref: &str,
         limit: u8,
     ) -> Result<OpenCliDiscoverySearchResult, OpenCliDiscoverySearchError> {
+        self.search_discovery_once_with_recovery(campaign_id, expected_revision, platform, profile_ref, limit, None).await
+    }
+
+    pub async fn search_discovery_once_with_recovery(
+        &self,
+        campaign_id: &str,
+        expected_revision: u32,
+        platform: &str,
+        profile_ref: &str,
+        limit: u8,
+        recovery: Option<onecrew_creator_runtime::DiscoverySearchRecovery>,
+    ) -> Result<OpenCliDiscoverySearchResult, OpenCliDiscoverySearchError> {
         OpenCli::check_creator_search_limit(platform, limit)
             .map_err(OpenCliDiscoverySearchError::Dependency)?;
         let cli = OpenCli::inspect_system()
@@ -1395,11 +1416,12 @@ impl LocalPlatform {
             ));
         }
         let claim = creators
-            .claim_discovery_search_async(
+            .claim_discovery_search_with_recovery_async(
                 campaign_id.to_owned(),
                 expected_revision,
                 platform.into(),
                 profile_ref.to_owned(),
+                recovery,
             )
             .await
             .map_err(|error| OpenCliDiscoverySearchError::Campaign(error.to_string()))?;
@@ -1437,6 +1459,8 @@ impl LocalPlatform {
                     OpenCliError::InvalidInput(_) => "opencli_invalid_input",
                     OpenCliError::Unavailable => "opencli_unavailable",
                     OpenCliError::CommandFailed(_) => "opencli_command_failed",
+                    OpenCliError::YoutubeEvidence(failure) => failure.code(),
+                    OpenCliError::NativeRead(failure) => failure.code(),
                     OpenCliError::RiskControl => "opencli_risk_control",
                     OpenCliError::AuthRequired => "opencli_auth_required",
                 };
@@ -1522,6 +1546,8 @@ pub fn provider_stop_code(error: &OpenCliError) -> &'static str {
         OpenCliError::InvalidInput(_) => "opencli_invalid_input",
         OpenCliError::Unavailable => "opencli_unavailable",
         OpenCliError::CommandFailed(_) => "opencli_command_failed",
+        OpenCliError::YoutubeEvidence(failure) => failure.code(),
+        OpenCliError::NativeRead(failure) => failure.code(),
         OpenCliError::RiskControl => "opencli_risk_control",
         OpenCliError::AuthRequired => "opencli_auth_required",
     }

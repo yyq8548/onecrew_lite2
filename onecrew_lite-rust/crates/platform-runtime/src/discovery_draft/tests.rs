@@ -2,6 +2,35 @@ use super::*;
 use crate::opencli::{OpenCliDiscoveryProfile, OpenCliDiscoverySource};
 
 #[tokio::test]
+#[ignore = "使用真实来源注册表和已登录 Codex 验证美妆需求，不执行平台搜索"]
+async fn live_beauty_plan_preserves_platform_followers_and_total() {
+    let directory = tempfile::tempdir().unwrap();
+    let platform = LocalPlatform::open(directory.path()).unwrap();
+    let inventory: OpenCliDiscoverySources = platform.opencli_setup_report().await.into();
+    assert!(inventory.issue.is_none(), "{:?}", inventory.issue);
+    let mut request = input();
+    request.brief = "我要找美妆博主，帮我在tiktok, x 和 youtube上找粉丝数不少于5000的100个\nDefault search entries when no platform is requested: youtube".into();
+    request.target_count = None;
+    request.max_calls = None;
+    request.profile_ref = inventory
+        .profiles
+        .first()
+        .expect("已连接的浏览器身份")
+        .context_id
+        .clone();
+    let proposal = codex::plan(&request.brief, &inventory).await.unwrap();
+    let draft = build_draft(&request, &inventory, proposal).unwrap();
+    assert_eq!(draft.target_count, 100);
+    assert_eq!(draft.criteria["min_subscribers"], 5000);
+    let platforms: BTreeSet<_> = draft.scopes.iter().map(|s| s.platform.as_str()).collect();
+    assert_eq!(platforms, BTreeSet::from(["tiktok", "twitter", "youtube"]));
+    for scope in draft.scopes {
+        assert!((6..=8).contains(&scope.keywords.len()));
+        println!("{}：{}", scope.platform, scope.keywords.join("；"));
+    }
+}
+
+#[tokio::test]
 #[ignore = "authorized native intent then query planning, no provider reads or customer writes"]
 async fn native_codex_headphone_intent_and_queries_acceptance() {
     let mut request = input();
@@ -35,6 +64,7 @@ fn input() -> PrepareDiscoveryDraftInput {
         min_followers_override: None,
         criteria_overrides: None,
         scope_overrides: vec![],
+        refinement: None,
     }
 }
 
@@ -549,7 +579,7 @@ fn explicit_settings_override_ai_defaults_without_requiring_other_fields() {
 }
 
 #[test]
-fn unsupported_or_unquoted_conditions_cannot_create_a_draft() {
+fn quoted_conditions_are_preserved_and_unquoted_conditions_cannot_create_a_draft() {
     let mut invented = plan();
     invented.intent.min_subscribers = ProposedConstraint::Specified {
         value: 10000,
@@ -567,10 +597,9 @@ fn unsupported_or_unquoted_conditions_cannot_create_a_draft() {
             description: "保证便宜".into(),
             excerpt: "便宜".into(),
         });
-    assert_eq!(
-        build_draft(&input(), &sources(), unsupported).unwrap_err(),
-        DiscoveryDraftError::UnsupportedConditions(vec!["便宜".into()])
-    );
+    let saved = build_draft(&input(), &sources(), unsupported).unwrap();
+    assert_eq!(saved.criteria["requirements"][0]["excerpt"], "便宜");
+    assert_eq!(saved.criteria["contact_preference"], "public_email_first");
     let mut changed = plan();
     changed.intent.original_request = "别的需求".into();
     assert_eq!(
@@ -580,7 +609,7 @@ fn unsupported_or_unquoted_conditions_cannot_create_a_draft() {
 }
 
 #[test]
-fn unsupported_people_request_returns_exact_conditions_without_model_descriptions() {
+fn additional_customer_conditions_survive_in_the_frozen_draft() {
     let mut request = input();
     request.brief = "找10位中国大陆的男明星按照粉丝排名".into();
     let mut proposal = plan();
@@ -594,10 +623,9 @@ fn unsupported_people_request_returns_exact_conditions_without_model_description
         })
         .collect();
     proposal.intent.soft_preferences.clear();
-    assert_eq!(
-        build_draft(&request, &sources(), proposal).unwrap_err(),
-        DiscoveryDraftError::UnsupportedConditions(vec!["男明星".into(), "按照粉丝排名".into()])
-    );
+    let saved = build_draft(&request, &sources(), proposal).unwrap();
+    assert_eq!(saved.criteria["requirements"][0]["excerpt"], "男明星");
+    assert_eq!(saved.criteria["requirements"][1]["excerpt"], "按照粉丝排名");
 }
 
 #[test]
@@ -888,6 +916,53 @@ async fn native_codex_returns_a_valid_shoe_plan_without_plugin_transport() {
     assert_eq!(draft.scopes[0].platform, "youtube");
     assert_eq!(draft.criteria["min_subscribers"], 2000);
     assert_eq!(draft.criteria["requires_ai_tool_demo"], false);
+}
+
+#[tokio::test]
+#[ignore = "uses actual MCP inventory and signed-in model; no provider read or Campaign write"]
+async fn native_codex_preserves_exclusions_core_goal_and_email_preference() {
+    let inventory_path = std::env::var("ONECREW_DRAFT_INVENTORY").expect("actual inventory path required");
+    let inventory: OpenCliDiscoverySources = serde_json::from_str(
+        &std::fs::read_to_string(inventory_path).unwrap()
+    ).unwrap();
+    assert!(inventory.extension_connected && inventory.daemon_running);
+    let mut request = input();
+    request.brief = "我要找美妆博主，帮我在tiktok, x 和 youtube上找粉丝数不少于5000的100个博主，排除赌博合作账号".into();
+    if std::env::var_os("ONECREW_DRAFT_REFINE").is_some() {
+        request.brief = format!(
+            "原任务需求：\n我要找美妆博主，帮我在tiktok, x 和 youtube上找粉丝数不少于5000的100个博主\n已确认的计划设定：\n{}\n本次修改（仅覆盖明确修改的条件）：\n排除赌博合作账号，其他条件保持不变",
+            json!({"criteria":{"category":"美妆","min_subscribers":5000,
+                "requires_ai_tool_demo":true,"requires_public_tool_url":true},"target_count":100}),
+        );
+    }
+    let all_sources = std::env::var_os("ONECREW_DRAFT_ALL_SOURCES").is_some();
+    if all_sources {
+        request.brief.push_str("\nSearch only these entries: ");
+        request.brief.push_str(&inventory.sources.iter().filter(|source| source.registered)
+            .map(|source| source.platform.as_str()).collect::<Vec<_>>().join(", "));
+    }
+    request.profile_ref = inventory.profiles.first().expect("actual browser profile").context_id.clone();
+    request.opencli_version = inventory.version.clone().unwrap();
+    request.target_count = None;
+    request.max_calls = None;
+    let proposal = codex::plan(&request.brief, &inventory).await.unwrap();
+    let draft = build_draft(&request, &inventory, proposal).unwrap();
+    assert_eq!(draft.target_count, 100);
+    assert_eq!(draft.criteria["min_subscribers"], 5000);
+    assert_eq!(draft.criteria["requires_ai_tool_demo"], false);
+    assert_eq!(draft.criteria["requires_public_tool_url"], false);
+    assert_eq!(draft.criteria["contact_preference"], "public_email_first");
+    assert!(draft.criteria["requirements"].as_array().unwrap().iter().any(|item| {
+        item["excerpt"].as_str().is_some_and(|quote| quote.contains("赌博"))
+    }));
+    let platforms: BTreeSet<_> = draft.scopes.iter().map(|scope| scope.platform.as_str()).collect();
+    let expected = if all_sources {
+        inventory.sources.iter().filter(|source| source.registered)
+            .map(|source| source.platform.as_str()).collect()
+    } else {
+        BTreeSet::from(["tiktok", "twitter", "youtube"])
+    };
+    assert_eq!(platforms, expected);
 }
 
 #[tokio::test]

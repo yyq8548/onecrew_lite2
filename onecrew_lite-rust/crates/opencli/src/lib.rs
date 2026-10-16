@@ -101,6 +101,50 @@ use registry::Registry;
 const PROBE_TIMEOUT: Duration = Duration::from_secs(15);
 const READ_TIMEOUT: Duration = Duration::from_secs(45);
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum YoutubeEvidenceFailure {
+    Unavailable,
+    Layout,
+    Identity,
+    Description,
+}
+
+impl YoutubeEvidenceFailure {
+    pub fn code(self) -> &'static str {
+        match self {
+            Self::Unavailable => "youtube_video_unavailable",
+            Self::Layout => "youtube_watch_layout_unsupported",
+            Self::Identity => "youtube_author_identity_invalid",
+            Self::Description => "youtube_description_unavailable",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum NativeReadFailure {
+    Request,
+    Http,
+    NotFound,
+    Redirect,
+    Json,
+    Shape,
+    SourceUnavailable,
+}
+
+impl NativeReadFailure {
+    pub fn code(self) -> &'static str {
+        match self {
+            Self::Request => "provider_request_failed",
+            Self::Http => "provider_response_http_error",
+            Self::NotFound => "provider_endpoint_not_found",
+            Self::Redirect => "provider_response_redirected",
+            Self::Json => "provider_response_invalid_json",
+            Self::Shape => "provider_response_shape_invalid",
+            Self::SourceUnavailable => "provider_source_unavailable",
+        }
+    }
+}
+
 #[derive(Debug, Error, PartialEq, Eq)]
 pub enum OpenCliError {
     #[error("OpenCLI executable is unavailable")]
@@ -111,6 +155,10 @@ pub enum OpenCliError {
     OutputTooLarge,
     #[error("OpenCLI command failed with exit code {0:?}")]
     CommandFailed(Option<i32>),
+    #[error("YouTube video evidence failed: {0:?}")]
+    YoutubeEvidence(YoutubeEvidenceFailure),
+    #[error("Native provider read failed: {0:?}")]
+    NativeRead(NativeReadFailure),
     #[error("OpenCLI provider requested human verification or rate limited the read")]
     RiskControl,
     #[error("OpenCLI provider account is not signed in or not authorized")]

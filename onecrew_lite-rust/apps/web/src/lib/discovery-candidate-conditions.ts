@@ -44,3 +44,21 @@ export function candidateConditions(item: DiscoveryCandidate, criteria: Discover
   }
   return { met, reasons: [...reasons] };
 }
+
+export function candidateRequirementGaps(item: DiscoveryCandidate, criteria: DiscoveryCampaign["criteria"]) {
+  const requirement = z.object({ description: z.string(), excerpt: z.string() });
+  const review = z.object({ index: z.number().int(), requirement, outcome: z.enum(["supported", "contradicted", "insufficient"]), reason: z.string(), native_author_id: z.string(), source_url: z.string() });
+  const requirements = z.array(requirement).safeParse(criteria.requirements);
+  if (!requirements.success) return [];
+  const proofs = Array.isArray(item.evidence.reviewed_requirements) ? item.evidence.reviewed_requirements : [];
+  return requirements.data.flatMap((condition, index) => {
+    const proof = review.safeParse(proofs[index]);
+    const bound = proof.success && proof.data.index === index
+      && proof.data.native_author_id === item.platform_account_id
+      && item.evidence.source_urls.includes(proof.data.source_url)
+      && proof.data.requirement.description === condition.description
+      && proof.data.requirement.excerpt === condition.excerpt;
+    if (bound && proof.data.outcome === "supported") return [];
+    return [{ condition: condition.excerpt, reason: bound ? proof.data.reason : "" }];
+  });
+}

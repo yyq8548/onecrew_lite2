@@ -1,19 +1,11 @@
 //! Runtime-owned credential workflows and provider admission shared by Creator gateways.
 mod gmail;
-mod mailbox;
-mod registry;
-mod resend;
-#[cfg(test)]
-mod resend_full_access_tests;
 mod youtube;
 use super::EmailMailboxAuthResolver;
 use onecrew_local_vault::LocalVault;
-pub(super) use registry::ResolvedResendMailbox;
-pub use resend::ResendCredentialTest;
-pub(crate) use resend::{ResendCredentialTestError, ResendCredentialValidation};
 use std::{
     collections::HashMap,
-    sync::{Arc, Mutex, atomic::AtomicU64},
+    sync::{Arc, Mutex, RwLock, atomic::AtomicU64},
 };
 use uuid::Uuid;
 pub use youtube::YoutubeCredentialRejectionIssue;
@@ -24,8 +16,7 @@ pub(crate) use youtube::{
 
 pub(crate) struct CredentialServices {
     vault: LocalVault,
-    email_transport: Arc<onecrew_email::ResendAdmission>,
-    email_registry: registry::EmailProviderRegistry,
+    mailbox_resolver: RwLock<Option<Arc<dyn EmailMailboxAuthResolver>>>,
     youtube_clients: Mutex<HashMap<Uuid, youtube::CachedYoutubeClient>>,
     youtube_limiters: Mutex<HashMap<Uuid, onecrew_youtube::YoutubeRequestLimiter>>,
     youtube_health: Mutex<HashMap<Uuid, youtube::YoutubeHealthState>>,
@@ -35,17 +26,10 @@ pub(crate) struct CredentialServices {
     youtube_read_snapshot_hook: Mutex<Option<Arc<youtube::YoutubeReadSnapshotHook>>>,
 }
 impl CredentialServices {
-    pub(crate) fn new(
-        vault: LocalVault,
-        email_transport: Arc<onecrew_email::ResendAdmission>,
-    ) -> Self {
+    pub(crate) fn new(vault: LocalVault) -> Self {
         Self {
-            email_registry: registry::EmailProviderRegistry::new(
-                vault.clone(),
-                Arc::clone(&email_transport),
-            ),
+            mailbox_resolver: RwLock::new(None),
             vault,
-            email_transport,
             youtube_clients: Mutex::new(HashMap::new()),
             youtube_limiters: Mutex::new(HashMap::new()),
             youtube_health: Mutex::new(HashMap::new()),
@@ -56,7 +40,12 @@ impl CredentialServices {
         }
     }
     pub(crate) fn bind_email_mailbox_resolver(&self, resolver: Arc<dyn EmailMailboxAuthResolver>) {
-        self.email_registry.bind_resolver(resolver);
+        *self.mailbox_resolver.write().expect("email resolver lock poisoned") = Some(resolver);
+    }
+
+    fn mailbox_resolver(&self) -> Result<Arc<dyn EmailMailboxAuthResolver>, String> {
+        self.mailbox_resolver.read().map_err(|_| "email mailbox resolver is unavailable".to_owned())?
+            .clone().ok_or_else(|| "email mailbox resolver is unavailable".to_owned())
     }
 
     #[cfg(test)]
@@ -74,23 +63,6 @@ where
     F: FnOnce() -> Result<T, E> + Send + 'static,
 {
     tokio::task::spawn_blocking(work).await.map_err(|_| lost)?
-}
-
-fn normalize_email_address(value: &str) -> Result<String, String> {
-    let value = value.trim().to_ascii_lowercase();
-    let Some((local, domain)) = value.split_once('@') else {
-        return Err("Resend sender email_address is invalid".into());
-    };
-    if local.is_empty()
-        || domain.is_empty()
-        || domain.starts_with('.')
-        || domain.ends_with('.')
-        || !domain.contains('.')
-        || value.chars().any(char::is_whitespace)
-    {
-        return Err("Resend sender email_address is invalid".into());
-    }
-    Ok(value)
 }
 
 #[cfg(test)]

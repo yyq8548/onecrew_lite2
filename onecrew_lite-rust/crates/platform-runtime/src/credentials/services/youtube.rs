@@ -774,7 +774,6 @@ mod tests {
         let vault = LocalVault::open(directory.path().join("agent-platform.db")).unwrap();
         let services = std::sync::Arc::new(CredentialServices::new(
             vault,
-            std::sync::Arc::new(onecrew_email::ResendAdmission::new().unwrap()),
         ));
         let guard = services.begin_youtube_read();
         let (started_tx, started_rx) = tokio::sync::oneshot::channel();
@@ -824,7 +823,6 @@ mod tests {
             .unwrap();
         let services = CredentialServices::new(
             vault,
-            std::sync::Arc::new(onecrew_email::ResendAdmission::new().unwrap()),
         );
         let first = services
             .youtube_platform_for_read(&credential.id.to_string())
@@ -877,7 +875,6 @@ mod tests {
             .unwrap();
         let services = CredentialServices::new(
             vault,
-            std::sync::Arc::new(onecrew_email::ResendAdmission::new().unwrap()),
         );
         let read = services
             .youtube_platform_for_read(&credential.id.to_string())
@@ -909,7 +906,6 @@ mod tests {
             .unwrap();
         let services = std::sync::Arc::new(CredentialServices::new(
             vault,
-            std::sync::Arc::new(onecrew_email::ResendAdmission::new().unwrap()),
         ));
         let hook = std::sync::Arc::new(super::YoutubeReadSnapshotHook {
             snapshot_taken: std::sync::Barrier::new(2),
@@ -970,7 +966,6 @@ mod tests {
             .unwrap();
         let services = CredentialServices::new(
             vault,
-            std::sync::Arc::new(onecrew_email::ResendAdmission::new().unwrap()),
         );
         let read = services
             .youtube_platform_for_read(&credential.id.to_string())
@@ -1009,7 +1004,6 @@ mod tests {
             .unwrap();
         let services = CredentialServices::new(
             vault.clone(),
-            std::sync::Arc::new(onecrew_email::ResendAdmission::new().unwrap()),
         );
         let opened = services.youtube_platform_for_test(old.id).unwrap();
         let rotated = services
@@ -1053,7 +1047,6 @@ mod tests {
             .unwrap();
         let services = CredentialServices::new(
             vault.clone(),
-            std::sync::Arc::new(onecrew_email::ResendAdmission::new().unwrap()),
         );
         let first = services
             .youtube_platform_for_read(&credential.id.to_string())
@@ -1124,7 +1117,6 @@ mod tests {
             .unwrap();
         let services = CredentialServices::new(
             vault,
-            std::sync::Arc::new(onecrew_email::ResendAdmission::new().unwrap()),
         );
 
         // Two distinct Creator connection references (direct read and save
@@ -1179,7 +1171,6 @@ mod tests {
             .unwrap();
         let services = CredentialServices::new(
             vault,
-            std::sync::Arc::new(onecrew_email::ResendAdmission::new().unwrap()),
         );
         services
             .youtube_platform_for_read(&first.id.to_string())
@@ -1249,7 +1240,6 @@ mod tests {
             .unwrap();
         let services = CredentialServices::new(
             vault,
-            std::sync::Arc::new(onecrew_email::ResendAdmission::new().unwrap()),
         );
         services
             .youtube_platform_for_read(&credential.id.to_string())
@@ -1414,7 +1404,6 @@ mod tests {
         let vault = LocalVault::open(directory.path().join("agent-platform.db")).unwrap();
         let services = CredentialServices::new(
             vault.clone(),
-            std::sync::Arc::new(onecrew_email::ResendAdmission::new().unwrap()),
         );
         assert!(matches!(
             services.youtube_platform_for_read("invalid"),
@@ -1455,7 +1444,6 @@ mod tests {
             .unwrap();
         let adapter = CredentialServices::new(
             vault.clone(),
-            std::sync::Arc::new(onecrew_email::ResendAdmission::new().unwrap()),
         );
         let credential_id = credential.id.to_string();
         let read = adapter.youtube_platform_for_read(&credential_id).unwrap();
@@ -1486,7 +1474,6 @@ mod tests {
             .unwrap();
         let adapter = CredentialServices::new(
             vault.clone(),
-            std::sync::Arc::new(onecrew_email::ResendAdmission::new().unwrap()),
         );
         assert!(matches!(
             adapter
@@ -1529,7 +1516,6 @@ mod tests {
             .unwrap();
         let adapter = CredentialServices::new(
             vault.clone(),
-            std::sync::Arc::new(onecrew_email::ResendAdmission::new().unwrap()),
         );
 
         let result = adapter
@@ -1578,7 +1564,6 @@ mod tests {
             .unwrap();
         let adapter = CredentialServices::new(
             vault.clone(),
-            std::sync::Arc::new(onecrew_email::ResendAdmission::new().unwrap()),
         );
 
         for (observation, (kind, expected)) in [
@@ -1642,7 +1627,6 @@ mod tests {
             .unwrap();
         let adapter = CredentialServices::new(
             vault.clone(),
-            std::sync::Arc::new(onecrew_email::ResendAdmission::new().unwrap()),
         );
 
         for (observation, kind) in [
@@ -1686,7 +1670,6 @@ mod tests {
         let vault = LocalVault::open(directory.path().join("agent-platform.db")).unwrap();
         let adapter = CredentialServices::new(
             vault.clone(),
-            std::sync::Arc::new(onecrew_email::ResendAdmission::new().unwrap()),
         );
 
         assert!(adapter.validate_youtube_api_key("   ").await.is_err());

@@ -11,6 +11,7 @@ export type DiscoveryCodexRequest = {
   minFollowersOverride?: number | null;
   scopeOverrides?: { platform: string; keywords: string[] }[];
   startAfterPrepare?: boolean;
+  refinement?: { campaign_id: string; expected_revision: number };
   criteriaOverrides?: { region: string | null; language: string | null; category: string | null; requires_ai_tool_demo: boolean; requires_public_tool_url: boolean };
 };
 
@@ -39,7 +40,8 @@ export function discoveryDraftFailureKey(error: unknown) {
 
 export function matchesDiscoveryCodexRequest(campaign: DiscoveryCampaign, request: DiscoveryCodexRequest): boolean {
   return campaign.id === request.id && campaign.phase === "draft"
-    && campaign.brief === request.brief && campaign.opencli_version === request.version
+    && (campaign.brief === request.brief || (!!request.refinement && campaign.brief.endsWith(`本次修改（仅覆盖明确修改的条件）：\n${request.brief}`))) && campaign.opencli_version === request.version
+    && (!request.refinement || JSON.stringify(campaign.criteria.refinement) === JSON.stringify(request.refinement))
     && campaign.scopes.length > 0 && campaign.used_calls === 0
     && (request.targetCount === null || campaign.target_count === request.targetCount)
     && (request.maxCalls === null || campaign.max_calls === request.maxCalls)

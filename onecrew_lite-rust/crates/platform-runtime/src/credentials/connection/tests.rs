@@ -1,5 +1,5 @@
 use crate::PlatformChangeScope;
-use crate::credentials::services::{ResendCredentialValidation, YoutubeCredentialValidation};
+use crate::credentials::services::YoutubeCredentialValidation;
 use onecrew_creator_runtime::AccountRefId;
 use onecrew_local_domain::ServiceProvider;
 
@@ -7,7 +7,7 @@ use super::{
     ServiceCredentialReconciler, ServiceCredentialValidator, connect_reconciliation_error,
 };
 use crate::{
-    LocalPlatform, RenameYoutubeCredentialInput, ResendCredentialConnectInput,
+    LocalPlatform, RenameYoutubeCredentialInput,
     YoutubeApiKeyConnectInput,
 };
 
@@ -17,14 +17,10 @@ impl ServiceCredentialReconciler for NoopCredentialReconciler {
     fn reconcile_youtube(&self, _platform: &LocalPlatform) -> Result<(), String> {
         Ok(())
     }
-    fn reconcile_resend(&self, _platform: &LocalPlatform) -> Result<(), String> {
-        Ok(())
-    }
 }
 
 struct FakeCredentialValidator {
     youtube: Result<YoutubeCredentialValidation, String>,
-    resend: Result<ResendCredentialValidation, String>,
 }
 
 #[async_trait::async_trait]
@@ -36,19 +32,10 @@ impl ServiceCredentialValidator for FakeCredentialValidator {
         self.youtube.clone()
     }
 
-    async fn validate_resend(
-        &self,
-        _email_address: &str,
-        _display_name: Option<&str>,
-        _api_key: &str,
-    ) -> Result<ResendCredentialValidation, String> {
-        self.resend.clone()
-    }
 }
 
 struct FailingCredentialReconciler {
     youtube_error: String,
-    resend_error: String,
 }
 
 #[tokio::test]
@@ -69,7 +56,6 @@ async fn failed_credential_rollback_invalidates_the_committed_vault_row() {
             &successful_validator(),
             &FailingCredentialReconciler {
                 youtube_error: "forced reconcile failure".into(),
-                resend_error: "unused".into(),
             },
         )
         .await
@@ -99,9 +85,6 @@ impl ServiceCredentialReconciler for FailingCredentialReconciler {
         Err(self.youtube_error.clone())
     }
 
-    fn reconcile_resend(&self, _platform: &LocalPlatform) -> Result<(), String> {
-        Err(self.resend_error.clone())
-    }
 }
 
 fn successful_validator() -> FakeCredentialValidator {
@@ -110,14 +93,6 @@ fn successful_validator() -> FakeCredentialValidator {
             checked_at: 42,
             channel_id: Some("UC-test".into()),
             message: "YouTube key is valid".into(),
-        }),
-        resend: Ok(ResendCredentialValidation {
-            checked_at: 43,
-            email_address: "sender@example.com".into(),
-            display_name: Some("Sender".into()),
-            sender_domain: "example.com".into(),
-            sender_domain_verified: true,
-            message: "Resend key, receiving access and sender domain are valid".into(),
         }),
     }
 }
@@ -131,27 +106,15 @@ fn credential_connection_inputs_redact_keys_from_debug_and_json() {
         "api_key": KEY
     }))
     .unwrap();
-    let resend: ResendCredentialConnectInput = serde_json::from_value(serde_json::json!({
-        "label": "Mailbox",
-        "email_address": "sender@example.com",
-        "display_name": "Sender",
-        "api_key": KEY
-    }))
-    .unwrap();
     for wire in [
         format!("{youtube:?}"),
         serde_json::to_string(&youtube).unwrap(),
-        format!("{resend:?}"),
-        serde_json::to_string(&resend).unwrap(),
     ] {
         assert!(!wire.contains(KEY), "secret leaked in {wire}");
     }
     let youtube_schema =
         serde_json::to_string(&schemars::schema_for!(YoutubeApiKeyConnectInput)).unwrap();
-    let resend_schema =
-        serde_json::to_string(&schemars::schema_for!(ResendCredentialConnectInput)).unwrap();
     assert!(youtube_schema.contains("api_key"));
-    assert!(resend_schema.contains("api_key"));
     let combined = connect_reconciliation_error(
         &format!("reconcile exposed {KEY}"),
         Some(&format!("rollback exposed {KEY}")),
@@ -175,7 +138,6 @@ async fn youtube_validation_failure_preserves_same_label_credential_and_creator_
     let before = platform.creators.get_account_ref(&account_ref_id).unwrap();
     let validator = FakeCredentialValidator {
         youtube: Err(format!("provider rejected key {CANDIDATE_KEY}")),
-        ..successful_validator()
     };
     let mut changes = platform.subscribe_changes();
 
@@ -210,66 +172,6 @@ async fn youtube_validation_failure_preserves_same_label_credential_and_creator_
 }
 
 #[tokio::test]
-async fn resend_validation_failure_preserves_same_label_credential_and_mailbox_ref() {
-    const OLD_KEY: &str = "re_old_good";
-    const CANDIDATE_KEY: &str = "re_invalid_candidate";
-    let directory = tempfile::tempdir().unwrap();
-    let platform = LocalPlatform::open(directory.path()).unwrap();
-    let old = platform
-        .put_resend_credential(
-            "Mailbox",
-            "old@example.com",
-            Some("Old Sender".into()),
-            OLD_KEY,
-        )
-        .unwrap();
-    let before = platform.creators.list_mailboxes().unwrap();
-    let validator = FakeCredentialValidator {
-        resend: Err(format!("provider rejected key {CANDIDATE_KEY}")),
-        ..successful_validator()
-    };
-    let mut changes = platform.subscribe_changes();
-
-    let error = platform
-        .connect_resend_credential_with_validator(
-            ResendCredentialConnectInput {
-                label: "Mailbox".into(),
-                email_address: "new@example.com".into(),
-                display_name: Some("New Sender".into()),
-                api_key: CANDIDATE_KEY.into(),
-            },
-            &validator,
-        )
-        .await
-        .unwrap_err();
-    assert!(!error.contains(CANDIDATE_KEY));
-    assert!(matches!(
-        changes.try_recv(),
-        Err(tokio::sync::broadcast::error::TryRecvError::Empty)
-    ));
-    let (stored, secret) = platform
-        .credential_services
-        .get_resend_credential(&old.id.to_string())
-        .unwrap();
-    assert_eq!(stored.metadata["email_address"], "old@example.com");
-    assert_eq!(secret.expose_secret(), OLD_KEY);
-    let after = platform.creators.list_mailboxes().unwrap();
-    assert_eq!(after.len(), before.len());
-    let before = &before[0];
-    let after = &after[0];
-    assert_eq!(after.mailbox_ref_id, before.mailbox_ref_id);
-    assert_eq!(after.provider, before.provider);
-    assert_eq!(after.label, before.label);
-    assert_eq!(after.email_address, before.email_address);
-    assert_eq!(after.display_name, before.display_name);
-    assert_eq!(after.capabilities, before.capabilities);
-    assert_eq!(after.available, before.available);
-    assert_eq!(after.issues, before.issues);
-    assert_eq!(after.created_at, before.created_at);
-    assert_eq!(after.updated_at, before.updated_at);
-}
-
-#[tokio::test]
 async fn youtube_reconcile_failure_restores_old_snapshot_and_removes_new_candidate() {
     const OLD_KEY: &str = "AIza-old-good";
     const CANDIDATE_KEY: &str = "AIza-candidate-secret";
@@ -285,7 +187,6 @@ async fn youtube_reconcile_failure_restores_old_snapshot_and_removes_new_candida
     let (before, before_secret) = platform.vault.get_service_credential(old.id).unwrap();
     let reconciler = FailingCredentialReconciler {
         youtube_error: format!("Creator runtime rejected candidate {CANDIDATE_KEY}"),
-        resend_error: "unused".into(),
     };
     let mut changes = platform.subscribe_changes();
 
@@ -341,88 +242,8 @@ async fn youtube_reconcile_failure_restores_old_snapshot_and_removes_new_candida
 }
 
 #[tokio::test]
-async fn resend_reconcile_failure_restores_old_snapshot_and_removes_new_candidate() {
-    const OLD_KEY: &str = "re_old_good";
-    const CANDIDATE_KEY: &str = "re_candidate_secret";
-    let directory = tempfile::tempdir().unwrap();
-    let platform = LocalPlatform::open(directory.path()).unwrap();
-    let old = platform
-        .put_resend_credential("Mailbox", "old@example.com", Some("Old".into()), OLD_KEY)
-        .unwrap();
-    platform
-        .vault
-        .mark_email_secret_record_failure(
-            old.id,
-            onecrew_local_vault::EmailSecretRecordKind::ResendApiKey,
-            "old health",
-            true,
-            Some(u64::MAX),
-        )
-        .unwrap();
-    let (before, before_secret) = platform
-        .credential_services
-        .get_resend_credential(&old.id.to_string())
-        .unwrap();
-    let reconciler = FailingCredentialReconciler {
-        youtube_error: "unused".into(),
-        resend_error: format!("Creator runtime rejected candidate {CANDIDATE_KEY}"),
-    };
-
-    let error = platform
-        .rotate_resend_credential_with_dependencies(
-            crate::RotateResendCredentialInput {
-                credential_id: old.id.to_string(),
-                api_key: CANDIDATE_KEY.into(),
-                confirmed: true,
-            },
-            &successful_validator(),
-            &reconciler,
-        )
-        .await
-        .unwrap_err();
-    assert!(error.contains("rolled back"), "{error}");
-    assert!(!error.contains(CANDIDATE_KEY));
-    let (after, after_secret) = platform
-        .credential_services
-        .get_resend_credential(&old.id.to_string())
-        .unwrap();
-    assert_eq!(after.metadata, before.metadata);
-    assert_eq!(after.disabled, before.disabled);
-    assert_eq!(after.cooldown_until, before.cooldown_until);
-    assert_eq!(after.last_used_at, before.last_used_at);
-    assert_eq!(after.last_error, before.last_error);
-    assert_eq!(after.created_at, before.created_at);
-    assert_eq!(after.updated_at, before.updated_at);
-    assert_eq!(after_secret.expose_secret(), before_secret.expose_secret());
-
-    let error = platform
-        .connect_resend_credential_with_dependencies(
-            ResendCredentialConnectInput {
-                label: "New Mailbox".into(),
-                email_address: "sender@example.com".into(),
-                display_name: None,
-                api_key: CANDIDATE_KEY.into(),
-            },
-            &successful_validator(),
-            &reconciler,
-        )
-        .await
-        .unwrap_err();
-    assert!(error.contains("rolled back"), "{error}");
-    assert!(
-        platform
-            .vault
-            .list_service_credentials(ServiceProvider::Resend, false)
-            .unwrap()
-            .iter()
-            .all(|credential| credential.label != "New Mailbox")
-    );
-}
-
-#[tokio::test]
 async fn validated_connections_persist_and_return_only_safe_projections() {
     const YOUTUBE_KEY: &str = "AIza-new-secret";
-    const RESEND_KEY: &str = "re_new_secret";
     let directory = tempfile::tempdir().unwrap();
     let platform = LocalPlatform::open(directory.path()).unwrap();
     let validator = successful_validator();
@@ -444,43 +265,14 @@ async fn validated_connections_persist_and_return_only_safe_projections() {
         youtube_change.scopes,
         vec![PlatformChangeScope::ServiceCredentials]
     );
-    let mut creator_changes = platform.creators.subscribe_changes();
-    let resend = platform
-        .connect_resend_credential_with_validator(
-            ResendCredentialConnectInput {
-                label: "Mailbox".into(),
-                email_address: "sender@example.com".into(),
-                display_name: Some("Sender".into()),
-                api_key: RESEND_KEY.into(),
-            },
-            &validator,
-        )
-        .await
-        .unwrap();
-    let resend_change = changes.try_recv().expect("Resend connection change");
-    assert_eq!(
-        resend_change.scopes,
-        vec![PlatformChangeScope::ServiceCredentials,]
-    );
-    assert_eq!(
-        creator_changes
-            .try_recv()
-            .expect("Creator mailbox commit")
-            .scopes,
-        vec![onecrew_creator_runtime::CreatorChangeScope::EmailFolders]
-    );
-
-    let wire = serde_json::to_string(&(youtube.clone(), resend.clone())).unwrap();
+    let wire = serde_json::to_string(&youtube).unwrap();
     assert!(!wire.contains(YOUTUBE_KEY));
-    assert!(!wire.contains(RESEND_KEY));
     assert!(youtube.credential.available);
-    assert!(resend.credential.available);
     assert_eq!(
         youtube.health.provider_resource_id.as_deref(),
         Some("UC-test")
     );
     let youtube_id = uuid::Uuid::parse_str(&youtube.credential.credential_id).unwrap();
-    let resend_id = uuid::Uuid::parse_str(&resend.credential.credential_id).unwrap();
     assert_eq!(
         platform
             .vault
@@ -489,15 +281,6 @@ async fn validated_connections_persist_and_return_only_safe_projections() {
             .1
             .expose_secret(),
         YOUTUBE_KEY
-    );
-    assert_eq!(
-        platform
-            .credential_services
-            .get_resend_credential(&resend_id.to_string())
-            .unwrap()
-            .1
-            .expose_secret(),
-        RESEND_KEY
     );
 }
 
@@ -590,22 +373,6 @@ async fn connect_rejects_an_existing_label_and_rotate_replaces_the_key_in_place(
         .unwrap();
     assert_eq!(secret.expose_secret(), "AIza_rotated_key");
 
-    let wrong_provider = platform
-        .rotate_resend_credential_with_dependencies(
-            crate::RotateResendCredentialInput {
-                credential_id: first.credential.credential_id.clone(),
-                api_key: "re_key".into(),
-                confirmed: true,
-            },
-            &successful_validator(),
-            &NoopCredentialReconciler,
-        )
-        .await
-        .expect_err("provider mismatch must fail");
-    assert!(
-        wrong_provider.contains("not a Resend credential"),
-        "{wrong_provider}"
-    );
 }
 
 #[test]
@@ -706,7 +473,6 @@ fn youtube_rename_reconcile_failure_restores_old_vault_snapshot() {
         .unwrap();
     let reconciler = FailingCredentialReconciler {
         youtube_error: "Creator runtime rejected renamed label".into(),
-        resend_error: "unused".into(),
     };
 
     let error = platform

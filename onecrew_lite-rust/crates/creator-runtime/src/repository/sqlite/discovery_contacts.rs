@@ -258,7 +258,9 @@ pub(super) fn eligible_author(
         "SELECT c.platform_account_id,c.verdict,c.evidence_json FROM discovery_candidates c
          JOIN discovery_recommendation_policies p ON p.discovery_campaign_id=c.discovery_campaign_id AND p.criteria_revision=c.criteria_revision
          WHERE c.id=?1 AND c.discovery_campaign_id=?2 AND c.criteria_revision=?3
-           AND p.policy='score_and_contact_v1' AND c.verdict='qualified'",
+           AND p.policy='score_and_contact_v1' AND (c.verdict='qualified' OR (c.verdict='pending'
+             AND EXISTS(SELECT 1 FROM json_each(c.evidence_json,'$.assessment.reasons') reason WHERE reason.value='requirement_unverified')
+             AND NOT EXISTS(SELECT 1 FROM json_each(c.evidence_json,'$.assessment.reasons') reason WHERE reason.value!='requirement_unverified')))",
         params![candidate,campaign,revision], |r| Ok((r.get(0)?,r.get(1)?,r.get(2)?)),
     ).optional().map_err(|e| e.to_string())?;
     let Some((author, verdict, raw)) = saved else {
@@ -273,7 +275,9 @@ pub(super) fn eligible_author(
         revision,
         &author,
     )?;
-    Ok(crate::discovery_contacts::score_passes(&verdict, &evidence, &author).then_some(author))
+    let requires_evidence = verdict == "pending" && evidence["assessment"]["reasons"].as_array()
+        .is_some_and(|reasons| !reasons.is_empty() && reasons.iter().all(|reason| reason == "requirement_unverified"));
+    Ok(crate::discovery_contacts::score_passes(if requires_evidence { "qualified" } else { &verdict }, &evidence, &author).then_some(author))
 }
 
 /// Reuse only author-bound profile/content receipts. Audience comments are excluded.
@@ -606,7 +610,11 @@ pub(super) fn native_material(
     else {
         return Ok(None);
     };
-    if !list(
+    let requires_evidence: bool = tx.query_row(
+        "SELECT verdict='pending' FROM discovery_candidates WHERE id=?1 AND discovery_campaign_id=?2 AND criteria_revision=?3",
+        params![input.candidate_id, input.campaign_id, input.expected_revision], |row| row.get(0),
+    ).map_err(|error| error.to_string())?;
+    if !requires_evidence && (!list(
         tx,
         &input.campaign_id,
         input.expected_revision,
@@ -620,7 +628,7 @@ pub(super) fn native_material(
             input.expected_revision,
             &input.candidate_id,
             &author,
-        )?
+        )?)
     {
         return Ok(None);
     }
@@ -658,7 +666,14 @@ pub(super) fn next_native_link(
          JOIN discovery_recommendation_policies policy ON policy.discovery_campaign_id=d.id AND policy.criteria_revision=d.current_revision
          WHERE d.id=?1 AND d.phase='active' AND c.criteria_revision=d.current_revision AND a.approved_at IS NOT NULL
            AND NOT EXISTS(SELECT 1 FROM json_each(?2) excluded WHERE excluded.value IN (c.platform,c.source_platform))
-           AND policy.policy='score_and_contact_v1' AND c.verdict='qualified' AND (d.max_calls IS NULL OR d.used_calls<d.max_calls)
+           AND policy.policy='score_and_contact_v1' AND (c.verdict='qualified' OR (c.verdict='pending'
+             AND json_array_length(json_extract(a.criteria_json,'$.requirements'))>0)) AND (d.max_calls IS NULL OR d.used_calls<d.max_calls)
+           AND ((COALESCE(json_extract(a.criteria_json,'$.contact_preference'),'')!='public_email_first' AND c.verdict='qualified')
+             OR ((c.verdict='pending' OR NOT EXISTS(SELECT 1 FROM discovery_contact_observations contact
+                    WHERE contact.candidate_id=c.id AND contact.criteria_revision=c.criteria_revision AND contact.kind='email')
+                 )
+                 AND (SELECT COUNT(*) FROM discovery_public_page_reads page WHERE page.candidate_id=c.id)
+                   < CASE WHEN c.verdict='pending' THEN 2 ELSE 1 END))
            AND NOT EXISTS(SELECT 1 FROM discovery_platform_runs r WHERE r.discovery_campaign_id=d.id AND r.status='searching')
            AND (p.status='completed' OR (p.status='technical_stop' AND p.stop_code='interrupted_public_page_read'))
          ORDER BY c.id").map_err(|e|e.to_string())?;

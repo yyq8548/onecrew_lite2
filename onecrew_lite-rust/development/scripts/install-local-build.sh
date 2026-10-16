@@ -110,6 +110,20 @@ upgrade_phase=service_host_registration
 record_upgrade 0
 if [[ "$target" == *windows* ]]; then "$install_path" service host install; fi
 if [[ "$plugin_install" == 1 ]]; then
+  if [[ "$target" == *apple-darwin ]]; then
+    # 先切换插件，再停止旧服务，避免旧插件在安装间隙重启旧后台。
+    upgrade_phase=plugin_installation
+    record_upgrade 0
+    "$install_path" plugin install
+    upgrade_phase=service_handoff
+    record_upgrade 0
+    if stop_output="$("$install_path" stop 2>&1)"; then
+      printf '%s\n' "$stop_output"
+    elif [[ "$stop_output" != 'onecrew_lite: service_not_running' ]]; then
+      printf '%s\n' "$stop_output" >&2
+      exit 1
+    fi
+  fi
   # Establish the shared owner from the installation host before Codex probes
   # the plugin in temporary Windows Jobs. Keep its output off installer pipes.
   startup_log="$(dirname "$install_path")/service-startup.log"
@@ -121,9 +135,11 @@ if [[ "$plugin_install" == 1 ]]; then
     exit 1
   fi
   cat "$startup_log"
-  upgrade_phase=plugin_installation
-  record_upgrade 0
-  "$install_path" plugin install
+  if [[ "$target" != *apple-darwin ]]; then
+    upgrade_phase=plugin_installation
+    record_upgrade 0
+    "$install_path" plugin install
+  fi
   upgrade_phase=installed_pending_live_verification
   echo 'Files installed; live MCP and workspace verification are still pending. Reload the Codex plugin connection once if the host still uses the previous generation.'
 else

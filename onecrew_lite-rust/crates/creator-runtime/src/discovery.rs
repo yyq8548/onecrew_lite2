@@ -19,10 +19,24 @@ pub struct CreateDiscoveryCampaignInput {
     pub id: String,
     pub brief: String,
     pub opencli_version: String,
+    /// `requirements` 保存 description/excerpt 条件；`excluded_accounts` 保存
+    /// native_author_id/profile_url/excerpt；`refinement` 关联 campaign_id/expected_revision。
+    /// `contact_preference=public_email_first` 优先公开邮箱，不强制邮箱资格。
     pub criteria: Value,
     pub scopes: Vec<DiscoveryPlatformScope>,
     pub target_count: u32,
     pub max_calls: Option<u32>,
+}
+
+impl CreateDiscoveryCampaignInput {
+    pub fn with_default_delivery_preferences(mut self) -> Self {
+        if let Some(criteria) = self.criteria.as_object_mut() {
+            criteria.entry("contact_preference").or_insert_with(|| Value::String("public_email_first".into()));
+            criteria.entry("requires_ai_tool_demo").or_insert(Value::Bool(false));
+            criteria.entry("requires_public_tool_url").or_insert(Value::Bool(false));
+        }
+        self
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq)]
@@ -89,6 +103,10 @@ pub(crate) fn source_local_read_failure(code: Option<&str>) -> bool {
         code,
         Some(
             "opencli_command_failed"
+                | "youtube_video_unavailable"
+                | "youtube_watch_layout_unsupported"
+                | "youtube_author_identity_invalid"
+                | "youtube_description_unavailable"
                 | "opencli_invalid_output"
                 | "opencli_output_too_large"
                 | "opencli_timeout"
@@ -351,6 +369,7 @@ pub(crate) fn validate_discovery_candidate(
         .ok_or_else(|| "Discovery evidence must be an object".to_string())?;
     if evidence.contains_key("manual_approval")
         || evidence.contains_key("reviewed_residence")
+        || evidence.contains_key("reviewed_requirements")
         || evidence.contains_key("reviewed_apparel_content")
         || evidence.contains_key("reviewed_category_content")
     {
@@ -375,6 +394,34 @@ pub(crate) fn validate_discovery_candidate(
     Ok(())
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub struct DiscoveryRefinement {
+    pub campaign_id: String,
+    pub expected_revision: u32,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, schemars::JsonSchema)]
+pub struct DiscoverySearchRecovery {
+    pub expected_stop_code: String,
+    pub expected_stopped_at: i64,
+}
+
+pub(crate) fn can_recover_repaired_search(code: &str) -> bool {
+    matches!(code, "provider_endpoint_not_found" | "provider_response_invalid_json"
+        | "provider_response_shape_invalid" | "provider_response_http_error"
+        | "provider_source_unavailable" | "opencli_command_unavailable"
+        | "opencli_command_failed" | "opencli_invalid_output" | "opencli_output_too_large")
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub struct DiscoveryExcludedAccount {
+    pub native_author_id: String,
+    pub profile_url: String,
+    pub excerpt: String,
+}
+
 pub(crate) fn validate_create(input: &CreateDiscoveryCampaignInput) -> Result<(), String> {
     if input.id.is_empty()
         || input.id.len() > 128
@@ -385,8 +432,9 @@ pub(crate) fn validate_create(input: &CreateDiscoveryCampaignInput) -> Result<()
     {
         return Err("Campaign id must be 1-128 safe ASCII characters".into());
     }
-    if input.brief.trim().is_empty() || input.brief.chars().count() > 4000 {
-        return Err("Campaign brief must be 1-4000 characters".into());
+    let brief_limit = if input.criteria.get("refinement").is_some() { 32_000 } else { 4_000 };
+    if input.brief.trim().is_empty() || input.brief.chars().count() > brief_limit {
+        return Err(format!("Campaign brief must be 1-{brief_limit} characters"));
     }
     if input.opencli_version.len() > 64
         || input.opencli_version.split('.').count() != 3
@@ -401,6 +449,41 @@ pub(crate) fn validate_create(input: &CreateDiscoveryCampaignInput) -> Result<()
         return Err("Campaign criteria must be a bounded object".into());
     }
     let criteria = input.criteria.as_object().expect("checked above");
+    if criteria.get("contact_preference").is_some_and(|value| value != "public_email_first") {
+        return Err("Campaign contact preference is invalid".into());
+    }
+    if let Some(value) = criteria.get("excluded_accounts") {
+        let accounts: Vec<DiscoveryExcludedAccount> = serde_json::from_value(value.clone())
+            .map_err(|_| "Campaign excluded accounts are invalid")?;
+        if accounts.len() > 1000 || accounts.iter().any(|item| {
+            item.native_author_id.trim().is_empty() || item.native_author_id.len() > 256
+                || item.profile_url.len() > 2048
+                || url::Url::parse(&item.profile_url).is_err()
+                || !item.profile_url.starts_with("https://")
+                || item.excerpt.trim().is_empty() || !input.brief.contains(&item.excerpt)
+        }) {
+            return Err("Campaign excluded accounts require identity, profile and customer quotation".into());
+        }
+    }
+    if let Some(value) = criteria.get("requirements") {
+        let requirements: Vec<crate::QuotedHardCondition> = serde_json::from_value(value.clone())
+            .map_err(|_| "Campaign requirements are invalid")?;
+        if requirements.len() > 32 || requirements.iter().any(|item| {
+            item.description.trim().is_empty() || item.description.len() > 1000
+                || item.excerpt.trim().is_empty() || !input.brief.contains(&item.excerpt)
+        }) {
+            return Err("Campaign requirements must quote the customer request".into());
+        }
+    }
+    if let Some(value) = criteria.get("refinement") {
+        let source: DiscoveryRefinement = serde_json::from_value(value.clone())
+            .map_err(|_| "Campaign refinement is invalid")?;
+        if source.campaign_id == input.id || source.campaign_id.is_empty()
+            || source.campaign_id.len() > 128 || source.expected_revision == 0
+        {
+            return Err("Campaign refinement source is invalid".into());
+        }
+    }
     if criteria.contains_key("min_subscribers") && criteria.contains_key("min_followers") {
         return Err("Campaign cannot set two competing follower thresholds".into());
     }
@@ -474,8 +557,10 @@ impl CreatorRuntime {
         campaign: String,
     ) -> Result<Vec<DiscoveryReadStop>, CreatorRepositoryCallError<String>> {
         let owner = self.clone();
-        self.repository_read_segment(move || owner.repository.discovery_read_stops(&campaign))
-            .await
+        self.repository_discovery_read_segment(move || {
+            owner.repository.discovery_read_stops(&campaign)
+        })
+        .await
     }
     pub async fn plan_discovery_step_async(
         &self,
@@ -483,7 +568,7 @@ impl CreatorRuntime {
         expected_revision: u32,
     ) -> Result<DiscoveryStep, CreatorRepositoryCallError<String>> {
         let owner = self.clone();
-        self.repository_read_segment(move || {
+        self.repository_discovery_read_segment(move || {
             owner.plan_discovery_step(&campaign_id, expected_revision)
         })
         .await
@@ -504,7 +589,7 @@ impl CreatorRuntime {
         excluded_platforms: Vec<String>,
     ) -> Result<DiscoveryStep, CreatorRepositoryCallError<String>> {
         let owner = self.clone();
-        self.repository_read_segment(move || {
+        self.repository_discovery_read_segment(move || {
             owner.plan_discovery_step_excluding(
                 &campaign_id,
                 expected_revision,
@@ -531,7 +616,7 @@ impl CreatorRuntime {
         deferred_platforms: Vec<String>,
     ) -> Result<DiscoveryStep, CreatorRepositoryCallError<String>> {
         let owner = self.clone();
-        self.repository_read_segment(move || {
+        self.repository_discovery_read_segment(move || {
             owner.plan_discovery_step_deferred(
                 &campaign_id,
                 expected_revision,
@@ -551,7 +636,7 @@ impl CreatorRuntime {
         scoring_hits: Vec<String>,
     ) -> Result<DiscoveryStep, CreatorRepositoryCallError<String>> {
         let owner = self.clone();
-        self.repository_read_segment(move || {
+        self.repository_discovery_read_segment(move || {
             let fallback = owner.plan_discovery_step_deferred(
                 &campaign_id,
                 expected_revision,
@@ -974,7 +1059,7 @@ impl CreatorRuntime {
         excluded_platforms: Vec<String>,
     ) -> Result<u32, CreatorRepositoryCallError<String>> {
         let owner = self.clone();
-        self.repository_read_segment(move || {
+        self.repository_discovery_read_segment(move || {
             let campaign = owner.get_discovery_campaign(&campaign_id)?;
             let counts = owner
                 .repository
@@ -989,8 +1074,10 @@ impl CreatorRuntime {
         campaign_id: String,
     ) -> Result<DiscoveryCandidateCounts, CreatorRepositoryCallError<String>> {
         let owner = self.clone();
-        self.repository_read_segment(move || owner.count_discovery_candidates(&campaign_id))
-            .await
+        self.repository_discovery_read_segment(move || {
+            owner.count_discovery_candidates(&campaign_id)
+        })
+        .await
     }
 
     pub fn count_discovery_candidates(
@@ -1008,7 +1095,7 @@ impl CreatorRuntime {
         input: ListDiscoverySearchHitsInput,
     ) -> Result<Vec<DiscoverySearchHit>, CreatorRepositoryCallError<String>> {
         let owner = self.clone();
-        self.repository_read_segment(move || owner.list_discovery_search_hits(input))
+        self.repository_discovery_read_segment(move || owner.list_discovery_search_hits(input))
             .await
     }
 
@@ -1049,6 +1136,22 @@ impl CreatorRuntime {
             platform,
             profile_ref,
         )
+    }
+
+    pub async fn claim_discovery_search_with_recovery_async(
+        &self,
+        campaign_id: String,
+        expected_revision: u32,
+        platform: String,
+        profile_ref: String,
+        recovery: Option<DiscoverySearchRecovery>,
+    ) -> Result<DiscoverySearchClaim, CreatorRepositoryCallError<String>> {
+        let owner = self.clone();
+        self.repository_write_segment(move || {
+            owner.repository.claim_discovery_search_with_recovery(
+                &campaign_id, expected_revision, &platform, &profile_ref, recovery.as_ref(),
+            )
+        }).await
     }
 
     pub async fn finish_discovery_search_async(
@@ -1179,7 +1282,7 @@ impl CreatorRuntime {
         id: String,
     ) -> Result<DiscoveryCampaign, CreatorRepositoryCallError<String>> {
         let owner = self.clone();
-        self.repository_read_segment(move || owner.get_discovery_campaign(&id))
+        self.repository_discovery_read_segment(move || owner.get_discovery_campaign(&id))
             .await
     }
 
@@ -1192,16 +1295,20 @@ impl CreatorRuntime {
         id: String,
     ) -> Result<crate::DiscoveryLibraryTableName, CreatorRepositoryCallError<String>> {
         let owner = self.clone();
-        self.repository_read_segment(move || owner.repository.discovery_library_table_name(&id))
-            .await
+        self.repository_discovery_read_segment(move || {
+            owner.repository.discovery_library_table_name(&id)
+        })
+        .await
     }
 
     pub async fn recent_discovery_campaigns_async(
         &self,
     ) -> Result<Vec<DiscoveryCampaignSummary>, CreatorRepositoryCallError<String>> {
         let owner = self.clone();
-        self.repository_read_segment(move || owner.repository.recent_discovery_campaigns())
-            .await
+        self.repository_discovery_read_segment(move || {
+            owner.repository.recent_discovery_campaigns()
+        })
+        .await
     }
 
     pub async fn upsert_discovery_candidate_async(
@@ -1250,7 +1357,7 @@ impl CreatorRuntime {
         input: ListDiscoveryCandidatesInput,
     ) -> Result<Vec<DiscoveryCandidate>, CreatorRepositoryCallError<String>> {
         let owner = self.clone();
-        self.repository_read_segment(move || owner.list_discovery_candidates(input))
+        self.repository_discovery_read_segment(move || owner.list_discovery_candidates(input))
             .await
     }
 
@@ -1268,6 +1375,90 @@ impl CreatorRuntime {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn conversational_refinement_requires_approved_source_and_keeps_old_plan() {
+        let directory = tempfile::tempdir().unwrap();
+        let owner = CreatorRuntime::open(directory.path(), crate::CreatorGateways::default()).unwrap();
+        let source = CreateDiscoveryCampaignInput {
+            id: "original".into(), brief: "找美妆博主".into(), opencli_version: "1.8.8".into(),
+            criteria: serde_json::json!({"requires_ai_tool_demo": false, "requires_public_tool_url": false}),
+            scopes: vec![DiscoveryPlatformScope { platform: "youtube".into(),
+                profile_ref: "browser".into(), keywords: vec!["makeup tutorial".into()] }],
+            target_count: 50, max_calls: None,
+        };
+        owner.create_discovery_campaign(source.clone()).unwrap();
+        let mut improved = source;
+        improved.id = "improved".into();
+        improved.brief = "找美妆博主，排除赌博合作账号，目标100位".into();
+        improved.target_count = 100;
+        improved.criteria["refinement"] = serde_json::json!({"campaign_id":"original", "expected_revision":1});
+        improved.criteria["requirements"] = serde_json::json!([{
+            "description":"排除赌博合作账号", "excerpt":"排除赌博合作账号"
+        }]);
+        assert!(owner.create_discovery_campaign(improved.clone()).is_err());
+        let original = owner.approve_discovery_campaign("original", 1).unwrap();
+        let draft = owner.create_discovery_campaign(improved).unwrap();
+        assert_eq!(draft.phase, "draft");
+        assert_eq!(draft.used_calls, 0);
+        assert_eq!(owner.get_discovery_campaign("original").unwrap(), original);
+        let approved = owner.approve_discovery_campaign("improved", 1).unwrap();
+        assert_eq!(approved.target_count, 100);
+        assert_eq!(approved.used_calls, 0);
+        assert_eq!(owner.get_discovery_campaign("original").unwrap(), original);
+    }
+
+    #[test]
+    fn refinement_replays_captured_instagram_author_bindings() {
+        let directory = tempfile::tempdir().unwrap();
+        let owner = CreatorRuntime::open(directory.path(), crate::CreatorGateways::default()).unwrap();
+        let capture: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../integrations/opencli/onecrew-browser-search/instagram-search.capture.json"
+        )).unwrap();
+        let source = CreateDiscoveryCampaignInput {
+            id: "instagram-capture-source".into(), brief: "找粉丝至少5000的美妆博主".into(),
+            opencli_version: "1.8.8".into(), criteria: serde_json::json!({"min_subscribers":5000}),
+            scopes: vec![DiscoveryPlatformScope { platform: "instagram".into(),
+                profile_ref: "d5pskwub".into(), keywords: vec!["makeup artist".into()] }],
+            target_count: 10, max_calls: Some(50),
+        };
+        owner.create_discovery_campaign(source.clone()).unwrap();
+        owner.approve_discovery_campaign(&source.id, 1).unwrap();
+        let claim = owner.claim_discovery_search(&source.id, 1, "instagram", "d5pskwub").unwrap();
+        let search_hits = capture["response"]["data"]["xdt_api__v1__fbsearch__topsearch_connection"]["users"]
+            .as_array().unwrap().iter().map(|entry| {
+                let user = &entry["user"];
+                let url = format!("https://www.instagram.com/{}/", user["username"].as_str().unwrap());
+                DiscoverySearchHitInput { source_url: url.clone(),
+                    title: user["full_name"].as_str().unwrap().into(),
+                    author_label: user["username"].as_str().unwrap().into(),
+                    author_id: Some(user["id"].as_str().unwrap().into()), author_url: Some(url) }
+            }).collect();
+        owner.finish_discovery_search(FinishDiscoverySearchInput {
+            claim, status: "completed".into(), stop_code: None, search_hits,
+        }).unwrap();
+        let saved = owner.list_discovery_search_hits(ListDiscoverySearchHitsInput {
+            campaign_id: source.id.clone(), after_id: None, limit: 100,
+        }).unwrap();
+        let mut refined = source.clone();
+        refined.id = "instagram-capture-refined".into();
+        refined.criteria["refinement"] = serde_json::json!({"campaign_id":source.id,"expected_revision":1});
+        owner.create_discovery_campaign(refined.clone()).unwrap();
+        let approved = owner.approve_discovery_campaign(&refined.id, 1).unwrap();
+        assert_eq!(approved.used_calls, 0);
+        let copied = owner.list_discovery_search_hits(ListDiscoverySearchHitsInput {
+            campaign_id: refined.id, after_id: None, limit: 100,
+        }).unwrap();
+        assert_eq!(copied.len(), saved.len());
+        for hit in &saved {
+            let copy = copied.iter().find(|copy| copy.source_url == hit.source_url).unwrap();
+            assert_eq!(copy.author_id, hit.author_id);
+            assert_eq!(copy.author_url, hit.author_url);
+            assert_eq!(copy.author_observed_at, hit.author_observed_at);
+            assert!(copy.author_observed_at.is_some());
+        }
+        assert_eq!(owner.get_discovery_campaign(&source.id).unwrap().used_calls, 1);
+    }
 
     #[tokio::test]
     async fn recent_plans_are_bounded_deterministic_and_do_not_authorize_or_consume_reads() {
@@ -2473,6 +2664,45 @@ mod tests {
     #[test]
     fn definite_search_failure_waits_for_saved_author_before_next_approved_keyword() {
         assert_definite_search_failure_recovers("opencli_command_failed");
+    }
+
+    #[test]
+    fn repaired_search_requires_exact_checkpoint_and_claims_only_next_approved_query() {
+        let directory = tempfile::tempdir().unwrap();
+        let owner = CreatorRuntime::open(directory.path(), crate::CreatorGateways::default()).unwrap();
+        owner.create_discovery_campaign(CreateDiscoveryCampaignInput {
+            id: "repair-checkpoint".into(), brief: "Find beauty creators".into(),
+            opencli_version: "1.8.8".into(), criteria: serde_json::json!({"min_followers": 5000}),
+            scopes: vec![DiscoveryPlatformScope { platform: "instagram".into(), profile_ref: "dedicated".into(),
+                keywords: vec!["beauty creator".into(), "makeup artist".into()] }],
+            target_count: 100, max_calls: Some(4),
+        }).unwrap();
+        owner.approve_discovery_campaign("repair-checkpoint", 1).unwrap();
+        let claim = owner.claim_discovery_search("repair-checkpoint", 1, "instagram", "dedicated").unwrap();
+        let stopped = owner.finish_discovery_search(FinishDiscoverySearchInput {
+            claim, status: "technical_stop".into(), stop_code: Some("provider_endpoint_not_found".into()), search_hits: vec![],
+        }).unwrap();
+        let run = &stopped.platform_runs[0];
+        let mut recovery = DiscoverySearchRecovery { expected_stop_code: run.stop_code.clone().unwrap(), expected_stopped_at: run.updated_at + 1 };
+        let recover = |proof: &DiscoverySearchRecovery| owner.repository.claim_discovery_search_with_recovery(
+            "repair-checkpoint", 1, "instagram", "dedicated", Some(proof));
+        assert!(recover(&recovery).is_err());
+        assert!(owner.claim_discovery_search("repair-checkpoint", 1, "instagram", "dedicated").is_err());
+        recovery.expected_stopped_at = run.updated_at;
+        for code in ["opencli_timeout", "interrupted_read", "provider_request_failed", "risk_control", "unauthorized"] {
+            let denied = DiscoverySearchRecovery { expected_stop_code: code.into(), ..recovery.clone() };
+            assert!(recover(&denied).is_err());
+        }
+        let unchanged = owner.get_discovery_campaign("repair-checkpoint").unwrap();
+        assert_eq!(serde_json::to_value(&stopped).unwrap(), serde_json::to_value(&unchanged).unwrap());
+        let next = recover(&recovery).unwrap();
+        assert_eq!(next.query, "makeup artist");
+        assert!(recover(&recovery).is_err());
+        let resumed = owner.get_discovery_campaign("repair-checkpoint").unwrap();
+        assert_eq!(resumed.used_calls, stopped.used_calls + 1);
+        assert_eq!(resumed.criteria, stopped.criteria);
+        assert_eq!(resumed.scopes, stopped.scopes);
+        assert_eq!(resumed.platform_runs[0].status, "searching");
     }
 
     #[test]

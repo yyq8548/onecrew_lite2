@@ -110,22 +110,31 @@ pub(crate) fn validate_result(input: &FinishDiscoveryWebSourceInput) -> Result<(
         return Err("Web source claim is not a supported native source".into());
     }
     let valid = match (&input.native_material, input.stop_code.as_deref()) {
-        (None, Some(code)) => matches!(
-            code,
-            "opencli_timeout"
-                | "opencli_output_too_large"
-                | "opencli_version_changed"
-                | "opencli_daemon_unavailable"
-                | "opencli_extension_unavailable"
-                | "opencli_profile_unavailable"
-                | "opencli_command_unavailable"
-                | "opencli_invalid_output"
-                | "opencli_invalid_input"
-                | "opencli_unavailable"
-                | "opencli_command_failed"
-                | "opencli_risk_control"
-                | "opencli_auth_required"
-        ),
+        (None, Some(code)) => {
+            matches!(
+                code,
+                "opencli_timeout"
+                    | "opencli_output_too_large"
+                    | "opencli_version_changed"
+                    | "opencli_daemon_unavailable"
+                    | "opencli_extension_unavailable"
+                    | "opencli_profile_unavailable"
+                    | "opencli_command_unavailable"
+                    | "opencli_invalid_output"
+                    | "opencli_invalid_input"
+                    | "opencli_unavailable"
+                    | "opencli_command_failed"
+                    | "opencli_risk_control"
+                    | "opencli_auth_required"
+            ) || (claim.target_platform == "youtube"
+                && matches!(
+                    code,
+                    "youtube_video_unavailable"
+                        | "youtube_watch_layout_unsupported"
+                        | "youtube_author_identity_invalid"
+                        | "youtube_description_unavailable"
+                ))
+        }
         (Some(material), None) if claim.target_platform == "twitter" => {
             twitter::valid(material, &claim.source_url, &claim.video_id)
         }

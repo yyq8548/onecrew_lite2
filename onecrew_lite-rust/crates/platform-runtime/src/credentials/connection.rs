@@ -1,12 +1,9 @@
 use crate::PlatformChangeScope;
-use crate::credentials::services::{
-    CredentialServices, ResendCredentialValidation, YoutubeCredentialValidation,
-};
+use crate::credentials::services::{CredentialServices, YoutubeCredentialValidation};
 use onecrew_local_domain::{ServiceCredential, ServiceCredentialSecret, ServiceProvider};
 
 use super::{
-    ConnectedServiceCredentialProjection, ResendCredentialConnectInput,
-    ServiceCredentialConnectResult, ServiceCredentialProjection,
+    ConnectedServiceCredentialProjection, ServiceCredentialConnectResult, ServiceCredentialProjection,
     ServiceCredentialValidationProjection, YoutubeApiKeyConnectInput,
 };
 use crate::LocalPlatform;
@@ -14,18 +11,10 @@ use crate::LocalPlatform;
 #[async_trait::async_trait]
 trait ServiceCredentialValidator: Send + Sync {
     async fn validate_youtube(&self, api_key: &str) -> Result<YoutubeCredentialValidation, String>;
-
-    async fn validate_resend(
-        &self,
-        email_address: &str,
-        display_name: Option<&str>,
-        api_key: &str,
-    ) -> Result<ResendCredentialValidation, String>;
 }
 
 trait ServiceCredentialReconciler: Send + Sync {
     fn reconcile_youtube(&self, platform: &LocalPlatform) -> Result<(), String>;
-    fn reconcile_resend(&self, platform: &LocalPlatform) -> Result<(), String>;
 }
 
 struct RuntimeServiceCredentialReconciler;
@@ -33,10 +22,6 @@ struct RuntimeServiceCredentialReconciler;
 impl ServiceCredentialReconciler for RuntimeServiceCredentialReconciler {
     fn reconcile_youtube(&self, platform: &LocalPlatform) -> Result<(), String> {
         platform.reconcile_vault_youtube_refs().map(|_| ())
-    }
-
-    fn reconcile_resend(&self, platform: &LocalPlatform) -> Result<(), String> {
-        platform.reconcile_vault_mailbox_refs().map(|_| ())
     }
 }
 
@@ -52,16 +37,6 @@ impl ServiceCredentialValidator for CredentialServices {
     async fn validate_youtube(&self, api_key: &str) -> Result<YoutubeCredentialValidation, String> {
         self.validate_youtube_api_key(api_key).await
     }
-
-    async fn validate_resend(
-        &self,
-        email_address: &str,
-        display_name: Option<&str>,
-        api_key: &str,
-    ) -> Result<ResendCredentialValidation, String> {
-        self.validate_resend_credential(email_address, display_name, api_key)
-            .await
-    }
 }
 
 impl LocalPlatform {
@@ -73,16 +48,6 @@ impl LocalPlatform {
             .await
             .map_err(|message| crate::ServiceCredentialMutationError::from_safe_message(&message))
     }
-
-    pub async fn connect_resend_credential_typed(
-        &self,
-        input: ResendCredentialConnectInput,
-    ) -> Result<ServiceCredentialConnectResult, crate::ServiceCredentialMutationError> {
-        self.connect_resend_credential(input)
-            .await
-            .map_err(|message| crate::ServiceCredentialMutationError::from_safe_message(&message))
-    }
-
     pub fn rename_youtube_credential_typed(
         &self,
         input: crate::RenameYoutubeCredentialInput,
@@ -100,14 +65,6 @@ impl LocalPlatform {
             .map_err(|message| crate::ServiceCredentialMutationError::from_safe_message(&message))
     }
 
-    pub async fn rotate_resend_credential_typed(
-        &self,
-        input: crate::RotateResendCredentialInput,
-    ) -> Result<ServiceCredentialConnectResult, crate::ServiceCredentialMutationError> {
-        self.rotate_resend_credential(input)
-            .await
-            .map_err(|message| crate::ServiceCredentialMutationError::from_safe_message(&message))
-    }
 
     /// Validate a raw YouTube Data API key with a temporary client, then and
     /// only then replace the encrypted credential and reconcile its Creator ref.
@@ -184,101 +141,6 @@ impl LocalPlatform {
             validation.checked_at,
             validation.message,
             validation.channel_id,
-        );
-        self.publish_changes([PlatformChangeScope::ServiceCredentials]);
-        Ok(result)
-    }
-
-    /// Validate Resend's Receiving API with a temporary sender before writing
-    /// the candidate key to the encrypted vault.
-    pub async fn connect_resend_credential(
-        &self,
-        input: ResendCredentialConnectInput,
-    ) -> Result<ServiceCredentialConnectResult, String> {
-        self.connect_resend_credential_with_dependencies(
-            input,
-            self.credential_services.as_ref(),
-            &RuntimeServiceCredentialReconciler,
-        )
-        .await
-    }
-
-    #[cfg(test)]
-    async fn connect_resend_credential_with_validator(
-        &self,
-        input: ResendCredentialConnectInput,
-        validator: &dyn ServiceCredentialValidator,
-    ) -> Result<ServiceCredentialConnectResult, String> {
-        self.connect_resend_credential_with_dependencies(
-            input,
-            validator,
-            &RuntimeServiceCredentialReconciler,
-        )
-        .await
-    }
-
-    async fn connect_resend_credential_with_dependencies(
-        &self,
-        input: ResendCredentialConnectInput,
-        validator: &dyn ServiceCredentialValidator,
-        reconciler: &dyn ServiceCredentialReconciler,
-    ) -> Result<ServiceCredentialConnectResult, String> {
-        let label = required_trimmed(input.label, "mailbox label is required")?;
-        let email_address = required_trimmed(input.email_address, "sender email is required")?;
-        let display_name = input
-            .display_name
-            .map(|value| value.trim().to_owned())
-            .filter(|value| !value.is_empty());
-        let api_key = required_trimmed(input.api_key, "Resend API key is required")?;
-        if self
-            .find_service_credential_by_label(ServiceProvider::Resend, &label)?
-            .is_some()
-        {
-            return Err(format!(
-                "a Resend mailbox labeled \"{label}\" already exists; rotate its key explicitly or choose a new label"
-            ));
-        }
-        let validation = validator
-            .validate_resend(&email_address, display_name.as_deref(), &api_key)
-            .await
-            .map_err(|error| redact_secret(&error, &api_key))?;
-        let rollback = self
-            .capture_service_credential(ServiceProvider::Resend, &label)
-            .map_err(|error| redact_secret(&error, &api_key))?;
-        let sender_domain = validation.sender_domain.clone();
-        let credential = self
-            .credential_services
-            .put_resend_credential(
-                label,
-                validation.email_address,
-                validation.display_name,
-                api_key.clone(),
-            )
-            .map_err(|error| redact_secret(&error, &api_key))?;
-        if let Err(reconcile_error) = reconciler.reconcile_resend(self) {
-            let rollback_error = match rollback.as_ref() {
-                Some(_) => {
-                    Err("Resend credential rollback encountered an existing typed row".into())
-                }
-                None => self
-                    .credential_services
-                    .delete_resend_credential(&credential.id.to_string())
-                    .map(|_| ()),
-            };
-            if rollback_error.is_err() {
-                self.publish_changes([PlatformChangeScope::ServiceCredentials]);
-            }
-            return Err(connect_reconciliation_error(
-                &reconcile_error,
-                rollback_error.as_ref().err().map(String::as_str),
-                &api_key,
-            ));
-        }
-        let result = connection_result(
-            credential,
-            validation.checked_at,
-            validation.message,
-            Some(sender_domain),
         );
         self.publish_changes([PlatformChangeScope::ServiceCredentials]);
         Ok(result)
@@ -432,125 +294,11 @@ impl LocalPlatform {
         Ok(result)
     }
 
-    /// Rotate one existing Resend credential's key in place: same label,
-    /// sender address, and display name; explicit confirmation required.
-    pub async fn rotate_resend_credential(
-        &self,
-        input: crate::RotateResendCredentialInput,
-    ) -> Result<ServiceCredentialConnectResult, String> {
-        self.rotate_resend_credential_with_dependencies(
-            input,
-            self.credential_services.as_ref(),
-            &RuntimeServiceCredentialReconciler,
-        )
-        .await
-    }
-
-    async fn rotate_resend_credential_with_dependencies(
-        &self,
-        input: crate::RotateResendCredentialInput,
-        validator: &dyn ServiceCredentialValidator,
-        reconciler: &dyn ServiceCredentialReconciler,
-    ) -> Result<ServiceCredentialConnectResult, String> {
-        if !input.confirmed {
-            return Err("credential rotation requires explicit confirmation".into());
-        }
-        let credential_id = uuid::Uuid::parse_str(input.credential_id.trim())
-            .map_err(|_| "invalid credential id".to_string())?;
-        let api_key = required_trimmed(input.api_key, "Resend API key is required")?;
-        let (existing, _secret) = self
-            .credential_services
-            .get_resend_credential(&credential_id.to_string())
-            .map_err(|error| {
-                if error.contains("typed Email secret record")
-                    || error.contains("expected typed Email")
-                {
-                    "credential is not a Resend credential".to_string()
-                } else {
-                    redact_secret(&error, &api_key)
-                }
-            })?;
-        if existing.provider != ServiceProvider::Resend {
-            return Err("credential is not a Resend credential".into());
-        }
-        let email_address = existing
-            .metadata
-            .get("email_address")
-            .and_then(|value| value.as_str())
-            .map(str::to_owned)
-            .ok_or_else(|| "stored Resend credential is missing its sender address".to_string())?;
-        let display_name = existing
-            .metadata
-            .get("display_name")
-            .and_then(|value| value.as_str())
-            .map(str::to_owned);
-        let validation = validator
-            .validate_resend(&email_address, display_name.as_deref(), &api_key)
-            .await
-            .map_err(|error| redact_secret(&error, &api_key))?;
-        let rollback = self
-            .credential_services
-            .get_resend_typed_credential(&existing.id.to_string())
-            .map_err(|error| redact_secret(&error, &api_key))?;
-        let sender_domain = validation.sender_domain.clone();
-        let credential = self
-            .credential_services
-            .put_resend_credential(
-                existing.label,
-                validation.email_address,
-                validation.display_name,
-                api_key.clone(),
-            )
-            .map_err(|error| redact_secret(&error, &api_key))?;
-        if credential.id != existing.id {
-            let rollback_error = self
-                .credential_services
-                .restore_resend_typed_credential(&rollback.0, &rollback.1);
-            if rollback_error.is_err() {
-                self.publish_changes([PlatformChangeScope::ServiceCredentials]);
-            }
-            return Err(connect_reconciliation_error(
-                "rotation resolved to a different credential row",
-                rollback_error.as_ref().err().map(String::as_str),
-                &api_key,
-            ));
-        }
-        if let Err(reconcile_error) = reconciler.reconcile_resend(self) {
-            let rollback_error = self
-                .credential_services
-                .restore_resend_typed_credential(&rollback.0, &rollback.1);
-            if rollback_error.is_err() {
-                self.publish_changes([PlatformChangeScope::ServiceCredentials]);
-            }
-            return Err(connect_reconciliation_error(
-                &reconcile_error,
-                rollback_error.as_ref().err().map(String::as_str),
-                &api_key,
-            ));
-        }
-        let result = connection_result(
-            credential,
-            validation.checked_at,
-            validation.message,
-            Some(sender_domain),
-        );
-        self.publish_changes([PlatformChangeScope::ServiceCredentials]);
-        Ok(result)
-    }
-
     fn find_service_credential_by_label(
         &self,
         provider: ServiceProvider,
         label: &str,
     ) -> Result<Option<uuid::Uuid>, String> {
-        if provider == ServiceProvider::Resend {
-            return Ok(self
-                .credential_services
-                .list_resend_credentials()?
-                .into_iter()
-                .find(|credential| credential.label == label)
-                .map(|credential| credential.id));
-        }
         Ok(self
             .vault
             .list_service_credentials(provider, false)

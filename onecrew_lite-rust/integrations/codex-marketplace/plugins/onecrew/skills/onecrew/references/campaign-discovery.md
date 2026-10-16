@@ -22,8 +22,8 @@ for its provider reads. Keep the original sentence as the Campaign brief.
 3. Parse the customer's sentence into a proposal, not an approved standard.
    Keep each hard constraint with the exact supporting phrase: geography,
    content language, topic, follower threshold, exclusions, forbidden
-   sources, quantity and deadline. Unstated criteria stay unset. Do not copy
-   any prior Campaign, use a product demo or link requirement by default, or
+   sources, quantity and deadline. Unstated criteria stay unset. For a new task,
+   derive conditions from that task's request. Never add a product demo or link requirement by default, or
    equate an audience location with the creator's residence. Keep soft
    preferences and search tactics separate. When wording is ambiguous, ask
    only for the decision needed to make a hard condition executable.
@@ -32,6 +32,29 @@ for its provider reads. Keep the original sentence as the Campaign brief.
    validation issue; a valid response is a read-only preflight, not customer
    approval or proof that the interpretation is semantically correct. The
    customer still reviews the proposed hard conditions before creation.
+   Persist quoted additional conditions in `criteria.requirements` as
+   `{description, excerpt}` items. Each item requires its own source-bound
+   review; missing evidence remains pending. Treat a public email as a default
+   ranking preference, `criteria.contact_preference="public_email_first"`,
+   rather than a qualification gate. Prioritize observed profile emails and
+   bounded author-published contact pages; expand Telegram only when requested.
+
+   For conversational improvements, read the exact current Campaign first.
+   Identify the changed goal, hard conditions, preferences and target; retain
+   every unchanged customer requirement. Build a consolidated draft and attach
+   `criteria.refinement={campaign_id, expected_revision}` for its approved
+   source Campaign. The workbench AI planning input exposes the same refinement
+   reference. Show the changed conditions and obtain workbench approval.
+   Approval reuses saved search hints only where platform, browser profile and
+   exact keyword remain approved; native evidence and qualifications are checked
+   again. Keep the original Campaign and its historical result table intact.
+   An excluded account needs a verified native ID and exact profile URL:
+   `criteria.excluded_accounts` items contain `native_author_id`, `profile_url`
+   and the customer's exact `excerpt`. Resolve the actual account from saved
+   candidates; a display-name resemblance is insufficient. Approved exclusions
+   take precedence over a match score and remove that account from the new
+   recommendation set. A partnership exclusion remains a separate evidence
+   requirement; absence from one sampled post cannot prove an all-time absence.
 4. Form a bounded scope for every registered entry. Use each source's
    `scope_kind` and `allowed_values`; category sources require one of the
    returned values. Generate automatic queries for the actual search entry:
@@ -86,7 +109,8 @@ for its provider reads. Keep the original sentence as the Campaign brief.
    reading its result and the saved Campaign checkpoint before continuing.
    The owner completes each observed author through verification, scoring,
    source-backed contacts and recommendation before starting another author
-   or source search; reaching the contact-backed target stops further reads. Do not blindly retry an
+   or source search; reaching the approved qualification target stops further reads. Contacts are
+   required only by an explicit customer condition or a historical frozen policy. Do not blindly retry an
    unknown-effect or interrupted call. A login, risk or technical stop is
    not a zero-result source. For search-only `search_once` rounds, inspect the
    structured outcome after every call, before issuing another keyword.
@@ -97,6 +121,17 @@ for its provider reads. Keep the original sentence as the Campaign brief.
    the consumed call and failure in the evidence; stop that platform without
    retrying or treating it as empty. Continue other approved platforms only
    after checking that their connection and admission remain usable.
+   After a definite technical defect has been repaired, an explicitly requested
+   continuation may use `search_once.recovery` with the exact saved
+   `expected_stop_code` and `expected_stopped_at`. Read the current Campaign
+   first and fetch the live operation contract. The owner atomically checks
+   that checkpoint and admits one next approved query. Historical stops that
+   did not retain their failed query resume from the first approved query
+   without a saved successful completion; retain all previous charged calls.
+   Unchanged scope,
+   revision, connection and budget remain required. Never use repair recovery
+   for login, risk, timeout, interrupted or unknown-effect outcomes. A changed
+   checkpoint requires readback, never a blind retry.
    When the live output contract exposes `search_claim` and
    `returned_sources`, save the exact claim and ordered sources from that
    call for relevance comparisons. An array position is the returned order,
@@ -107,8 +142,9 @@ for its provider reads. Keep the original sentence as the Campaign brief.
    never reconstruct ranks from source IDs or make extra reads to fill it.
 6. Read candidate counts and source-bound evidence through the exact current
    operations. Search hits are leads; only owner-qualified, deduplicated
-   recommended creators with passing audited scores and real sourced contacts
-   count toward the new contact-backed target. Verify native author, content, follower and
+   recommended creators with passing audited scores count toward the target.
+   Report observed public emails separately; a profile URL or hidden-email control
+   is not an email address. Verify native author, content, follower and
    required location evidence. Missing or conflicting evidence remains
    pending. Never loosen a threshold, category, location or excluded source
    to reach a target. A changed hard condition needs a new customer decision
@@ -116,7 +152,14 @@ for its provider reads. Keep the original sentence as the Campaign brief.
    approved scope and budget; record why. Stop at the target, budget, no
    further approved action or required task-level decision. A null read limit
    never causes budget exhaustion. Unqualified, missing-contact or uncertain
-   candidates stay in the backend without a manual language approval queue. Report qualified,
+   candidates stay in the backend without a manual language approval queue. For
+   `criteria.requirements`, submit exactly one current-material finding for each
+   index using the live review contract's requirement criterion. Supported means
+   the entire condition is satisfied; contradicted requires positive conflicting
+   evidence; insufficient preserves an unresolved condition. Keep every citation
+   tied to that author and material hash. A `needs_evidence` result requires reading
+   these specific gaps; repeated Continue clicks do not create new evidence.
+   Report qualified,
    pending, rejected, per-source stop reasons and remaining gap honestly.
 
 The local UI and Library can show a Campaign and its one-author-one-row

@@ -10,7 +10,6 @@ workspace = true
 
 [dependencies]
 onecrew-email-contracts = { path = "../email-contracts" }
-onecrew-resend-platform = { path = "../resend-platform" }
 onecrew-gmail-platform = { path = "../gmail-platform" }
 
 [dev-dependencies]
