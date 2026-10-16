@@ -16,7 +16,7 @@ use onecrew_local_runtime::{
     OperatorAccountConnectionPrepareInput, OperatorAccountConnectionStatus,
     OperatorAccountConnectionStatusInput, OperatorAccountDisconnectError,
     OperatorAccountDisconnectInput, OperatorAccountDisconnectOutcome, OperatorAccountProjection,
-    RenameYoutubeCredentialInput, ResendCredentialConnectInput, ServiceCredentialConnectResult,
+    RenameYoutubeCredentialInput, ServiceCredentialConnectResult,
     ServiceCredentialProjection, SetXChatPasscodeInput, TelegramAccountConnectionOtpInput,
     TelegramAccountConnectionStartInput, TelegramAccountConnectionStatus,
     TelegramAccountConnectionTwoFactorInput, YoutubeApiKeyConnectInput,
@@ -111,10 +111,6 @@ pub trait OperatorAccountWorkflow: Send + Sync {
         &self,
         input: YoutubeApiKeyConnectInput,
     ) -> Result<ServiceCredentialConnectResult, String>;
-    async fn connect_resend(
-        &self,
-        input: ResendCredentialConnectInput,
-    ) -> Result<ServiceCredentialConnectResult, String>;
     async fn rotate_youtube(
         &self,
         input: onecrew_local_runtime::RotateYoutubeCredentialInput,
@@ -123,14 +119,6 @@ pub trait OperatorAccountWorkflow: Send + Sync {
         &self,
         input: RenameYoutubeCredentialInput,
     ) -> Result<ServiceCredentialProjection, String>;
-    async fn rotate_resend(
-        &self,
-        input: onecrew_local_runtime::RotateResendCredentialInput,
-    ) -> Result<ServiceCredentialConnectResult, String>;
-    async fn delete_resend(
-        &self,
-        input: onecrew_local_runtime::ResendCredentialDeleteInput,
-    ) -> Result<bool, String>;
 
     async fn disconnect(
         &self,
@@ -314,33 +302,6 @@ impl OperatorAccountWorkflow for PlatformRuntimeOperatorAccountWorkflow {
     ) -> Result<ServiceCredentialProjection, String> {
         let platform = Arc::clone(&self.platform);
         run_blocking(move || platform.rename_youtube_credential(input)).await
-    }
-
-    async fn rotate_resend(
-        &self,
-        input: onecrew_local_runtime::RotateResendCredentialInput,
-    ) -> Result<ServiceCredentialConnectResult, String> {
-        self.platform.rotate_resend_credential(input).await
-    }
-
-    async fn delete_resend(
-        &self,
-        input: onecrew_local_runtime::ResendCredentialDeleteInput,
-    ) -> Result<bool, String> {
-        let platform = Arc::clone(&self.platform);
-        run_blocking(move || {
-            platform
-                .delete_resend_credential(input)
-                .map_err(|error| error.to_string())
-        })
-        .await
-    }
-
-    async fn connect_resend(
-        &self,
-        input: ResendCredentialConnectInput,
-    ) -> Result<ServiceCredentialConnectResult, String> {
-        self.platform.connect_resend_credential(input).await
     }
 
     async fn disconnect(

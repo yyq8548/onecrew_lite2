@@ -454,6 +454,21 @@ pub trait DiscoveryCampaignRepository: Send + Sync {
         profile_ref: &str,
     ) -> Result<DiscoverySearchClaim, String>;
 
+    #[cfg_attr(any(), repository_execution(claim_reservation))]
+    fn claim_discovery_search_with_recovery(
+        &self,
+        campaign_id: &str,
+        expected_revision: u32,
+        platform: &str,
+        profile_ref: &str,
+        recovery: Option<&crate::discovery::DiscoverySearchRecovery>,
+    ) -> Result<DiscoverySearchClaim, String> {
+        if recovery.is_some() {
+            return Err("Discovery repair recovery is not allowed".into());
+        }
+        self.claim_discovery_search(campaign_id, expected_revision, platform, profile_ref)
+    }
+
     #[cfg_attr(any(), repository_execution(segmented_write))]
     fn finish_discovery_search(
         &self,

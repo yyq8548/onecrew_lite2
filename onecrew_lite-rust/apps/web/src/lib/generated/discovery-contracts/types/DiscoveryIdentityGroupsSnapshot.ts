@@ -47,6 +47,10 @@ export interface DiscoveryIdentityGroupsSnapshot {
           source_url: string;
         }[];
         evidence_version: string;
+        /**
+         * Owner-bound count; a leading ~ preserves a rounded public estimate.
+         */
+        followers?: string | null;
         hit: {
           author_id: string | null;
           author_label: string;

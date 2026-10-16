@@ -1,4 +1,5 @@
 import { platformDisplayName } from "@/lib/platform-display";
+import { DiscoveryPlanRequirements } from "./discovery-plan-requirements";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown, Download, ExternalLink, Loader2, Settings2 } from "lucide-react";
@@ -16,9 +17,10 @@ import { canStartPreparedDraft, discoveryDraftFailureKey, matchesDiscoveryCodexR
 import { discoveryExecutionKey, getDiscoveryExecution, startDiscoveryExecution, pauseDiscoveryExecution, executionRunning } from "@/lib/discovery-execution";
 import { discoveryDraftProgressKey, getDiscoveryDraftProgress } from "@/lib/discovery-draft-progress";
 import { discoveryLibraryFailureKey } from "@/lib/discovery-library-error";
+import { discoveryProviderFailureKey } from "@/lib/discovery-execution-error";
 import { checkpointExecution, loadRunCheckpoint, loadRunHistory, type DiscoveryRunCheckpoint } from "@/lib/discovery-run-checkpoint";
 import { authorGroupsKey, authorGroupsRefreshInterval, discoveryLibrarySyncKey, getDiscoveryAuthorGroups } from "@/lib/discovery-author-groups";
-import { DISCOVERY_DEFAULTS, loadDiscoveryPreferences, saveDiscoveryPreferences, discoveryPlanningBrief, discoveryProductBrief, discoveryPlanningScopeOverrides, discoveryEditedScopes } from "@/lib/discovery-draft-preferences";
+import { DISCOVERY_DEFAULTS, loadDiscoveryPreferences, saveDiscoveryPreferences, discoveryPlanningBrief, discoveryPlanningScopeOverrides, discoveryEditedScopes } from "@/lib/discovery-draft-preferences";
 import { loadOpenCliAuthObservations, OPENCLI_AUTH_CHANGED, excludedSearchPlatforms, preflightOpenCliSearch } from "@/lib/opencli-auth";
 import {
   approveDiscoveryCampaign, canRecoverDiscoverySearch, canVerifyDiscovery, countDiscoveryCandidates, createDiscoveryCampaign, getDiscoveryCampaign, getDiscoveryContent, prepareDiscoveryDraft,
@@ -66,7 +68,7 @@ export function SavedContentEvidence({ read }: { read: DiscoveryContentRead }) {
   const { t, i18n } = useTranslation("shell");
   const content = read.native_content;
   return <div className="mt-2 space-y-1 text-xs">
-    <p>{read.status}{read.stop_code ? ` · ${read.stop_code}` : ""}</p>
+    <p>{read.status}{read.stop_code ? ` · ${t(discoveryProviderFailureKey(read.stop_code))}` : ""}</p>
     {content && "bvid" in content && <>
       <p>{content.title} · MID {read.claim.author_id}</p>
       <p className="whitespace-pre-wrap break-words">{content.description}</p>
@@ -140,7 +142,7 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
     mutationFn: async (request: DiscoveryCodexRequest) => {
       const result = await prepareDiscoveryDraft({ id: request.id, brief: request.brief,
         profile_ref: request.profileRef, opencli_version: request.version,
-        target_count: request.targetCount, max_calls: request.maxCalls, min_followers_override: request.minFollowersOverride, criteria_overrides: request.criteriaOverrides, scope_overrides: request.scopeOverrides });
+        target_count: request.targetCount, max_calls: request.maxCalls, min_followers_override: request.minFollowersOverride, criteria_overrides: request.criteriaOverrides, scope_overrides: request.scopeOverrides, refinement: request.refinement });
       if (!matchesDiscoveryCodexRequest(result, request)) throw new Error("discovery_draft_conflict");
       return result;
     },
@@ -199,7 +201,10 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
   const [requireDemo, setRequireDemo] = useState(false);
   const [requireToolLink, setRequireToolLink] = useState(false);
   useEffect(() => { setPreferencesStatus(null); }, [brief, region, language, category, minSubscribers, targetCount, maxCalls, keywords, platforms, v2exNodes, redditCommunities, tagInputs, categoryInputs, requireDemo, requireToolLink]);
-  const planningBrief = discoveryPlanningBrief({ brief, region, language, category, keywords,
+  const editingSource = editingFrom ? queryClient.getQueryData<DiscoveryCampaign>(["opencli-campaign", editingFrom]) : undefined;
+  const planningBrief = discoveryPlanningBrief({ brief, region,
+    language: editingSource && language === (editingSource.criteria.language ?? "") ? "" : language,
+    category: editingSource && category === (editingSource.criteria.category ?? "") ? "" : category, keywords,
     expandAllSources: expandedFrom !== null,
     defaultPlatforms: ["youtube"],
     platformRestriction: platformsEdited ? platforms : undefined });
@@ -338,8 +343,8 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
     onError: () => { void campaign.refetch(); void candidates.refetch(); void counts.refetch(); },
   });
   const recoverSearch = useMutation({
-    mutationFn: (input: { id: string; revision: number; platform: string; profileRef: string }) =>
-      searchDiscoveryOnce(input.id, input.revision, input.platform, input.profileRef),
+    mutationFn: (input: { id: string; revision: number; platform: string; profileRef: string; recovery?: { expected_stop_code: string; expected_stopped_at: number } }) =>
+      searchDiscoveryOnce(input.id, input.revision, input.platform, input.profileRef, input.recovery),
     retry: false,
     onSuccess: result => queryClient.setQueryData(["opencli-campaign", result.id], result),
     onSettled: (_result, _error, input) => Promise.all([
@@ -356,13 +361,17 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
     && suppliedScopes.every(scope => scope.keywords.length === 0 || validDiscoveryScope(scope.platform, scope.keywords))
     && Number.isInteger(targetCount) && targetCount > 0 && targetCount <= 10000 && (maxCalls === null || (Number.isInteger(maxCalls) && maxCalls >= platforms.length && maxCalls <= 10000)) && minSubscribers >= 0;
   const preparePlan = (startAfterPrepare = false) => {
+    const previous = editingFrom ? queryClient.getQueryData<DiscoveryCampaign>(["opencli-campaign", editingFrom]) : undefined;
     aiDraft.mutate({ id: draftId,
     brief: planningBrief, profileRef, version, platforms: platformsEdited ? platforms : availablePlatforms,
-    targetCount: targetEdited ? targetCount : null, maxCalls, startAfterPrepare,
+    targetCount: targetEdited ? targetCount : null, maxCalls: previous && maxCalls === previous.max_calls ? null : maxCalls, startAfterPrepare,
+    refinement: previous ? { campaign_id: previous.id, expected_revision: previous.revision } : undefined,
     minFollowersOverride: followersEdited ? minSubscribers : null,
     scopeOverrides: discoveryPlanningScopeOverrides(suppliedScopes),
-    criteriaOverrides: { region: "",
-      language: language.trim() || (editingFrom ? "" : null), category: category.trim() || null,
+    criteriaOverrides: previous && language === (previous.criteria.language ?? "")
+      && category === (previous.criteria.category ?? "") && !requireDemo && !requireToolLink ? undefined : { region: "",
+      language: previous && language === (previous.criteria.language ?? "") ? null : language.trim() || (editingFrom ? "" : null),
+      category: previous && category === (previous.criteria.category ?? "") ? null : category.trim() || null,
       requires_ai_tool_demo: requireDemo, requires_public_tool_url: requireToolLink } });
   };
   const current = campaign.data;
@@ -491,7 +500,11 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
     startExpanded();
     setExpandedFrom(null);
     setEditingFrom(previous.id);
-    setBrief(discoveryProductBrief(previous.brief));
+    setTargetEdited(false);
+    setFollowersEdited(false);
+    setPlatformsEdited(false);
+    setBrief("");
+    setKeywords("");
     setPlatforms(previous.scopes.map(scope => scope.platform));
     setPlatformsEdited(true);
     // Old settings may be execution prose. Explicit form values supersede them.
@@ -688,14 +701,14 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
         </details>}
         {execution.isError && <Alert><AlertDescription>{t("opencliPilot.statusDisconnected")}</AlertDescription></Alert>}
         {counts.isError && <Alert variant="destructive"><AlertDescription>{t("opencliPilot.candidatesFailed")}</AlertDescription></Alert>}
+        <DiscoveryPlanRequirements criteria={current.criteria} />
         {current.phase === "draft" && <div className="rounded-md border p-3 text-sm"><p className="font-medium">{t("opencliPilot.approvalBounds")}</p><p>{current.scopes.map(scope => platformDisplayName(scope.platform)).join(", ")}</p><p>{t("opencliPilot.frozenThreshold", { count: current.criteria.min_subscribers ?? current.criteria.min_followers ?? 0 })}</p>{current.criteria.region && <p>{t("opencliPilot.frozenRegion", { value: current.criteria.region })}</p>}<p>{t("opencliPilot.frozenLanguage", { value: current.criteria.language || t("opencliPilot.any") })}</p><p>{t("opencliPilot.frozenCategory", { value: current.criteria.category || t("opencliPilot.any") })}</p>{current.scopes.map(scope => <p key={`${scope.platform}:${scope.profile_ref}`}>{t("opencliPilot.frozenKeywords", { value: `${platformDisplayName(scope.platform)}: ${scope.keywords.join(", ")}` })}</p>)}<p>{t("opencliPilot.frozenBudget", { target: current.target_count, calls: current.max_calls ?? "∞", version: current.opencli_version })}</p></div>}
         {current.phase === "active" && <Button variant="secondary" className="h-11 border font-semibold" disabled={running || pausing || verify.isPending || recoverSearch.isPending || current.platform_runs.some(run => run.status === "searching")} onClick={editPlan}><Settings2 className="size-4" />{t("opencliPilot.editPlan")}</Button>}
-        {current.phase === "active" && <Collapsible className="discovery-disclosure"><CollapsibleTrigger asChild><Button variant="ghost">{t("opencliPilot.adjustPlan")}</Button></CollapsibleTrigger>
-          <CollapsibleContent className="space-y-3 pb-4">
+        {current.phase === "active" && <section aria-label={t("opencliPilot.adjustPlan")} className="rounded-md border p-3 space-y-3">
           {running && <p role="status" className="text-sm text-muted-foreground">{t("opencliPilot.pauseBeforeAdjust")}</p>}
           <DiscoveryTargetIncrease key={current.id} campaign={current} busy={running || verify.isPending} />
 
-        </CollapsibleContent></Collapsible>}
+        </section>}
         {current.criteria.automatic_query_expansion === true && <p className="text-sm text-muted-foreground">{t("opencliPilot.automaticQueries")}</p>}
         {current.phase === "draft" && <div className="flex flex-wrap gap-2">
           <Button disabled={approve.isPending || profileChanged} onClick={() => approve.mutate(true)}>{approve.isPending && <Loader2 className="size-4 animate-spin" />}{t("opencliPilot.approveAndStart")}</Button>
@@ -705,20 +718,21 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
         <CollapsibleTrigger asChild><Button variant="ghost">{t("opencliPilot.platformRunsDetails")}</Button></CollapsibleTrigger>
         <CollapsibleContent className="space-y-3 pt-3">
         {current.phase === "active" && <div className="grid gap-1"><Label htmlFor="discovery-active-platform">{t("opencliPilot.platformStatusFilter")}</Label><select id="discovery-active-platform" className="h-9 rounded-md border bg-background px-3 text-sm" value={activePlatform} onChange={event => setActivePlatform(event.target.value)}>{current.scopes.filter(scope => !excludedPlatforms.includes(scope.platform)).map(scope => <option key={scope.platform} value={scope.platform}>{platformDisplayName(scope.platform)}</option>)}</select></div>}
-        {run && <p className="text-sm text-muted-foreground">{t("opencliPilot.runStatus", { status: discoveryRunStageKey(run.status) ? t(discoveryRunStageKey(run.status)!) : run.status, calls: run.calls_used })}{run.stop_code ? ` · ${run.stop_code}` : ""}</p>}
+        {run && <p className="text-sm text-muted-foreground">{t("opencliPilot.runStatus", { status: discoveryRunStageKey(run.status) ? t(discoveryRunStageKey(run.status)!) : run.status, calls: run.calls_used })}{run.stop_code ? ` · ${t(discoveryProviderFailureKey(run.stop_code))}` : ""}</p>}
         {coverage && <p className="text-sm text-muted-foreground">{t("opencliPilot.coverage", coverage)}</p>}
         <div className="space-y-3 text-sm">{current.platform_runs.map(item => <div key={`${item.platform}:${item.profile_ref}`} className="flex flex-wrap justify-between gap-2 border-b pb-3">
           <p className="font-medium">{platformDisplayName(item.platform)}</p><p>{discoveryRunStageKey(item.status) ? t(discoveryRunStageKey(item.status)!) : item.status} · {item.calls_used}</p>
-          {item.stop_code && <p className="basis-full break-words text-sm text-muted-foreground">{item.stop_code}</p>}
+          {item.stop_code && <p className="basis-full break-words text-sm text-muted-foreground">{t(discoveryProviderFailureKey(item.stop_code))}</p>}
         </div>)}</div>
         {run?.status === "technical_stop" && <Alert><AlertDescription>{t(run.stop_code === "interrupted_read" ? "opencliPilot.interruptedSearchHelp" : "opencliPilot.technicalStop")}</AlertDescription></Alert>}
-        {run?.status === "technical_stop" && run.stop_code === "interrupted_read" && <Button variant="outline"
+        {run?.status === "technical_stop" && canRecoverDiscoverySearch(current, profileRef, activePlatform) && <Button variant="outline"
           disabled={running || verify.isPending || recoverSearch.isPending || !canRecoverDiscoverySearch(current, profileRef, activePlatform)}
           onClick={() => {
             if (running || verify.isPending || recoverSearch.isPending || !canRecoverDiscoverySearch(current, profileRef, activePlatform)) return;
-            recoverSearch.mutate({ id: current.id, revision: current.revision, platform: activePlatform, profileRef });
+            recoverSearch.mutate({ id: current.id, revision: current.revision, platform: activePlatform, profileRef,
+              recovery: run.stop_code && run.stop_code !== "interrupted_read" && typeof run.updated_at === "number" ? { expected_stop_code: run.stop_code, expected_stopped_at: run.updated_at } : undefined });
           }}>
-          {recoverSearch.isPending && <Loader2 className="size-4 animate-spin" />}{t("opencliPilot.recoverInterruptedSearch", { platform: activePlatform })}
+          {recoverSearch.isPending && <Loader2 className="size-4 animate-spin" />}{t(run.stop_code === "interrupted_read" ? "opencliPilot.recoverInterruptedSearch" : "opencliPilot.recoverRepairedSearch", { platform: activePlatform })}
         </Button>}
         {recoverSearch.isError && recoverSearch.variables.id === current.id && <Alert variant="destructive"><AlertDescription>{t("opencliPilot.stepFailed")}</AlertDescription></Alert>}
         {run?.status === "unauthorized" && <Alert><AlertDescription>{t("opencliPilot.accountRequired", { platform: activePlatform })}</AlertDescription></Alert>}

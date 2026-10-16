@@ -59,10 +59,13 @@ pub(super) fn apply(
         .findings
         .first()
         .ok_or("initial_match_single_finding_required")?;
-    if input.findings.len() > 2 {
+    let ordinary: Vec<_> = input.findings.iter().filter(|finding| {
+        !matches!(finding.criterion, DiscoveryReviewCriterion::Requirement(_))
+    }).collect();
+    if ordinary.len() > 2 {
         return Err("initial_match_single_finding_required".into());
     }
-    if let Some(language) = input.findings.get(1)
+    if let Some(language) = ordinary.get(1)
         && (finding.outcome != DiscoveryReviewOutcome::Insufficient
             || language.criterion != DiscoveryReviewCriterion::ContentLanguage
             || language.outcome != DiscoveryReviewOutcome::Insufficient
@@ -178,7 +181,7 @@ pub(super) fn apply(
         "source_url": material.hit.source_url, "review_id": review_id,
         "material_hash": material.material_hash, "policy_version": POLICY,
         "outcome": finding.outcome, "level": finding.match_level, "reason": finding.rationale,
-        "language_only_pending": input.findings.len() == 2,
+        "language_only_pending": ordinary.len() == 2,
     });
     Ok(())
 }

@@ -105,11 +105,9 @@ pub use creator_save::{
     CreatorSaveTarget, CreatorSaveTelegramAdministratorRow, CreatorSaveTelegramAdministrators,
     PrepareCreatorSaveInput, TelegramCommunityAdministratorsInput, TelegramCommunityLocator,
 };
-pub use credentials::services::ResendCredentialTest;
 pub use credentials::{
     ConnectedServiceCredentialProjection, MailboxCredentialProjectionDetails,
-    RenameYoutubeCredentialInput, ResendCredentialConnectInput, ResendCredentialDeleteInput,
-    ResendCredentialDeleteOutcome, ResendCredentialDeletionError, RotateResendCredentialInput,
+    RenameYoutubeCredentialInput,
     RotateYoutubeCredentialInput, ServiceCredentialConnectResult, ServiceCredentialMutationError,
     ServiceCredentialProjection, ServiceCredentialValidationProjection, YoutubeApiKeyConnectInput,
     YoutubeCredentialAvailability, YoutubeCredentialDeleteError, YoutubeCredentialDeleteInput,

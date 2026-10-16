@@ -1,7 +1,7 @@
 use std::{
     collections::BTreeMap,
     sync::{
-        Arc, Mutex,
+        Mutex,
         atomic::{AtomicUsize, Ordering},
     },
 };
@@ -56,10 +56,7 @@ fn creator() -> YoutubeCreator {
 }
 
 fn services(vault: LocalVault) -> CredentialServices {
-    CredentialServices::new(
-        vault,
-        Arc::new(onecrew_email::ResendAdmission::new().unwrap()),
-    )
+    CredentialServices::new(vault)
 }
 
 fn credential(vault: &LocalVault) -> ServiceCredential {

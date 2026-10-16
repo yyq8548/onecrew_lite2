@@ -2,7 +2,7 @@ import { z } from "zod";
 import { invoke } from "./local-runtime";
 import { additionalNativeContentSchema, additionalNativePlatforms, additionalNativeContentBound, linkedinAccount } from "./discovery-native-content";
 
-const runSchema = z.object({ platform: z.string(), profile_ref: z.string(), status: z.string(), calls_used: z.number(), stop_code: z.string().nullable() });
+const runSchema = z.object({ platform: z.string(), profile_ref: z.string(), status: z.string(), calls_used: z.number(), stop_code: z.string().nullable(), updated_at: z.number().int().optional() });
 const campaignSchema = z.object({
   id: z.string(), phase: z.string(), revision: z.number(), brief: z.string(),
   opencli_version: z.string(),
@@ -60,6 +60,7 @@ export async function prepareDiscoveryDraft(input: {
   target_count: number | null; max_calls: number | null;
   min_followers_override?: number | null;
   scope_overrides?: { platform: string; keywords: string[] }[];
+  refinement?: { campaign_id: string; expected_revision: number } | null;
   criteria_overrides?: { region: string | null; language: string | null; category: string | null; requires_ai_tool_demo: boolean; requires_public_tool_url: boolean };
 }): Promise<DiscoveryCampaign> {
   return campaignSchema.parse(await invoke<unknown>("onecrew_discovery_draft_prepare", { input }));
@@ -501,9 +502,14 @@ export function canVerifyDiscovery(campaign: DiscoveryCampaign, profileRef: stri
 /** Explicit recovery only; ordinary full-source runs never replay an uncertain read. */
 export function canRecoverDiscoverySearch(campaign: DiscoveryCampaign, profileRef: string, platform: string): boolean {
   const run = campaign.platform_runs.find(item => item.platform === platform && item.profile_ref === profileRef);
-  return run?.status === "technical_stop" && run.stop_code === "interrupted_read"
+  const scope = campaign.scopes.find(item => item.platform === platform && item.profile_ref === profileRef);
+  const repairedCodes = ["provider_endpoint_not_found", "provider_response_invalid_json", "provider_response_shape_invalid",
+    "provider_response_http_error", "provider_source_unavailable", "opencli_command_unavailable",
+    "opencli_command_failed", "opencli_invalid_output", "opencli_output_too_large"];
+  return campaign.phase === "active" && (campaign.max_calls === null || campaign.used_calls < campaign.max_calls)
+    && run?.status === "technical_stop" && !!scope
     && !campaign.platform_runs.some(item => item.status === "searching")
-    && canSearchDiscovery(campaign, profileRef, platform);
+    && (run.stop_code === "interrupted_read" || (typeof run.updated_at === "number" && !!run.stop_code && repairedCodes.includes(run.stop_code) && run.calls_used < scope.keywords.length));
 }
 
 export type DiscoveryDraft = {
@@ -552,8 +558,11 @@ export async function searchDiscoveryYoutubeOnce(id: string, expectedRevision: n
   return campaignSchema.parse(z.object({ campaign: z.unknown(), returned_hits: z.number() }).parse(result).campaign);
 }
 
-export async function searchDiscoveryOnce(id: string, expectedRevision: number, platform: string, profileRef: string): Promise<DiscoveryCampaign> {
-  const result = await invoke<unknown>("onecrew_discovery_search_once", { id, expectedRevision, platform, profileRef, limit: 10 });
+export async function searchDiscoveryOnce(id: string, expectedRevision: number, platform: string, profileRef: string,
+  recovery?: { expected_stop_code: string; expected_stopped_at: number }): Promise<DiscoveryCampaign> {
+  const result = recovery
+    ? await invoke<unknown>("onecrew_discovery_search_recover_once", { input: { campaign_id: id, expected_revision: expectedRevision, platform, profile_ref: profileRef, limit: 10, recovery } })
+    : await invoke<unknown>("onecrew_discovery_search_once", { id, expectedRevision, platform, profileRef, limit: 10 });
   const campaign = campaignSchema.parse(z.object({ campaign: z.unknown(), returned_hits: z.number() }).parse(result).campaign);
   if (campaign.id !== id || campaign.revision !== expectedRevision) throw new Error("discovery_revision_changed");
   return campaign;

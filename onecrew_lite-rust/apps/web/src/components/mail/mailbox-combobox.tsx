@@ -78,6 +78,7 @@ export function MailboxCombobox({
               {mailboxes.map((mailbox) => (
                 <CommandItem
                   key={mailbox.mailbox_ref_id}
+                  disabled={!mailbox.available || mailbox.provider !== "gmail"}
                   value={`${mailbox.email_address} ${mailbox.label} ${mailbox.display_name ?? ""} ${mailbox.provider}`}
                   onSelect={() => {
                     onValueChange(mailbox.mailbox_ref_id);
@@ -88,7 +89,7 @@ export function MailboxCombobox({
                   <span className="min-w-0 flex-1">
                     <span className="block truncate">{mailbox.label || mailbox.email_address}</span>
                     <span className="block truncate text-[11px] text-muted-foreground">
-                      {mailbox.email_address} · Resend
+                      {mailbox.email_address}{mailbox.provider === "gmail" ? " · Gmail" : ` · ${t("mailbox.unavailable")}`}
                     </span>
                   </span>
                   {!mailbox.available && <span className="text-[10px] text-destructive">{t("mailbox.unavailable")}</span>}

@@ -46,8 +46,7 @@ pub struct DiscoveryIntentProposal {
     pub language: ProposedConstraint<String>,
     pub min_subscribers: ProposedConstraint<u64>,
     pub excluded_platforms: Vec<QuotedPlatform>,
-    /// Any hard condition that the current Campaign owner cannot enforce
-    /// blocks conversion to a draft until a supported mapping is available.
+    /// 每项要求保留原文，通过当前作者的公开证据逐项审核。
     pub other_hard_conditions: Vec<QuotedHardCondition>,
     pub soft_preferences: Vec<QuotedPreference>,
     pub suggested_keywords: Vec<String>,
@@ -143,7 +142,7 @@ pub fn validate_discovery_intent_proposal(
     registered_platforms: &[String],
 ) -> Vec<DiscoveryIntentIssue> {
     let mut issues = Vec::new();
-    if request.trim().is_empty() || request.len() > 4_000 || proposal.original_request != request {
+    if request.trim().is_empty() || request.len() > 32_000 || proposal.original_request != request {
         issue(&mut issues, "original_request", "request_mismatch");
     }
     if proposal.excluded_platforms.len() > 64 {
@@ -195,14 +194,11 @@ pub fn validate_discovery_intent_proposal(
         }
     }
     for condition in &proposal.other_hard_conditions {
-        if !excerpt_valid(request, &condition.excerpt) || condition.description.trim().is_empty() {
+        if !excerpt_valid(request, &condition.excerpt)
+            || condition.description.trim().is_empty()
+            || condition.description.len() > 1000
+        {
             issue(&mut issues, "other_hard_conditions", "invalid_condition");
-        } else {
-            issue(
-                &mut issues,
-                "other_hard_conditions",
-                "unsupported_hard_condition",
-            );
         }
     }
     for preference in &proposal.soft_preferences {
@@ -299,7 +295,7 @@ mod tests {
     }
 
     #[test]
-    fn blocks_unsupported_hard_conditions_and_unregistered_exclusions() {
+    fn preserves_quoted_hard_conditions_and_blocks_unregistered_exclusions() {
         let request = "找鞋子创作者，至少1万粉丝，语言不限，所在地不限，排除已有合作对象和抖音";
         let mut proposal = shoe_proposal(request);
         proposal.excluded_platforms = vec![QuotedPlatform {
@@ -312,10 +308,6 @@ mod tests {
         }];
         let issues = validate_discovery_intent_proposal(request, &proposal, &["youtube".into()]);
         assert!(issues.iter().any(|item| item.code == "invalid_platform"));
-        assert!(
-            issues
-                .iter()
-                .any(|item| item.code == "unsupported_hard_condition")
-        );
+        assert!(!issues.iter().any(|item| item.field == "other_hard_conditions"));
     }
 }

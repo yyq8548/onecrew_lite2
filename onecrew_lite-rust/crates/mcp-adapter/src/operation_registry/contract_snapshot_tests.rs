@@ -254,6 +254,21 @@ fn registry_contract_snapshot_is_exportable() {
         );
         let mut found = Vec::new();
         for toolkit in surface["directory"].as_array_mut().unwrap() {
+            if let Some(target) = toolkit["operations"]
+                .as_array_mut()
+                .unwrap()
+                .iter_mut()
+                .find(|operation| operation["id"] == "onecrew.discovery.target.increase")
+            {
+                assert_eq!(
+                    *target,
+                    json!({"id":"onecrew.discovery.target.increase","title":"Adjust discovery Campaign target","summary":"Record an authenticated, idempotent decision to raise or lower the approved Campaign target while preserving frozen criteria, sources and read budget."})
+                );
+                target["title"] = json!("Increase discovery Campaign target");
+                target["summary"] = json!(
+                    "Record an authenticated, idempotent decision to increase the approved Campaign target while preserving frozen criteria, sources and read budget."
+                );
+            }
             toolkit["operations"]
                 .as_array_mut()
                 .unwrap()

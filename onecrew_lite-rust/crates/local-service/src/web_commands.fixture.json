@@ -6,12 +6,6 @@
     ]
   },
   {
-    "name": "connect_resend_credential",
-    "keys": [
-      "input"
-    ]
-  },
-  {
     "name": "connect_youtube_api_key",
     "keys": [
       "input"
@@ -34,12 +28,6 @@
     "keys": []
   },
   {
-    "name": "delete_resend_credential",
-    "keys": [
-      "input"
-    ]
-  },
-  {
     "name": "delete_youtube_api_key",
     "keys": [
       "credentialId",
@@ -49,10 +37,6 @@
   },
   {
     "name": "list_profiles",
-    "keys": []
-  },
-  {
-    "name": "list_resend_credentials",
     "keys": []
   },
   {
@@ -436,6 +420,12 @@
       "platform",
       "profileRef",
       "limit"
+    ]
+  },
+  {
+    "name": "onecrew_discovery_search_recover_once",
+    "keys": [
+      "input"
     ]
   },
   {
@@ -884,12 +874,6 @@
     "keys": [
       "profileId",
       "proxy"
-    ]
-  },
-  {
-    "name": "test_resend_credential",
-    "keys": [
-      "credentialId"
     ]
   },
   {

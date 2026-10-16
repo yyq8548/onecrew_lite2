@@ -10,7 +10,6 @@
 use std::future::Future;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use onecrew_email::{EmailError, ProviderErrorClass};
 use onecrew_ig::IgError;
 use onecrew_local_domain::{Platform, ProfileSecret};
 use onecrew_proxy::{EgressInfo, ProxyError, check_egress_ip};
@@ -24,7 +23,6 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::credentials::services::{ResendCredentialTest, ResendCredentialTestError};
 use crate::{
     LocalPlatform, OperatorAccountPlatform, YoutubePlatformTestError, YoutubePlatformTestInput,
     YoutubePlatformTestResult,
@@ -143,7 +141,7 @@ impl LocalPlatform {
         )
     }
 
-    /// Probe Gmail through its own read path; other mailboxes retain their credential test.
+    /// Probe Gmail through its own read path.
     pub async fn mailbox_connection_check(
         &self,
         mailbox_ref_id: &str,
@@ -152,7 +150,7 @@ impl LocalPlatform {
             &onecrew_creator_runtime::MailboxRefId::new(mailbox_ref_id.to_owned())
         ).await;
         let (status, account_handle) = match probe {
-            Ok(None) => return project_resend_test(self.test_resend_credential_typed(mailbox_ref_id).await),
+            Ok(None) => return Err(ConnectionCheckError::ConnectionUnavailable),
             Ok(Some(email)) => (ConnectionCheckStatus::Ok, Some(email)),
             Err(code) if code == "gmail_read_timeout" || code == "gmail_read_transport_failed" =>
                 (ConnectionCheckStatus::NetworkUnreachable, None),
@@ -379,36 +377,6 @@ fn project_youtube_test(
         }
     };
     Ok(service_check(status))
-}
-
-fn project_resend_test(
-    result: Result<ResendCredentialTest, ResendCredentialTestError>,
-) -> Result<ConnectionCheck, ConnectionCheckError> {
-    let status = match result {
-        Ok(_) => ConnectionCheckStatus::Ok,
-        Err(ResendCredentialTestError::MailboxUnavailable(_)) => {
-            return Err(ConnectionCheckError::ConnectionUnavailable);
-        }
-        Err(ResendCredentialTestError::Local(_)) => return Err(ConnectionCheckError::Internal),
-        Err(ResendCredentialTestError::Provider(error)) => resend_failure_status(&error),
-    };
-    Ok(service_check(status))
-}
-
-fn resend_failure_status(error: &EmailError) -> ConnectionCheckStatus {
-    match error {
-        EmailError::Transport(_) => ConnectionCheckStatus::NetworkUnreachable,
-        EmailError::Provider(failure) if failure.class == ProviderErrorClass::Auth => {
-            ConnectionCheckStatus::CredentialRejected
-        }
-        // An unverified or unconfigured sender domain is fixed on the key's
-        // Resend account, like a rejected key.
-        EmailError::InvalidConfig(_) => ConnectionCheckStatus::CredentialRejected,
-        EmailError::Provider(_)
-        | EmailError::OversizedResponse { .. }
-        | EmailError::InvalidMessage(_)
-        | EmailError::UnsupportedCapability(_) => ConnectionCheckStatus::ProviderUnavailable,
-    }
 }
 
 /// Service credentials call their provider directly; no proxy is configured.

@@ -77,7 +77,6 @@ const accounts = {
   credentials: {
     count: {
       youtube: "Read-only discovery credentials: {{count}}",
-      resend: "Email identities: {{count}}",
     },
     columns: {
       credential: "Credential",
@@ -100,21 +99,17 @@ const accounts = {
     neverCalled: "Never used",
     actions: {
       testApiKey: "Test API Key",
-      testResend: "Test Resend email",
       delete: "Delete credential",
       edit: "Edit credential",
     },
     empty: {
       youtube: "No YouTube discovery credentials yet. Use Add in the upper-right.",
-      resend: "No Resend email identities yet. Use Add in the upper-right.",
     },
     notes: {
       youtube: "Availability, call limits, and last-used time are based on YouTube API responses.",
-      resend: "The API Key exists only in the encrypted local credential store. It is never revealed or cached here.",
     },
     delete: {
       youtubeDescription: "This YouTube API Key will be deleted from the encrypted local credential store and can no longer be used for discovery.",
-      resendDescription: "This Resend email identity will be deleted from the local credential store. Historical onecrew_lite emails, threads, Creator attribution, and audit records will be preserved.",
       title: "Delete {{label}}?",
       deleting: "Deleting…",
       confirm: "Delete",
@@ -518,29 +513,6 @@ const accounts = {
       desktopRotateRequired: "Replace the YouTube Key in the onecrew_lite desktop app",
       rotatedDescription: "The Key for credential {{label}} was replaced, encrypted, and saved locally",
       rotateFailed: "YouTube API Key replacement failed",
-    },
-  },
-  resendDialog: {
-    add: "Add email identity",
-    title: "Connect a Resend email identity",
-    description: "The API Key, receiving access, and sender domain are validated before the encrypted credential is written locally. The UI and onecrew_lite retain only a public projection.",
-    credentialName: "Credential name",
-    credentialPlaceholder: "For example, reach-outreach",
-    senderEmail: "Sender email",
-    senderEmailPlaceholder: "partnerships@example.com",
-    displayNameOptional: "Display name (optional)",
-    displayNamePlaceholder: "For example, Reach Labs",
-    apiKeyLabel: "Resend API Key",
-    apiKeyPlaceholder: "re_…",
-    securityTitle: "Encrypted locally · never revealed · never cached",
-    securityDescription: "The sender domain must be verified and enabled for sending in Resend. The email local-part is configuration only; Resend still accepts or rejects each actual send.",
-    savingAndTesting: "Saving and testing",
-    testPassed: "Test passed",
-    saveAndTest: "Save and test",
-    toasts: {
-      desktopRequired: "Connect the Resend email identity in the onecrew_lite desktop app",
-      savedDescription: "The API Key for {{email}} was verified, encrypted, and saved locally",
-      validationFailed: "Resend email validation failed",
     },
   },
   searchPlaceholder: "Search platforms…",

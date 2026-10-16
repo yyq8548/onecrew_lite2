@@ -15,7 +15,7 @@ fn production_registry_builds_without_changing_public_surface_construction() {
         registry.operation_ids_and_surfaces().len()
             + registry.playbook_ids().len()
             + registry.toolkit_guide_ids().len(),
-        191
+        188
     );
     assert!(!registry.operation_ids_and_surfaces().is_empty());
     let prepare = EntryId::parse("onecrew.search.plan.prepare").unwrap();
@@ -182,11 +182,8 @@ fn phase_six_connection_and_credential_operation_inventory_is_exact_and_surface_
         "youtube.credential.rotate",
         "youtube.credential.rename",
         "youtube.credential.delete",
-        "email.credential.connect",
-        "email.credential.rotate",
-        "email.credential.delete",
     ];
-    assert_eq!(expected.len(), 40);
+    assert_eq!(expected.len(), 37);
     for id in expected {
         let id = EntryId::parse(id).unwrap();
         assert!(registry.entry(&id, SurfaceId::Full).is_some(), "{id}");
@@ -248,16 +245,6 @@ fn phase_six_connection_and_credential_operation_inventory_is_exact_and_surface_
         ),
         (
             "youtube.credential.rotate",
-            SecretClass::VaultBound,
-            &["/api_key"][..],
-        ),
-        (
-            "email.credential.connect",
-            SecretClass::VaultBound,
-            &["/api_key"][..],
-        ),
-        (
-            "email.credential.rotate",
             SecretClass::VaultBound,
             &["/api_key"][..],
         ),

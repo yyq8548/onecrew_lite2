@@ -31,13 +31,16 @@ fn production_toolkit_and_playbook_inventory_is_exact() {
             (ToolkitId::Telegram, 18),
             (ToolkitId::Youtube, 9),
             (ToolkitId::OneCrew, 67),
-            (ToolkitId::Email, 29),
+            (ToolkitId::Email, 26),
         ]
         .into_iter()
         .collect()
     );
-    assert_eq!(registry.operation_ids_and_surfaces().len(), 159);
+    assert_eq!(registry.operation_ids_and_surfaces().len(), 156);
     for removed in [
+        "email.credential.connect",
+        "email.credential.rotate",
+        "email.credential.delete",
         "task.setup_form",
         "task.list",
         "task.get",
@@ -125,7 +128,7 @@ fn production_toolkit_and_playbook_inventory_is_exact() {
         registry.operation_ids_and_surfaces().len()
             + registry.playbook_ids().len()
             + registry.toolkit_guide_ids().len(),
-        159 + expected_playbooks.len() + 6
+        156 + expected_playbooks.len() + 6
     );
 
     for surface in [

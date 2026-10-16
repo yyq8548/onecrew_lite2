@@ -7,7 +7,7 @@ export interface SubmitDiscoveryReviewInput {
   campaign_id: string;
   expected_revision: number;
   /**
-   * @maxItems 6
+   * @maxItems 40
    *
    * Items: Supported demo requires first-hand actions/results in saved transcript, not a title,
    * advertisement, list, third-party retelling or mere tool mention. Text is not visual proof.
@@ -18,6 +18,8 @@ export interface SubmitDiscoveryReviewInput {
    * low = a cited significant weakness. Missing optional data never lowers fit.
    * Fit cannot override required eligibility. Unknown fit has insufficient outcome
    * and no match_level. Absence in one sample cannot reject the whole creator.
+   * match_fit 的 supported 表示证据支持所选等级，包括 low；
+   * 未知匹配使用 insufficient 且不填等级，match_fit 不接受 contradicted。
    */
   findings: {
     /**
@@ -57,13 +59,18 @@ export interface SubmitDiscoveryReviewInput {
      */
     country_code?: string | null;
     criterion:
-      | "own_ai_tool_demo"
-      | "public_tool_url"
-      | "apparel_business_content"
-      | "category_content"
-      | "creator_residence_outside_mainland"
-      | "content_language"
-      | "match_fit";
+      | (
+          | "own_ai_tool_demo"
+          | "public_tool_url"
+          | "apparel_business_content"
+          | "category_content"
+          | "creator_residence_outside_mainland"
+          | "content_language"
+          | "match_fit"
+        )
+      | {
+          requirement: number;
+        };
     match_level?: ("excellent" | "good" | "medium" | "low") | null;
     outcome: "supported" | "contradicted" | "insufficient";
     rationale: string;

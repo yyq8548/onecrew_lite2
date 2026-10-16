@@ -1558,6 +1558,78 @@ fn discovery_web_sources_failures_and_restart_advance_without_replay() {
         3
     );
 }
+
+#[test]
+fn discovery_web_sources_keep_specific_youtube_failures_after_restart() {
+    for origin in ["google", "yahoo"] {
+        for code in [
+            "youtube_video_unavailable",
+            "youtube_watch_layout_unsupported",
+            "youtube_author_identity_invalid",
+            "youtube_description_unavailable",
+        ] {
+            let (directory, owner) = setup(origin, &[source("1myh3Nu-y-k")]);
+            let hit = next(&owner);
+            let claim = owner.claim_discovery_web_source(CAMPAIGN, 1, &hit).unwrap();
+            let failed = owner
+                .finish_discovery_web_source(FinishDiscoveryWebSourceInput {
+                    claim,
+                    native_material: None,
+                    stop_code: Some(code.into()),
+                })
+                .unwrap();
+            assert_eq!(failed.status, "failed");
+            assert_eq!(failed.stop_code.as_deref(), Some(code));
+            assert!(failed.candidate_id.is_none());
+            assert_eq!(
+                owner.plan_discovery_step(CAMPAIGN, 1).unwrap(),
+                DiscoveryStep::SearchExhausted
+            );
+            let used = owner.get_discovery_campaign(CAMPAIGN).unwrap().used_calls;
+            drop(owner);
+            let reopened =
+                CreatorRuntime::open(directory.path(), CreatorGateways::default()).unwrap();
+            assert_eq!(
+                reopened.get_discovery_web_source(CAMPAIGN, &hit).unwrap(),
+                failed
+            );
+            assert_eq!(
+                reopened
+                    .get_discovery_campaign(CAMPAIGN)
+                    .unwrap()
+                    .used_calls,
+                used
+            );
+        }
+    }
+}
+
+#[test]
+fn discovery_web_sources_reject_youtube_codes_for_other_native_platforms() {
+    let (_directory, owner) = setup(
+        "google",
+        &["https://www.douyin.com/video/7690187248574254386".into()],
+    );
+    let hit = next(&owner);
+    let claim = owner.claim_discovery_web_source(CAMPAIGN, 1, &hit).unwrap();
+    assert_eq!(claim.target_platform, "douyin");
+    assert!(
+        owner
+            .finish_discovery_web_source(FinishDiscoveryWebSourceInput {
+                claim,
+                native_material: None,
+                stop_code: Some("youtube_description_unavailable".into()),
+            })
+            .is_err()
+    );
+    assert_eq!(
+        owner
+            .get_discovery_web_source(CAMPAIGN, &hit)
+            .unwrap()
+            .status,
+        "reading"
+    );
+}
 #[test]
 fn discovery_web_sources_reject_changed_claims_and_foreign_originals_without_charging() {
     let (_dir, owner) = setup("yahoo", &[source(VIDEO)]);

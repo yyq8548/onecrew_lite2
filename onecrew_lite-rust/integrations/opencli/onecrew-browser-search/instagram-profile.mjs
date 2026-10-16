@@ -129,6 +129,11 @@ export function observeInstagramProfile(username, authorId) {
       parse(a.getAttribute('title'));
       for (const node of a.querySelectorAll('[title]')) parse(node.getAttribute('title'));
     }
+    for (const node of main?.querySelectorAll('[title]') || []) {
+      const label = node.parentElement?.textContent?.trim();
+      if (!label || !/^[0-9.,KMB\s]+ followers$/i.test(label)) continue;
+      parse(node.getAttribute('title'));
+    }
     if (values.size > 1) return null;
     return values.size === 1 ? [...values][0] : exactCount('followers');
   };
@@ -147,8 +152,10 @@ export function observeInstagramProfile(username, authorId) {
     if (text) previews.push(`${url.href}\n${text.slice(0,350)}`);
     if (previews.length === 6) break;
   }
+  const name = lines[1] || '';
+  const displayName = /^[0-9.,KMB\s]+ (?:posts?|followers|following)$/i.test(name) ? username : name;
   return {profile:{adapter_version:'1.0.0',id:authorId,username,
-    display_name:(lines[1] || '').slice(0,200),biography,
+    display_name:displayName.slice(0,200),biography,
     follower_count:isPrivate ? exactCount('followers') : followerCount(),private_account:isPrivate ? true : null,verified:null,
     profile_url:`https://www.instagram.com/${username}/`,
     evidence_source:'public_profile_dom_search_bound',

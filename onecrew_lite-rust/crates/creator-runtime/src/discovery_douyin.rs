@@ -11,6 +11,7 @@ mod tests;
 
 /// Conservative bounds for a compact native display; never an exact count.
 #[derive(Debug, Clone, Serialize, JsonSchema, PartialEq, Eq)]
+#[cfg_attr(test, derive(serde::Deserialize))]
 pub struct DiscoveryFollowerEstimate {
     pub display: String,
     pub nominal: u64,

@@ -126,15 +126,28 @@ fn assess_with_count(
     subscriber_estimate: Option<SubscriberEstimate>,
     youtube_content_supported: bool,
 ) -> Assessment {
-    if let Some(assessment) = crate::discovery_review::initial_match::assessment(
+    if let Some(accounts) = criteria.get("excluded_accounts") {
+        let accounts = serde_json::from_value::<Vec<crate::DiscoveryExcludedAccount>>(accounts.clone());
+        let excluded = accounts.as_ref().is_ok_and(|items| items.iter().any(|item| {
+            item.native_author_id == account_id
+                && source_in_list(evidence["source_urls"].as_array(), &item.profile_url)
+        }));
+        let identity_pending = accounts.as_ref().is_ok_and(|items| items.iter().any(|item| item.native_author_id == account_id)) && !excluded;
+        if accounts.is_err() || excluded || identity_pending {
+            return Assessment {
+                verdict: if excluded { "rejected" } else { "pending" },
+                reasons: vec![if excluded { "excluded_by_customer" } else if identity_pending { "excluded_account_identity_unverified" } else { "excluded_accounts_invalid" }],
+                subscribers: subscriber_estimate.as_ref().map(|estimate| estimate.nominal),
+            };
+        }
+    }
+    let initial_assessment = crate::discovery_review::initial_match::assessment(
         evidence,
         account_id,
         subscriber_estimate
             .as_ref()
             .map(|estimate| estimate.nominal),
-    ) {
-        return assessment;
-    }
+    );
     let mut reasons = Vec::new();
     let sources = evidence.get("source_urls").and_then(Value::as_array);
     let minimum = criteria
@@ -290,6 +303,30 @@ fn assess_with_count(
             reasons.push("category_unverified");
         }
     }
+    let mut requirement_conflict = false;
+    let requirement_reason_start = reasons.len();
+    if let Some(requirements) = criteria.get("requirements") {
+        match requirements.as_array().filter(|items| items.len() <= 32) {
+            None => reasons.push("requirements_invalid"),
+            Some(items) => {
+                for (index, requirement) in items.iter().enumerate() {
+                    let proof = &evidence["reviewed_requirements"][index];
+                    let bound = proof["requirement"] == *requirement
+                        && proof["index"].as_u64() == Some(index as u64)
+                        && proof["native_author_id"].as_str() == Some(account_id)
+                        && proof["review_id"].as_str().is_some_and(|id| !id.is_empty())
+                        && proof["source_url"].as_str().is_some_and(|url| source_in_list(sources, url));
+                    if bound && proof["outcome"] == "contradicted" {
+                        requirement_conflict = true;
+                        reasons.push("requirement_contradicted");
+                    } else if !bound || proof["outcome"] != "supported" {
+                        reasons.push("requirement_unverified");
+                    }
+                }
+            }
+        }
+    }
+    let requirement_reasons = reasons[requirement_reason_start..].to_vec();
     // Custom hard constraints cannot silently disappear from qualification.
     if criteria.as_object().is_some_and(|object| {
         object.keys().any(|key| {
@@ -302,12 +339,28 @@ fn assess_with_count(
                     | "region"
                     | "language"
                     | "category"
+                    | "table_subject"
+                    | "contact_search_terms"
+                    | "automatic_query_expansion"
+                    | "requirements"
+                    | "contact_preference"
+                    | "refinement"
+                    | "excluded_accounts"
             )
         })
     }) {
         reasons.push("unsupported_criterion");
     }
-    let verdict = if below_minimum || language_conflict {
+    if let Some(mut assessment) = initial_assessment {
+        if requirement_conflict {
+            assessment.verdict = "rejected";
+        } else if !requirement_reasons.is_empty() && assessment.verdict == "qualified" {
+            assessment.verdict = "pending";
+        }
+        assessment.reasons.extend(requirement_reasons);
+        return assessment;
+    }
+    let verdict = if below_minimum || language_conflict || requirement_conflict {
         "rejected"
     } else if reasons.is_empty() {
         "qualified"
@@ -543,6 +596,67 @@ fn parse_subscribers(raw: &str) -> Option<SubscriberEstimate> {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn explicit_account_exclusion_requires_both_native_identity_and_profile() {
+        let profile = "https://www.tiktok.com/@mckennagoddard";
+        let criteria = json!({"requires_ai_tool_demo":false,"requires_public_tool_url":false,
+            "excluded_accounts":[{"native_author_id":"6943246620302902278",
+                "profile_url":profile,"excerpt":"排除 McKenna Goddard"}]});
+        let evidence = json!({"source_urls":[profile]});
+        let excluded = assess_profile(&criteria, &evidence, "6943246620302902278", 522200);
+        assert_eq!(excluded.verdict, "rejected");
+        assert_eq!(excluded.reasons, vec!["excluded_by_customer"]);
+        assert_eq!(assess_profile(&criteria, &evidence, "different-native-account", 522200).verdict, "qualified");
+        assert_eq!(assess_profile(&criteria, &json!({}), "6943246620302902278", 522200).verdict, "pending");
+    }
+
+    #[test]
+    fn quoted_requirements_need_evidence_and_email_preference_is_not_a_gate() {
+        let mut criteria = json!({
+            "min_subscribers": 5000, "requires_ai_tool_demo": false,
+            "requires_public_tool_url": false, "contact_preference": "public_email_first"
+        });
+        assert_eq!(assess_profile(&criteria, &json!({}), "account", 6000).verdict, "qualified");
+        criteria["requirements"] = json!([{
+            "description": "排除赌博合作账号", "excerpt": "排除赌博合作账号"
+        }]);
+        let result = assess_profile(&criteria, &json!({}), "account", 6000);
+        assert_eq!(result.verdict, "pending");
+        assert!(result.reasons.contains(&"requirement_unverified"));
+        assert!(!result.reasons.contains(&"unsupported_criterion"));
+    }
+
+    #[test]
+    fn discovery_planning_metadata_does_not_block_or_relax_qualification() {
+        let mut criteria = json!({
+            "min_subscribers": 5000,
+            "requires_ai_tool_demo": false,
+            "requires_public_tool_url": false,
+            "table_subject": "美妆博主",
+            "contact_search_terms": ["email", "business inquiries"],
+            "automatic_query_expansion": true
+        });
+        assert_eq!(
+            assess_profile(&criteria, &json!({}), "author", 79500).verdict,
+            "qualified"
+        );
+        assert_eq!(
+            assess_profile(&criteria, &json!({}), "author", 4451).verdict,
+            "rejected"
+        );
+        criteria["category"] = json!("美妆");
+        let category = assess_profile(&criteria, &json!({}), "author", 79500);
+        assert_eq!(category.verdict, "pending");
+        assert!(category.reasons.contains(&"category_unverified"));
+        assert!(!category.reasons.contains(&"unsupported_criterion"));
+        criteria["customer_extra_requirement"] = json!(true);
+        assert!(
+            assess_profile(&criteria, &json!({}), "author", 79500)
+                .reasons
+                .contains(&"unsupported_criterion")
+        );
+    }
+
     #[test]
     fn unrestricted_language_is_not_a_gate_and_unknown_language_never_publishes_fit() {
         let mut criteria = json!({"min_followers":8000,"requires_ai_tool_demo":false,"requires_public_tool_url":false});

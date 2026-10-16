@@ -359,7 +359,7 @@ fn fixed_standalone_operation_eval_preserves_recall_across_all_toolkits() {
 #[test]
 fn fixed_operation_eval_covers_every_registered_operation_at_recall_six() {
     let registry = production_registry();
-    assert_eq!(OPERATION_EVAL_CASES.len(), 159);
+    assert_eq!(OPERATION_EVAL_CASES.len(), 156);
 
     let expected_ids = OPERATION_EVAL_CASES
         .iter()

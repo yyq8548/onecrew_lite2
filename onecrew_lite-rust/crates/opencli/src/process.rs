@@ -115,9 +115,21 @@ fn classify_failure(code: Option<i32>, stdout: &[u8], stderr: &[u8]) -> OpenCliE
         String::from_utf8_lossy(stderr)
     )
     .to_ascii_lowercase();
-    if code == Some(77)
+    if [
+        "onecrew_instagram_search_risk",
+        "onecrew_reddit_profile_risk",
+        "onecrew_pinterest_risk",
+    ]
+    .iter()
+    .any(|marker| output.contains(marker))
+    {
+        OpenCliError::RiskControl
+    } else if code == Some(77)
         || output.contains("auth_required")
         || output.contains("not logged in")
+        || output.contains("onecrew_instagram_search_auth")
+        || output.contains("onecrew_reddit_profile_auth")
+        || output.contains("onecrew_pinterest_auth")
         // Reviewed Instagram read adapters emit this for an unauthorized session.
         // The generic sign-in suggestion alone also occurs on non-auth HTTP errors.
         || output.contains("http 401 - make sure you are logged in to instagram")
@@ -145,8 +157,16 @@ fn classify_failure(code: Option<i32>, stdout: &[u8], stderr: &[u8]) -> OpenCliE
     .any(|marker| output.contains(marker))
     {
         OpenCliError::RiskControl
+    } else if output.contains("onecrew_instagram_search_timeout") {
+        OpenCliError::Timeout
+    } else if let Some(failure) = native_read_failure(&output) {
+        OpenCliError::NativeRead(failure)
     } else if output.contains("onecrew_instagram_recent_source_")
         || output.contains("onecrew_instagram_recent_invalid_")
+        || output.contains("onecrew_instagram_search_invalid")
+        || output.contains("onecrew_instagram_search_input")
+        || output.contains("onecrew_reddit_profile_invalid")
+        || output.contains("onecrew_reddit_profile_input")
         || output.contains("invalid native pinterest input or result")
         || [
             "onecrew_linkedin_invalid",
@@ -217,6 +237,28 @@ fn classify_failure(code: Option<i32>, stdout: &[u8], stderr: &[u8]) -> OpenCliE
     } else {
         OpenCliError::CommandFailed(code)
     }
+}
+
+fn native_read_failure(output: &str) -> Option<crate::NativeReadFailure> {
+    use crate::NativeReadFailure;
+    [
+        ("onecrew_instagram_search_read_http_404", NativeReadFailure::NotFound),
+        ("onecrew_instagram_search_read_http", NativeReadFailure::Http),
+        ("onecrew_instagram_search_read_redirect", NativeReadFailure::Redirect),
+        ("onecrew_instagram_search_read_json", NativeReadFailure::Json),
+        ("onecrew_instagram_search_read", NativeReadFailure::Request),
+        ("onecrew_reddit_profile_inaccessible", NativeReadFailure::SourceUnavailable),
+        ("onecrew_reddit_profile_read_http", NativeReadFailure::Http),
+        ("onecrew_reddit_profile_read_redirect", NativeReadFailure::Redirect),
+        ("onecrew_reddit_profile_read_json", NativeReadFailure::Json),
+        ("onecrew_reddit_profile_read", NativeReadFailure::Request),
+        ("onecrew_pinterest_read_response_http", NativeReadFailure::Http),
+        ("onecrew_pinterest_read_response_encoding", NativeReadFailure::Json),
+        ("onecrew_pinterest_read_resource", NativeReadFailure::Shape),
+        ("onecrew_pinterest_invalid", NativeReadFailure::Shape),
+    ]
+    .into_iter()
+    .find_map(|(marker, failure)| output.contains(marker).then_some(failure))
 }
 
 async fn read_limited(
@@ -298,6 +340,72 @@ async fn read_web_diagnostics(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn native_read_stages_remain_bounded_and_do_not_override_auth_or_risk() {
+        for (marker, failure) in [
+            ("ONECREW_INSTAGRAM_SEARCH_READ_HTTP_404", crate::NativeReadFailure::NotFound),
+            ("ONECREW_INSTAGRAM_SEARCH_READ_HTTP", crate::NativeReadFailure::Http),
+            ("ONECREW_INSTAGRAM_SEARCH_READ_REDIRECT", crate::NativeReadFailure::Redirect),
+            ("ONECREW_INSTAGRAM_SEARCH_READ_JSON", crate::NativeReadFailure::Json),
+            ("ONECREW_INSTAGRAM_SEARCH_READ", crate::NativeReadFailure::Request),
+            ("ONECREW_REDDIT_PROFILE_INACCESSIBLE", crate::NativeReadFailure::SourceUnavailable),
+            ("ONECREW_PINTEREST_READ_RESPONSE_HTTP", crate::NativeReadFailure::Http),
+            ("ONECREW_PINTEREST_INVALID", crate::NativeReadFailure::Shape),
+        ] {
+            assert_eq!(
+                classify_failure(Some(1), b"", marker.as_bytes()),
+                OpenCliError::NativeRead(failure)
+            );
+            assert_eq!(
+                classify_failure(Some(1), marker.as_bytes(), b"AUTH_REQUIRED"),
+                OpenCliError::AuthRequired
+            );
+            assert_eq!(
+                classify_failure(Some(1), marker.as_bytes(), b"captcha"),
+                OpenCliError::RiskControl
+            );
+        }
+    }
+
+    #[test]
+    fn native_search_and_profile_stops_preserve_auth_risk_and_timeout() {
+        for family in [
+            "ONECREW_INSTAGRAM_SEARCH",
+            "ONECREW_REDDIT_PROFILE",
+            "ONECREW_PINTEREST",
+        ] {
+            let auth = format!("{family}_AUTH");
+            let risk = format!("{family}_RISK");
+            assert_eq!(
+                classify_failure(Some(1), b"", auth.as_bytes()),
+                OpenCliError::AuthRequired
+            );
+            assert_eq!(
+                classify_failure(Some(1), risk.as_bytes(), auth.as_bytes()),
+                OpenCliError::RiskControl
+            );
+        }
+        assert_eq!(
+            classify_failure(Some(1), b"", b"ONECREW_INSTAGRAM_SEARCH_TIMEOUT"),
+            OpenCliError::Timeout
+        );
+        for marker in [
+            "ONECREW_INSTAGRAM_SEARCH_INVALID",
+            "ONECREW_INSTAGRAM_SEARCH_INPUT",
+            "ONECREW_REDDIT_PROFILE_INVALID",
+            "ONECREW_REDDIT_PROFILE_INPUT",
+        ] {
+            assert_eq!(
+                classify_failure(Some(1), b"", marker.as_bytes()),
+                OpenCliError::InvalidOutput
+            );
+        }
+        assert_eq!(
+            classify_failure(Some(1), b"", b"unexpected native command failure"),
+            OpenCliError::CommandFailed(Some(1))
+        );
+    }
 
     #[test]
     fn youtube_evidence_failures_keep_safe_specific_reasons() {
@@ -550,12 +658,10 @@ process.stderr.write('[web-read diagnose]\nurl: https://example.com/channel\nfra
             "ONECREW_LINKEDIN_INVALID_CONTACT_UNAVAILABLE",
             "ONECREW_DOUYIN_INVALID",
             "ONECREW_PIXIV_INVALID",
-            "ONECREW_PINTEREST_INVALID",
             "ONECREW_PINTEREST_READ_INPUT",
             "ONECREW_PINTEREST_READ_SOURCE",
             "ONECREW_PINTEREST_READ_SESSION",
             "ONECREW_PINTEREST_READ_RESPONSE",
-            "ONECREW_PINTEREST_READ_RESOURCE",
             "ONECREW_FB_IDENTITY_INVALID",
             "ONECREW_FB_PROFILE_INVALID",
             "ONECREW_FB_CONTACT_INVALID",

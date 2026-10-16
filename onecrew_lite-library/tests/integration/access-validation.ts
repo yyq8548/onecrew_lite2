@@ -106,7 +106,7 @@ try {
     };
     now += 30_000;
     const revoked = await service.status();
-    assert.deepEqual(revoked, { state: 'unavailable', user: null, issue: 'access.revoked' });
+    assert.deepEqual(revoked, { state: 'signed_out', user: null, issue: 'access.revoked' });
     assert.deepEqual(await service.status(), revoked);
     assert.equal(client.validations, 3);
   }

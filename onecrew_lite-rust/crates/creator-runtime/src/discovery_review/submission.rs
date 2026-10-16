@@ -44,6 +44,8 @@ pub enum DiscoveryReviewCriterion {
     CreatorResidenceOutsideMainland,
     ContentLanguage,
     MatchFit,
+    /// 当前已批准 requirements 数组中的索引，随 criteria_revision 固定。
+    Requirement(u8),
 }
 
 /// Evidence-based fit, independent of eligibility. Unknown fit has no level.
@@ -106,6 +108,8 @@ pub struct DiscoveryReviewedTool {
 /// low = a cited significant weakness. Missing optional data never lowers fit.
 /// Fit cannot override required eligibility. Unknown fit has insufficient outcome
 /// and no match_level. Absence in one sample cannot reject the whole creator.
+/// match_fit 的 supported 表示证据支持所选等级，包括 low；
+/// 未知匹配使用 insufficient 且不填等级，match_fit 不接受 contradicted。
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct DiscoveryReviewFinding {
@@ -133,7 +137,7 @@ pub struct SubmitDiscoveryReviewInput {
     pub material_hash: String,
     pub request_id: String,
     pub reviewer: DiscoveryReviewer,
-    #[schemars(length(max = 6))]
+    #[schemars(length(max = 40))]
     pub findings: Vec<DiscoveryReviewFinding>,
 }
 
@@ -221,7 +225,7 @@ fn request_hash(account: &str, input: &SubmitDiscoveryReviewInput) -> Result<Str
         || input.expected_revision == 0
         || !hash(&input.material_hash)
         || !text(&input.reviewer.label, 256)
-        || input.findings.len() > 6
+        || input.findings.len() > 40
     {
         return Err("review_input_invalid".into());
     }
@@ -645,6 +649,56 @@ fn apply_language_and_match(
     Ok(())
 }
 
+fn apply_requirements(
+    material: &DiscoveryReviewMaterial,
+    input: &SubmitDiscoveryReviewInput,
+    evidence: &mut Value,
+    review_id: &str,
+) -> Result<(), String> {
+    let requirements = match material.criteria.get("requirements") {
+        None => &[][..],
+        Some(value) => value.as_array().ok_or("review_requirements_invalid")?.as_slice(),
+    };
+    if requirements.len() > 32 {
+        return Err("review_requirements_invalid".into());
+    }
+    let findings: Vec<_> = input.findings.iter().filter(|finding| {
+        matches!(finding.criterion, DiscoveryReviewCriterion::Requirement(_))
+    }).collect();
+    if findings.len() != requirements.len() {
+        return Err("review_requirements_incomplete".into());
+    }
+    let mut proofs = Vec::with_capacity(requirements.len());
+    for (index, requirement) in requirements.iter().enumerate() {
+        let matching: Vec<_> = findings.iter().filter(|finding| {
+            finding.criterion == DiscoveryReviewCriterion::Requirement(index as u8)
+        }).collect();
+        if matching.len() != 1 {
+            return Err("review_requirements_mismatch".into());
+        }
+        let finding = matching[0];
+        if !text(&finding.rationale, 4000)
+            || finding.citations.len() > 8
+            || finding.tool.is_some()
+            || finding.country_code.is_some()
+            || finding.match_level.is_some()
+            || !finding.citations.iter().all(|cite| citation_matches(material, cite))
+            || (finding.outcome != DiscoveryReviewOutcome::Insufficient && finding.citations.is_empty())
+        {
+            return Err("review_requirement_citation_invalid".into());
+        }
+        proofs.push(json!({
+            "requirement": requirement, "index": index, "outcome": finding.outcome,
+            "reason": finding.rationale, "native_author_id": material.native_author_id,
+            "source_url": material.hit.source_url, "review_id": review_id,
+            "material_hash": material.material_hash, "criteria_revision": input.expected_revision,
+        }));
+    }
+    evidence.as_object_mut().ok_or("review_evidence_invalid")?
+        .insert("reviewed_requirements".into(), json!(proofs));
+    Ok(())
+}
+
 fn prepare(
     account: String,
     input: SubmitDiscoveryReviewInput,
@@ -664,6 +718,7 @@ fn prepare(
     } else {
         apply_findings(&material, &input, &mut evidence, &review_id)?;
     }
+    apply_requirements(&material, &input, &mut evidence, &review_id)?;
     let assessment =
         if material.hit.platform == "douyin" && material.native_follower_estimate.is_some() {
             crate::discovery_qualification::assess_douyin_profile(

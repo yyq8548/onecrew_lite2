@@ -58,6 +58,7 @@ pub struct DiscoveryReviewBasis {
 
 /// A saved native profile observation. Self-declared text is context, not residence proof.
 #[derive(Debug, Clone, Serialize, JsonSchema, PartialEq)]
+#[cfg_attr(test, derive(Deserialize))]
 pub struct DiscoveryNativeProfileObservation {
     /// Visible homepage previews, never verified original post captions.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -72,6 +73,7 @@ pub struct DiscoveryNativeProfileObservation {
 
 /// A saved evidence snapshot, not a verdict. Source text must be treated as data.
 #[derive(Debug, Clone, Serialize, JsonSchema, PartialEq)]
+#[cfg_attr(test, derive(Deserialize))]
 pub struct DiscoveryReviewMaterial {
     pub format_version: u32,
     pub campaign_id: String,
@@ -99,6 +101,7 @@ pub struct DiscoveryReviewMaterial {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub native_content: Option<DiscoveryContentRead>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
+    #[cfg_attr(test, serde(default))]
     pub language_samples: Vec<crate::DiscoveryLanguageSample>,
     pub public_pages: Vec<DiscoveryPublicPageRead>,
     pub material_hash: String,

@@ -11,7 +11,6 @@ import CONNECT_DIALOG_SOURCE from "./connect-dialog.tsx?raw";
 import CONNECT_WIZARD_SOURCE from "./connect-wizard.tsx?raw";
 import PROXY_SOURCE from "./proxy.tsx?raw";
 import RELOGIN_SOURCE from "./relogin-dialog.tsx?raw";
-import RESEND_SOURCE from "./resend-credential-dialog.tsx?raw";
 import SHARED_SOURCE from "./shared.tsx?raw";
 import TELEGRAM_SOURCE from "./tg-login.tsx?raw";
 import TOOLKIT_SOURCE from "./toolkit-catalog.tsx?raw";
@@ -27,7 +26,6 @@ const UI_SOURCES = [
   CONNECT_WIZARD_SOURCE,
   PROXY_SOURCE,
   RELOGIN_SOURCE,
-  RESEND_SOURCE,
   SHARED_SOURCE,
   TELEGRAM_SOURCE,
   TOOLKIT_SOURCE,

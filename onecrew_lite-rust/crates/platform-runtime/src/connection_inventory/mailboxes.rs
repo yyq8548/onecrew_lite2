@@ -59,6 +59,6 @@ fn summary(mailbox: MailboxDetail) -> Option<MailboxAccountSummary> {
         email_address: mailbox.email_address,
         display_label,
         provider,
-        availability: shared::local_availability(mailbox.available),
+        availability: shared::local_availability(mailbox.available && mailbox.provider == MailboxProvider::Gmail),
     })
 }

@@ -67,7 +67,7 @@ pub(super) fn register_discovery_and_content(
             let platform = platform.clone();
             async move { platform.submit_discovery_review(input).await }
         },
-        classify_string_failure("review_submit_outcome_unknown"),
+        classify_review_submission_failure,
     )?;
     let platform = owners.platform.clone();
     builder.register_owner_review_operation::<SendContentReplyInput, onecrew_local_runtime::OutreachCompletion, onecrew_local_runtime::OutreachError, _, _, _>(
@@ -155,7 +155,7 @@ fn register_campaign(
         ),
         move |_context, input| {
             let creators = creators.clone();
-            async move { creators.create_discovery_campaign_async(input).await }
+            async move { creators.create_discovery_campaign_async(input.with_default_delivery_preferences()).await }
         },
         crate::operation_registry::execution::classify_repository_call(classify_string_failure(
             "discovery_create_outcome_unknown",
@@ -247,7 +247,7 @@ fn register_campaign(
         }),
         move |_context, input| {
             let platform = platform.clone();
-            async move { platform.search_discovery_once(&input.campaign_id, input.expected_revision, &input.platform, &input.profile_ref, input.limit).await }
+            async move { platform.search_discovery_once_with_recovery(&input.campaign_id, input.expected_revision, &input.platform, &input.profile_ref, input.limit, input.recovery).await }
         },
         classify_campaign_read_failure,
     )?;
@@ -265,6 +265,34 @@ fn register_campaign(
         },
         classify_campaign_read_failure,
     )
+}
+
+fn classify_review_submission_failure(error: String) -> ClassifiedOwnerFailure {
+    match error.as_str() {
+        "initial_match_single_finding_required"
+        | "initial_match_finding_invalid"
+        | "initial_match_required_failure_must_be_low"
+        | "initial_match_required_count_unknown"
+        | "initial_match_author_evidence_required"
+        | "review_material_changed"
+        | "review_input_too_large"
+        | "review_input_invalid"
+        | "review_conditions_mismatch"
+        | "review_citation_invalid"
+        | "review_first_hand_evidence_required"
+        | "review_transcript_required"
+        | "review_match_level_invalid" => ClassifiedOwnerFailure::known_no_effect(
+            PublicFailureCode::parse(&error).expect("closed review validation code"),
+            false,
+            None,
+        ),
+        _ => ClassifiedOwnerFailure::unknown(
+            PublicFailureCode::parse("review_submit_outcome_unknown").unwrap(),
+            Some(RecoveryDirective::ReadStatus {
+                reference: BoundedPublicValue::parse("onecrew.discovery.review.get").unwrap(),
+            }),
+        ),
+    }
 }
 
 fn classify_target_increase_failure(error: String) -> ClassifiedOwnerFailure {
@@ -303,6 +331,17 @@ fn classify_campaign_read_failure(error: OpenCliDiscoverySearchError) -> Classif
             false,
             None,
         ),
+        OpenCliDiscoverySearchError::Campaign(ref message)
+            if message == "Platform search is already running or stopped"
+                || message == "Discovery repair recovery checkpoint changed"
+                || message == "Discovery repair recovery is not allowed" =>
+        {
+            ClassifiedOwnerFailure::known_no_effect(
+                PublicFailureCode::parse("discovery_platform_search_stopped").unwrap(),
+                false,
+                readback(),
+            )
+        }
         OpenCliDiscoverySearchError::Campaign(_) => ClassifiedOwnerFailure::unknown(
             PublicFailureCode::parse("discovery_read_outcome_unknown").unwrap(),
             readback(),
@@ -311,5 +350,51 @@ fn classify_campaign_read_failure(error: OpenCliDiscoverySearchError) -> Classif
             PublicFailureCode::parse("discovery_provider_read_stopped").unwrap(),
             readback(),
         ),
+    }
+}
+
+#[cfg(test)]
+mod stopped_claim_tests {
+    use super::*;
+
+    #[test]
+    fn review_validation_is_known_no_effect_and_uncertain_writes_require_readback() {
+        assert_eq!(
+            classify_review_submission_failure("initial_match_finding_invalid".into()),
+            ClassifiedOwnerFailure::known_no_effect(
+                PublicFailureCode::parse("initial_match_finding_invalid").unwrap(),
+                false,
+                None,
+            )
+        );
+        assert_eq!(
+            classify_review_submission_failure("review_submit_outcome_unknown".into()),
+            ClassifiedOwnerFailure::unknown(
+                PublicFailureCode::parse("review_submit_outcome_unknown").unwrap(),
+                Some(RecoveryDirective::ReadStatus {
+                    reference: BoundedPublicValue::parse("onecrew.discovery.review.get").unwrap(),
+                }),
+            )
+        );
+    }
+
+    #[test]
+    fn stopped_claim_is_known_not_executed() {
+        for message in [
+            "Platform search is already running or stopped",
+            "Discovery repair recovery checkpoint changed",
+            "Discovery repair recovery is not allowed",
+        ] {
+            let failure = classify_campaign_read_failure(OpenCliDiscoverySearchError::Campaign(
+                message.into(),
+            ));
+            assert_eq!(failure, ClassifiedOwnerFailure::known_no_effect(
+                PublicFailureCode::parse("discovery_platform_search_stopped").unwrap(),
+                false,
+                Some(RecoveryDirective::ReadStatus {
+                    reference: BoundedPublicValue::parse("onecrew.discovery.campaign.get").unwrap(),
+                }),
+            ));
+        }
     }
 }

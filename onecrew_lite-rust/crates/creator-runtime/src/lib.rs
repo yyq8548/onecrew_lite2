@@ -116,7 +116,7 @@ pub use discovery_public_pages::{
 mod discovery_transcripts;
 pub use discovery::{
     ApproveDiscoveryCampaignInput, CreateDiscoveryCampaignInput, DiscoveryCampaign,
-    DiscoveryCampaignIdInput, DiscoveryCampaignSummary, DiscoveryCandidate,
+    DiscoveryCampaignIdInput, DiscoveryCampaignSummary, DiscoveryCandidate, DiscoveryRefinement, DiscoveryExcludedAccount, DiscoverySearchRecovery,
     DiscoveryCandidateCounts, DiscoveryPlatformRun, DiscoveryPlatformScope, DiscoverySearchClaim,
     DiscoverySearchHit, DiscoverySearchHitInput, DiscoveryStep, DiscoveryVideoClaim,
     FinishDiscoverySearchInput, FinishDiscoveryVideoInput, IncreaseDiscoveryBudgetInput,

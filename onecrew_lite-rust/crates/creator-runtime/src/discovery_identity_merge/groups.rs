@@ -343,7 +343,19 @@ pub(crate) fn build(
             decision_ids,
         });
     }
-    groups.sort_by(|a, b| a.group_id.cmp(&b.group_id));
+    let criteria: serde_json::Value = serde_json::from_str(&basis.library.criteria_json)
+        .map_err(|_| "identity_groups_criteria_invalid")?;
+    if criteria["contact_preference"] == "public_email_first" {
+        groups.sort_by_key(|group| (
+            group.qualified_member_count == 0,
+            !group.members.iter().filter(|member| member.verdict == "qualified")
+                .flat_map(|member| &member.sources).flat_map(|source| &source.contacts)
+                .any(|contact| contact.kind == crate::DiscoveryContactKind::Email),
+            group.group_id.clone(),
+        ));
+    } else {
+        groups.sort_by(|a, b| a.group_id.cmp(&b.group_id));
+    }
     let counts = DiscoveryIdentityGroupCounts {
         native_accounts,
         qualified_native_accounts,

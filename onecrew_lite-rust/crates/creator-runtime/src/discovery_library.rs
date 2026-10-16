@@ -238,7 +238,13 @@ pub(crate) fn build_snapshot(
                 }
                 let receipt: Value = serde_json::from_str(&candidate.identity_receipt)
                     .map_err(|_| "library_source_identity_invalid")?;
-                let verdict = if basis.contact_required {
+                let verdict = if reasons.iter().any(|reason| matches!(reason.as_str(),
+                    "excluded_by_customer" | "excluded_account_identity_unverified"
+                    | "excluded_accounts_invalid" | "requirement_unverified"
+                    | "requirement_contradicted" | "requirements_invalid"
+                )) {
+                    candidate.verdict.clone()
+                } else if basis.contact_required {
                     if crate::discovery_contacts::score_passes(
                         &candidate.verdict,
                         &evidence,
@@ -333,6 +339,12 @@ pub(crate) fn build_snapshot(
                 .map(|c| c.contacts.clone())
                 .unwrap_or_default(),
         });
+    }
+    if criteria["contact_preference"] == "public_email_first" {
+        rows.sort_by_key(|row| (
+            row.verdict != "qualified",
+            !row.contacts.iter().any(|contact| contact.kind == crate::DiscoveryContactKind::Email),
+        ));
     }
     let snapshot_basis = (
         1,

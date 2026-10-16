@@ -312,7 +312,7 @@ pub(crate) async fn create(
         .platform()
         .await?
         .creators()?
-        .create_discovery_campaign_async(input)
+        .create_discovery_campaign_async(input.with_default_delivery_preferences())
         .await
         .map_err(|error| error.to_string())
 }
@@ -404,6 +404,19 @@ pub(crate) async fn search_once(
         .search_discovery_once(&id, expected_revision, &platform, &profile_ref, limit)
         .await
         .map_err(|error| format!("{error:?}"))
+}
+
+pub(crate) async fn search_recover_once(
+    state: &ServiceState,
+    input: onecrew_local_runtime::OpenCliDiscoveryPlatformSearchInput,
+) -> Result<OpenCliDiscoverySearchResult, String> {
+    if input.recovery.is_none() {
+        return Err("Discovery repair recovery requires a saved checkpoint".into());
+    }
+    state.platform().await?
+        .search_discovery_once_with_recovery(&input.campaign_id, input.expected_revision,
+            &input.platform, &input.profile_ref, input.limit, input.recovery)
+        .await.map_err(|error| format!("{error:?}"))
 }
 
 pub(crate) async fn verify_youtube_hit_once(

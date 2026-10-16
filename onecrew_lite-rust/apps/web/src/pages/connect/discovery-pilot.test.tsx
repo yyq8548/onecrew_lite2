@@ -213,7 +213,8 @@ describe("Campaign paginated result presentation", () => {
       expect(markup).toContain('aria-expanded="false"');
       expect(markup).not.toContain('id="discovery-budget-new"');
       expect(markup).not.toContain(catalog.opencliPilot.budgetDecisionConfirm.replace("{{max}}", "0"));
-      expect(markup).not.toContain("175/200");
+      expect(markup).toContain("175/200");
+      expect(markup).toContain('id="discovery-target-new"');
       expect(markup).toContain(catalog.opencliPilot.editPlan);
       expect(markup).toContain("outside mainland China");
       expect(markup).toContain("clothing");

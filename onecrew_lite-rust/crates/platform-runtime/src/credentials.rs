@@ -1,6 +1,5 @@
 mod connection;
 pub(crate) mod email_gateway;
-mod resend;
 pub(crate) mod services;
 mod youtube;
 
@@ -20,27 +19,10 @@ pub use youtube::{
     YoutubePlatformTestError, YoutubePlatformTestInput, YoutubePlatformTestResult,
 };
 
-use onecrew_creator_runtime::MailboxCredentialDeletionBlockers;
 use schemars::JsonSchema;
+use onecrew_creator_runtime::ServiceCredentialDeleteResult;
 use serde::{Deserialize, Serialize};
 use std::fmt;
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(tag = "kind", rename_all = "snake_case")]
-pub enum ResendCredentialDeletionError {
-    InvalidRequest {
-        message: String,
-    },
-    Blocked {
-        /// Every mailbox projection mapped to the auth connection is
-        /// returned. A single connection may own a mailbox and send-as
-        /// aliases, so deletion must not discard secondary blockers.
-        blockers: Vec<MailboxCredentialDeletionBlockers>,
-    },
-    Runtime {
-        message: String,
-    },
-}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ServiceCredentialMutationError {
@@ -61,9 +43,7 @@ impl ServiceCredentialMutationError {
             Self::ConfirmationRequired
         } else if normalized.contains("not found") {
             Self::NotFound
-        } else if normalized.contains("not a youtube credential")
-            || normalized.contains("not a resend credential")
-        {
+        } else if normalized.contains("not a youtube credential") {
             Self::WrongKind
         } else if normalized.contains("already exists")
             || normalized.contains("different credential row")
@@ -87,39 +67,6 @@ impl ServiceCredentialMutationError {
         }
     }
 }
-
-impl std::fmt::Display for ResendCredentialDeletionError {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::InvalidRequest { message } | Self::Runtime { message } => {
-                formatter.write_str(message)
-            }
-            Self::Blocked { blockers } => {
-                let recoveries = blockers
-                    .iter()
-                    .map(|blocker| blocker.recoveries.len())
-                    .sum::<usize>();
-                let sending_drafts = blockers
-                    .iter()
-                    .map(|blocker| blocker.sending_drafts.len())
-                    .sum::<usize>();
-                let mailbox_ids = blockers
-                    .iter()
-                    .map(|blocker| blocker.mailbox_ref_id.as_str())
-                    .collect::<Vec<_>>()
-                    .join(", ");
-                write!(
-                    formatter,
-                    "cannot delete Resend credential (mailboxes: {mailbox_ids}) while {recoveries} active email recoveries and {sending_drafts} sending drafts depend on it; recover them with the same credential and idempotency key first (recreating a credential with the same label is not a recovery path)"
-                )
-            }
-        }
-    }
-}
-
-impl std::error::Error for ResendCredentialDeletionError {}
-
-use onecrew_creator_runtime::ServiceCredentialDeleteResult;
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
@@ -208,29 +155,6 @@ impl fmt::Debug for YoutubeApiKeyConnectInput {
     }
 }
 
-#[derive(Clone, Deserialize, Serialize, JsonSchema)]
-#[serde(deny_unknown_fields)]
-pub struct ResendCredentialConnectInput {
-    pub label: String,
-    pub email_address: String,
-    #[serde(default)]
-    pub display_name: Option<String>,
-    #[serde(skip_serializing)]
-    pub api_key: String,
-}
-
-impl fmt::Debug for ResendCredentialConnectInput {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        formatter
-            .debug_struct("ResendCredentialConnectInput")
-            .field("label", &self.label)
-            .field("email_address", &self.email_address)
-            .field("display_name", &self.display_name)
-            .field("api_key", &"[REDACTED]")
-            .finish()
-    }
-}
-
 /// Rotate one existing YouTube credential in place: same label and project,
 /// a new validated key. The credential is addressed by its stable id and the
 /// rotation must be explicitly confirmed.
@@ -264,43 +188,6 @@ pub struct RenameYoutubeCredentialInput {
     pub confirmed: bool,
 }
 
-#[derive(Clone, Deserialize, Serialize, JsonSchema)]
-#[serde(deny_unknown_fields)]
-pub struct RotateResendCredentialInput {
-    pub credential_id: String,
-    #[serde(skip_serializing)]
-    pub api_key: String,
-    pub confirmed: bool,
-}
-
-impl fmt::Debug for RotateResendCredentialInput {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        formatter
-            .debug_struct("RotateResendCredentialInput")
-            .field("credential_id", &self.credential_id)
-            .field("api_key", &"[REDACTED]")
-            .field("confirmed", &self.confirmed)
-            .finish()
-    }
-}
-
-/// Guarded Resend credential deletion; idempotency is carried by the
-/// persisted mailbox deletion guard plus the stable credential id.
-#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
-#[serde(deny_unknown_fields)]
-pub struct ResendCredentialDeleteInput {
-    pub credential_id: String,
-    pub confirmed: bool,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(deny_unknown_fields)]
-pub struct ResendCredentialDeleteOutcome {
-    pub credential_id: String,
-    pub deleted: bool,
-    pub replayed: bool,
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct YoutubeCredentialProjectionDetails {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -330,10 +217,9 @@ pub struct ConnectedServiceCredentialProjection {
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct ServiceCredentialValidationProjection {
     pub checked_at: u64,
-    /// Human-readable verification scope. For Resend this distinguishes API
-    /// key/Receiving API checks from the separately matched sending domain.
+    /// 可读的凭据验证范围。
     pub message: String,
-    /// YouTube validation channel id or Resend verified sender-domain name.
+    /// YouTube 验证返回的频道标识。
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub provider_resource_id: Option<String>,
 }
@@ -362,18 +248,6 @@ mod mutation_contract_tests {
         );
         assert!(!format!("{input:?}").contains("secret-youtube-key"));
 
-        let input = ResendCredentialConnectInput {
-            label: "mailbox".into(),
-            email_address: "sender@example.com".into(),
-            display_name: None,
-            api_key: "secret-resend-key".into(),
-        };
-        assert!(
-            !serde_json::to_string(&input)
-                .unwrap()
-                .contains("secret-resend-key")
-        );
-        assert!(!format!("{input:?}").contains("secret-resend-key"));
     }
 
     #[test]
@@ -386,7 +260,7 @@ mod mutation_contract_tests {
         );
         assert_eq!(
             ServiceCredentialMutationError::from_safe_message(
-                "credential is not a Resend credential"
+                "credential is not a YouTube credential"
             ),
             ServiceCredentialMutationError::WrongKind
         );

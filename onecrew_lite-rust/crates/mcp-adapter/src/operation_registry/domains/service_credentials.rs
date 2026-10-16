@@ -1,6 +1,5 @@
 use onecrew_local_runtime::{
-    RenameYoutubeCredentialInput, ResendCredentialConnectInput, ResendCredentialDeleteInput,
-    ResendCredentialDeleteOutcome, ResendCredentialDeletionError, RotateResendCredentialInput,
+    RenameYoutubeCredentialInput,
     RotateYoutubeCredentialInput, ServiceCredentialConnectResult, ServiceCredentialMutationError,
     ServiceCredentialProjection, YoutubeApiKeyConnectInput, YoutubeCredentialDeleteError,
     YoutubeCredentialDeleteInput, YoutubeCredentialDeleteOutcome,
@@ -64,29 +63,7 @@ pub(super) fn register(
         classify_youtube_delete,
     )?;
 
-    let platform = owners.platform.clone();
-    builder.register_operation::<ResendCredentialConnectInput, ServiceCredentialConnectResult, _, _, _, _>(
-        metadata(onecrew_local_runtime::OperationId::EMAIL_CREDENTIAL_CONNECT),
-        policy(EffectClass::WriteLocal, SecretClass::VaultBound, false, IdempotencyMode::None, &[], &["/api_key"], false, None),
-        move |_context, input| { let platform = platform.clone(); async move { platform.connect_resend_credential_typed(input).await } },
-        classify_mutation,
-    )?;
-
-    let platform = owners.platform.clone();
-    builder.register_operation::<RotateResendCredentialInput, ServiceCredentialConnectResult, _, _, _, _>(
-        metadata(onecrew_local_runtime::OperationId::EMAIL_CREDENTIAL_ROTATE),
-        policy(EffectClass::WriteLocal, SecretClass::VaultBound, true, IdempotencyMode::None, &[], &["/api_key"], false, Some("Rotate this Resend credential?")),
-        move |_context, input| { let platform = platform.clone(); async move { platform.rotate_resend_credential_typed(input).await } },
-        classify_mutation,
-    )?;
-
-    let platform = owners.platform;
-    builder.register_operation::<ResendCredentialDeleteInput, ResendCredentialDeleteOutcome, _, _, _, _>(
-        metadata(onecrew_local_runtime::OperationId::EMAIL_CREDENTIAL_DELETE),
-        policy(EffectClass::DeleteLocal, SecretClass::None, true, IdempotencyMode::OwnerInputIdentity, &["/credential_id"], &[], false, Some("Delete this Resend credential?")),
-        move |_context, input| { let platform = platform.clone(); async move { run_blocking(move || platform.delete_resend_credential_outcome(input)).await } },
-        classify_resend_delete,
-    )
+    Ok(())
 }
 
 fn metadata(id: onecrew_local_runtime::OperationId) -> OperationRegistration {
@@ -202,14 +179,6 @@ impl From<BlockingTaskFailure> for YoutubeCredentialDeleteError {
     }
 }
 
-impl From<BlockingTaskFailure> for ResendCredentialDeletionError {
-    fn from(failure: BlockingTaskFailure) -> Self {
-        Self::Runtime {
-            message: String::from(failure),
-        }
-    }
-}
-
 fn classify_mutation(error: ServiceCredentialMutationError) -> ClassifiedOwnerFailure {
     match error {
         ServiceCredentialMutationError::ConfirmationRequired => failure(
@@ -281,32 +250,6 @@ fn classify_youtube_delete(error: YoutubeCredentialDeleteError) -> ClassifiedOwn
     }
 }
 
-fn classify_resend_delete(error: ResendCredentialDeletionError) -> ClassifiedOwnerFailure {
-    match error {
-        ResendCredentialDeletionError::InvalidRequest { message }
-            if message.contains("explicit confirmation") =>
-        {
-            failure(
-                "confirmation_required",
-                Some(RecoveryDirective::Confirm {
-                    parameter: bounded("confirmed"),
-                }),
-            )
-        }
-        ResendCredentialDeletionError::InvalidRequest { .. } => failure(
-            "credential_input_invalid",
-            Some(RecoveryDirective::CorrectInput),
-        ),
-        ResendCredentialDeletionError::Blocked { .. } => {
-            failure("credential_delete_blocked", Some(connection_list()))
-        }
-        ResendCredentialDeletionError::Runtime { .. } => ClassifiedOwnerFailure::unknown(
-            PublicFailureCode::parse("credential_delete_unavailable").unwrap(),
-            Some(connection_list()),
-        ),
-    }
-}
-
 fn connection_list() -> RecoveryDirective {
     RecoveryDirective::ReadStatus {
         reference: bounded("onecrew_connection_list"),
@@ -350,20 +293,8 @@ mod tests {
                 onecrew_local_runtime::OperationId::YOUTUBE_CREDENTIAL_DELETE.as_str(),
                 ToolkitId::Youtube,
             ),
-            (
-                onecrew_local_runtime::OperationId::EMAIL_CREDENTIAL_CONNECT.as_str(),
-                ToolkitId::Email,
-            ),
-            (
-                onecrew_local_runtime::OperationId::EMAIL_CREDENTIAL_ROTATE.as_str(),
-                ToolkitId::Email,
-            ),
-            (
-                onecrew_local_runtime::OperationId::EMAIL_CREDENTIAL_DELETE.as_str(),
-                ToolkitId::Email,
-            ),
         ];
-        assert_eq!(operations.len(), 7);
+        assert_eq!(operations.len(), 4);
         for (id, toolkit) in operations {
             let metadata = metadata(onecrew_local_runtime::OperationId::from_static(id));
             assert_eq!(

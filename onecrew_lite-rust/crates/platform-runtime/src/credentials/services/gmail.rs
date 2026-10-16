@@ -23,7 +23,6 @@ impl CredentialServices {
         capability: EmailCapability,
     ) -> Result<Option<GmailSession>, String> {
         let binding = self
-            .email_registry
             .mailbox_resolver()?
             .resolve_mailbox_auth_connection(id)
             .await?;

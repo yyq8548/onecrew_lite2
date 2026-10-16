@@ -5,6 +5,45 @@ use rusqlite::Connection;
 const LINK: &str = "https://example.com/tool";
 
 #[test]
+fn requirements_bind_each_finding_to_real_saved_author_material() {
+    // 2026-10-15 通过正式 MCP 读取的 Pinterest 原生资料，未模拟平台响应。
+    let mut material: DiscoveryReviewMaterial = serde_json::from_str(include_str!(
+        "pinterest-native-20261015.json"
+    )).unwrap();
+    material.criteria["requirements"] = json!([{
+        "description":"公开简介提到 Makeup", "excerpt":"公开简介提到 Makeup"
+    }]);
+    let finding = DiscoveryReviewFinding {
+        criterion: DiscoveryReviewCriterion::Requirement(0),
+        outcome: DiscoveryReviewOutcome::Supported,
+        rationale: "原生简介明确出现该词。".into(),
+        citations: vec![DiscoveryReviewQuote::NativeProfile {
+            profile_url: material.native_profile.as_ref().unwrap().profile_url.clone(),
+            quote: "Artist & Makeup Lover".into(),
+        }],
+        tool: None, country_code: None, match_level: None,
+    };
+    let mut request = SubmitDiscoveryReviewInput {
+        campaign_id: material.campaign_id.clone(), expected_revision: material.criteria_revision,
+        search_hit_id: material.hit.id.clone(), material_hash: material.material_hash.clone(),
+        request_id: "requirement-citation-check".into(),
+        reviewer: DiscoveryReviewer { kind: DiscoveryReviewerKind::Agent, label: "Codex".into() },
+        findings: vec![finding],
+    };
+    let mut evidence = json!({});
+    apply_requirements(&material, &request, &mut evidence, "review").unwrap();
+    assert_eq!(evidence["reviewed_requirements"][0]["native_author_id"], material.native_author_id);
+    assert_eq!(evidence["reviewed_requirements"][0]["requirement"], material.criteria["requirements"][0]);
+    request.findings[0].criterion = DiscoveryReviewCriterion::Requirement(1);
+    assert_eq!(apply_requirements(&material, &request, &mut evidence, "review").unwrap_err(), "review_requirements_mismatch");
+    request.findings[0].criterion = DiscoveryReviewCriterion::Requirement(0);
+    request.findings[0].citations = vec![DiscoveryReviewQuote::NativeContent { quote: "未读取的文本不能作为证据".into() }];
+    assert_eq!(apply_requirements(&material, &request, &mut evidence, "review").unwrap_err(), "review_requirement_citation_invalid");
+    request.findings.clear();
+    assert_eq!(apply_requirements(&material, &request, &mut evidence, "review").unwrap_err(), "review_requirements_incomplete");
+}
+
+#[test]
 fn scored_youtube_author_can_read_own_channel_bio_before_username_search() {
     for through_website in [false, true] {
         let dir = tempfile::tempdir().unwrap();

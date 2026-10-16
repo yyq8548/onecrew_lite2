@@ -52,15 +52,80 @@ fn native_read(step: &DiscoveryStep) -> bool {
     )
 }
 
+struct NativeAcceptanceRequirements {
+    request: String,
+    category: String,
+    min_subscribers: u64,
+}
+
+impl NativeAcceptanceRequirements {
+    fn from_environment() -> Self {
+        let request = std::env::var("ONECREW_TEST_NATIVE_REQUEST")
+            .expect("explicit customer request required for relevance acceptance");
+        assert!(
+            !request.trim().is_empty(),
+            "customer request must not be empty"
+        );
+        let category = std::env::var("ONECREW_TEST_NATIVE_CATEGORY")
+            .expect("explicit content category; use an empty value only for unrestricted QA");
+        let min_subscribers = std::env::var("ONECREW_TEST_NATIVE_MIN_SUBSCRIBERS")
+            .expect("explicit follower threshold required")
+            .parse::<u64>()
+            .expect("follower threshold must be an unsigned integer");
+        Self {
+            request,
+            category,
+            min_subscribers,
+        }
+    }
+
+    fn criteria(&self, language: &str) -> serde_json::Value {
+        json!({"min_subscribers":self.min_subscribers,"category":self.category,
+            "language":language,"region":"","requires_ai_tool_demo":false,
+            "requires_public_tool_url":false})
+    }
+}
+
+#[test]
+fn native_acceptance_preserves_customer_requirements() {
+    let requirements = NativeAcceptanceRequirements {
+        request: "找粉丝数不少于5000的美妆博主".into(),
+        category: "美妆".into(),
+        min_subscribers: 5000,
+    };
+    let directory = tempfile::tempdir().unwrap();
+    let owner = CreatorRuntime::open(directory.path(), CreatorGateways::default()).unwrap();
+    let saved = owner
+        .create_discovery_campaign(CreateDiscoveryCampaignInput {
+            id: "acceptance-requirements".into(),
+            brief: requirements.request.clone(),
+            opencli_version: "1.8.8".into(),
+            criteria: requirements.criteria(""),
+            scopes: vec![DiscoveryPlatformScope {
+                platform: "instagram".into(),
+                profile_ref: "browser".into(),
+                keywords: vec!["beauty creator".into()],
+            }],
+            target_count: 1,
+            max_calls: Some(20),
+        })
+        .unwrap();
+    assert_eq!(saved.brief, requirements.request);
+    assert_eq!(saved.criteria["category"], "美妆");
+    assert_eq!(saved.criteria["min_subscribers"], 5000);
+}
+
 #[tokio::test]
 #[ignore = "one explicitly selected live entrance, native model scoring, contact and isolated Library/export acceptance"]
 async fn actual_native_source_contact_recommendation_and_restart() {
+    let requirements = NativeAcceptanceRequirements::from_environment();
     let site = std::env::var("ONECREW_TEST_NATIVE_ENTRANCE").expect("explicit entrance");
     // Pixiv's outstanding policy denial must not be routed around by this harness.
     assert!(
         [
             "youtube",
             "tiktok",
+            "instagram",
             "twitter",
             "bilibili",
             "reddit",
@@ -135,15 +200,21 @@ async fn actual_native_source_contact_recommendation_and_restart() {
     authenticate(&platform, "fixture-operator");
     let owner = platform.creators().unwrap();
     let campaign = format!("native-contact-{}", uuid::Uuid::new_v4());
-    owner.create_discovery_campaign(CreateDiscoveryCampaignInput {
-        id: campaign.clone(),
-        brief: format!("独立入口验收：{language}内容，不限制品类；真实评分通过及有来源绑定联系方式才推荐。测试不更改客户要求。"),
-        opencli_version: cli.inventory().version,
-        criteria: json!({"min_followers":0,"category":"","language":language,"region":"",
-            "requires_ai_tool_demo":false,"requires_public_tool_url":false}),
-        scopes: vec![DiscoveryPlatformScope {platform:site.clone(),profile_ref:browser.clone(),keywords:vec![query.clone()]}],
-        target_count: 1, max_calls: Some(20),
-    }).unwrap();
+    owner
+        .create_discovery_campaign(CreateDiscoveryCampaignInput {
+            id: campaign.clone(),
+            brief: requirements.request.clone(),
+            opencli_version: cli.inventory().version,
+            criteria: requirements.criteria(&language),
+            scopes: vec![DiscoveryPlatformScope {
+                platform: site.clone(),
+                profile_ref: browser.clone(),
+                keywords: vec![query.clone()],
+            }],
+            target_count: 1,
+            max_calls: Some(20),
+        })
+        .unwrap();
     owner.approve_discovery_campaign(&campaign, 1).unwrap();
     let claim = owner
         .claim_discovery_search(&campaign, 1, &site, &browser)

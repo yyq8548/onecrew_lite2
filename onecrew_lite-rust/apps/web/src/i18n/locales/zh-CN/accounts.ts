@@ -74,7 +74,6 @@ const accounts = {
   credentials: {
     count: {
       youtube: "只读发现凭据：{{count}}",
-      resend: "邮件身份：{{count}}",
     },
     columns: {
       credential: "凭据",
@@ -97,21 +96,17 @@ const accounts = {
     neverCalled: "尚未调用",
     actions: {
       testApiKey: "测试 API Key",
-      testResend: "测试 Resend 邮箱",
       delete: "删除凭据",
       edit: "编辑凭据",
     },
     empty: {
       youtube: "还没有 YouTube 发现凭据，点击右上角添加。",
-      resend: "还没有 Resend 邮箱，点击右上角添加。",
     },
     notes: {
       youtube: "可用状态、调用限制和最近使用时间以 YouTube API 返回为准。",
-      resend: "API Key 仅存在本机加密凭据库；此处不会回显或缓存密钥。",
     },
     delete: {
       youtubeDescription: "该 YouTube API Key 会从本机加密凭据库删除，之后不能再用于发现。",
-      resendDescription: "该 Resend 邮件身份会从本机凭据库删除。onecrew_lite 中的历史邮件、线程、Creator 归因和审计记录不会删除。",
       title: "确认删除 {{label}}？",
       deleting: "删除中…",
       confirm: "确认删除",
@@ -515,29 +510,6 @@ const accounts = {
       desktopRotateRequired: "请在 onecrew_lite 桌面应用中替换 YouTube Key",
       rotatedDescription: "凭据 {{label}} 的 Key 已替换并加密保存",
       rotateFailed: "YouTube API Key 替换失败",
-    },
-  },
-  resendDialog: {
-    add: "添加邮箱",
-    title: "连接 Resend 邮箱",
-    description: "验证 API Key、接收访问及发件域名后才写入本机加密凭据库；界面与 onecrew_lite 只保留公开投影。",
-    credentialName: "凭据名称",
-    credentialPlaceholder: "如 reach-outreach",
-    senderEmail: "发件邮箱",
-    senderEmailPlaceholder: "partnerships@example.com",
-    displayNameOptional: "显示名称（可选）",
-    displayNamePlaceholder: "如 Reach Labs",
-    apiKeyLabel: "Resend API Key",
-    apiKeyPlaceholder: "re_…",
-    securityTitle: "本地加密 · 不回显 · 不缓存",
-    securityDescription: "发件域名必须已在 Resend 验证并启用发送；邮箱 local-part 仅作为配置，实际发送仍由 Resend 接受或拒绝。",
-    savingAndTesting: "保存并测试中",
-    testPassed: "测试通过",
-    saveAndTest: "保存并测试",
-    toasts: {
-      desktopRequired: "请在 onecrew_lite 桌面应用中连接 Resend 邮箱",
-      savedDescription: "{{email}} 的 API Key 已验证并加密保存在本机",
-      validationFailed: "Resend 邮箱验证失败",
     },
   },
   searchPlaceholder: "搜索平台…",

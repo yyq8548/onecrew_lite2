@@ -24,21 +24,6 @@
         "title": "Check mailbox connection"
       },
       {
-        "id": "email.credential.connect",
-        "summary": "Validate and store one Resend API credential in the local vault.",
-        "title": "Connect Resend credential"
-      },
-      {
-        "id": "email.credential.delete",
-        "summary": "Delete one confirmed Resend credential from the local vault.",
-        "title": "Delete Resend credential"
-      },
-      {
-        "id": "email.credential.rotate",
-        "summary": "Validate and replace the secret for one stored Resend credential.",
-        "title": "Rotate Resend credential"
-      },
-      {
         "id": "email.direct.prepare",
         "summary": "Prepare an email to a confirmed Creator contact route without sending it.",
         "title": "Prepare direct email"

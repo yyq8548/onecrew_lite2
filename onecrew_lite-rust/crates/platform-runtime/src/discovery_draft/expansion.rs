@@ -148,7 +148,7 @@ impl LocalPlatform {
                 .collect::<Vec<_>>();
             super::query_audit::audit(
                 &campaign.brief,
-                json!({"frozen_criteria":campaign.criteria,"target":campaign.target_count,"approved_scopes":campaign.scopes,"next_round":audit_scopes}),
+                json!({"audit_mode":"frozen_query_expansion","frozen_criteria":campaign.criteria,"target":campaign.target_count,"approved_scopes":campaign.scopes,"next_round":audit_scopes,"registered_sources":sources.sources}),
                 &audit_scopes,
                 &|_| {},
             )

@@ -10,13 +10,18 @@ export interface DiscoveryReviewReceipt {
   criteria_revision: number;
   judgments: {
     criterion:
-      | "own_ai_tool_demo"
-      | "public_tool_url"
-      | "apparel_business_content"
-      | "category_content"
-      | "creator_residence_outside_mainland"
-      | "content_language"
-      | "match_fit";
+      | (
+          | "own_ai_tool_demo"
+          | "public_tool_url"
+          | "apparel_business_content"
+          | "category_content"
+          | "creator_residence_outside_mainland"
+          | "content_language"
+          | "match_fit"
+        )
+      | {
+          requirement: number;
+        };
     outcome: "supported" | "contradicted" | "insufficient";
     [k: string]: unknown;
   }[];

@@ -120,6 +120,31 @@ impl YoutubeEvidenceFailure {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum NativeReadFailure {
+    Request,
+    Http,
+    NotFound,
+    Redirect,
+    Json,
+    Shape,
+    SourceUnavailable,
+}
+
+impl NativeReadFailure {
+    pub fn code(self) -> &'static str {
+        match self {
+            Self::Request => "provider_request_failed",
+            Self::Http => "provider_response_http_error",
+            Self::NotFound => "provider_endpoint_not_found",
+            Self::Redirect => "provider_response_redirected",
+            Self::Json => "provider_response_invalid_json",
+            Self::Shape => "provider_response_shape_invalid",
+            Self::SourceUnavailable => "provider_source_unavailable",
+        }
+    }
+}
+
 #[derive(Debug, Error, PartialEq, Eq)]
 pub enum OpenCliError {
     #[error("OpenCLI executable is unavailable")]
@@ -132,6 +157,8 @@ pub enum OpenCliError {
     CommandFailed(Option<i32>),
     #[error("YouTube video evidence failed: {0:?}")]
     YoutubeEvidence(YoutubeEvidenceFailure),
+    #[error("Native provider read failed: {0:?}")]
+    NativeRead(NativeReadFailure),
     #[error("OpenCLI provider requested human verification or rate limited the read")]
     RiskControl,
     #[error("OpenCLI provider account is not signed in or not authorized")]

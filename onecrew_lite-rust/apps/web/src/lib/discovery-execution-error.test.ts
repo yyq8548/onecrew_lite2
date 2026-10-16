@@ -1,5 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { discoveryExecutionFailureKey } from "./discovery-execution-error";
+import { discoveryExecutionFailureKey, discoveryProviderFailureKey } from "./discovery-execution-error";
+
+it.each([
+  ["provider_response_http_error", "sourceHttpFailed"],
+  ["provider_endpoint_not_found", "sourceEndpointMissing"],
+  ["provider_response_redirected", "sourceRedirected"],
+  ["provider_response_invalid_json", "sourceInvalidJson"],
+  ["provider_response_shape_invalid", "sourceInvalidShape"],
+  ["provider_source_unavailable", "sourceUnavailable"],
+  ["opencli_auth_required", "sourceAuthRequired"],
+  ["opencli_risk_control", "sourceRiskStopped"],
+])("renders a readable provider stop for %s", (code, message) => {
+  expect(discoveryProviderFailureKey(code)).toBe(`opencliPilot.${message}`);
+});
 
 it.each([
   ["creator_repository_overloaded", "repositoryBusy"],
