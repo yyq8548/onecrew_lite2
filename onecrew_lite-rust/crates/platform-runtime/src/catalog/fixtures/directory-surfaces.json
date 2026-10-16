@@ -4,52 +4,26 @@
     "directory": [
       {
         "capability_categories": [
-          "drafts and templates",
-          "confirmed sending",
+          "historical drafts and templates",
           "threads and inbound mail",
           "mailbox lifecycle"
         ],
         "connection_model": "Provider mail uses a tagged mailbox reference backed by a vault-held service credential. Local draft and template work may not require provider access.",
         "gotchas": [
-          "Saving a draft does not send it.",
+          "Historical drafts and templates cannot resume single-message sending.",
           "A provider acceptance response is not a substitute for declared delivery or thread readback.",
           "If a mail provider call fails, run email.connection.check once and report its status; do not retry the failed call until the check returns ok."
         ],
         "id": "toolkit.email",
         "identifier_semantics": [
           "Mailbox references, local draft IDs, provider message IDs, and thread IDs are separate domains.",
-          "Reply using the canonical thread and message identifiers returned by Email operations."
+          "Read history using the canonical thread and message identifiers returned by Email operations."
         ],
         "operations": [
           {
             "id": "email.connection.check",
             "summary": "Run a live self-check of this connection: network/proxy reachability and account or key validity. Use it once after network_unreachable.",
             "title": "Check mailbox connection"
-          },
-          {
-            "id": "email.credential.connect",
-            "summary": "Validate and store one Resend API credential in the local vault.",
-            "title": "Connect Resend credential"
-          },
-          {
-            "id": "email.credential.delete",
-            "summary": "Delete one confirmed Resend credential from the local vault.",
-            "title": "Delete Resend credential"
-          },
-          {
-            "id": "email.credential.rotate",
-            "summary": "Validate and replace the secret for one stored Resend credential.",
-            "title": "Rotate Resend credential"
-          },
-          {
-            "id": "email.direct.prepare",
-            "summary": "Prepare an email to a confirmed Creator contact route without sending it.",
-            "title": "Prepare direct email"
-          },
-          {
-            "id": "email.direct.send",
-            "summary": "Send one prepared email to a Creator route after attended approval and return delivery evidence.",
-            "title": "Send direct email"
           },
           {
             "id": "email.draft.get",
@@ -60,26 +34,6 @@
             "id": "email.draft.list",
             "summary": "List local email drafts with filters and bounded pagination.",
             "title": "List mail drafts"
-          },
-          {
-            "id": "email.draft.restore",
-            "summary": "Restore one trashed local email draft and return its current content and state.",
-            "title": "Restore mail draft"
-          },
-          {
-            "id": "email.draft.save",
-            "summary": "Create or update one local email draft and return the persisted draft.",
-            "title": "Save mail draft"
-          },
-          {
-            "id": "email.draft.send",
-            "summary": "Send one saved mail draft after attended approval and return its updated state with delivery evidence.",
-            "title": "Send mail draft"
-          },
-          {
-            "id": "email.draft.trash",
-            "summary": "Move one local email draft to trash and return its updated state.",
-            "title": "Trash mail draft"
           },
           {
             "id": "email.folder.list",
@@ -102,34 +56,9 @@
             "title": "Get mailbox sync status"
           },
           {
-            "id": "email.manual.prepare",
-            "summary": "Prepare an email to an explicit address without saving or sending it.",
-            "title": "Prepare manual email"
-          },
-          {
-            "id": "email.manual.send",
-            "summary": "Send one prepared email to an explicit address after attended approval and return delivery evidence.",
-            "title": "Send manual email"
-          },
-          {
             "id": "email.message.get",
             "summary": "Read one email message by its canonical message identifier.",
             "title": "Get mail message"
-          },
-          {
-            "id": "email.send_many",
-            "summary": "Send a prepared provider-neutral email batch after attended approval and return durable per-item delivery evidence.",
-            "title": "Send many emails"
-          },
-          {
-            "id": "email.send_many.reconcile",
-            "summary": "Reconcile a remotely accepted email batch after attended approval without resending; accepted items require sent readback before local completion.",
-            "title": "Reconcile email batch"
-          },
-          {
-            "id": "email.template.delete",
-            "summary": "Delete one confirmed local email template and return whether it was removed.",
-            "title": "Delete mail template"
           },
           {
             "id": "email.template.get",
@@ -140,16 +69,6 @@
             "id": "email.template.list",
             "summary": "List reusable local email templates with bounded pagination.",
             "title": "List mail templates"
-          },
-          {
-            "id": "email.template.render",
-            "summary": "Render one email template with supplied variables without saving or sending it.",
-            "title": "Render mail template"
-          },
-          {
-            "id": "email.template.save",
-            "summary": "Create or update one reusable local email template and return the persisted template.",
-            "title": "Save mail template"
           },
           {
             "id": "email.thread.get",
@@ -167,8 +86,8 @@
             "title": "Update mail thread disposition"
           }
         ],
-        "purpose": "Use Email capabilities to manage canonical drafts and templates, send confirmed messages, read threads, synchronize inbound mail, and maintain a connected mailbox.",
-        "summary": "Email workflows for drafts, templates, confirmed sending, inbox sync, threads, and connected mailboxes.",
+        "purpose": "Read recorded mail and synchronize inbound mail. User sending is available only through GmailBulk on the Mail page.",
+        "summary": "Read email history, inbox sync, threads, and connected mailboxes.",
         "title": "Email",
         "toolkit": "email"
       },
@@ -176,7 +95,6 @@
         "capability_categories": [
           "account discovery and profiles",
           "media and comments",
-          "relationships and direct messages",
           "operator account lifecycle"
         ],
         "connection_model": "Provider work uses a tagged Instagram operator account established by the attended browser login flow.",
@@ -253,16 +171,6 @@
             "title": "Operator reconnect status"
           },
           {
-            "id": "instagram.conversation.sync",
-            "summary": "Fetch one Instagram conversation from the platform into the local Creator store and return the current conversation.",
-            "title": "Sync Instagram conversation"
-          },
-          {
-            "id": "instagram.message.send",
-            "summary": "Prepare one reply inside an existing Instagram Creator conversation for exact review. Confirmation sends the frozen message and records the verified Creator result.",
-            "title": "Send Instagram direct message"
-          },
-          {
             "id": "instagram.profile.get",
             "summary": "Read one live Instagram profile by handle and return Instagram's own user object as returned, with its public identity and account metrics. To learn whether it is already a saved Creator, pass its id or handle to onecrew.creator.identity.resolve.",
             "title": "Instagram profile by handle"
@@ -273,7 +181,7 @@
             "title": "Instagram user search"
           }
         ],
-        "purpose": "Use Instagram capabilities to find accounts, inspect profiles and content, check relationships, exchange direct messages, and manage the connected operator session.",
+        "purpose": "Find accounts, inspect public profiles and content, and manage the connected operator session.",
         "summary": "A visual social network centered on creator profiles, photos, Reels, comments, and direct messages.",
         "title": "Instagram",
         "toolkit": "instagram"
@@ -349,16 +257,6 @@
             "id": "onecrew.creator.contact_route.update",
             "summary": "Update one saved Creator contact route and return the persisted route record.",
             "title": "Update Creator contact route"
-          },
-          {
-            "id": "onecrew.creator.content_reply.prepare",
-            "summary": "Prepare a reply for one saved content thread without posting it.",
-            "title": "Prepare content reply"
-          },
-          {
-            "id": "onecrew.creator.content_reply.send",
-            "summary": "Prepare the exact Creator content reply for review. The result-owned confirmation freezes its body and stable target before delivery and Creator recording.",
-            "title": "Send content reply"
           },
           {
             "id": "onecrew.creator.delete",
@@ -517,8 +415,8 @@
           },
           {
             "id": "onecrew.discovery.target.increase",
-            "summary": "Record an authenticated, idempotent decision to increase the approved Campaign target while preserving frozen criteria, sources and read budget.",
-            "title": "Increase discovery Campaign target"
+            "summary": "Record an authenticated, idempotent decision to raise or lower the approved Campaign target while preserving frozen criteria, sources and read budget.",
+            "title": "Adjust discovery Campaign target"
           },
           {
             "id": "onecrew.discovery.transcript.get",
@@ -566,29 +464,9 @@
             "title": "List local outreach conversations"
           },
           {
-            "id": "onecrew.outreach.message.prepare",
-            "summary": "Resolve and validate one direct-message target without sending the message.",
-            "title": "Prepare outreach message"
-          },
-          {
-            "id": "onecrew.outreach.message.send",
-            "summary": "Prepare the exact direct message and target for review; confirmation sends it and records verified delivery in Creator.",
-            "title": "Send outreach message"
-          },
-          {
             "id": "onecrew.outreach.relationship.get",
             "summary": "Read the live relationship state between the selected operator account and target.",
             "title": "Get outreach relationship"
-          },
-          {
-            "id": "onecrew.outreach.relationship.prepare",
-            "summary": "Prepare a follow or relationship change and return its current preflight state.",
-            "title": "Prepare outreach relationship action"
-          },
-          {
-            "id": "onecrew.outreach.relationship.update",
-            "summary": "Prepare the exact relationship change for review; confirmation applies it and records the verified Creator result.",
-            "title": "Update outreach relationship"
           },
           {
             "id": "onecrew.search.plan.prepare",
@@ -612,11 +490,11 @@
           },
           {
             "id": "onecrew.workflow.guide",
-            "summary": "Read-only Q&A guidance for finding creators, enriching profiles, and outreach. Omit topic for a directory, or choose a registered scenario for questions, steps, discovery queries and examples. This does not execute business actions, send messages, or create scheduled work.",
-            "title": "Workflow guidance: find, enrich, outreach"
+            "summary": "Read-only Q&A guidance for finding creators and enriching profiles. Omit topic for a directory, or choose a registered scenario for questions, steps, discovery queries and examples. This does not execute business actions, send messages, or create scheduled work.",
+            "title": "Workflow guidance: find, enrich"
           }
         ],
-        "purpose": "Use OneCrew for durable Creator records, reviewed platform saves and outreach, confirmed contact routes, conversations, classifications, and revision-aware local changes.",
+        "purpose": "Use OneCrew for durable Creator records, reviewed platform saves, confirmed contact routes, historical conversations, classifications, and revision-aware local changes.",
         "summary": "OneCrew's local system for Creators, contact routes, conversations, and outreach history.",
         "title": "onecrew_lite",
         "toolkit": "onecrew"
@@ -625,7 +503,6 @@
         "capability_categories": [
           "community discovery",
           "participants and administrators",
-          "messages",
           "operator account lifecycle"
         ],
         "connection_model": "Provider work uses a tagged Telegram operator account. Login can continue through QR, phone code, OTP, or 2FA steps and may require a configured SOCKS5 proxy.",
@@ -721,19 +598,9 @@
             "id": "telegram.connection.reconnect.status",
             "summary": "Read the current state and allowed next actions for one operator reconnect flow.",
             "title": "Operator reconnect status"
-          },
-          {
-            "id": "telegram.conversation.sync",
-            "summary": "Fetch one Telegram conversation from the platform into the local Creator store and return the current conversation.",
-            "title": "Sync Telegram conversation"
-          },
-          {
-            "id": "telegram.message.send",
-            "summary": "Prepare one reply inside an existing Telegram Creator conversation for exact review. Confirmation sends the frozen message and records the verified Creator result.",
-            "title": "Send Telegram direct message"
           }
         ],
-        "purpose": "Use Telegram capabilities to find communities, inspect or resolve community participants, exchange messages where authorized, and manage an MTProto operator session.",
+        "purpose": "Find public communities, inspect or resolve community participants, and manage an MTProto operator session.",
         "summary": "A messaging platform organized around private chats, groups, channels, and their administrators.",
         "title": "Telegram",
         "toolkit": "telegram"
@@ -743,7 +610,6 @@
           "author discovery through advanced post search",
           "profiles and recent activity",
           "posts and threads",
-          "relationships and direct messages",
           "operator account lifecycle"
         ],
         "connection_model": "Provider work uses a tagged X operator account. Browser login and reconnect are attended lifecycle steps; connection identity remains X-specific.",
@@ -761,16 +627,6 @@
           "Post locators and account locators are different identifier domains."
         ],
         "operations": [
-          {
-            "id": "x.chat.passcode.clear",
-            "summary": "Remove the stored X Chat passcode for one operator account from the local vault.",
-            "title": "Clear X Chat passcode"
-          },
-          {
-            "id": "x.chat.passcode.set",
-            "summary": "Store the X Chat passcode for one operator account in the local vault.",
-            "title": "Set X Chat passcode"
-          },
           {
             "id": "x.connection.browser.cancel",
             "summary": "Cancel one active x browser login and return its terminal operation state.",
@@ -803,7 +659,7 @@
           },
           {
             "id": "x.connection.get",
-            "summary": "Read one local X operator connection and return safe identity, configuration, credential availability, and X Chat passcode status.",
+            "summary": "Read one local X operator connection and return safe identity, configuration, and credential availability.",
             "title": "X connection detail"
           },
           {
@@ -832,16 +688,6 @@
             "title": "Operator reconnect status"
           },
           {
-            "id": "x.conversation.sync",
-            "summary": "Fetch one X conversation from the platform into the local Creator store and return the current conversation.",
-            "title": "Sync X conversation"
-          },
-          {
-            "id": "x.message.send",
-            "summary": "Prepare one reply inside an existing X Creator conversation for exact review. Confirmation sends the frozen message and records the verified Creator result.",
-            "title": "Send X direct message"
-          },
-          {
             "id": "x.post_thread.get",
             "summary": "Read one native X thread page with items and next_cursor. Pass the provider cursor unchanged to continue; no local cursor encoding or Creator candidate projection is used.",
             "title": "X post thread"
@@ -862,7 +708,7 @@
             "title": "X user posts"
           }
         ],
-        "purpose": "Find people by searching posts with x.posts.search.advanced and inspecting their authors. Read selected profiles, recent posts and threads to verify the requested criteria, then use separate operations for relationships, messaging or account lifecycle.",
+        "purpose": "Find people by searching posts with x.posts.search.advanced and inspecting their authors. Read selected public profiles, recent posts and threads to verify the requested criteria, and manage the operator account lifecycle.",
         "summary": "A public social network for real-time conversations, posts, relationships, and creator profiles.",
         "title": "X",
         "toolkit": "x"
@@ -946,42 +792,26 @@
     "directory": [
       {
         "capability_categories": [
-          "drafts and templates",
-          "confirmed sending",
+          "historical drafts and templates",
           "threads and inbound mail",
           "mailbox lifecycle"
         ],
         "connection_model": "Provider mail uses a tagged mailbox reference backed by a vault-held service credential. Local draft and template work may not require provider access.",
         "gotchas": [
-          "Saving a draft does not send it.",
+          "Historical drafts and templates cannot resume single-message sending.",
           "A provider acceptance response is not a substitute for declared delivery or thread readback.",
           "If a mail provider call fails, run email.connection.check once and report its status; do not retry the failed call until the check returns ok."
         ],
         "id": "toolkit.email",
         "identifier_semantics": [
           "Mailbox references, local draft IDs, provider message IDs, and thread IDs are separate domains.",
-          "Reply using the canonical thread and message identifiers returned by Email operations."
+          "Read history using the canonical thread and message identifiers returned by Email operations."
         ],
         "operations": [
           {
             "id": "email.connection.check",
             "summary": "Run a live self-check of this connection: network/proxy reachability and account or key validity. Use it once after network_unreachable.",
             "title": "Check mailbox connection"
-          },
-          {
-            "id": "email.credential.connect",
-            "summary": "Validate and store one Resend API credential in the local vault.",
-            "title": "Connect Resend credential"
-          },
-          {
-            "id": "email.credential.delete",
-            "summary": "Delete one confirmed Resend credential from the local vault.",
-            "title": "Delete Resend credential"
-          },
-          {
-            "id": "email.credential.rotate",
-            "summary": "Validate and replace the secret for one stored Resend credential.",
-            "title": "Rotate Resend credential"
           },
           {
             "id": "email.draft.get",
@@ -992,26 +822,6 @@
             "id": "email.draft.list",
             "summary": "List local email drafts with filters and bounded pagination.",
             "title": "List mail drafts"
-          },
-          {
-            "id": "email.draft.restore",
-            "summary": "Restore one trashed local email draft and return its current content and state.",
-            "title": "Restore mail draft"
-          },
-          {
-            "id": "email.draft.save",
-            "summary": "Create or update one local email draft and return the persisted draft.",
-            "title": "Save mail draft"
-          },
-          {
-            "id": "email.draft.send",
-            "summary": "Send one saved mail draft after attended approval and return its updated state with delivery evidence.",
-            "title": "Send mail draft"
-          },
-          {
-            "id": "email.draft.trash",
-            "summary": "Move one local email draft to trash and return its updated state.",
-            "title": "Trash mail draft"
           },
           {
             "id": "email.folder.list",
@@ -1039,21 +849,6 @@
             "title": "Get mail message"
           },
           {
-            "id": "email.send_many",
-            "summary": "Send a prepared provider-neutral email batch after attended approval and return durable per-item delivery evidence.",
-            "title": "Send many emails"
-          },
-          {
-            "id": "email.send_many.reconcile",
-            "summary": "Reconcile a remotely accepted email batch after attended approval without resending; accepted items require sent readback before local completion.",
-            "title": "Reconcile email batch"
-          },
-          {
-            "id": "email.template.delete",
-            "summary": "Delete one confirmed local email template and return whether it was removed.",
-            "title": "Delete mail template"
-          },
-          {
             "id": "email.template.get",
             "summary": "Read one reusable local email template by ID.",
             "title": "Get mail template"
@@ -1062,16 +857,6 @@
             "id": "email.template.list",
             "summary": "List reusable local email templates with bounded pagination.",
             "title": "List mail templates"
-          },
-          {
-            "id": "email.template.render",
-            "summary": "Render one email template with supplied variables without saving or sending it.",
-            "title": "Render mail template"
-          },
-          {
-            "id": "email.template.save",
-            "summary": "Create or update one reusable local email template and return the persisted template.",
-            "title": "Save mail template"
           },
           {
             "id": "email.thread.get",
@@ -1089,8 +874,8 @@
             "title": "Update mail thread disposition"
           }
         ],
-        "purpose": "Use Email capabilities to manage canonical drafts and templates, send confirmed messages, read threads, synchronize inbound mail, and maintain a connected mailbox.",
-        "summary": "Email workflows for drafts, templates, confirmed sending, inbox sync, threads, and connected mailboxes.",
+        "purpose": "Read recorded mail and synchronize inbound mail. User sending is available only through GmailBulk on the Mail page.",
+        "summary": "Read email history, inbox sync, threads, and connected mailboxes.",
         "title": "Email",
         "toolkit": "email"
       },
@@ -1098,7 +883,6 @@
         "capability_categories": [
           "account discovery and profiles",
           "media and comments",
-          "relationships and direct messages",
           "operator account lifecycle"
         ],
         "connection_model": "Provider work uses a tagged Instagram operator account established by the attended browser login flow.",
@@ -1125,16 +909,6 @@
             "title": "Instagram connection detail"
           },
           {
-            "id": "instagram.conversation.sync",
-            "summary": "Fetch one Instagram conversation from the platform into the local Creator store and return the current conversation.",
-            "title": "Sync Instagram conversation"
-          },
-          {
-            "id": "instagram.message.send",
-            "summary": "Prepare one reply inside an existing Instagram Creator conversation for exact review. Confirmation sends the frozen message and records the verified Creator result.",
-            "title": "Send Instagram direct message"
-          },
-          {
             "id": "instagram.profile.get",
             "summary": "Read one live Instagram profile by handle and return Instagram's own user object as returned, with its public identity and account metrics. To learn whether it is already a saved Creator, pass its id or handle to onecrew.creator.identity.resolve.",
             "title": "Instagram profile by handle"
@@ -1145,7 +919,7 @@
             "title": "Instagram user search"
           }
         ],
-        "purpose": "Use Instagram capabilities to find accounts, inspect profiles and content, check relationships, exchange direct messages, and manage the connected operator session.",
+        "purpose": "Find accounts, inspect public profiles and content, and manage the connected operator session.",
         "summary": "A visual social network centered on creator profiles, photos, Reels, comments, and direct messages.",
         "title": "Instagram",
         "toolkit": "instagram"
@@ -1221,16 +995,6 @@
             "id": "onecrew.creator.contact_route.update",
             "summary": "Update one saved Creator contact route and return the persisted route record.",
             "title": "Update Creator contact route"
-          },
-          {
-            "id": "onecrew.creator.content_reply.prepare",
-            "summary": "Prepare a reply for one saved content thread without posting it.",
-            "title": "Prepare content reply"
-          },
-          {
-            "id": "onecrew.creator.content_reply.send",
-            "summary": "Prepare the exact Creator content reply for review. The result-owned confirmation freezes its body and stable target before delivery and Creator recording.",
-            "title": "Send content reply"
           },
           {
             "id": "onecrew.creator.delete",
@@ -1389,8 +1153,8 @@
           },
           {
             "id": "onecrew.discovery.target.increase",
-            "summary": "Record an authenticated, idempotent decision to increase the approved Campaign target while preserving frozen criteria, sources and read budget.",
-            "title": "Increase discovery Campaign target"
+            "summary": "Record an authenticated, idempotent decision to raise or lower the approved Campaign target while preserving frozen criteria, sources and read budget.",
+            "title": "Adjust discovery Campaign target"
           },
           {
             "id": "onecrew.discovery.transcript.get",
@@ -1438,29 +1202,9 @@
             "title": "List local outreach conversations"
           },
           {
-            "id": "onecrew.outreach.message.prepare",
-            "summary": "Resolve and validate one direct-message target without sending the message.",
-            "title": "Prepare outreach message"
-          },
-          {
-            "id": "onecrew.outreach.message.send",
-            "summary": "Prepare the exact direct message and target for review; confirmation sends it and records verified delivery in Creator.",
-            "title": "Send outreach message"
-          },
-          {
             "id": "onecrew.outreach.relationship.get",
             "summary": "Read the live relationship state between the selected operator account and target.",
             "title": "Get outreach relationship"
-          },
-          {
-            "id": "onecrew.outreach.relationship.prepare",
-            "summary": "Prepare a follow or relationship change and return its current preflight state.",
-            "title": "Prepare outreach relationship action"
-          },
-          {
-            "id": "onecrew.outreach.relationship.update",
-            "summary": "Prepare the exact relationship change for review; confirmation applies it and records the verified Creator result.",
-            "title": "Update outreach relationship"
           },
           {
             "id": "onecrew.search.plan.prepare",
@@ -1484,11 +1228,11 @@
           },
           {
             "id": "onecrew.workflow.guide",
-            "summary": "Read-only Q&A guidance for finding creators, enriching profiles, and outreach. Omit topic for a directory, or choose a registered scenario for questions, steps, discovery queries and examples. This does not execute business actions, send messages, or create scheduled work.",
-            "title": "Workflow guidance: find, enrich, outreach"
+            "summary": "Read-only Q&A guidance for finding creators and enriching profiles. Omit topic for a directory, or choose a registered scenario for questions, steps, discovery queries and examples. This does not execute business actions, send messages, or create scheduled work.",
+            "title": "Workflow guidance: find, enrich"
           }
         ],
-        "purpose": "Use OneCrew for durable Creator records, reviewed platform saves and outreach, confirmed contact routes, conversations, classifications, and revision-aware local changes.",
+        "purpose": "Use OneCrew for durable Creator records, reviewed platform saves, confirmed contact routes, historical conversations, classifications, and revision-aware local changes.",
         "summary": "OneCrew's local system for Creators, contact routes, conversations, and outreach history.",
         "title": "onecrew_lite",
         "toolkit": "onecrew"
@@ -1497,7 +1241,6 @@
         "capability_categories": [
           "community discovery",
           "participants and administrators",
-          "messages",
           "operator account lifecycle"
         ],
         "connection_model": "Provider work uses a tagged Telegram operator account. Login can continue through QR, phone code, OTP, or 2FA steps and may require a configured SOCKS5 proxy.",
@@ -1538,19 +1281,9 @@
             "id": "telegram.connection.get",
             "summary": "Read one local Telegram operator connection and return safe identity, configuration, and credential status.",
             "title": "Telegram connection detail"
-          },
-          {
-            "id": "telegram.conversation.sync",
-            "summary": "Fetch one Telegram conversation from the platform into the local Creator store and return the current conversation.",
-            "title": "Sync Telegram conversation"
-          },
-          {
-            "id": "telegram.message.send",
-            "summary": "Prepare one reply inside an existing Telegram Creator conversation for exact review. Confirmation sends the frozen message and records the verified Creator result.",
-            "title": "Send Telegram direct message"
           }
         ],
-        "purpose": "Use Telegram capabilities to find communities, inspect or resolve community participants, exchange messages where authorized, and manage an MTProto operator session.",
+        "purpose": "Find public communities, inspect or resolve community participants, and manage an MTProto operator session.",
         "summary": "A messaging platform organized around private chats, groups, channels, and their administrators.",
         "title": "Telegram",
         "toolkit": "telegram"
@@ -1560,7 +1293,6 @@
           "author discovery through advanced post search",
           "profiles and recent activity",
           "posts and threads",
-          "relationships and direct messages",
           "operator account lifecycle"
         ],
         "connection_model": "Provider work uses a tagged X operator account. Browser login and reconnect are attended lifecycle steps; connection identity remains X-specific.",
@@ -1585,18 +1317,8 @@
           },
           {
             "id": "x.connection.get",
-            "summary": "Read one local X operator connection and return safe identity, configuration, credential availability, and X Chat passcode status.",
+            "summary": "Read one local X operator connection and return safe identity, configuration, and credential availability.",
             "title": "X connection detail"
-          },
-          {
-            "id": "x.conversation.sync",
-            "summary": "Fetch one X conversation from the platform into the local Creator store and return the current conversation.",
-            "title": "Sync X conversation"
-          },
-          {
-            "id": "x.message.send",
-            "summary": "Prepare one reply inside an existing X Creator conversation for exact review. Confirmation sends the frozen message and records the verified Creator result.",
-            "title": "Send X direct message"
           },
           {
             "id": "x.post_thread.get",
@@ -1619,7 +1341,7 @@
             "title": "X user posts"
           }
         ],
-        "purpose": "Find people by searching posts with x.posts.search.advanced and inspecting their authors. Read selected profiles, recent posts and threads to verify the requested criteria, then use separate operations for relationships, messaging or account lifecycle.",
+        "purpose": "Find people by searching posts with x.posts.search.advanced and inspecting their authors. Read selected public profiles, recent posts and threads to verify the requested criteria, and manage the operator account lifecycle.",
         "summary": "A public social network for real-time conversations, posts, relationships, and creator profiles.",
         "title": "X",
         "toolkit": "x"
@@ -1703,21 +1425,20 @@
     "directory": [
       {
         "capability_categories": [
-          "drafts and templates",
-          "confirmed sending",
+          "historical drafts and templates",
           "threads and inbound mail",
           "mailbox lifecycle"
         ],
         "connection_model": "Provider mail uses a tagged mailbox reference backed by a vault-held service credential. Local draft and template work may not require provider access.",
         "gotchas": [
-          "Saving a draft does not send it.",
+          "Historical drafts and templates cannot resume single-message sending.",
           "A provider acceptance response is not a substitute for declared delivery or thread readback.",
           "If a mail provider call fails, run email.connection.check once and report its status; do not retry the failed call until the check returns ok."
         ],
         "id": "toolkit.email",
         "identifier_semantics": [
           "Mailbox references, local draft IDs, provider message IDs, and thread IDs are separate domains.",
-          "Reply using the canonical thread and message identifiers returned by Email operations."
+          "Read history using the canonical thread and message identifiers returned by Email operations."
         ],
         "operations": [
           {
@@ -1726,28 +1447,13 @@
             "title": "Check mailbox connection"
           },
           {
-            "id": "email.credential.connect",
-            "summary": "Validate and store one Resend API credential in the local vault.",
-            "title": "Connect Resend credential"
-          },
-          {
-            "id": "email.credential.delete",
-            "summary": "Delete one confirmed Resend credential from the local vault.",
-            "title": "Delete Resend credential"
-          },
-          {
-            "id": "email.credential.rotate",
-            "summary": "Validate and replace the secret for one stored Resend credential.",
-            "title": "Rotate Resend credential"
-          },
-          {
             "id": "email.mailbox.get",
             "summary": "Read one connected mailbox by reference without exposing its credential.",
             "title": "Get mailbox"
           }
         ],
-        "purpose": "Use Email capabilities to manage canonical drafts and templates, send confirmed messages, read threads, synchronize inbound mail, and maintain a connected mailbox.",
-        "summary": "Email workflows for drafts, templates, confirmed sending, inbox sync, threads, and connected mailboxes.",
+        "purpose": "Read recorded mail and synchronize inbound mail. User sending is available only through GmailBulk on the Mail page.",
+        "summary": "Read email history, inbox sync, threads, and connected mailboxes.",
         "title": "Email",
         "toolkit": "email"
       },
@@ -1755,7 +1461,6 @@
         "capability_categories": [
           "account discovery and profiles",
           "media and comments",
-          "relationships and direct messages",
           "operator account lifecycle"
         ],
         "connection_model": "Provider work uses a tagged Instagram operator account established by the attended browser login flow.",
@@ -1832,7 +1537,7 @@
             "title": "Operator reconnect status"
           }
         ],
-        "purpose": "Use Instagram capabilities to find accounts, inspect profiles and content, check relationships, exchange direct messages, and manage the connected operator session.",
+        "purpose": "Find accounts, inspect public profiles and content, and manage the connected operator session.",
         "summary": "A visual social network centered on creator profiles, photos, Reels, comments, and direct messages.",
         "title": "Instagram",
         "toolkit": "instagram"
@@ -1841,7 +1546,6 @@
         "capability_categories": [
           "community discovery",
           "participants and administrators",
-          "messages",
           "operator account lifecycle"
         ],
         "connection_model": "Provider work uses a tagged Telegram operator account. Login can continue through QR, phone code, OTP, or 2FA steps and may require a configured SOCKS5 proxy.",
@@ -1924,7 +1628,7 @@
             "title": "Operator reconnect status"
           }
         ],
-        "purpose": "Use Telegram capabilities to find communities, inspect or resolve community participants, exchange messages where authorized, and manage an MTProto operator session.",
+        "purpose": "Find public communities, inspect or resolve community participants, and manage an MTProto operator session.",
         "summary": "A messaging platform organized around private chats, groups, channels, and their administrators.",
         "title": "Telegram",
         "toolkit": "telegram"
@@ -1934,7 +1638,6 @@
           "author discovery through advanced post search",
           "profiles and recent activity",
           "posts and threads",
-          "relationships and direct messages",
           "operator account lifecycle"
         ],
         "connection_model": "Provider work uses a tagged X operator account. Browser login and reconnect are attended lifecycle steps; connection identity remains X-specific.",
@@ -1952,16 +1655,6 @@
           "Post locators and account locators are different identifier domains."
         ],
         "operations": [
-          {
-            "id": "x.chat.passcode.clear",
-            "summary": "Remove the stored X Chat passcode for one operator account from the local vault.",
-            "title": "Clear X Chat passcode"
-          },
-          {
-            "id": "x.chat.passcode.set",
-            "summary": "Store the X Chat passcode for one operator account in the local vault.",
-            "title": "Set X Chat passcode"
-          },
           {
             "id": "x.connection.browser.cancel",
             "summary": "Cancel one active x browser login and return its terminal operation state.",
@@ -1994,7 +1687,7 @@
           },
           {
             "id": "x.connection.get",
-            "summary": "Read one local X operator connection and return safe identity, configuration, credential availability, and X Chat passcode status.",
+            "summary": "Read one local X operator connection and return safe identity, configuration, and credential availability.",
             "title": "X connection detail"
           },
           {
@@ -2023,7 +1716,7 @@
             "title": "Operator reconnect status"
           }
         ],
-        "purpose": "Find people by searching posts with x.posts.search.advanced and inspecting their authors. Read selected profiles, recent posts and threads to verify the requested criteria, then use separate operations for relationships, messaging or account lifecycle.",
+        "purpose": "Find people by searching posts with x.posts.search.advanced and inspecting their authors. Read selected public profiles, recent posts and threads to verify the requested criteria, and manage the operator account lifecycle.",
         "summary": "A public social network for real-time conversations, posts, relationships, and creator profiles.",
         "title": "X",
         "toolkit": "x"
@@ -2094,7 +1787,6 @@
         "capability_categories": [
           "account discovery and profiles",
           "media and comments",
-          "relationships and direct messages",
           "operator account lifecycle"
         ],
         "connection_model": "Provider work uses a tagged Instagram operator account established by the attended browser login flow.",
@@ -2126,7 +1818,7 @@
             "title": "Instagram user search"
           }
         ],
-        "purpose": "Use Instagram capabilities to find accounts, inspect profiles and content, check relationships, exchange direct messages, and manage the connected operator session.",
+        "purpose": "Find accounts, inspect public profiles and content, and manage the connected operator session.",
         "summary": "A visual social network centered on creator profiles, photos, Reels, comments, and direct messages.",
         "title": "Instagram",
         "toolkit": "instagram"
@@ -2197,16 +1889,6 @@
             "id": "onecrew.creator.contact_route.update",
             "summary": "Update one saved Creator contact route and return the persisted route record.",
             "title": "Update Creator contact route"
-          },
-          {
-            "id": "onecrew.creator.content_reply.prepare",
-            "summary": "Prepare a reply for one saved content thread without posting it.",
-            "title": "Prepare content reply"
-          },
-          {
-            "id": "onecrew.creator.content_reply.send",
-            "summary": "Prepare the exact Creator content reply for review. The result-owned confirmation freezes its body and stable target before delivery and Creator recording.",
-            "title": "Send content reply"
           },
           {
             "id": "onecrew.creator.delete",
@@ -2365,8 +2047,8 @@
           },
           {
             "id": "onecrew.discovery.target.increase",
-            "summary": "Record an authenticated, idempotent decision to increase the approved Campaign target while preserving frozen criteria, sources and read budget.",
-            "title": "Increase discovery Campaign target"
+            "summary": "Record an authenticated, idempotent decision to raise or lower the approved Campaign target while preserving frozen criteria, sources and read budget.",
+            "title": "Adjust discovery Campaign target"
           },
           {
             "id": "onecrew.discovery.transcript.get",
@@ -2395,11 +2077,11 @@
           },
           {
             "id": "onecrew.workflow.guide",
-            "summary": "Read-only Q&A guidance for finding creators, enriching profiles, and outreach. Omit topic for a directory, or choose a registered scenario for questions, steps, discovery queries and examples. This does not execute business actions, send messages, or create scheduled work.",
-            "title": "Workflow guidance: find, enrich, outreach"
+            "summary": "Read-only Q&A guidance for finding creators and enriching profiles. Omit topic for a directory, or choose a registered scenario for questions, steps, discovery queries and examples. This does not execute business actions, send messages, or create scheduled work.",
+            "title": "Workflow guidance: find, enrich"
           }
         ],
-        "purpose": "Use OneCrew for durable Creator records, reviewed platform saves and outreach, confirmed contact routes, conversations, classifications, and revision-aware local changes.",
+        "purpose": "Use OneCrew for durable Creator records, reviewed platform saves, confirmed contact routes, historical conversations, classifications, and revision-aware local changes.",
         "summary": "OneCrew's local system for Creators, contact routes, conversations, and outreach history.",
         "title": "onecrew_lite",
         "toolkit": "onecrew"
@@ -2408,7 +2090,6 @@
         "capability_categories": [
           "community discovery",
           "participants and administrators",
-          "messages",
           "operator account lifecycle"
         ],
         "connection_model": "Provider work uses a tagged Telegram operator account. Login can continue through QR, phone code, OTP, or 2FA steps and may require a configured SOCKS5 proxy.",
@@ -2446,7 +2127,7 @@
             "title": "Check Telegram connection"
           }
         ],
-        "purpose": "Use Telegram capabilities to find communities, inspect or resolve community participants, exchange messages where authorized, and manage an MTProto operator session.",
+        "purpose": "Find public communities, inspect or resolve community participants, and manage an MTProto operator session.",
         "summary": "A messaging platform organized around private chats, groups, channels, and their administrators.",
         "title": "Telegram",
         "toolkit": "telegram"
@@ -2456,7 +2137,6 @@
           "author discovery through advanced post search",
           "profiles and recent activity",
           "posts and threads",
-          "relationships and direct messages",
           "operator account lifecycle"
         ],
         "connection_model": "Provider work uses a tagged X operator account. Browser login and reconnect are attended lifecycle steps; connection identity remains X-specific.",
@@ -2500,7 +2180,7 @@
             "title": "X user posts"
           }
         ],
-        "purpose": "Find people by searching posts with x.posts.search.advanced and inspecting their authors. Read selected profiles, recent posts and threads to verify the requested criteria, then use separate operations for relationships, messaging or account lifecycle.",
+        "purpose": "Find people by searching posts with x.posts.search.advanced and inspecting their authors. Read selected public profiles, recent posts and threads to verify the requested criteria, and manage the operator account lifecycle.",
         "summary": "A public social network for real-time conversations, posts, relationships, and creator profiles.",
         "title": "X",
         "toolkit": "x"
@@ -2559,42 +2239,6 @@
     "directory": [
       {
         "capability_categories": [
-          "account discovery and profiles",
-          "media and comments",
-          "relationships and direct messages",
-          "operator account lifecycle"
-        ],
-        "connection_model": "Provider work uses a tagged Instagram operator account established by the attended browser login flow.",
-        "gotchas": [
-          "User search returns the native user array without a continuation cursor; inspect selected profiles separately before preparing Creator saves.",
-          "Login state can expire and require attended reconnect.",
-          "Preserve provider-returned identifiers instead of reconstructing them from display names.",
-          "After network_unreachable, run instagram.connection.check once and report its status; do not retry the failed call until the check returns ok."
-        ],
-        "id": "toolkit.instagram",
-        "identifier_semantics": [
-          "Instagram handles and media locators remain Instagram-specific.",
-          "A Creator ID does not replace an Instagram account locator."
-        ],
-        "operations": [
-          {
-            "id": "instagram.conversation.sync",
-            "summary": "Fetch one Instagram conversation from the platform into the local Creator store and return the current conversation.",
-            "title": "Sync Instagram conversation"
-          },
-          {
-            "id": "instagram.message.send",
-            "summary": "Prepare one reply inside an existing Instagram Creator conversation for exact review. Confirmation sends the frozen message and records the verified Creator result.",
-            "title": "Send Instagram direct message"
-          }
-        ],
-        "purpose": "Use Instagram capabilities to find accounts, inspect profiles and content, check relationships, exchange direct messages, and manage the connected operator session.",
-        "summary": "A visual social network centered on creator profiles, photos, Reels, comments, and direct messages.",
-        "title": "Instagram",
-        "toolkit": "instagram"
-      },
-      {
-        "capability_categories": [
           "Creator profiles and reviewed saves",
           "contacts and routes",
           "conversations and classifications",
@@ -2646,29 +2290,9 @@
             "title": "List local outreach conversations"
           },
           {
-            "id": "onecrew.outreach.message.prepare",
-            "summary": "Resolve and validate one direct-message target without sending the message.",
-            "title": "Prepare outreach message"
-          },
-          {
-            "id": "onecrew.outreach.message.send",
-            "summary": "Prepare the exact direct message and target for review; confirmation sends it and records verified delivery in Creator.",
-            "title": "Send outreach message"
-          },
-          {
             "id": "onecrew.outreach.relationship.get",
             "summary": "Read the live relationship state between the selected operator account and target.",
             "title": "Get outreach relationship"
-          },
-          {
-            "id": "onecrew.outreach.relationship.prepare",
-            "summary": "Prepare a follow or relationship change and return its current preflight state.",
-            "title": "Prepare outreach relationship action"
-          },
-          {
-            "id": "onecrew.outreach.relationship.update",
-            "summary": "Prepare the exact relationship change for review; confirmation applies it and records the verified Creator result.",
-            "title": "Update outreach relationship"
           },
           {
             "id": "onecrew.triage.acknowledge",
@@ -2686,86 +2310,10 @@
             "title": "Record reply triage"
           }
         ],
-        "purpose": "Use OneCrew for durable Creator records, reviewed platform saves and outreach, confirmed contact routes, conversations, classifications, and revision-aware local changes.",
+        "purpose": "Use OneCrew for durable Creator records, reviewed platform saves, confirmed contact routes, historical conversations, classifications, and revision-aware local changes.",
         "summary": "OneCrew's local system for Creators, contact routes, conversations, and outreach history.",
         "title": "onecrew_lite",
         "toolkit": "onecrew"
-      },
-      {
-        "capability_categories": [
-          "community discovery",
-          "participants and administrators",
-          "messages",
-          "operator account lifecycle"
-        ],
-        "connection_model": "Provider work uses a tagged Telegram operator account. Login can continue through QR, phone code, OTP, or 2FA steps and may require a configured SOCKS5 proxy.",
-        "gotchas": [
-          "Community search returns native public chat objects without a cursor or Creator snapshot. Use their real IDs and kinds to resolve a community and read administrators.",
-          "Administrator reads return a bounded page; a missing member does not prove absence. Prepare selected locators directly and present result_ref for App confirmation.",
-          "Continuation codes and passwords are transient secrets and must not be repeated in catalog queries.",
-          "After network_unreachable, run telegram.connection.check once and report its status; do not retry the failed call until the check returns ok."
-        ],
-        "id": "toolkit.telegram",
-        "identifier_semantics": [
-          "Chat, channel, user, and message identifiers are distinct Telegram domains.",
-          "Carry identifiers returned by the selected Telegram account rather than guessing usernames.",
-          "telegram.community.get and telegram.community.administrators.list use current typed locators and return public data without phone numbers or access hashes."
-        ],
-        "operations": [
-          {
-            "id": "telegram.conversation.sync",
-            "summary": "Fetch one Telegram conversation from the platform into the local Creator store and return the current conversation.",
-            "title": "Sync Telegram conversation"
-          },
-          {
-            "id": "telegram.message.send",
-            "summary": "Prepare one reply inside an existing Telegram Creator conversation for exact review. Confirmation sends the frozen message and records the verified Creator result.",
-            "title": "Send Telegram direct message"
-          }
-        ],
-        "purpose": "Use Telegram capabilities to find communities, inspect or resolve community participants, exchange messages where authorized, and manage an MTProto operator session.",
-        "summary": "A messaging platform organized around private chats, groups, channels, and their administrators.",
-        "title": "Telegram",
-        "toolkit": "telegram"
-      },
-      {
-        "capability_categories": [
-          "author discovery through advanced post search",
-          "profiles and recent activity",
-          "posts and threads",
-          "relationships and direct messages",
-          "operator account lifecycle"
-        ],
-        "connection_model": "Provider work uses a tagged X operator account. Browser login and reconnect are attended lifecycle steps; connection identity remains X-specific.",
-        "gotchas": [
-          "Select x.posts.search.advanced and deduplicate authors before verification.",
-          "Read profile or recent posts only when quality or geography evidence is missing; otherwise pass locator, connection and provenance to Creator save preparation.",
-          "A post's language is not evidence that its author lives in that language's country. Keep requested geography and content-quality checks in the plan's acceptance criteria.",
-          "Search and thread reads return native X pages and cursors without creating Creator records or snapshots. Pass the native next_cursor unchanged to continue.",
-          "Do not substitute an Instagram handle or Creator ID for an X locator.",
-          "After network_unreachable, run x.connection.check once and report its status; do not retry the failed call until the check returns ok."
-        ],
-        "id": "toolkit.x",
-        "identifier_semantics": [
-          "Handles identify X accounts; preserve the returned spelling when passing them to another X operation.",
-          "Post locators and account locators are different identifier domains."
-        ],
-        "operations": [
-          {
-            "id": "x.conversation.sync",
-            "summary": "Fetch one X conversation from the platform into the local Creator store and return the current conversation.",
-            "title": "Sync X conversation"
-          },
-          {
-            "id": "x.message.send",
-            "summary": "Prepare one reply inside an existing X Creator conversation for exact review. Confirmation sends the frozen message and records the verified Creator result.",
-            "title": "Send X direct message"
-          }
-        ],
-        "purpose": "Find people by searching posts with x.posts.search.advanced and inspecting their authors. Read selected profiles, recent posts and threads to verify the requested criteria, then use separate operations for relationships, messaging or account lifecycle.",
-        "summary": "A public social network for real-time conversations, posts, relationships, and creator profiles.",
-        "title": "X",
-        "toolkit": "x"
       }
     ]
   },
@@ -2774,52 +2322,26 @@
     "directory": [
       {
         "capability_categories": [
-          "drafts and templates",
-          "confirmed sending",
+          "historical drafts and templates",
           "threads and inbound mail",
           "mailbox lifecycle"
         ],
         "connection_model": "Provider mail uses a tagged mailbox reference backed by a vault-held service credential. Local draft and template work may not require provider access.",
         "gotchas": [
-          "Saving a draft does not send it.",
+          "Historical drafts and templates cannot resume single-message sending.",
           "A provider acceptance response is not a substitute for declared delivery or thread readback.",
           "If a mail provider call fails, run email.connection.check once and report its status; do not retry the failed call until the check returns ok."
         ],
         "id": "toolkit.email",
         "identifier_semantics": [
           "Mailbox references, local draft IDs, provider message IDs, and thread IDs are separate domains.",
-          "Reply using the canonical thread and message identifiers returned by Email operations."
+          "Read history using the canonical thread and message identifiers returned by Email operations."
         ],
         "operations": [
           {
             "id": "email.connection.check",
             "summary": "Run a live self-check of this connection: network/proxy reachability and account or key validity. Use it once after network_unreachable.",
             "title": "Check mailbox connection"
-          },
-          {
-            "id": "email.credential.connect",
-            "summary": "Validate and store one Resend API credential in the local vault.",
-            "title": "Connect Resend credential"
-          },
-          {
-            "id": "email.credential.delete",
-            "summary": "Delete one confirmed Resend credential from the local vault.",
-            "title": "Delete Resend credential"
-          },
-          {
-            "id": "email.credential.rotate",
-            "summary": "Validate and replace the secret for one stored Resend credential.",
-            "title": "Rotate Resend credential"
-          },
-          {
-            "id": "email.direct.prepare",
-            "summary": "Prepare an email to a confirmed Creator contact route without sending it.",
-            "title": "Prepare direct email"
-          },
-          {
-            "id": "email.direct.send",
-            "summary": "Send one prepared email to a Creator route after attended approval and return delivery evidence.",
-            "title": "Send direct email"
           },
           {
             "id": "email.draft.get",
@@ -2830,26 +2352,6 @@
             "id": "email.draft.list",
             "summary": "List local email drafts with filters and bounded pagination.",
             "title": "List mail drafts"
-          },
-          {
-            "id": "email.draft.restore",
-            "summary": "Restore one trashed local email draft and return its current content and state.",
-            "title": "Restore mail draft"
-          },
-          {
-            "id": "email.draft.save",
-            "summary": "Create or update one local email draft and return the persisted draft.",
-            "title": "Save mail draft"
-          },
-          {
-            "id": "email.draft.send",
-            "summary": "Send one saved mail draft after attended approval and return its updated state with delivery evidence.",
-            "title": "Send mail draft"
-          },
-          {
-            "id": "email.draft.trash",
-            "summary": "Move one local email draft to trash and return its updated state.",
-            "title": "Trash mail draft"
           },
           {
             "id": "email.folder.list",
@@ -2872,34 +2374,9 @@
             "title": "Get mailbox sync status"
           },
           {
-            "id": "email.manual.prepare",
-            "summary": "Prepare an email to an explicit address without saving or sending it.",
-            "title": "Prepare manual email"
-          },
-          {
-            "id": "email.manual.send",
-            "summary": "Send one prepared email to an explicit address after attended approval and return delivery evidence.",
-            "title": "Send manual email"
-          },
-          {
             "id": "email.message.get",
             "summary": "Read one email message by its canonical message identifier.",
             "title": "Get mail message"
-          },
-          {
-            "id": "email.send_many",
-            "summary": "Send a prepared provider-neutral email batch after attended approval and return durable per-item delivery evidence.",
-            "title": "Send many emails"
-          },
-          {
-            "id": "email.send_many.reconcile",
-            "summary": "Reconcile a remotely accepted email batch after attended approval without resending; accepted items require sent readback before local completion.",
-            "title": "Reconcile email batch"
-          },
-          {
-            "id": "email.template.delete",
-            "summary": "Delete one confirmed local email template and return whether it was removed.",
-            "title": "Delete mail template"
           },
           {
             "id": "email.template.get",
@@ -2910,16 +2387,6 @@
             "id": "email.template.list",
             "summary": "List reusable local email templates with bounded pagination.",
             "title": "List mail templates"
-          },
-          {
-            "id": "email.template.render",
-            "summary": "Render one email template with supplied variables without saving or sending it.",
-            "title": "Render mail template"
-          },
-          {
-            "id": "email.template.save",
-            "summary": "Create or update one reusable local email template and return the persisted template.",
-            "title": "Save mail template"
           },
           {
             "id": "email.thread.get",
@@ -2937,8 +2404,8 @@
             "title": "Update mail thread disposition"
           }
         ],
-        "purpose": "Use Email capabilities to manage canonical drafts and templates, send confirmed messages, read threads, synchronize inbound mail, and maintain a connected mailbox.",
-        "summary": "Email workflows for drafts, templates, confirmed sending, inbox sync, threads, and connected mailboxes.",
+        "purpose": "Read recorded mail and synchronize inbound mail. User sending is available only through GmailBulk on the Mail page.",
+        "summary": "Read email history, inbox sync, threads, and connected mailboxes.",
         "title": "Email",
         "toolkit": "email"
       },
@@ -2946,7 +2413,6 @@
         "capability_categories": [
           "account discovery and profiles",
           "media and comments",
-          "relationships and direct messages",
           "operator account lifecycle"
         ],
         "connection_model": "Provider work uses a tagged Instagram operator account established by the attended browser login flow.",
@@ -2973,7 +2439,7 @@
             "title": "Instagram connection detail"
           }
         ],
-        "purpose": "Use Instagram capabilities to find accounts, inspect profiles and content, check relationships, exchange direct messages, and manage the connected operator session.",
+        "purpose": "Find accounts, inspect public profiles and content, and manage the connected operator session.",
         "summary": "A visual social network centered on creator profiles, photos, Reels, comments, and direct messages.",
         "title": "Instagram",
         "toolkit": "instagram"
@@ -3021,7 +2487,7 @@
             "title": "Record reply triage"
           }
         ],
-        "purpose": "Use OneCrew for durable Creator records, reviewed platform saves and outreach, confirmed contact routes, conversations, classifications, and revision-aware local changes.",
+        "purpose": "Use OneCrew for durable Creator records, reviewed platform saves, confirmed contact routes, historical conversations, classifications, and revision-aware local changes.",
         "summary": "OneCrew's local system for Creators, contact routes, conversations, and outreach history.",
         "title": "onecrew_lite",
         "toolkit": "onecrew"
@@ -3030,7 +2496,6 @@
         "capability_categories": [
           "community discovery",
           "participants and administrators",
-          "messages",
           "operator account lifecycle"
         ],
         "connection_model": "Provider work uses a tagged Telegram operator account. Login can continue through QR, phone code, OTP, or 2FA steps and may require a configured SOCKS5 proxy.",
@@ -3058,7 +2523,7 @@
             "title": "Telegram connection detail"
           }
         ],
-        "purpose": "Use Telegram capabilities to find communities, inspect or resolve community participants, exchange messages where authorized, and manage an MTProto operator session.",
+        "purpose": "Find public communities, inspect or resolve community participants, and manage an MTProto operator session.",
         "summary": "A messaging platform organized around private chats, groups, channels, and their administrators.",
         "title": "Telegram",
         "toolkit": "telegram"
@@ -3068,7 +2533,6 @@
           "author discovery through advanced post search",
           "profiles and recent activity",
           "posts and threads",
-          "relationships and direct messages",
           "operator account lifecycle"
         ],
         "connection_model": "Provider work uses a tagged X operator account. Browser login and reconnect are attended lifecycle steps; connection identity remains X-specific.",
@@ -3093,11 +2557,11 @@
           },
           {
             "id": "x.connection.get",
-            "summary": "Read one local X operator connection and return safe identity, configuration, credential availability, and X Chat passcode status.",
+            "summary": "Read one local X operator connection and return safe identity, configuration, and credential availability.",
             "title": "X connection detail"
           }
         ],
-        "purpose": "Find people by searching posts with x.posts.search.advanced and inspecting their authors. Read selected profiles, recent posts and threads to verify the requested criteria, then use separate operations for relationships, messaging or account lifecycle.",
+        "purpose": "Find people by searching posts with x.posts.search.advanced and inspecting their authors. Read selected public profiles, recent posts and threads to verify the requested criteria, and manage the operator account lifecycle.",
         "summary": "A public social network for real-time conversations, posts, relationships, and creator profiles.",
         "title": "X",
         "toolkit": "x"

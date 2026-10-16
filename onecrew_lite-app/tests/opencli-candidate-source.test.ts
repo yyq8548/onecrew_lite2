@@ -1,0 +1,50 @@
+import assert from "node:assert/strict";
+import { randomBytes } from "node:crypto";
+import { readFileSync } from "node:fs";
+import { test } from "node:test";
+import { MemoryStorage } from "@mtcute/core";
+import { readStringSession, writeStringSession } from "@mtcute/core/utils.js";
+import { importGrammersSession } from "../src/platforms/candidates/telegram-read.ts";
+import { parseYoutubeAbout, projectYoutubeProfile } from "../src/platforms/candidates/youtube-read.ts";
+import { parseHeldLinkHub, linkHubUrl } from "../src/platforms/candidates/link-hub.ts";
+import { creatorLinkHubs } from "../src/platforms/candidates/resolver.ts";
+
+test("原Grammers会话通过成熟mtcute会话编码保留home DC及256字节授权，不连接网络", () => {
+  const key = randomBytes(256);
+  const converted = importGrammersSession(JSON.stringify({ home_dc: 2, dc_options: [{ id: 2, ipv4: "149.154.167.41:443", ipv6: "[2001:67c:4e8:f002::a]:443", auth_key: key.toString("hex") }] }));
+  const encoded = writeStringSession({ ...converted.session, version: 3, primaryDcs: converted.session.primaryDcs! });
+  const parsed = readStringSession(encoded); assert.deepEqual(Buffer.from(parsed.authKey), key);
+  assert.equal(parsed.primaryDcs.main.id, 2); assert.equal(parsed.primaryDcs.main.ipAddress, "149.154.167.41");
+  const storage = new MemoryStorage(); for (const entry of converted.keys) storage.authKeys.set(entry.id, entry.key);
+  assert.deepEqual(storage.authKeys.get(2), key);
+  assert.throws(() => importGrammersSession(JSON.stringify({ home_dc: 2, dc_options: [] })));
+  key.fill(0); parsed.authKey.fill(0); converted.session.authKey.fill(0); for (const entry of converted.keys) entry.key.fill(0);
+});
+test("YouTube原HTML夹具由成熟HTML与JS AST解析，保留完整About与最近视频证据", () => {
+  const about = parseYoutubeAbout(readFileSync(new URL("../../onecrew_lite-rust/crates/youtube-client/tests/fixtures/creator-about.html", import.meta.url), "utf8"));
+  assert.ok(about.links.includes("https://www.tiktok.com/@creator.name"));
+  assert.ok(about.description.includes("business@example.com"));
+  const id = "UC_x5XG1OV2P6uZZ5FSM9Ttw";
+  const playlist = JSON.parse(readFileSync(new URL("../../onecrew_lite-rust/crates/youtube-client/tests/fixtures/creator-playlist.json", import.meta.url), "utf8"));
+  const payload = { items: [{ id, snippet: { title: "Channel title", description: "API description", customUrl: "@channel", country: "TR", thumbnails: { high: { url: "https://i.ytimg.com/channel.jpg" } } }, statistics: { subscriberCount: "125" } }] };
+  const result = projectYoutubeProfile(payload, id, about, playlist);
+  assert.equal(result.profile.follower_count, 125n); assert.equal(result.account.handle, "channel");
+  assert.ok(result.evidence.some(item => item.kind === "profile_field" && item.source === "video_description"));
+  assert.equal(result.warnings.length, 0);
+  assert.throws(() => projectYoutubeProfile(payload, "UCaaaaaaaaaaaaaaaaaaaaaa", about, playlist), { kind: "identity_mismatch" });
+  assert.throws(() => parseYoutubeAbout("<script>var ytInitialData = dangerousFunction();</script>"));
+  const missing = projectYoutubeProfile(payload, id, null, null); assert.equal(missing.warnings.length, 2);
+});
+test("LinkHub原HTML夹具合并SSR与结构化数据，排除推荐卡和内部导航", () => {
+  const source = "https://linktr.ee/bitcoinmx";
+  const html = readFileSync(new URL("../../onecrew_lite-rust/crates/platform-runtime/src/toolkits/fixtures/linktree_bitcoinmx.html", import.meta.url), "utf8");
+  const result = parseHeldLinkHub(html, source, source);
+  assert.equal(result.source_url, source); assert.ok(result.links.some(link => link.url === "https://x.com/bitcoinmx"));
+  const filtered = parseHeldLinkHub('<a href="/report">bad@example.com</a><div data-seo-modal-panel><a href="https://other.example">phantom@example.com</a></div><a href="mailto:Owner@Example.org">Email</a>', source, source);
+  assert.deepEqual(filtered.emails, [{ value: "owner@example.org" }]);
+  assert.equal(linkHubUrl("https://linktr.ee/owner，").href, "https://linktr.ee/owner");
+  assert.throws(() => linkHubUrl("https://evil.example/linktr.ee"));
+  const read = projectYoutubeProfile({ items: [{ id: "UC_x5XG1OV2P6uZZ5FSM9Ttw", snippet: { title: "Channel" }, statistics: {} }] }, "UC_x5XG1OV2P6uZZ5FSM9Ttw", null, null);
+  read.evidence.push({ kind: "observation", channel: "link_hub", locator_kind: "url", value: source, source: "profile_website", source_url: null });
+  assert.ok(creatorLinkHubs(read).includes(source));
+});

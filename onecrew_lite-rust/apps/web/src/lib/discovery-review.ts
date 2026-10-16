@@ -1,7 +1,10 @@
 import { invoke } from "./local-runtime";
-import type { DiscoveryReviewMaterial as GeneratedMaterial, DiscoveryReviewMaterialInput, DiscoveryReviewReceipt, GetDiscoveryReviewInput, SubmitDiscoveryReviewInput } from "./generated/discovery-contracts";
-import { validateDiscoveryReviewMaterial } from "./generated/discovery-contracts/validators/DiscoveryReviewMaterial.js";
-import { validateDiscoveryReviewReceipt } from "./generated/discovery-contracts/validators/DiscoveryReviewReceipt.js";
+import type { DiscoveryReviewMaterialInput, GetDiscoveryReviewInput, SubmitDiscoveryReviewInput as OriginalSubmitDiscoveryReviewInput } from "./generated/discovery-contracts";
+import { discoveryReviewMaterial, discoveryReviewReceipt, type DiscoveryReviewCriterion, type DiscoveryReviewMaterial as GeneratedMaterial, type DiscoveryReviewReceipt } from "@onecrew/runtime-contracts/discovery";
+export type SubmitDiscoveryReviewInput = Omit<OriginalSubmitDiscoveryReviewInput, "findings"> & { findings: (Omit<OriginalSubmitDiscoveryReviewInput["findings"][number], "criterion"> & { criterion: DiscoveryReviewCriterion })[] };
+import { isU64 } from "@onecrew/runtime-contracts/result-wire";
+const validateDiscoveryReviewMaterial = (value: unknown): value is GeneratedMaterial => discoveryReviewMaterial.safeParse(value).success;
+const validateDiscoveryReviewReceipt = (value: unknown): value is DiscoveryReviewReceipt => discoveryReviewReceipt.safeParse(value).success;
 import { parseDiscoveryContent, parseDiscoveryPublicPage, parseDiscoveryTranscript, type DiscoveryAdvanceResult } from "./opencli-discovery";
 import { additionalNativePlatforms, additionalNativeReviewBound } from "./discovery-native-content";
 
@@ -78,7 +81,7 @@ export async function submitDiscoveryReview(input: SubmitDiscoveryReviewInput): 
     && receipt.criteria_revision === input.expected_revision && receipt.material_hash === input.material_hash
     && receipt.request_id === input.request_id
     && receipt.judgments.length === input.findings.length
-    && receipt.judgments.every((judgment, index) => judgment.criterion === input.findings[index].criterion
+    && receipt.judgments.every((judgment, index) => JSON.stringify(judgment.criterion) === JSON.stringify(input.findings[index].criterion)
       && judgment.outcome === input.findings[index].outcome);
   let raw: unknown;
   try {
@@ -154,10 +157,10 @@ export async function getDiscoveryReview(request: ReviewRequest): Promise<Review
       && native.claim.campaign_id === request.campaignId && native.claim.search_hit_id === request.hitId
       && native.claim.expected_revision === request.revision && native.claim.platform === "twitter"
       && native.claim.profile_ref === request.profileRef && native.claim.source_url === material.hit.source_url
-      && typeof material.native_followers === "number" && material.native_followers >= 0
+      && isU64(material.native_followers)
       && material.video_description === null && material.transcript === null)
     || (material.hit.platform === "tiktok" && material.format_version === 2
-      && native === undefined && typeof material.native_followers === "number" && material.native_followers >= 0
+      && native === undefined && isU64(material.native_followers)
       && material.hit.author_id === material.native_author_id && !!material.hit.author_url
       && typeof material.hit.author_observed_at === "number" && material.hit.author_observed_at > 0
       && /^https:\/\/www\.tiktok\.com\/@[^/]+\/video\/\d+$/.test(material.hit.source_url)
@@ -173,7 +176,7 @@ export async function getDiscoveryReview(request: ReviewRequest): Promise<Review
       && native.claim.expected_revision === request.revision && native.claim.platform === "bilibili"
       && native.claim.profile_ref === request.profileRef && native.claim.author_id === material.native_author_id
       && native.claim.source_url === material.hit.source_url
-      && typeof material.native_followers === "number" && material.native_followers >= 0
+      && isU64(material.native_followers)
       && material.hit.author_id === material.native_author_id && !!material.hit.author_url
       && typeof material.hit.author_observed_at === "number" && material.hit.author_observed_at > 0
       && material.video_description === null && material.transcript === null);

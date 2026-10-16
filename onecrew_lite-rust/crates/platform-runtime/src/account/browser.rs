@@ -297,6 +297,9 @@ fn validate_x_chat_connection_input(
     preference: XChatConnectionPreference,
     passcode: Option<&str>,
 ) -> Result<(), String> {
+    if preference == XChatConnectionPreference::Enabled || passcode.is_some() {
+        return Err(crate::RETIRED_OPERATION_CODE.into());
+    }
     match (platform, preference, passcode) {
         (OperatorAccountPlatform::X, XChatConnectionPreference::Enabled, Some(value))
             if !value.trim().is_empty() =>

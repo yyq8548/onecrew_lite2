@@ -3,6 +3,33 @@ use serde_json::{Value, json};
 const CAMPAIGN: &str = "web-source-flow";
 const CHANNEL: &str = "UCabcdefghijklmnopqrstuv";
 const VIDEO: &str = "abcdefghijk";
+
+#[test]
+fn export_web_source_node_oracle() {
+    let Some(output) = std::env::var_os("ONECREW_WEB_SOURCE_ORACLE_DIRECTORY") else { return; };
+    let output = std::path::PathBuf::from(output);
+    std::fs::create_dir_all(&output).unwrap();
+    for origin in ["google", "yahoo"] {
+        for (target, source, native) in [
+            ("youtube", source(VIDEO), material(VIDEO)),
+            ("twitter", "https://x.com/Creator_1/status/1234567890123456789".into(), twitter_material()),
+            ("douyin", "https://www.douyin.com/video/7688639864627214835".into(), douyin_material()),
+        ] {
+            let (directory, owner) = setup(origin, &[source]);
+            let snapshot = |suffix: &str| {
+                let db = rusqlite::Connection::open(directory.path().join("crm.db")).unwrap();
+                db.execute("VACUUM INTO ?1", [output.join(format!("{origin}-{target}-{suffix}.sqlite")).to_str().unwrap()]).unwrap();
+            };
+            let hit = next(&owner);
+            snapshot("before");
+            let claim = owner.claim_discovery_web_source(CAMPAIGN, 1, &hit).unwrap();
+            snapshot("claimed");
+            let result = owner.finish_discovery_web_source(FinishDiscoveryWebSourceInput { claim: claim.clone(), native_material: Some(native.clone()), stop_code: None }).unwrap();
+            snapshot("finished");
+            std::fs::write(output.join(format!("{origin}-{target}.json")), serde_json::to_vec_pretty(&json!({"claim":claim,"material":native,"result":result})).unwrap()).unwrap();
+        }
+    }
+}
 fn source(video: &str) -> String {
     format!("https://www.youtube.com/watch?v={video}&pp=source-tracking")
 }

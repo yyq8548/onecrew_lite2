@@ -22,8 +22,8 @@ for its provider reads. Keep the original sentence as the Campaign brief.
 3. Parse the customer's sentence into a proposal, not an approved standard.
    Keep each hard constraint with the exact supporting phrase: geography,
    content language, topic, follower threshold, exclusions, forbidden
-   sources, quantity and deadline. Unstated criteria stay unset. Do not copy
-   any prior Campaign, use a product demo or link requirement by default, or
+   sources, quantity and deadline. Unstated criteria stay unset. For a new task,
+   derive conditions from its request. Never add a product demo or link requirement by default, or
    equate an audience location with the creator's residence. Keep soft
    preferences and search tactics separate. When wording is ambiguous, ask
    only for the decision needed to make a hard condition executable.
@@ -32,6 +32,23 @@ for its provider reads. Keep the original sentence as the Campaign brief.
    validation issue; a valid response is a read-only preflight, not customer
    approval or proof that the interpretation is semantically correct. The
    customer still reviews the proposed hard conditions before creation.
+   Persist quoted additional conditions in `criteria.requirements` as
+   `{description, excerpt}` items. Each condition needs its own source-bound
+   review; missing evidence remains pending. Use `contact_preference="public_email_first"`
+   as the default ranking preference. An email is mandatory only when requested.
+   Prefer observed profile emails and bounded author-published contact pages.
+   Expand Telegram contact research only when explicitly requested; no social sending is available.
+
+   To revise an existing task, first read its current Campaign. Preserve every
+   unchanged customer condition and attach `criteria.refinement={campaign_id, expected_revision}`.
+   Show the consolidated draft for workbench approval. Only exact approved
+   platform, profile and keyword matches reuse saved search hints. Recheck native
+   evidence and qualifications; retain the source Campaign and its table.
+   Excluded accounts require verified native IDs, exact profile URLs and the
+   customer's quotation in `criteria.excluded_accounts` items with
+   `native_author_id`, `profile_url` and `excerpt`. Display-name similarity is
+   insufficient. A partnership exclusion requires evidence; silence in one
+   sampled post cannot prove an all-time absence.
 4. Form a bounded scope for every registered entry. Use each source's
    `scope_kind` and `allowed_values`; category sources require one of the
    returned values. Generate automatic queries for the actual search entry:
@@ -86,7 +103,7 @@ for its provider reads. Keep the original sentence as the Campaign brief.
    reading its result and the saved Campaign checkpoint before continuing.
    The owner completes each observed author through verification, scoring,
    source-backed contacts and recommendation before starting another author
-   or source search; reaching the contact-backed target stops further reads. Do not blindly retry an
+   or source search; reaching the approved target stops further reads. Do not blindly retry an
    unknown-effect or interrupted call. A login, risk or technical stop is
    not a zero-result source. For search-only `search_once` rounds, inspect the
    structured outcome after every call, before issuing another keyword.
@@ -107,8 +124,9 @@ for its provider reads. Keep the original sentence as the Campaign brief.
    never reconstruct ranks from source IDs or make extra reads to fill it.
 6. Read candidate counts and source-bound evidence through the exact current
    operations. Search hits are leads; only owner-qualified, deduplicated
-   recommended creators with passing audited scores and real sourced contacts
-   count toward the new contact-backed target. Verify native author, content, follower and
+   recommended creators with passing audited scores count toward the target.
+   Report observed public emails separately; a profile URL or hidden-email
+   control is not an email address. Verify native author, content, follower and
    required location evidence. Missing or conflicting evidence remains
    pending. Never loosen a threshold, category, location or excluded source
    to reach a target. A changed hard condition needs a new customer decision
@@ -116,7 +134,12 @@ for its provider reads. Keep the original sentence as the Campaign brief.
    approved scope and budget; record why. Stop at the target, budget, no
    further approved action or required task-level decision. A null read limit
    never causes budget exhaustion. Unqualified, missing-contact or uncertain
-   candidates stay in the backend without a manual language approval queue. Report qualified,
+   candidates stay in the backend without a manual language approval queue.
+   Submit exactly one current-material finding per `criteria.requirements` index
+   using `criterion={requirement:index}` and exact saved citations. Supported
+   means the entire condition is satisfied; contradicted requires positive
+   conflicting evidence; insufficient keeps the condition unresolved. A good
+   match score cannot override missing required evidence. Report qualified,
    pending, rejected, per-source stop reasons and remaining gap honestly.
 
 The local UI and Library can show a Campaign and its one-author-one-row
@@ -141,11 +164,10 @@ supported with excellent/good/medium/low; unknown is insufficient with a null
 match_level. The owner audits and saves the score; the new initial-match policy
 replaces the legacy proof checklist for these scored candidates.
 
-For new contact-backed plans, excellent, good or medium is necessary but not
-sufficient: all required conditions must also pass and a real email or Telegram
-contact must have been observed in saved author-bound original material or a
-successfully read associated webpage. No contact means no recommendation or
-main-table row. Contacts with uncertain ownership/purpose retain that uncertainty
+For new plans, excellent, good or medium is necessary but not sufficient:
+all required conditions must also pass. With `public_email_first`, missing email
+does not block an otherwise qualified creator. Explicit contact requirements
+still need author-bound evidence. Contacts with uncertain ownership/purpose retain that uncertainty
 in the backend; never invent a locator, use audience comments as contact sources,
 or describe an unknown Telegram destination as a personal account. Contacts are
 not permission to reach out. Read the owner's final deduplicated count, not the

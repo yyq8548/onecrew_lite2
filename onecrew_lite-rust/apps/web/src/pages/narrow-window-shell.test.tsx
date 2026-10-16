@@ -13,9 +13,7 @@ import { validateLocalServiceStatus } from "@/lib/generated/creator-sync-contrac
 import { Connect } from "@/pages/Connect";
 import MAIL_ITEM_LIST_SOURCE from "@/components/mail/mail-item-list.tsx?raw";
 import MAIL_SOURCE from "@/pages/Mail.tsx?raw";
-import INBOX_SOURCE from "@/pages/Inbox.tsx?raw";
 import LEADS_SOURCE from "@/pages/Leads.tsx?raw";
-import MESSAGE_WORKSPACE_SOURCE from "@/components/message-workspace.tsx?raw";
 import TABLE_TOOLBAR_SOURCE from "@/components/data-table/toolbar.tsx?raw";
 
 const PLUGIN_VERSION = `0.6.0+codex.${"0123456789abcdef".repeat(4)}`;
@@ -118,7 +116,6 @@ describe("narrow-window shell", () => {
     expect(MAIL_SOURCE).toMatch(/<Sheet open=\{foldersOpen\} onOpenChange=\{setFoldersOpen\}>[\s\S]*<SheetTitle>\{t\("folders\.navigationLabel"\)\}<\/SheetTitle>\s*<SheetDescription>\{t\("folders\.sheetDescription"\)\}<\/SheetDescription>/);
     expect(MAIL_SOURCE).toContain("if (!singlePane) setFoldersOpen(false);");
     expect(MAIL_SOURCE).toMatch(/const changeFolder = \(value: EmailFolder\) => \{\s*setFoldersOpen\(false\);/);
-    expect(MAIL_SOURCE).toMatch(/const beginNewEmail = \(initialTemplateId\?: string\) => \{\s*setFoldersOpen\(false\);/);
   });
 
   it("declares the split Mail panes' percentage floors and asks the panel whether it is collapsed", () => {
@@ -129,35 +126,6 @@ describe("narrow-window shell", () => {
     expect(MAIL_SOURCE).not.toContain("inPixels");
   });
 
-  it("switches the Inbox to one pane from its own measured width, the way Mail does", () => {
-    expect(INBOX_SOURCE).not.toContain("useSidebar");
-    expect(INBOX_SOURCE).toContain('import { useSize } from "radix-ui/internal";');
-    expect(INBOX_SOURCE).toContain("const INBOX_SPLIT_MIN_WIDTH = 860;");
-    expect(INBOX_SOURCE).toContain("const inboxWidth = useSize(inboxRoot)?.width;");
-    expect(INBOX_SOURCE).toContain("const singlePane = inboxWidth !== undefined && inboxWidth < INBOX_SPLIT_MIN_WIDTH;");
-    expect(INBOX_SOURCE).toContain('<div ref={setInboxRoot} className="flex h-full min-h-0 flex-col');
-  });
-
-  it("keeps both one-pane Inbox views mounted and hands focus between them", () => {
-    expect(INBOX_SOURCE).toContain('<div ref={listRef} className={cn("absolute inset-0", threadCovers && "invisible")}>{listPane}</div>');
-    expect(INBOX_SOURCE).toContain('<div className={cn("absolute inset-0", !threadCovers && "invisible")}>{threadPane}</div>');
-    expect(INBOX_SOURCE).toMatch(/flushSync\(\(\) => \{\s*setOpenThread\(thread\);\s*setThreadOnTop\(true\);\s*\}\);\s*threadBackRef\.current\?\.focus\(\);/);
-    expect(INBOX_SOURCE).toMatch(/\.find\(\(row\) => row\.dataset\.conversationId === openedId\)\s*\?\.focus\(\);/);
-    expect(INBOX_SOURCE).toContain("data-conversation-id={summary.conversation_id}");
-    // Loading, route-missing and loaded threads all keep the same back control.
-    expect(INBOX_SOURCE.match(/\{backButton\}/g)).toHaveLength(4);
-    expect(INBOX_SOURCE).toContain("backButtonRef={attachThreadBack}");
-    // Going back only lifts the list: unmounting the workspace would re-run its
-    // automatic thread sync, which is a provider call, not a local re-read.
-    expect(INBOX_SOURCE).toContain("flushSync(() => setThreadOnTop(false));");
-    expect(INBOX_SOURCE).not.toContain("setOpenThread(null)");
-  });
-
-  it("declares the split Inbox panes' percentage floors, like Mail's", () => {
-    expect(INBOX_SOURCE).toContain('<ResizablePanel defaultSize="32%" minSize="30%" maxSize="45%" className="min-w-0">');
-    expect(INBOX_SOURCE).toContain('<ResizablePanel minSize="30%" className="min-w-0">');
-    expect(INBOX_SOURCE).not.toMatch(/minSize="(?:280|360)px"/);
-  });
 
   it("wraps every table toolbar instead of letting its buttons run off the page", () => {
     // Both halves held their min-content width, so a narrow page pushed the
@@ -171,21 +139,6 @@ describe("narrow-window shell", () => {
     expect(LEADS_SOURCE).not.toContain('<div className="flex items-center gap-2">\n              <CreateCreatorGroupDialog');
   });
 
-  it("keeps the one-pane thread header on one line per row", () => {
-    // Two labelled buttons plus a fixed 96px floor left the title column a
-    // single character wide, and the title had no truncate, so it wrapped one
-    // character per line.
-    expect(MESSAGE_WORKSPACE_SOURCE).toContain('<div className="truncate text-sm font-medium">');
-    expect(MESSAGE_WORKSPACE_SOURCE).toContain('<PlatformIcon platform={channel.platform} className="size-5 shrink-0" />');
-    // Narrow collapses both labelled buttons to icons, with the text kept as
-    // the accessible name, and drops the handle the host row already shows.
-    expect(MESSAGE_WORKSPACE_SOURCE).toContain('aria-label={t("common.browserOpen")}');
-    expect(MESSAGE_WORKSPACE_SOURCE).toContain("aria-label={followLabel}");
-    expect(MESSAGE_WORKSPACE_SOURCE).toContain("{narrow ? headerStatus : <>@{channel.handle} · {headerStatus}</>}");
-    // The host decides; the workspace never measures a second width.
-    expect(MESSAGE_WORKSPACE_SOURCE).not.toContain("useSize");
-    expect(INBOX_SOURCE).toContain("narrow={onBack != null}");
-  });
 
   it("truncates the Mail list header title and count instead of wrapping them", () => {
     const header = MAIL_SOURCE.slice(MAIL_SOURCE.indexOf("const listPane = ("), MAIL_SOURCE.indexOf("<SelectTrigger"));

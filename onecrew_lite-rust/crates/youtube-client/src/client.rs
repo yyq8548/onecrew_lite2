@@ -627,6 +627,30 @@ struct AuthorChannelId {
 }
 
 #[cfg(test)]
+#[test]
+fn export_public_platform_read_node_oracle() {
+    let directory = std::path::PathBuf::from(std::env::var("ONECREW_PUBLIC_READ_ORACLE_DIRECTORY").unwrap());
+    std::fs::create_dir_all(&directory).unwrap();
+    let cases = [
+        serde_json::json!({"id":"UC_x5XG1OV2P6uZZ5FSM9Ttw"}),
+        serde_json::json!({"id":"UC_x5XG1OV2P6uZZ5FSM9Ttw","snippet":{"title":"Channel","description":"API description","customUrl":"@channel","country":"US","thumbnails":{"high":{"url":"https://example.com/high"},"medium":{"url":"https://example.com/medium"}}},"statistics":{"subscriberCount":"18446744073709551615","viewCount":"9007199254740993","videoCount":"+7"}}),
+        serde_json::json!({"id":"UC_x5XG1OV2P6uZZ5FSM9Ttw","statistics":{"subscriberCount":"18446744073709551616","viewCount":" 7","videoCount":"1,000"}}),
+        serde_json::json!({"id":"UC_x5XG1OV2P6uZZ5FSM9Ttw","snippet":null}),
+    ].into_iter().map(|input| {
+        let parsed = serde_json::from_value::<ChannelItem>(input.clone());
+        let expected = parsed.ok().map(|channel| serde_json::json!({
+            "channel_id":channel.id,"title":channel.snippet.title,
+            "thumbnail_url":channel_thumbnail(&channel.snippet),"description":channel.snippet.description,
+            "custom_url":non_empty(channel.snippet.custom_url.clone()),"country":non_empty(channel.snippet.country.clone()),
+            "subscriber_count":parse_count(channel.statistics.subscriber_count),"view_count":parse_count(channel.statistics.view_count),"video_count":parse_count(channel.statistics.video_count),
+        }));
+        serde_json::json!({"input":input,"expected":expected})
+    }).collect::<Vec<_>>();
+    let counts = ["", "0", "+1", "-1", "1.0", "1e3", "1,000", " 1", "1 ", "18446744073709551615", "18446744073709551616"].into_iter().map(|input| serde_json::json!({"input":input,"expected":parse_count(input.to_owned())})).collect::<Vec<_>>();
+    std::fs::write(directory.join("youtube.json"), serde_json::to_vec_pretty(&serde_json::json!({"channels":cases,"counts":counts,"light_omitted":YoutubeClient::omitted_comments(crate::YoutubeReadDepth::Light),"full_omitted":YoutubeClient::omitted_comments(crate::YoutubeReadDepth::Full)})).unwrap()).unwrap();
+}
+
+#[cfg(test)]
 mod tests {
     use std::{
         collections::BTreeMap,

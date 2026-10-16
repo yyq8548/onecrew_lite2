@@ -35,9 +35,10 @@ export function dmReviewSnapshot(): ResultSnapshot {
 
 export function dmFailedSnapshot(): ResultSnapshot {
   const review = dmReviewSnapshot();
+  review.binding.revision++; review.binding.revision++;
   return {
     ...review,
-    binding: { ...review.binding, revision: review.binding.revision + 2 },
+    binding: { ...review.binding },
     pending_action: null,
     completed_sections_count: 1,
     state: { kind: "failed", code: "outreach_preflight_failed", summary: "The confirmed message could not proceed.", retryable: false },

@@ -1,14 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { invoke, isRuntimeAvailable } from "./local-runtime";
-import type { LocalServiceStatus } from "./generated/creator-sync-contracts";
-import { validateLocalServiceStatus } from "./generated/creator-sync-contracts/validators/LocalServiceStatus.js";
+import { localServiceStatus, type LocalServiceStatus } from "@onecrew/runtime-contracts/status";
 
 export const SERVICE_STATUS_QUERY_KEY = ["local-service-status"] as const;
 
 export async function readServiceStatus(): Promise<LocalServiceStatus> {
   const result = await invoke<unknown>("service_status");
-  if (!validateLocalServiceStatus(result)) throw new Error("invalid_service_status");
-  return result;
+  const parsed = localServiceStatus.safeParse(result);
+  if (!parsed.success) throw new Error("invalid_service_status");
+  return parsed.data;
 }
 
 export function useServiceStatus() {
@@ -27,5 +27,7 @@ export async function logoutFromService(): Promise<void> {
 
 /** Explicit local Codex inspection. This never installs/enables a plugin. */
 export async function refreshCodexPluginStatus(): Promise<LocalServiceStatus["plugin"]> {
-  return invoke<LocalServiceStatus["plugin"]>("onecrew_codex_plugin_status_refresh");
+  const parsed = localServiceStatus.shape.plugin.safeParse(await invoke<unknown>("onecrew_codex_plugin_status_refresh"));
+  if (!parsed.success) throw new Error("invalid_plugin_status");
+  return parsed.data;
 }

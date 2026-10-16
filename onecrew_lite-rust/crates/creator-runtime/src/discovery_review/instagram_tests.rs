@@ -1,6 +1,39 @@
 use crate::*;
 use serde_json::json;
 
+#[test]
+fn export_discovery_contact_node_oracle() {
+    let Some(output) = std::env::var_os("ONECREW_CONTACT_ORACLE_DIRECTORY") else { return; };
+    let output = std::path::PathBuf::from(output);
+    std::fs::create_dir_all(&output).unwrap();
+    for (name, web) in [("native", false), ("web", true)] {
+        let (directory, owner, hit) = setup_evidence(Some(15000), true, true, true, true, web);
+        if !web {
+            let db = rusqlite::Connection::open(directory.path().join("crm.db")).unwrap();
+            db.execute("UPDATE discovery_campaign_revisions SET criteria_json=?1 WHERE discovery_campaign_id='instagram-flow'", [json!({"min_followers":10000}).to_string()]).unwrap();
+        }
+        let snapshot = |suffix: &str| {
+            let db = rusqlite::Connection::open(directory.path().join("crm.db")).unwrap();
+            db.execute("VACUUM INTO ?1", [output.join(format!("{name}-{suffix}.sqlite")).to_str().unwrap()]).unwrap();
+        };
+        snapshot("before");
+        let material = owner.prepare_discovery_review_material("instagram-flow", 1, &hit).unwrap();
+        let input = SubmitDiscoveryReviewInput {
+            campaign_id: "instagram-flow".into(), expected_revision: 1, search_hit_id: hit.clone(), material_hash: material.material_hash.clone(), request_id: format!("{name}-contact-oracle"),
+            reviewer: DiscoveryReviewer { kind: DiscoveryReviewerKind::Agent, label: INITIAL_MATCH_REVIEWER.into() },
+            findings: vec![DiscoveryReviewCriterion::MatchFit].into_iter().map(|criterion| DiscoveryReviewFinding {
+                match_level: matches!(criterion, DiscoveryReviewCriterion::MatchFit).then_some(DiscoveryMatchLevel::Good), criterion,
+                outcome: DiscoveryReviewOutcome::Supported, rationale: "The saved original content is an explicit keyboard review.".into(),
+                citations: vec![DiscoveryReviewQuote::NativeContent { quote: "Original keyboard review.".into() }], tool: None, country_code: None,
+            }).collect(),
+        };
+        let receipt = owner.submit_discovery_review("contact-oracle", input.clone()).unwrap();
+        assert_eq!(receipt.verdict, "qualified");
+        snapshot("after");
+        std::fs::write(output.join(format!("{name}.json")), serde_json::to_vec(&json!({"input":input,"material":material,"receipt":receipt})).unwrap()).unwrap();
+    }
+}
+
 fn setup_count(followers: Option<u64>) -> (tempfile::TempDir, CreatorRuntime, String) {
     setup_profile(followers, false)
 }

@@ -63,16 +63,6 @@ pub(super) const CASES: &[OperationEvalCase] = &[
         expected_id: "instagram.connection.reconnect.status",
     },
     OperationEvalCase {
-        query: "Instagram sync one conversation thread into the local store",
-        toolkit: ToolkitId::Instagram,
-        expected_id: "instagram.conversation.sync",
-    },
-    OperationEvalCase {
-        query: "Instagram send a direct message reply inside an open conversation",
-        toolkit: ToolkitId::Instagram,
-        expected_id: "instagram.message.send",
-    },
-    OperationEvalCase {
         query: "Instagram profile by handle",
         toolkit: ToolkitId::Instagram,
         expected_id: "instagram.profile.get",

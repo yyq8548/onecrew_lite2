@@ -2,6 +2,14 @@ use crate::*;
 use serde_json::json;
 
 #[test]
+fn export_discovery_post_author_node_oracle() {
+    let Some(output) = std::env::var_os("ONECREW_POST_AUTHOR_ORACLE_DIRECTORY") else { return; };
+    let output = std::path::PathBuf::from(output); std::fs::create_dir_all(&output).unwrap(); let (directory, owner, hit) = setup(10);
+    let snapshot = |suffix: &str| { let db = rusqlite::Connection::open(directory.path().join("crm.db")).unwrap(); db.execute("VACUUM INTO ?1", [output.join(format!("{suffix}.sqlite")).to_str().unwrap()]).unwrap(); };
+    snapshot("before"); let claim = owner.claim_discovery_identity("identity", 1, &hit).unwrap(); snapshot("claimed"); owner.finish_discovery_identity(success(claim)).unwrap(); snapshot("after");
+}
+
+#[test]
 fn library_snapshot_requires_exact_x_permanent_profile_and_post_binding() {
     let (dir, owner, hit) = setup(3);
     let identity = owner.claim_discovery_identity("identity", 1, &hit).unwrap();

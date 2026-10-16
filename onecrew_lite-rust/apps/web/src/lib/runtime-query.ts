@@ -14,7 +14,6 @@ import { normalizeCreatorListCriteria, type CreatorListCriteria } from "@/lib/cr
 import type { ServiceCredential } from "@/types";
 
 export const YOUTUBE_CREDENTIALS_QUERY_KEY = ["service-credentials", "youtube"] as const;
-export const RESEND_CREDENTIALS_QUERY_KEY = ["service-credentials", "resend"] as const;
 
 const LOCAL_RUNTIME_STALE_TIME = 30_000;
 
@@ -110,17 +109,6 @@ export function youtubeCredentialsQueryOptions(enabled: boolean) {
   return queryOptions({
     queryKey: YOUTUBE_CREDENTIALS_QUERY_KEY,
     queryFn: () => invoke<ServiceCredential[]>("list_youtube_api_keys"),
-    enabled,
-    retry: false,
-    staleTime: LOCAL_RUNTIME_STALE_TIME,
-    refetchOnWindowFocus: false,
-  });
-}
-
-export function resendCredentialsQueryOptions(enabled: boolean) {
-  return queryOptions({
-    queryKey: RESEND_CREDENTIALS_QUERY_KEY,
-    queryFn: () => invoke<ServiceCredential[]>("list_resend_credentials"),
     enabled,
     retry: false,
     staleTime: LOCAL_RUNTIME_STALE_TIME,

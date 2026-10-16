@@ -118,7 +118,7 @@ pub(super) async fn onecrew_operator_account_connection_configure_browser_in_app
     flow_id: String,
     profile_name: String,
     proxy: ProxyConfig,
-    x_chat_preference: XChatConnectionPreference,
+    x_chat_preference: Option<XChatConnectionPreference>,
     x_chat_passcode: Option<String>,
 ) -> Result<OperatorAccountConnectionStatus, String> {
     state
@@ -128,7 +128,7 @@ pub(super) async fn onecrew_operator_account_connection_configure_browser_in_app
             &flow_id,
             profile_name,
             proxy,
-            x_chat_preference,
+            x_chat_preference.unwrap_or(XChatConnectionPreference::Disabled),
             x_chat_passcode,
         )
         .await

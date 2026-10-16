@@ -1,0 +1,175 @@
+[
+  {
+    "author": "12345",
+    "platform": "facebook",
+    "profile": {
+      "adapter_version": "1.0.0",
+      "display_name": "Creator",
+      "evidence_source": "visible_numeric_profile_header",
+      "follower_count": null,
+      "follower_text": "2K followers",
+      "id": "12345",
+      "profile_url": "https://www.facebook.com/profile.php?id=12345"
+    },
+    "source": "https://www.facebook.com/profile.php?id=12345",
+    "valid": true
+  },
+  {
+    "author": "12345",
+    "platform": "facebook",
+    "profile": {
+      "adapter_version": "1.0.0",
+      "display_name": "Creator",
+      "evidence_source": "visible_numeric_profile_header",
+      "follower_count": 2000,
+      "follower_text": "2K followers",
+      "id": "12345",
+      "profile_url": "https://www.facebook.com/profile.php?id=12345"
+    },
+    "source": "https://www.facebook.com/profile.php?id=12345",
+    "valid": false
+  },
+  {
+    "author": "12345",
+    "platform": "facebook",
+    "profile": {
+      "adapter_version": "1.0.0",
+      "contact_links": [
+        "https://www.facebook.com/profile.php?id=12345&sk=about_contact_and_basic_info"
+      ],
+      "display_name": "Creator",
+      "evidence_source": "visible_numeric_profile_header",
+      "follower_count": null,
+      "follower_text": "2K followers",
+      "id": "12345",
+      "profile_url": "https://www.facebook.com/profile.php?id=12345"
+    },
+    "source": "https://www.facebook.com/profile.php?id=12345",
+    "valid": true
+  },
+  {
+    "author": "12345",
+    "platform": "facebook",
+    "profile": {
+      "adapter_version": "1.0.0",
+      "contact_links": [
+        "https://www.facebook.com/profile.php?id=999&sk=about_contact_and_basic_info"
+      ],
+      "display_name": "Creator",
+      "evidence_source": "visible_numeric_profile_header",
+      "follower_count": null,
+      "follower_text": "2K followers",
+      "id": "12345",
+      "profile_url": "https://www.facebook.com/profile.php?id=12345"
+    },
+    "source": "https://www.facebook.com/profile.php?id=12345",
+    "valid": false
+  },
+  {
+    "author": "12345",
+    "platform": "facebook",
+    "profile": {
+      "adapter_version": "1.0.0",
+      "display_name": "Creator",
+      "evidence_source": "visible_numeric_profile_header",
+      "follower_count": null,
+      "follower_text": "2K followers",
+      "id": "12345",
+      "observed_profile_url": null,
+      "profile_url": "https://www.facebook.com/profile.php?id=12345"
+    },
+    "source": "https://www.facebook.com/profile.php?id=12345",
+    "valid": false
+  },
+  {
+    "author": "12345",
+    "platform": "facebook",
+    "profile": {
+      "adapter_version": "1.0.0",
+      "display_name": "Creator",
+      "evidence_source": "visible_numeric_profile_header",
+      "follower_count": 2000,
+      "follower_text": "2,000 followers",
+      "id": "12345",
+      "profile_url": "https://www.facebook.com/profile.php?id=12345"
+    },
+    "source": "https://www.facebook.com/profile.php?id=12345",
+    "valid": true
+  },
+  {
+    "author": "12345",
+    "platform": "facebook",
+    "profile": {
+      "adapter_version": "2.0.0",
+      "contact_links": [
+        "https://www.facebook.com/creator.page/directory_contact_info"
+      ],
+      "display_name": "Creator",
+      "evidence_source": "native_profile_header_response",
+      "follower_count": null,
+      "follower_text": "2K followers",
+      "id": "12345",
+      "observed_profile_url": "https://www.facebook.com/creator.page",
+      "profile_url": "https://www.facebook.com/profile.php?id=12345"
+    },
+    "source": "https://www.facebook.com/creator.page",
+    "valid": true
+  },
+  {
+    "author": "t2_abc",
+    "platform": "reddit",
+    "profile": {
+      "adapter_version": "1.0.0",
+      "biography": "Public biography",
+      "evidence_source": "native_profile_response",
+      "follower_count": null,
+      "id": "t2_abc",
+      "profile_url": "https://www.reddit.com/user/Creator/",
+      "username": "Creator"
+    },
+    "source": "https://www.reddit.com/user/Creator/",
+    "valid": true
+  },
+  {
+    "author": "t2_abc",
+    "platform": "reddit",
+    "profile": {
+      "adapter_version": "1.0.0",
+      "biography": "Public biography",
+      "evidence_source": "native_profile_response",
+      "id": "t2_abc",
+      "profile_url": "https://www.reddit.com/user/Creator/",
+      "username": "Creator"
+    },
+    "source": "https://www.reddit.com/user/Creator/",
+    "valid": false
+  },
+  {
+    "author": "t2_abc",
+    "platform": "reddit",
+    "profile": {
+      "adapter_version": "1.0.0",
+      "biography": "Public biography",
+      "evidence_source": "native_profile_response",
+      "follower_count": null,
+      "id": "t2_abc",
+      "username": "Creator"
+    },
+    "source": "https://www.reddit.com/user/Creator/",
+    "valid": false
+  },
+  {
+    "author": "t2_abc",
+    "platform": "reddit",
+    "profile": {
+      "adapter_version": "1.0.0",
+      "biography": "Public biography",
+      "follower_count": null,
+      "id": "t2_abc",
+      "profile_url": "https://www.reddit.com/user/Creator/",
+      "username": "Creator"
+    },
+    "source": "https://www.reddit.com/user/Creator/",
+    "valid": false
+  }
+]

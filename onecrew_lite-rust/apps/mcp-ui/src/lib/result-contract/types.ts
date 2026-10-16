@@ -6,17 +6,20 @@ import type {
   ResultStateOutput as GeneratedResultStateOutput,
 } from "@mcp-ui/lib/generated/contracts";
 
-export type ResultBinding = GeneratedResultBinding;
-export type ResultSnapshot = GeneratedResultSnapshot & { presented: true };
+import type { WireResultBinding, WireResultSnapshot, WireResultInput, WireResultFailure, WireClaimedContinuation } from "@onecrew/runtime-contracts/result-wire";
+
+export type ResultBinding = WireResultBinding;
+export type ResultSnapshot = WireResultSnapshot;
 export type ResultSnapshotOutput = Omit<Extract<GeneratedResultStateOutput, { kind: "snapshot" }>, "snapshot"> & {
   snapshot: ResultSnapshot;
 };
 export type ResultDmFailure = NonNullable<ResultSnapshotOutput["dm_failure"]>;
 export type ResultStateOutput =
   | ResultSnapshotOutput
-  | Exclude<GeneratedResultStateOutput, { kind: "snapshot" }>;
-export type ResultStateFailure = GeneratedResultStateFailure;
-export type ResultStateInput = ExactResultStateInput;
+  | { kind: "claimed_continuation"; claimed: WireClaimedContinuation }
+  | { kind: "completed_continuation"; completed: { binding: ResultBinding; continuation: ResultSnapshot["continuation"] } };
+export type ResultStateFailure = WireResultFailure;
+export type ResultStateInput = WireResultInput;
 export type ResultStateFailureCode = ResultStateFailure["code"];
 export type PresentationProjection = ResultSnapshot["presentation"];
 export type PresentationKind = PresentationProjection["kind"];

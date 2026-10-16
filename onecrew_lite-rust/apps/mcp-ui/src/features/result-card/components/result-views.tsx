@@ -6,7 +6,7 @@ import { SearchPlanProjectionView } from "@mcp-ui/features/result-card/component
 
 export type ResultViewProps = { projection: PresentationProjection };
 
-const VIEW_COMPONENTS: Record<PresentationKind, ComponentType<ResultViewProps>> = {
+const VIEW_COMPONENTS: Partial<Record<PresentationKind, ComponentType<ResultViewProps>>> = {
   creator_save_batch_confirmation: ProjectionSections,
   creator_save_batch_outcome: ProjectionSections,
   // A manual Creator batch review and its receipt are ordinary field/item
@@ -14,12 +14,7 @@ const VIEW_COMPONENTS: Record<PresentationKind, ComponentType<ResultViewProps>> 
   // the card renders those sections rather than a bespoke view.
   creator_batch_confirmation: ProjectionSections,
   creator_batch_outcome: ProjectionSections,
-  outreach_confirmation: OutreachDraftView,
-  outreach_outcome: OutreachDraftView,
-  email_confirmation: ProjectionSections,
-  email_outcome: ProjectionSections,
   search_plan_editor: SearchPlanProjectionView,
-  outreach_draft: OutreachDraftView,
   record_preview: RecordPreviewView,
   simple_operation: SimpleOperationView,
   read_only: ReadOnlyView,
@@ -31,11 +26,10 @@ const VIEW_COMPONENTS: Record<PresentationKind, ComponentType<ResultViewProps>> 
 export const RESULT_VIEW_KINDS = Object.keys(VIEW_COMPONENTS) as PresentationKind[];
 
 export function ResultBusinessView({ projection }: ResultViewProps) {
-  const View = VIEW_COMPONENTS[projection.kind];
+  const View = VIEW_COMPONENTS[projection.kind] ?? ReadOnlyView;
   return <View projection={projection} />;
 }
 
-export function OutreachDraftView(props: ResultViewProps) { return <ProjectionSections {...props} />; }
 export function RecordPreviewView(props: ResultViewProps) { return <ProjectionSections {...props} />; }
 export function SimpleOperationView(props: ResultViewProps) { return <ProjectionSections {...props} />; }
 export function ReadOnlyView(props: ResultViewProps) { return <ProjectionSections {...props} />; }

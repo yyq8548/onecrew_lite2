@@ -4,6 +4,19 @@ use serde_json::json;
 mod facebook;
 mod native;
 
+#[test]
+fn export_discovery_content_hydration_node_oracle() {
+    let Some(output) = std::env::var_os("ONECREW_CONTENT_HYDRATION_ORACLE_DIRECTORY") else { return; };
+    let output = std::path::PathBuf::from(output); std::fs::create_dir_all(&output).unwrap();
+    for platform in ["bilibili", "twitter"] {
+        let (directory, owner, hit) = if platform == "twitter" { setup_x(10) } else { setup(10) };
+        let campaign = if platform == "twitter" { "x-content" } else { "content" };
+        let snapshot = |suffix: &str| { let db = rusqlite::Connection::open(directory.path().join("crm.db")).unwrap(); db.execute("VACUUM INTO ?1", [output.join(format!("{platform}-{suffix}.sqlite")).to_str().unwrap()]).unwrap(); };
+        snapshot("before"); let claim = owner.claim_discovery_content(campaign, 1, &hit.id).unwrap(); snapshot("claimed");
+        owner.finish_discovery_content(if platform == "twitter" { x_success(claim) } else { success(claim) }).unwrap(); snapshot("after");
+    }
+}
+
 fn setup(max_calls: u32) -> (tempfile::TempDir, CreatorRuntime, DiscoverySearchHit) {
     let dir = tempfile::tempdir().unwrap();
     let owner = CreatorRuntime::open(dir.path(), CreatorGateways::default()).unwrap();

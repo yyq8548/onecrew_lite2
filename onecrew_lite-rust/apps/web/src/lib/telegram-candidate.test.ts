@@ -34,10 +34,12 @@ it("uses refreshed owner status while mapping only identity and provenance into 
 
 function snapshot(): OwnerReviewSnapshot {
   return {
-    binding: { result_ref: "rr_123", view: { identity: "view", kind: "confirmation" }, fingerprint: "fingerprint", revision: 1, origin: "trusted-browser" },
+    ...{ locale: "en-US", presented: true, batch: { outcomes: [{ call_id: "save", operation_id: "onecrew.creator.candidate.save", disposition: { kind: "not_run", reason: "awaiting_confirmation" }, summary: "Review", resource_refs: [] }] }, continuation: { state: "not_requested", continuation_revision: 1, dispatch_started_at_ms: null, dispatch_not_after_ms: null } },
+    binding: { result_ref: `rr_${"a".repeat(32)}`, view: { identity: `rv_${"b".repeat(32)}`, kind: "confirmation" }, fingerprint: `sha256:${"c".repeat(64)}`, revision: 1, origin: "trusted-browser" },
     state: { kind: "available" },
     completed_sections_count: 0,
-    pending_action: { kind: "creator_save_batch", review: { rows: [{ row_id: "row", preview: {
+    pending_action: { kind: "creator_save_batch", review: { ...{ failures: [], intent: "save_or_update", summary: { total: 1, eligible_new: 1, eligible_update: 0, existing_skipped: 0, duplicate_skipped: 0, blocked: 0, failed: 0 } }, rows: [{ row_id: "row", preview: {
+      ...{ source_url: null, intent: "save_or_update", status: "eligible_new", reason: null },
       display_name: "Admin", platform: "telegram", handle: "admin", profile_url: null,
       avatar_url: null, identity_status: "new", identity_creator_ids: [], notes: null, score: null,
       assessment: null, follower_counts: {}, expires_at: 1900000000,
@@ -46,7 +48,7 @@ function snapshot(): OwnerReviewSnapshot {
         { route_id: "optional", channel: "website", kind: "url", display_value: "https://example.test", normalized_value: "https://example.test", sources: [], required: false, collision: { status: "none", creator_ids: [] } },
       ],
     } }] } },
-    presentation: { title: "Review", summary: null, sections: [] },
+    presentation: { ...{ kind: "creator_save_batch_confirmation" }, title: "Review", summary: null, sections: [] },
   };
 }
 
@@ -54,7 +56,7 @@ describe("Telegram administrator selection and confirmed save", () => {
   it("prepares direct candidate input and requires a separate confirm request", async () => {
     const prepared = snapshot();
     vi.mocked(creatorInvoke).mockResolvedValueOnce(prepared);
-    expect(await prepareTelegramAdministratorSave(admin, community, source)).toBe(prepared);
+    expect(await prepareTelegramAdministratorSave(admin, community, source)).toEqual(prepared);
     expect(vi.mocked(creatorInvoke).mock.calls.map(([name]) => name)).toEqual(["onecrew_creator_save_prepare"]);
     expect(creatorInvoke).toHaveBeenLastCalledWith("onecrew_creator_save_prepare", { input: { candidates: [telegramAdministratorCandidateInput(admin, community, source)] } });
     vi.mocked(creatorInvoke).mockResolvedValueOnce(prepared);

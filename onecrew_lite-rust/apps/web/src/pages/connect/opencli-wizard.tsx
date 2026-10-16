@@ -13,9 +13,10 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   checkOpenCliProfile, OPENCLI_PROFILE_PREFERENCE_KEY,
   selectedProfileIsConnected, useOpenCliSetup, useOpenCliRecovery,
-  canInstallOpenCliAddons, useInstallOpenCliAddons, openOpenCliSetupPage,
+  canInstallOpenCliAddons, canRepairOpenCliAddons, useInstallOpenCliAddons, openOpenCliSetupPage,
   openCliVersionIsCompatible,
   useRepairOpenCliInstallation,
+  useOpenCliProfileOwner,
   type OpenCliSetupReport,
 } from "@/lib/opencli-setup";
 import { DiscoveryPilot } from "./discovery-pilot";
@@ -25,8 +26,10 @@ import { platformWebsite } from "./platform-websites";
 import { checkOpenCliSitesAuth, openOpenCliLoginPage, readOpenCliAuthObservations, saveOpenCliAuthObservation, isFreshOpenCliAuthObservation, type OpenCliAuthObservation } from "@/lib/opencli-auth";
 import { formatDate } from "@/lib/creator";
 import { openCliPlatformIsGreen, openCliPlatformNeedsSignIn, orderOpenCliPlatforms } from "@/lib/opencli-platform-presentation";
-import type { LocalServiceStatus } from "@/lib/generated/creator-sync-contracts";
+import type { LocalServiceStatus } from "@onecrew/runtime-contracts/status";
 import { openCliSearchAccess, openCliSearchNeedsLoginCheck } from "@/lib/opencli-search-access";
+import { hasUnifiedAccountSession, unifiedAccountSessionKey } from "@/lib/local-runtime";
+import { ManagedBrowserSetup } from "./managed-browser";
 
 const CODEX_USE_ACKNOWLEDGMENT_KEY = "onecrew:codex-use-acknowledgment:v1";
 const ACTION_CLASS = "min-h-10 border-border bg-background text-foreground shadow-none hover:bg-muted hover:border-foreground/30 font-medium";
@@ -225,11 +228,12 @@ export function OpenCliAddonSetup({ report, pending, failed, onInstall }: {
   report: Pick<OpenCliSetupReport, "version" | "addons">;
   pending: boolean;
   failed: boolean;
-  onInstall: () => void;
+  onInstall: (repair: boolean) => void;
 }) {
   const { t } = useTranslation("shell");
   const allReady = report.addons.length > 0 && report.addons.every(addon => addon.state === "ready");
   const blockedAddon = report.addons.find(addon => addon.state === "conflict" || addon.state === "unavailable");
+  const repair = canRepairOpenCliAddons(report);
   return <section className="space-y-3" aria-label={t("opencli.addonsTitle")}>
     <details className="text-sm" open={!allReady}>
       <summary className="cursor-pointer font-medium">{t("opencli.addonsTitle")}</summary>
@@ -244,9 +248,9 @@ export function OpenCliAddonSetup({ report, pending, failed, onInstall }: {
       </div>
     </details>
     {failed && <Alert variant="destructive"><AlertDescription>{t("opencli.addonsFailed")}</AlertDescription></Alert>}
-    {!allReady && !canInstallOpenCliAddons(report) && <p className="text-sm" role="status">{blockedAddon ? t(`opencli.addonState.${blockedAddon.state}`) : t("opencli.addonsUnavailable")}</p>}
-    {allReady ? <p className={`flex items-center gap-2 text-sm ${SUCCESS_TEXT}`} role="status"><CheckCircle2 className="size-4" aria-hidden />{t("opencli.addonsInstalled")}</p> : <Button size="sm" disabled={pending || !canInstallOpenCliAddons(report)} onClick={onInstall}>
-      {pending && <Loader2 className="size-4 animate-spin" aria-hidden />}{t("opencli.installAddons")}
+    {!allReady && !canInstallOpenCliAddons(report) && !repair && <p className="text-sm" role="status">{blockedAddon ? t(`opencli.addonState.${blockedAddon.state}`) : t("opencli.addonsUnavailable")}</p>}
+    {allReady ? <p className={`flex items-center gap-2 text-sm ${SUCCESS_TEXT}`} role="status"><CheckCircle2 className="size-4" aria-hidden />{t("opencli.addonsInstalled")}</p> : <Button size="sm" disabled={pending || !(canInstallOpenCliAddons(report) || repair)} onClick={() => onInstall(repair)}>
+      {pending && <Loader2 className="size-4 animate-spin" aria-hidden />}{t(repair ? "opencli.repairAddons" : "opencli.installAddons")}
     </Button>}
   </section>;
 }
@@ -256,8 +260,9 @@ export function OpenCliSearch({ onConnections, credentialId = null }: { onConnec
   const setup = useOpenCliSetup();
   const recovery = useOpenCliRecovery(setup.data);
   const [profile] = useState(savedProfile);
+  const ownership = useOpenCliProfileOwner(profile, credentialId);
   const report = setup.data;
-  const ready = report && !setup.isError && !recovery.isPending && selectedProfileIsConnected(report, profile);
+  const ready = ownership.verified && report && !setup.isError && !recovery.isPending && selectedProfileIsConnected(report, profile);
   if (setup.isPending || recovery.isPending || (!ready && setup.isFetching)) return <p role="status">{t("service.checking")}</p>;
   if (!ready || !profile || !report.version) return <Card><CardContent className="space-y-3 pt-5">
     <p>{t("opencli.searchNeedsConnections")}</p>
@@ -275,10 +280,12 @@ export function OpenCliWizard(props: CodexConsentProps & { onSearch?: () => void
   const openPage = useMutation({ mutationFn: openOpenCliSetupPage, retry: false });
   const [selected, setSelected] = useState(savedProfile);
   const [candidate, setCandidate] = useState(savedProfile);
+  const ownership = useOpenCliProfileOwner(selected, props.credentialId ?? null);
   const check = useMutation({
     mutationFn: checkOpenCliProfile,
     onSuccess: (_, profile) => {
       setSelected(profile);
+      if (selected === profile) void ownership.check.refetch();
       try { window.localStorage.setItem(OPENCLI_PROFILE_PREFERENCE_KEY, profile); }
       catch { /* The current-session selection still works without storage. */ }
     },
@@ -287,7 +294,7 @@ export function OpenCliWizard(props: CodexConsentProps & { onSearch?: () => void
   const issue = issueKey(report?.issue ?? null);
   const versionCompatible = report && openCliVersionIsCompatible(report);
   const versionBlocked = !!report?.installed && !versionCompatible;
-  const ready = report && !setup.isError && !recovery.isPending && selectedProfileIsConnected(report, selected);
+  const ready = ownership.verified && report && !setup.isError && !recovery.isPending && selectedProfileIsConnected(report, selected);
   const selectable = report?.profiles ?? [];
   const choice = candidate && selectable.some(profile => profile.context_id === candidate)
     ? candidate : selectable.length === 1 ? selectable[0].context_id : "";
@@ -340,6 +347,7 @@ export function OpenCliWizard(props: CodexConsentProps & { onSearch?: () => void
     <h3 className="text-sm font-semibold">{t("opencli.profileTitle")}</h3>
     <div className="min-w-0 space-y-3">
           <p className="text-sm text-muted-foreground">{t("opencli.profileDescription")}</p>
+          {hasUnifiedAccountSession() && <ManagedBrowserSetup key={`${props.credentialId ?? "signed-out"}:${unifiedAccountSessionKey()}`} contextId={choice} onConnected={profile => { setCandidate(profile); check.mutate(profile); void setup.refetch(); }} />}
           {selectable.length === 0 && <p className="text-sm" role="status">{setup.isPending ? t("service.checking") : setup.isError ? t("opencli.statusFailed") : versionBlocked ? t("opencli.upgradeBeforeProfile") : issue ? t(`opencli.issue.${issue}`) : t("opencli.profilesEmpty")}</p>}
           {recovery.isPending && <p className="text-sm" role="status"><Loader2 className="mr-1 inline size-4 animate-spin" aria-hidden />{t("opencli.recovering")}</p>}
           {recovery.isError && <p className="text-sm" role="alert">{t("opencli.recoveryFailed")}</p>}
@@ -362,7 +370,7 @@ export function OpenCliWizard(props: CodexConsentProps & { onSearch?: () => void
       </ol>
       {openPage.isSuccess && <p className="text-sm" role="status">{t("opencli.chromeLaunchRequested")}</p>}
       {openPage.isError && <Alert variant="destructive"><AlertDescription>{t("opencli.chromeLaunchFailed")}</AlertDescription></Alert>}
-      {report && <OpenCliAddonSetup report={report} pending={addons.isPending} failed={addons.isError} onInstall={() => addons.mutate()} />}
+      {report && <OpenCliAddonSetup report={report} pending={addons.isPending} failed={addons.isError} onInstall={repair => addons.mutate(repair)} />}
       {report && <OpenCliPlatformCapabilities capabilities={report.search_capabilities} profileRef={ready ? selected : null} credentialId={props.credentialId ?? null} />}
       {setup.isError && <Alert variant="destructive"><AlertDescription>{t("opencli.statusFailed")}</AlertDescription></Alert>}
       {issue && !versionBlocked && <Alert><AlertDescription>{t(`opencli.issue.${issue}`)}</AlertDescription></Alert>}

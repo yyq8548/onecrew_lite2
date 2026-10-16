@@ -55,8 +55,8 @@ async fn browser_request_key_conflict_precedes_proxy_validation_and_keeps_secret
         OperatorAccountPlatform::X,
         "operator",
         &proxy,
-        XChatConnectionPreference::Enabled,
-        Some("original-passcode"),
+        XChatConnectionPreference::Disabled,
+        None,
     );
     platform
         .operator_account_connection_prepare_internal(
@@ -78,10 +78,10 @@ async fn browser_request_key_conflict_precedes_proxy_validation_and_keeps_secret
     let error = platform
         .browser_account_connection_start(BrowserAccountConnectionStartInput {
             platform: OperatorAccountPlatform::X,
-            profile_name: "operator".into(),
+            profile_name: "changed-operator".into(),
             proxy,
-            x_chat_preference: XChatConnectionPreference::Enabled,
-            x_chat_passcode: Some("changed-passcode".into()),
+            x_chat_preference: XChatConnectionPreference::Disabled,
+            x_chat_passcode: None,
             idempotency_key: "browser-request-key".into(),
         })
         .await

@@ -76,7 +76,15 @@ impl ResultMemoryStore {
                 .pending_action
                 .as_ref()
                 .ok_or(ResultStoreError::InvalidState("owner_review_required"))?;
+            if matches!(pending.payload().owner_review_kind(), Some(OwnerReviewKind::Outreach | OwnerReviewKind::Email)) {
+                return Err(ResultStoreError::InvalidState(crate::RETIRED_OPERATION_CODE));
+            }
             if pending.payload().owner_review_kind().is_none() {
+                if record.batch.outcomes.iter().any(|outcome|
+                    matches!(outcome.disposition, CallDisposition::NotRun { .. })
+                        && crate::is_retired_operation(&outcome.operation_id)) {
+                    return Err(ResultStoreError::InvalidState(crate::RETIRED_OPERATION_CODE));
+                }
                 if require_owner {
                     return Err(ResultStoreError::InvalidState("owner_review_required"));
                 }

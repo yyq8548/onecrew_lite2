@@ -31,7 +31,7 @@ Access实际部署同时保留公司Pro基线；不要只部署尚未包含整�
 
 ## 保留的限制
 
-Mac Developer ID签名与公证、Windows签名分发未完成。未重跑全部历史测试；构建存在已记录的非失败警告。Windows r3源码来源仍待核实。新架构尚未编写、构建、安装或部署。
+Mac Developer ID签名与公证、Windows签名分发未完成。原发布记录未重跑全部历史测试；构建存在已记录的非失败警告。Windows r3源码来源仍待核实。统一程序开发及Windows隔离候选验收见[开发执行记录](09-implementation-status.md)，未执行生产安装或部署。
 
 ## 旧版本回退资料
 

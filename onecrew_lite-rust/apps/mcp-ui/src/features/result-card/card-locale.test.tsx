@@ -19,7 +19,7 @@ describe("a confirmation card in the conversation's language", () => {
     const html = render(manualEmailSnapshot());
     expect(html).toContain("发送邮件");
     expect(html).not.toContain("Send manual email");
-    expect(html).toContain(">确认<");
+    expect(html).not.toContain(">确认<");
     expect(html).not.toContain(">Confirm<");
   });
 
@@ -28,7 +28,7 @@ describe("a confirmation card in the conversation's language", () => {
     // conversations and en-US for the rest, and both must be honoured.
     const html = render({ ...manualEmailSnapshot(), locale: "en-US" });
     expect(html).toContain("Send email");
-    expect(html).toContain(">Confirm<");
+    expect(html).not.toContain(">Confirm<");
     expect(html).not.toContain("发送邮件");
     expect(html).not.toContain("确认");
   });
@@ -48,13 +48,13 @@ describe("a confirmation card in the conversation's language", () => {
     expect(html).not.toContain("greeting-01a0a82b");
   });
 
-  it("passes through a label the owner chose for its own action", () => {
+  it("does not restore an owner action label on historical sending cards", () => {
     // Outreach sends a specific confirm label. Only the generic English one is
     // known copy; anything an owner wrote deliberately must survive untouched.
     const snapshot = manualEmailSnapshot();
     if (snapshot.pending_action?.kind !== "confirm") throw new Error("fixture shape");
     snapshot.pending_action.label = "确认执行";
-    expect(render(snapshot)).toContain("确认执行");
+    expect(render(snapshot)).not.toContain("确认执行");
   });
 
   it("names the operation only while it is still asking for approval", () => {

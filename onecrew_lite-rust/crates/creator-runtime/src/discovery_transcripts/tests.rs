@@ -6,6 +6,17 @@ use crate::{
 };
 use serde_json::json;
 
+#[test]
+fn export_discovery_transcript_hydration_node_oracle() {
+    let Some(output) = std::env::var_os("ONECREW_TRANSCRIPT_HYDRATION_ORACLE_DIRECTORY") else { return; };
+    let output = std::path::PathBuf::from(output); std::fs::create_dir_all(&output).unwrap();
+    let directory = tempfile::tempdir().unwrap(); let (owner, hit) = setup(directory.path());
+    let snapshot = |suffix: &str| { let db = rusqlite::Connection::open(directory.path().join("crm.db")).unwrap(); db.execute("VACUUM INTO ?1", [output.join(format!("{suffix}.sqlite")).to_str().unwrap()]).unwrap(); };
+    snapshot("before");
+    let claim = owner.claim_discovery_transcript("transcript", 1, "dedicated", &hit).unwrap(); snapshot("claimed");
+    owner.finish_discovery_transcript(completed(claim)).unwrap(); snapshot("after");
+}
+
 fn setup(directory: &std::path::Path) -> (CreatorRuntime, String) {
     let owner = CreatorRuntime::open(directory, crate::CreatorGateways::default()).unwrap();
     owner.create_discovery_campaign(CreateDiscoveryCampaignInput {

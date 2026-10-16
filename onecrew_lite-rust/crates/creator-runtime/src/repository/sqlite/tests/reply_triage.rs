@@ -7,6 +7,27 @@ use crate::{
 use super::super::SqliteRepository;
 use super::repository;
 
+#[test]
+fn export_creator_history_node_oracle() {
+    let Some(directory) = std::env::var_os("ONECREW_CREATOR_HISTORY_ORACLE_DIRECTORY") else { return; };
+    let directory = std::path::PathBuf::from(directory);
+    std::fs::create_dir_all(&directory).expect("oracle directory");
+    let (_temporary, repository) = repository();
+    let (conversation_id, message_id) = dm_fixture(&repository);
+    repository.lock().expect("lock").execute_batch("UPDATE messages SET status='sent' WHERE id='msg-out'; INSERT INTO locator_resolutions(id,locator_id,account_ref_id,resolved_target_id,state,resolved_at) VALUES('resolution-1','locator-1','account-1','target-1','active',1);").expect("historical resolution");
+    repository.lock().expect("lock").execute("VACUUM INTO ?1", [directory.join("baseline.sqlite").to_str().expect("path")]).expect("real SQLite baseline");
+    let before = repository.list_conversations(crate::ListConversationsInput::default()).expect("before conversations");
+    let pending = repository.pending_conversation_triage(&crate::ConversationId::new(conversation_id.clone()), 20).expect("pending");
+    let last = repository.contact_route_last_contact_account(&crate::CreatorId::new("creator-1"), &crate::CreatorContactRouteId::new("route-1")).expect("last contact");
+    let recorded = repository.record_reply_triage(RecordReplyTriageInput { email_id: None, message_id: Some(crate::MessageId::new(message_id)), intent: ReplyIntent::Interested, summary: "  原始分类  ".into(), suggested_reply: Some("  建议文本  ".into()) }).expect("record");
+    repository.lock().expect("lock").execute("UPDATE reply_triage SET created_at=123 WHERE id=?1", [recorded.id.as_str()]).expect("stable clock");
+    let list = repository.list_reply_triage(ListReplyTriageInput::default()).expect("list");
+    let conversations = repository.list_conversations(crate::ListConversationsInput::default()).expect("conversations");
+    let debt = repository.pending_conversation_triage(&crate::ConversationId::new(conversation_id), 20).expect("debt");
+    let output = serde_json::json!({"before":before,"pending":pending,"last":last,"list":list,"conversations":conversations,"debt":debt});
+    std::fs::write(directory.join("expected.json"), serde_json::to_vec_pretty(&output).expect("JSON")).expect("write oracle");
+}
+
 /// A conversation with one inbound and one outbound message, so the
 /// direction gate has something to reject.
 fn dm_fixture(repository: &SqliteRepository) -> (String, String) {

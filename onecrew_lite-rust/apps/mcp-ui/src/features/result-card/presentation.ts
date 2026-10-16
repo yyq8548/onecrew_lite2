@@ -21,7 +21,7 @@ export function startsNextReview(previous: ResultSnapshot, next: ResultSnapshot)
     next.binding.revision > previous.binding.revision;
 }
 
-export function reviewRevisionAfterSnapshot(current: number, previous: ResultSnapshot, next: ResultSnapshot, confirmed: boolean): number {
+export function reviewRevisionAfterSnapshot(current: number | bigint, previous: ResultSnapshot, next: ResultSnapshot, confirmed: boolean): number | bigint {
   return startsNextReview(previous, next) && (confirmed || next.completed_sections_count > previous.completed_sections_count)
     ? next.binding.revision : current;
 }

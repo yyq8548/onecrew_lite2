@@ -2,6 +2,24 @@ use super::*;
 use crate::*;
 use rusqlite::{Connection, params};
 
+#[test]
+fn export_discovery_library_node_oracle() {
+    let Some(path) = std::env::var_os("ONECREW_DISCOVERY_LIBRARY_NODE_ORACLE") else { return; };
+    let (_directory, owner, hit) = setup();
+    let encode = |basis: DiscoveryLibraryBasis| {
+        let expected = build_snapshot(&basis).unwrap();
+        serde_json::json!({"basis":{"campaign_id":basis.campaign_id,"revision":basis.revision,"criteria_json":basis.criteria_json,"scopes_json":basis.scopes_json,"approved_at":basis.approved_at,"contact_required":basis.contact_required,"rows":basis.rows},"expected":expected})
+    };
+    let mut cases = vec![encode(owner.repository.read_discovery_library_basis("library-proof",1).unwrap())];
+    read_video(&owner, &hit);
+    cases.push(encode(owner.repository.read_discovery_library_basis("library-proof",1).unwrap()));
+    let mut legacy = owner.repository.read_discovery_library_basis("library-proof",1).unwrap();
+    legacy.contact_required = false;
+    if let Some(candidate) = legacy.rows[0].candidate.as_mut() { candidate.manual_approved_at = Some(123); }
+    cases.push(encode(legacy));
+    std::fs::write(path,serde_json::to_vec_pretty(&cases).unwrap()).unwrap();
+}
+
 fn setup() -> (tempfile::TempDir, CreatorRuntime, String) {
     let dir = tempfile::tempdir().unwrap();
     let owner = CreatorRuntime::open(dir.path(), CreatorGateways::default()).unwrap();

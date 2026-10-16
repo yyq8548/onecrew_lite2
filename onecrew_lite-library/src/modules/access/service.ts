@@ -18,7 +18,7 @@ type Pending = {
 };
 type Verification =
   | { state: 'signed_in'; user: { id: string; email: string } }
-  | { state: 'unavailable'; issue: string };
+  | { state: 'signed_out' | 'unavailable'; issue: string };
 type VerificationCache = Verification & {
   credential: Credential;
   epoch: number;
@@ -76,9 +76,10 @@ export class AccessService {
       const user = await this.client.profile(credential);
       return { state: 'signed_in', user } as const;
     } catch (error) {
+      const issue = error instanceof AccessError ? error.code : 'access.remote_unavailable';
       return {
-        state: 'unavailable',
-        issue: error instanceof AccessError ? error.code : 'access.remote_unavailable',
+        state: ['access.unauthorized', 'access.forbidden', 'access.revoked'].includes(issue) ? 'signed_out' : 'unavailable',
+        issue,
       } as const;
     }
   }
@@ -127,8 +128,8 @@ export class AccessService {
       verification = await inFlight.promise;
       if (this.credential !== credential || this.epoch !== epoch) return this.status();
     }
-    if (verification.state === 'unavailable')
-      return { state: 'unavailable', user: null, issue: verification.issue };
+    if (verification.state !== 'signed_in')
+      return { state: verification.state, user: null, issue: verification.issue };
     if (
       this.reportedCredential !== credential.installation.credential_id &&
       Date.now() >= this.nextReportAt
@@ -149,8 +150,11 @@ export class AccessService {
   }
   async begin(port: number) {
     await this.load();
+    const credential = this.credential;
+    const status = credential ? await this.status() : undefined;
     return this.exclusive(async () => {
-      if (this.credential) throw new AccessError('access.already_signed_in', 409);
+      if (this.credential !== credential) throw new AccessError('access.already_signed_in', 409);
+      if (credential && status?.state !== 'signed_out') throw new AccessError(status?.state === 'unavailable' ? (status.issue ?? 'access.remote_unavailable') : 'access.already_signed_in', status?.state === 'unavailable' ? 503 : 409);
       if (this.platform !== 'darwin' && this.platform !== 'win32')
         throw new AccessError('access.unsupported_platform', 422);
       if (!Number.isInteger(port) || port < 1024 || port > 65535)

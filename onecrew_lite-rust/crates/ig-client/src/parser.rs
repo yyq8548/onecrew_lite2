@@ -187,6 +187,19 @@ fn arr<'a>(value: &'a Value, key: &str) -> &'a [Value] {
 }
 
 #[cfg(test)]
+#[test]
+fn export_public_platform_read_node_oracle() {
+    let directory = std::path::PathBuf::from(std::env::var("ONECREW_PUBLIC_READ_ORACLE_DIRECTORY").unwrap());
+    std::fs::create_dir_all(&directory).unwrap();
+    let cases = [
+        serde_json::json!({"pk":9223372036854775807_i64,"username":"creator","full_name":"Creator","is_private":false,"is_verified":true,"follower_count":i64::MAX,"following_count":i64::MIN,"media_count":-1,"biography":"Business: public@example.com","external_url":"https://example.com","bio_links":[{"url":"https://example.com"},{"url":"https://example.com"},{"lynx_url":"https://example.net"}],"profile_pic_url":"https://example.com/a","public_email":"public@example.com","city_name":"City","address_street":"Street"}),
+        serde_json::json!({"pk":"9007199254740993","username":"minimal","full_name":"","follower_count":u64::MAX,"following_count":"42","biography":"","external_url":null,"is_private":null}),
+        serde_json::json!({}),
+    ].into_iter().map(|input| serde_json::json!({"input":input,"expected":user(&input)})).collect::<Vec<_>>();
+    std::fs::write(directory.join("instagram.json"), serde_json::to_vec_pretty(&cases).unwrap()).unwrap();
+}
+
+#[cfg(test)]
 mod tests {
     use super::*;
 

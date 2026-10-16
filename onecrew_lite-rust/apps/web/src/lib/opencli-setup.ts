@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 import { z } from "zod";
-import { invoke, isRuntimeAvailable } from "./local-runtime";
+import { invoke, isRuntimeAvailable, unifiedAccountSessionKey } from "./local-runtime";
 
 const profileSchema = z.object({ context_id: z.string(), alias: z.string().nullable() });
 const ADDON_IDS = ["onecrew-site-auth", "onecrew-youtube", "onecrew-tiktok", "onecrew-bilibili", "onecrew-tiktok-profile", "onecrew-bilibili-profile", "onecrew-bilibili-video", "onecrew-twitter-identity", "onecrew-twitter-post-identity", "onecrew-twitter-post-content", "onecrew-substack", "onecrew-source-search", "onecrew-browser-search", "onecrew-public-search", "onecrew-bluesky"] as const;
@@ -47,8 +47,14 @@ export function canInstallOpenCliAddons(report: Pick<OpenCliSetupReport, "versio
     && report.addons.every(item => item.state === "ready" || item.state === "missing");
 }
 
-export async function installOpenCliAddons(): Promise<OpenCliSetupReport["addons"]> {
-  const result = await invoke<unknown>("onecrew_opencli_addons_install", { approved: true });
+export function canRepairOpenCliAddons(report: Pick<OpenCliSetupReport, "version" | "addons">): boolean {
+  return report.version === "1.8.8" && report.addons.length === ADDON_IDS.length
+    && report.addons.some(item => item.state === "conflict")
+    && report.addons.every(item => item.state === "ready" || item.state === "missing" || item.state === "conflict");
+}
+
+export async function installOpenCliAddons(repair = false): Promise<OpenCliSetupReport["addons"]> {
+  const result = await invoke<unknown>("onecrew_opencli_addons_install", { approved: true, ...(repair ? { repair: true } : {}) });
   return addonsSchema.refine(items => items.length === ADDON_IDS.length).parse(result);
 }
 
@@ -121,6 +127,17 @@ export function useOpenCliRecovery(report: OpenCliSetupReport | undefined) {
 export async function checkOpenCliProfile(profile: string): Promise<void> {
   const result = await invoke<unknown>("onecrew_opencli_profile_check", { profile });
   z.object({ profile: z.literal(profile), preflight_passed: z.literal(true) }).parse(result);
+}
+
+export function useOpenCliProfileOwner(profile: string | null, credentialId: string | null) {
+  const sessionKey = unifiedAccountSessionKey();
+  const check = useQuery({
+    queryKey: ["opencli-profile-owner", sessionKey, credentialId, profile],
+    queryFn: async () => { await checkOpenCliProfile(profile!); return profile; },
+    enabled: sessionKey !== null && profile !== null,
+    retry: false, refetchInterval: 30_000, refetchIntervalInBackground: false,
+  });
+  return { verified: sessionKey === null || check.isSuccess && !check.isError && check.data === profile, check };
 }
 
 export function selectedProfileIsConnected(report: OpenCliSetupReport, selected: string | null): boolean {

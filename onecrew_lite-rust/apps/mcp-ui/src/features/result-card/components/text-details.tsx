@@ -33,7 +33,7 @@ type CardDetails = {
 
 const TextDetailsContext = createContext<CardDetails | null>(null);
 
-export function ResultTextDetailsProvider({ revision, children }: { revision: number; children: ReactNode }) {
+export function ResultTextDetailsProvider({ revision, children }: { revision: number | bigint; children: ReactNode }) {
   const [detail, setDetail] = useState<CardDetail | null>(null);
   useEffect(() => { setDetail(null); }, [revision]);
   return <TextDetailsContext.Provider value={{

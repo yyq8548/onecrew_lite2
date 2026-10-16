@@ -4,6 +4,19 @@ use serde_json::{Value, json};
 const CAMPAIGN: &str = "douyin-source-flow";
 const AUTHOR: &str = "MS4wLjABAAAA_native_author_123456789";
 const POST: &str = "7688639864627214835";
+
+#[test]
+fn export_discovery_source_author_node_oracle() {
+    let Some(output) = std::env::var_os("ONECREW_SOURCE_AUTHOR_ORACLE_DIRECTORY") else { return; };
+    let output = std::path::PathBuf::from(output); std::fs::create_dir_all(&output).unwrap();
+    let (directory, owner) = setup(json!({"min_followers":1000}), &[POST, "7688639864627214836"]);
+    let snapshot = |suffix: &str| { let db = rusqlite::Connection::open(directory.path().join("crm.db")).unwrap(); db.execute("VACUUM INTO ?1", [output.join(format!("{suffix}.sqlite")).to_str().unwrap()]).unwrap(); };
+    snapshot("before"); let first = next(&owner); let claim = owner.claim_discovery_source_author(CAMPAIGN,1,&first).unwrap(); snapshot("claimed");
+    owner.finish_discovery_source_author(FinishDiscoverySourceAuthorInput { native_profile:Some(profile(true,false)),native_content:Some(content(&claim.post_id)),claim,stop_code:None }).unwrap(); snapshot("completed");
+    let second = owner.list_discovery_search_hits(ListDiscoverySearchHitsInput {campaign_id:CAMPAIGN.into(),after_id:None,limit:100}).unwrap().into_iter().find(|hit|hit.id!=first).unwrap();
+    let claim = owner.claim_discovery_source_author(CAMPAIGN,1,&second.id).unwrap(); snapshot("duplicate-claimed");
+    owner.finish_discovery_source_author(FinishDiscoverySourceAuthorInput {native_profile:Some(profile(true,false)),native_content:Some(content(&claim.post_id)),claim,stop_code:None}).unwrap(); snapshot("duplicate");
+}
 fn source(post: &str) -> String {
     format!("https://www.douyin.com/video/{post}")
 }

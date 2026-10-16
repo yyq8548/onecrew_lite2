@@ -232,6 +232,13 @@ impl OperationRegistry {
         if result_state_binding(&input).origin.as_str() != surface_origin_scope(surface) {
             return Err(ResultStateFailure::OriginMismatch);
         }
+        if !matches!(&input, ResultStateInput::ReadCurrent { .. }) {
+            let current = platform.read_current_result(result_state_binding(&input))
+                .map_err(map_store_failure)?;
+            if onecrew_local_runtime::is_retired_result(&current) {
+                return Err(ResultStateFailure::InvalidState);
+            }
+        }
         match input {
             ResultStateInput::ConfirmCreatorSaveBatch {
                 binding,

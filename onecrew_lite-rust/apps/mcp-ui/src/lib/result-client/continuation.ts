@@ -55,9 +55,10 @@ export async function dispatchPendingContinuation(app: App, snapshot: ResultSnap
 }
 
 export function continuationRefreshDelay(snapshot: ResultSnapshot, nowMs: number): number | null {
-  return snapshot.continuation.state === "dispatching" && snapshot.continuation.dispatch_not_after_ms != null
-    ? Math.max(100, snapshot.continuation.dispatch_not_after_ms - nowMs + 50)
-    : null;
+  if (snapshot.continuation.state !== "dispatching" || snapshot.continuation.dispatch_not_after_ms == null) return null;
+  const delay = BigInt(snapshot.continuation.dispatch_not_after_ms) - BigInt(Math.floor(nowMs)) + 50n;
+  if (delay < 100n) return 100;
+  return delay > 2_147_483_647n ? 2_147_483_647 : Number(delay);
 }
 
 const SUBMITTED_REFRESH_STEPS_MS = [1_000, 2_000, 4_000, 8_000, 15_000];

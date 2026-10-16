@@ -109,10 +109,21 @@ mod tests {
                 keywords: vec!["headphones comfort test".into()],
             }],
         };
+        let export = std::env::var_os("ONECREW_QUERY_ROUND_ORACLE_DIRECTORY").map(std::path::PathBuf::from);
+        if let Some(path) = &export {
+            std::fs::create_dir_all(path).unwrap();
+            let db = rusqlite::Connection::open(dir.path().join("crm.db")).unwrap();
+            db.execute("VACUUM INTO ?1", [path.join("before.sqlite").to_str().unwrap()]).unwrap();
+            std::fs::write(path.join("input.json"), serde_json::to_vec_pretty(&serde_json::json!({"campaign_id":input.campaign_id,"revision":input.revision,"expected_scopes":input.expected_scopes,"additions":input.additions})).unwrap()).unwrap();
+        }
         owner
             .append_discovery_queries_async("account".into(), input.clone())
             .await
             .unwrap();
+        if let Some(path) = &export {
+            let db = rusqlite::Connection::open(dir.path().join("crm.db")).unwrap();
+            db.execute("VACUUM INTO ?1", [path.join("after.sqlite").to_str().unwrap()]).unwrap();
+        }
         // A repeated request cannot append twice; the stale snapshot loses the CAS.
         assert!(
             owner

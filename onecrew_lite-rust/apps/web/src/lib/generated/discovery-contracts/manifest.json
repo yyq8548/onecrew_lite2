@@ -122,7 +122,7 @@
       "name": "DiscoveryIdentityGroupsSnapshot",
       "direction": "serialize",
       "id": "https://reacher.local/contracts/DiscoveryIdentityGroupsSnapshot.schema.json",
-      "revision": "sha256:ea9711873f19cb7f36f16b79b3d7af2eb58d749423acca38af72326020ae8b82",
+      "revision": "sha256:2535e48341014e728fed6accb394b6cfbe38f276cd35ce67a2780f46dbe6cd47",
       "schema": {
         "$id": "https://reacher.local/contracts/DiscoveryIdentityGroupsSnapshot.schema.json",
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -296,6 +296,13 @@
                             },
                             "evidence_version": {
                               "type": "string"
+                            },
+                            "followers": {
+                              "description": "Owner-bound count; a leading ~ preserves a rounded public estimate.",
+                              "type": [
+                                "string",
+                                "null"
+                              ]
                             },
                             "hit": {
                               "properties": {
@@ -3079,5 +3086,5 @@
       }
     }
   ],
-  "manifest_revision": "sha256:569809180a076d9682404e7d634ed7d3c8b09066b1c540454bbf1269212b183b"
+  "manifest_revision": "sha256:2aa9a0b286220c663eaee0bc06d87933839556be11d9f1c32a29249772323702"
 }

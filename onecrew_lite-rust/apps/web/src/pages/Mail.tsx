@@ -9,12 +9,6 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
 import {
-  MailComposerSheet,
-  type EmailComposerLaunch,
-  type MailComposerSheetHandle,
-} from "@/components/mail/composer-sheet";
-import {
-  ComposeButton,
   MailFolderNav,
   emailFolderCount,
   emailFolderLabel,
@@ -23,8 +17,6 @@ import { MailItemList } from "@/components/mail/mail-item-list";
 import { MailboxCombobox } from "@/components/mail/mailbox-combobox";
 import { GmailBulk } from "@/components/mail/gmail-bulk";
 import { GmailConnection } from "@/components/mail/gmail-connection";
-import { resolveEmailReplyTarget } from "@/components/mail/reply-target";
-import { MailTemplateLibrary } from "@/components/mail/template-library";
 import {
   EmailMessageDisplay,
   MailboxUnavailable,
@@ -65,7 +57,6 @@ import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
-  emailContactRoutes,
   type EmailDraftState,
   type EmailFolder,
   type EmailMessageView,
@@ -77,19 +68,12 @@ import {
   type MailboxDetail,
 } from "@/lib/creator";
 import { useCanvasPortal } from "@/lib/canvas-portal";
-import { creatorDetailQueryOptions } from "@/lib/runtime-query";
 import { cn } from "@/lib/utils";
 
 // Below this Mail width the folders, list and reader cannot sit side by
 // side: at 800px the list (32%) keeps about 84px for its title and count
 // beside the 132px sort control; a 528px host panel left it 18px.
 const MAIL_SPLIT_MIN_WIDTH = 800;
-
-function threadRecipient(summary: EmailThreadSummary | undefined) {
-  const message = summary?.latest_message;
-  if (!message) return null;
-  return message.direction === "inbound" ? message.reply_to[0] ?? message.from : message.to[0] ?? null;
-}
 
 export type MailNavigationGuardHandle = {
   requestLeave: (continueNavigation: () => void) => void;
@@ -101,7 +85,6 @@ export const Mail = forwardRef<MailNavigationGuardHandle, { onManageMailboxes?: 
   const { t } = useTranslation("mail");
   const runtimeAvailable = isRuntimeAvailable();
   const queryClient = useQueryClient();
-  const composerRef = useRef<MailComposerSheetHandle>(null);
   const canvas = useCanvasPortal();
   const [mailboxId, setMailboxId] = useState<string | null>(null);
   const [folder, setFolder] = useState<EmailFolder>("sent");
@@ -131,7 +114,6 @@ export const Mail = forwardRef<MailNavigationGuardHandle, { onManageMailboxes?: 
   }, []);
   const [search, setSearch] = useState("");
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
-  const [composerLaunch, setComposerLaunch] = useState<EmailComposerLaunch | null>(null);
 
   const mailboxes = useQuery({
     queryKey: MAILBOX_QUERY_KEY,
@@ -191,7 +173,6 @@ export const Mail = forwardRef<MailNavigationGuardHandle, { onManageMailboxes?: 
     () => drafts.data?.pages.flatMap((page) => page.items) ?? [],
     [drafts.data],
   );
-  const selectedSummary = threadItems.find(({ thread }) => thread.id === selectedThreadId);
   const selectedThread = useQuery({
     queryKey: emailThreadKey(selectedThreadId),
     queryFn: () => getEmailThread<EmailThreadView>({ thread_id: selectedThreadId! }),
@@ -200,35 +181,6 @@ export const Mail = forwardRef<MailNavigationGuardHandle, { onManageMailboxes?: 
   });
   // Thread messages arrive newest first, so the latest message is the head.
   const lastMessage: EmailMessageView | null = selectedThread.data?.messages[0] ?? null;
-  const selectedRecipient = threadRecipient(selectedSummary);
-  // Detail-on-demand: the thread already names its creator, so fetch that one
-  // record instead of scanning the whole creator list for a reply route.
-  const replyCreator = useQuery(creatorDetailQueryOptions(
-    selectedSummary?.thread.creator_id ?? null,
-    runtimeAvailable,
-  ));
-  const replyRoute = emailContactRoutes(replyCreator.data).find((route) => route.route.id === selectedSummary?.thread.contact_route_id);
-  const creatorReplyTarget = selectedSummary?.thread.creator_id && replyRoute && selectedRecipient
-    ? {
-        creatorId: selectedSummary.thread.creator_id,
-        contactRouteId: replyRoute.route.id,
-        to: selectedRecipient,
-      }
-    : null;
-  const selectedRuntimeThread = selectedThread.data?.thread;
-  const replyTarget = resolveEmailReplyTarget({
-    creatorTarget: creatorReplyTarget,
-    displayedMessage: lastMessage,
-    threadMessages: selectedThread.data?.messages ?? [],
-    allowManualThreadReply: Boolean(
-      selectedMailbox?.available
-      && selectedMailbox.capabilities.includes("reply")
-      && mailboxCanSend(selectedMailbox)
-      && selectedRuntimeThread
-      && !selectedRuntimeThread.creator_id
-      && !selectedRuntimeThread.contact_route_id
-    ),
-  });
 
   const replySync = useMutation({
     mutationFn: (id: string) => runMailboxSync(id),
@@ -298,27 +250,15 @@ export const Mail = forwardRef<MailNavigationGuardHandle, { onManageMailboxes?: 
     setMailboxId(value);
     setFolder("sent");
     setSelectedThreadId(null);
-    setComposerLaunch(null);
   };
   const requestMailboxChange = (value: string | null) => {
     if (value === mailboxId) return;
-    const change = () => applyMailboxChange(value);
-    if (!composerLaunch) {
-      change();
-      return;
-    }
-    composerRef.current?.requestClose(change);
+    applyMailboxChange(value);
   };
 
   useImperativeHandle(ref, () => ({
-    requestLeave: (continueNavigation) => {
-      if (!composerLaunch) {
-        continueNavigation();
-        return;
-      }
-      composerRef.current?.requestClose(continueNavigation);
-    },
-  }), [composerLaunch]);
+    requestLeave: (continueNavigation) => continueNavigation(),
+  }), []);
 
   useEffect(() => {
     if (mailboxId && mailboxOptions.some((mailbox) => mailbox.mailbox_ref_id === mailboxId)) return;
@@ -369,25 +309,6 @@ export const Mail = forwardRef<MailNavigationGuardHandle, { onManageMailboxes?: 
     Array.from(listRef.current?.querySelectorAll<HTMLElement>("[data-thread-id]") ?? [])
       .find((row) => row.dataset.threadId === openedId)
       ?.focus();
-  };
-  const beginNewEmail = (initialTemplateId?: string) => {
-    setFoldersOpen(false);
-    setComposerLaunch({
-      key: crypto.randomUUID(),
-      kind: "new",
-      initialTemplateId,
-    });
-  };
-  const beginReply = () => {
-    if (!replyTarget) return;
-    setComposerLaunch({
-      key: crypto.randomUUID(),
-      kind: "reply",
-      to: replyTarget.to,
-      creatorId: replyTarget.creatorId,
-      contactRouteId: replyTarget.contactRouteId,
-      message: replyTarget.message,
-    });
   };
 
   if (!runtimeAvailable) return <RuntimeUnavailable className="h-full border-0" />;
@@ -465,12 +386,6 @@ export const Mail = forwardRef<MailNavigationGuardHandle, { onManageMailboxes?: 
             {receivingUnavailableDescription}
           </p>
         ))}
-        <MailTemplateLibrary
-          collapsed={collapsed}
-          canCompose={mailboxCanSend(selectedMailbox)}
-          onUseTemplate={(templateId) => beginNewEmail(templateId)}
-        />
-        <ComposeButton collapsed={collapsed} disabled={!mailboxCanSend(selectedMailbox)} onClick={() => beginNewEmail()} />
       </div>
     </>
   );
@@ -529,7 +444,6 @@ export const Mail = forwardRef<MailNavigationGuardHandle, { onManageMailboxes?: 
             query={search}
             emptyDescription={folder === "drafts" ? t("page.emptyDraftsDescription") : t("page.emptyFolderDescription")}
             onSelectThread={openThread}
-            onSelectDraft={(draftId) => setComposerLaunch({ key: crypto.randomUUID(), kind: "draft", draftId })}
           />
           {(folder !== "drafts" && threads.hasNextPage) || (draftState && drafts.hasNextPage) ? (
             <div className="border-t p-2">
@@ -580,7 +494,6 @@ export const Mail = forwardRef<MailNavigationGuardHandle, { onManageMailboxes?: 
           onDispositionAction={selectedThreadId
             ? (action) => updateDisposition.mutate({ threadId: selectedThreadId, action })
             : undefined}
-          onReply={replyTarget ? beginReply : undefined}
           onBack={singlePane ? closeReader : undefined}
           backButtonRef={attachReaderBack}
         />
@@ -591,7 +504,6 @@ export const Mail = forwardRef<MailNavigationGuardHandle, { onManageMailboxes?: 
             <EmptyTitle>{t("page.readerEmptyTitle")}</EmptyTitle>
             <EmptyDescription>{t("page.readerEmptyDescription")}</EmptyDescription>
           </EmptyHeader>
-          {mailboxCanSend(selectedMailbox) && <Button size="sm" onClick={() => beginNewEmail()}>{t("common.compose")}</Button>}
         </Empty>
       )}
     </div>
@@ -601,7 +513,7 @@ export const Mail = forwardRef<MailNavigationGuardHandle, { onManageMailboxes?: 
     <TooltipProvider delayDuration={0}>
       <div ref={setMailRoot} className="flex h-full min-h-0 flex-col overflow-hidden border-t-0 bg-card">
         <GmailConnection />
-        <GmailBulk mailboxes={mailboxes.data ?? []} />
+        <GmailBulk mailboxes={mailboxes.data ?? []} mailboxError={mailboxes.error} mailboxesLoading={mailboxes.isFetching} refreshMailboxes={() => mailboxes.refetch({ throwOnError: true })} />
         <MailboxUnavailable mailbox={selectedMailbox} />
         {mailboxes.error && (
           <div className="border-b border-destructive/30 bg-destructive/5 px-4 py-3 text-xs text-destructive">
@@ -663,17 +575,6 @@ export const Mail = forwardRef<MailNavigationGuardHandle, { onManageMailboxes?: 
           </ResizablePanelGroup>
         )}
 
-        <MailComposerSheet
-          ref={composerRef}
-          launch={composerLaunch}
-          mailbox={selectedMailbox}
-          container={canvas}
-          onClose={() => setComposerLaunch(null)}
-          onSent={(result) => {
-            setFolder("sent");
-            setSelectedThreadId(result.thread.id);
-          }}
-        />
       </div>
     </TooltipProvider>
   );

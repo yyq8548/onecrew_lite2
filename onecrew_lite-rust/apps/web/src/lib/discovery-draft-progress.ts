@@ -1,11 +1,11 @@
 import { invoke } from "./local-runtime";
-import type { DraftProgress } from "./generated/discovery-contracts";
-import { validateDraftProgress } from "./generated/discovery-contracts/validators/DraftProgress.js";
+import { discoveryDraftProgress, type DraftProgress } from "@onecrew/runtime-contracts/discovery";
 export const discoveryDraftProgressKey = (id: string) => ["discovery-draft-progress", id] as const;
 export function parseDraftProgress(value: unknown, id: string): DraftProgress | null {
   if (value === null) return null;
-  if (!validateDraftProgress(value) || value.id !== id) throw new Error("discovery_draft_progress_invalid");
-  return value;
+  const parsed = discoveryDraftProgress.safeParse(value);
+  if (!parsed.success || parsed.data.id !== id) throw new Error("discovery_draft_progress_invalid");
+  return parsed.data;
 }
 export async function getDiscoveryDraftProgress(id: string) {
   return parseDraftProgress(await invoke<unknown>("onecrew_discovery_draft_progress_get", { id }), id);

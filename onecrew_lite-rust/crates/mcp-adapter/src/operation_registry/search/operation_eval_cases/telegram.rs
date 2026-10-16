@@ -82,14 +82,4 @@ pub(super) const CASES: &[OperationEvalCase] = &[
         toolkit: ToolkitId::Telegram,
         expected_id: "telegram.connection.reconnect.status",
     },
-    OperationEvalCase {
-        query: "Telegram sync one conversation thread into the local store",
-        toolkit: ToolkitId::Telegram,
-        expected_id: "telegram.conversation.sync",
-    },
-    OperationEvalCase {
-        query: "Telegram send a direct message reply inside an open conversation",
-        toolkit: ToolkitId::Telegram,
-        expected_id: "telegram.message.send",
-    },
 ];

@@ -54,7 +54,7 @@ const accounts = {
     cookieImport: {
       macos: {
         title: "macOS 可能请求 Apple 钥匙串授权",
-        description: "提取 Cookie 时，系统可能弹出 Chrome Safe Storage 授权框。请只在系统弹窗中输入当前 Mac 用户的登录密码；系统密码不会进入本应用，也不是 X Chat passcode。",
+        description: "提取 Cookie 时，系统可能弹出 Chrome Safe Storage 授权框。请只在系统弹窗中输入当前 Mac 用户的登录密码；系统密码不会进入本应用。",
       },
       windows: {
         title: "Cookie 将由 Windows 当前用户解密",
@@ -255,14 +255,6 @@ const accounts = {
     profileName: "Profile 名称",
     profilePlaceholder: "例如 x-us-01",
     profileDescription: "每个 profile 都是独立的 Chrome 登录环境（独立 Cookie + 独立家宽），与日常浏览器和其他 profile 互不干扰。指纹会按家宽地区对齐（时区 / 语言），硬件指纹使用本机真实值。",
-    xChatQuestion: "是否启用 X Chat？",
-    xChatEnabled: "启用 X Chat",
-    xChatEnabledDescription: "配置 passcode 后，应用才能发送并解锁 X Chat 对话。",
-    xChatDisabled: "暂不启用",
-    xChatDisabledDescription: "仍可连接 X 账号，但无法通过本应用发送或解锁 X Chat 对话。",
-    passcodeLabel: "X Chat passcode",
-    passcodePlaceholder: "请输入 X Chat passcode",
-    passcodeHint: "这里只填写 X Chat passcode，不是系统用户的登录密码。",
     loginIntro: "将打开一个走该家宽、使用真实 Chrome 的独立窗口。打开前请先确认下方指纹，再登录 {{platform}}。",
     fingerprintTitle: "本次登录指纹",
     fingerprint: {
@@ -280,10 +272,6 @@ const accounts = {
     importDescription: "从该 Chrome profile 读取登录 Cookie（由系统凭据提供方解密），同一家宽校验后加密保存到本机。",
     connected: "已连接 @{{username}}",
     profileSummary: "Chrome · profile {{profile}}",
-    validation: {
-      selectXChat: "请选择是否启用 X Chat",
-      passcodeRequired: "启用 X Chat 必须填写 passcode",
-    },
     toasts: {
       browserOpened: "已打开 Chrome",
       browserOpenedDescription: "独立窗口 · 请在其中登录 {{platform}}",
@@ -333,7 +321,6 @@ const accounts = {
       menuAria: "打开 @{{username}} 的账号操作",
       verify: "验证身份（whoami）",
       relogin: "用 Chrome 重新登录",
-      xChat: "X Chat 设置",
       proxy: "配置家宽代理",
       disconnect: "断开连接",
     },
@@ -361,39 +348,6 @@ const accounts = {
       verifyFailed: "验证失败",
       disconnected: "已断开 @{{username}}",
       disconnectFailed: "断开连接失败",
-    },
-  },
-  xChat: {
-    status: {
-      configured: { label: "X Chat 已配置", description: "已保存用于发送和解锁 X Chat 对话的 passcode。" },
-      notConfigured: { label: "X Chat 未配置", description: "当前无法通过本应用发送或解锁 X Chat 对话。" },
-      unavailable: { label: "X Chat 状态不可用", description: "本机暂时无法读取该账号的加密凭据。" },
-      notApplicable: { label: "X Chat 不适用", description: "该平台不使用 X Chat passcode。" },
-    },
-    dialog: {
-      title: "X Chat 设置",
-      description: "管理 @{{username}} 在本机保存的 X Chat passcode。这里不会修改 X 网站上的 passcode。",
-      replace: "更换 X Chat passcode",
-      enableAndSet: "启用并设置 X Chat passcode",
-      enabledDescription: "保存后，发送或解锁 X Chat 对话会使用新值。",
-      disableAndClear: "停用并清除 X Chat passcode",
-      disabledDescription: "明确清除本机保存值；X 登录 Cookie 和账号连接保持不变。",
-      newPasscode: "新的 X Chat passcode",
-      passcodePlaceholder: "请输入 X Chat passcode",
-      passcodeHint: "这里只填写 X Chat passcode，不是系统用户的登录密码。",
-      disableWarningTitle: "停用后无法发送或解锁 X Chat",
-      disableWarningDescription: "账号仍保持连接，但本应用将无法读取 X Chat 对话，也无法发送 X Chat 消息。",
-      disableAction: "停用并清除",
-      saveAction: "保存新 passcode",
-      enableAction: "启用 X Chat",
-    },
-    toasts: {
-      updated: "X Chat passcode 已更新",
-      enabled: "X Chat 已启用",
-      savedDescription: "@{{username}} 已保存新的本机加密配置",
-      cleared: "X Chat passcode 已清除",
-      clearedDescription: "@{{username}} 将无法通过本应用发送或解锁 X Chat 对话",
-      saveFailed: "X Chat 设置保存失败",
     },
   },
   telegram: {

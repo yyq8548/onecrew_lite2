@@ -1,0 +1,106 @@
+[
+  {
+    "file": "creator-candidate/creator.sqlite",
+    "sha256": "a52219dbe8f98d7dd0954a1013b25d5c8d3ed53f6e217d23784c5a23f84579d0"
+  },
+  {
+    "file": "creator-candidate/inputs.json",
+    "sha256": "8f06534ae9c3595497cc38bde314eb1cf784e707e4dff9248192e6e8aef85bd9"
+  },
+  {
+    "file": "creator-candidate/prepared.json",
+    "sha256": "e6176f7c8a08db4730db769a1b430c4a282657968e3480cf34b6569c00f32270"
+  },
+  {
+    "file": "creator-candidate/result.json",
+    "sha256": "6b5c93bbe2af6bb5cfadc78545851b3dc214444c2bb646b7f37049847976f821"
+  },
+  {
+    "file": "creator-candidate/selected.json",
+    "sha256": "dd9f189ff643298a90548b1d553c9d3f9e6eb205a20f2392dbbd884e96caba90"
+  },
+  {
+    "file": "creator-candidate/selections.json",
+    "sha256": "bda45b7489d3a52c0469fd6266ab86fc6096e249567023944331a6b9ae8f946a"
+  },
+  {
+    "file": "creator-import/v2.bundle.json",
+    "sha256": "583840f37d7485f2ca78de9d5a5a670aa75e8bf103b92cc337d6d37826513a7e"
+  },
+  {
+    "file": "creator-import/v2.sqlite",
+    "sha256": "3add254bc1685d63e99f928bfca0c8f58c2ad0144dde57d38bc6f2ac6f1768b2"
+  },
+  {
+    "file": "creator-import/v2.xlsx",
+    "sha256": "54c3e0f66b7bc3014f18c4f6ce108365da92944cafc6eaa25e513f107d744bbe"
+  },
+  {
+    "file": "creator-import/v3.bundle.json",
+    "sha256": "a2ff89a8bfb45cfcb65902d2b96fcf992d6352bfb78869f522a1ca6a4525bcaf"
+  },
+  {
+    "file": "creator-import/v3.sqlite",
+    "sha256": "efd55864338b56e610022e8a0a0d80bc55cb0343c7ae6db73c5c18435c4c03a5"
+  },
+  {
+    "file": "creator-import/v3.xlsx",
+    "sha256": "c14656a87c1c19d3cbac5fd1ec334de4386ce01e5763563fecd114aa6cabe32e"
+  },
+  {
+    "file": "creator-import/v4.bundle.json",
+    "sha256": "e744a619440220dddc16fa34c33d96b32c45057dd801ae82c55090cd4e18efd5"
+  },
+  {
+    "file": "creator-import/v4.sqlite",
+    "sha256": "cdd9c485c5976e5439115774e0694f409c8fa715183c6dc1d872951090ebbbf1"
+  },
+  {
+    "file": "creator-import/v4.xlsx",
+    "sha256": "229e4e0b4eeee7eeea76383a81d4d984f2f67776c2e5ec553e3f940b705416e1"
+  },
+  {
+    "file": "discovery-identity/baseline.sqlite",
+    "sha256": "c13e57de4e3715d101e32792b3bfd574054b4e1a01a0a1a1da6c402b4c745f83"
+  },
+  {
+    "file": "discovery-identity/merged.sqlite",
+    "sha256": "00eab77e209b86d8d447331ec7cd37046809fe0724295993104191dcacad7a0f"
+  },
+  {
+    "file": "discovery-identity/oracle.json",
+    "sha256": "e5e00ede81bc604c64a1bafccb4f1d873ee8f9bb5adecf0cebdd8009b3dca74b"
+  },
+  {
+    "file": "discovery-identity/revoked.sqlite",
+    "sha256": "fe7024ebedbf7adec5384666de980319851b3b2aea172c3c0137a9e50f34946b"
+  },
+  {
+    "file": "discovery-identity/stale.sqlite",
+    "sha256": "7008921a5bdd12bea062cc3f41d2c2d9f5587c7229bde912a51ad9d294c6bcf0"
+  },
+  {
+    "file": "discovery-contacts/native-after.sqlite",
+    "sha256": "2f9a9e7c721b9d78ef9c38245332cfb820ddb92f4513113abd8f45c7b959f715"
+  },
+  {
+    "file": "discovery-contacts/native-before.sqlite",
+    "sha256": "1a1461e869d7b8da4608f32ef38dfe9357efd51486a605c33835530f9fe21177"
+  },
+  {
+    "file": "discovery-contacts/native.json",
+    "sha256": "69e99262ca1bfe6a30d6d5e842284cdcc2ce1f0cafa60e496e9cec39a922b81a"
+  },
+  {
+    "file": "discovery-contacts/web-after.sqlite",
+    "sha256": "badc718884511a758043fb3960d10a299b71fd97894c52995ba69f90daba38bc"
+  },
+  {
+    "file": "discovery-contacts/web-before.sqlite",
+    "sha256": "d8c3f0d4db0f6d09c1c4cb6839e937a4128a27b5789c3b57ec1aad238b5f346e"
+  },
+  {
+    "file": "discovery-contacts/web.json",
+    "sha256": "7547223aad20c6605a8447886f454a64eea56c3052d5d3d869246a91157aad56"
+  }
+]

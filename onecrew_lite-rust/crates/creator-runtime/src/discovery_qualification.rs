@@ -542,6 +542,29 @@ fn parse_subscribers(raw: &str) -> Option<SubscriberEstimate> {
 }
 
 #[cfg(test)]
+#[test]
+fn export_discovery_qualification_node_oracle() {
+    let Some(path) = std::env::var_os("ONECREW_DISCOVERY_QUALIFICATION_NODE_ORACLE") else { return; };
+    let unrestricted = json!({"min_followers":8000,"requires_ai_tool_demo":false,"requires_public_tool_url":false});
+    let mut cases = Vec::new();
+    for language in ["", "不限", "语言不限", "any", " Unrestricted ", "English"] {
+        let mut criteria = unrestricted.clone(); criteria["language"] = json!(language);
+        for count in [None,Some(7999u64),Some(8000),Some(9000),Some(u64::MAX)] {
+            let evidence = json!({});
+            let assessment = count.map_or_else(||assess_profile_without_count(&criteria,&evidence,"author"),|count|assess_profile(&criteria,&evidence,"author",count));
+            cases.push(json!({"mode":"profile","criteria":criteria,"evidence":evidence,"author":"author","count":count,"expected":{"verdict":assessment.verdict,"reasons":assessment.reasons,"subscribers":assessment.subscribers},"assessed_evidence":assessed_evidence(evidence.clone(),&assessment)}));
+        }
+    }
+    for raw in ["12.4K subscribers","12,400 subscribers","约1万","20000 subscribers","18446744073709551615 subscribers"] {
+        let criteria = json!({"min_subscribers":12400,"requires_ai_tool_demo":false,"requires_public_tool_url":false});
+        let evidence = json!({"source_urls":["https://www.youtube.com/watch?v=LR04bU_yV5k"],"subscribers_source_url":"https://www.youtube.com/watch?v=LR04bU_yV5k","subscribers_raw":raw,"captured_at":100});
+        let assessment = assess(&criteria,&evidence,"author");
+        cases.push(json!({"mode":"youtube","criteria":criteria,"evidence":evidence,"author":"author","count":null,"expected":{"verdict":assessment.verdict,"reasons":assessment.reasons,"subscribers":assessment.subscribers},"assessed_evidence":assessed_evidence(evidence.clone(),&assessment)}));
+    }
+    std::fs::write(path,serde_json::to_vec_pretty(&cases).unwrap()).unwrap();
+}
+
+#[cfg(test)]
 mod tests {
     #[test]
     fn unrestricted_language_is_not_a_gate_and_unknown_language_never_publishes_fit() {

@@ -1303,3 +1303,34 @@ fn provenance_regression_discovery_context_is_immutable_distinct_and_preserves_l
         "same complete context has stable source and locator-observation identity"
     );
 }
+
+#[test]
+fn export_creator_candidate_node_compatibility_fixture() {
+    let Some(directory) = std::env::var_os("ONECREW_CREATOR_CANDIDATE_ORACLE_DIRECTORY") else { return; };
+    let directory = std::path::PathBuf::from(directory);
+    std::fs::create_dir_all(&directory).unwrap();
+    let repository = SqliteRepository::open(directory.join("creator.sqlite")).unwrap();
+    repository.upsert_account_ref(AccountRefId::new("operator-x"), Platform::X, "profile", "@operator").unwrap();
+    let mut first = input("row-original-x", "123456");
+    first.profile.follower_count = Some(u64::MAX);
+    first.tags = Some(vec!["公开".into()]);
+    let mut second = input("row-original-youtube", "UCabcdefghijklmnopqrstuv");
+    second.account.platform = Platform::YouTube;
+    second.account.target_kind = Some(TargetKind::Channel);
+    second.account.handle = None;
+    second.account.profile_url = Some("https://youtube.com/channel/UCabcdefghijklmnopqrstuv".into());
+    second.provenance = CreatorSaveProvenance::DirectSelection { source_ref: "original-youtube".into(), source_url: None, description: None, operator_account_ref_id: None };
+    second.contact_evidence.clear();
+    let inputs = vec![first, second];
+    std::fs::write(directory.join("inputs.json"), serde_json::to_vec(&inputs).unwrap()).unwrap();
+    let prepared = prepare_entries(&repository, inputs, CreatorSaveIntent::SaveOrUpdate).unwrap();
+    std::fs::write(directory.join("prepared.json"), prepared.encoded_payload().unwrap()).unwrap();
+    let selections = prepared.rows().iter().map(|row| CreatorSaveRouteSelection { row_id: row.row_id.clone(), route_ids: row.route_options.iter().map(|route| route.route_id.clone()).collect() }).collect::<Vec<_>>();
+    std::fs::write(directory.join("selections.json"), serde_json::to_vec(&selections).unwrap()).unwrap();
+    let selected = prepared.select_routes(selections).unwrap();
+    std::fs::write(directory.join("selected.json"), serde_json::to_vec(&selected).unwrap()).unwrap();
+    let (result, changed) = execute_prepared(&repository, selected, "creator-candidate-rust-oracle".into()).unwrap();
+    assert!(changed);
+    assert!(result.outcomes.iter().all(|outcome| matches!(outcome, CreatorSaveRowOutcome::Saved { .. })));
+    std::fs::write(directory.join("result.json"), serde_json::to_vec(&result).unwrap()).unwrap();
+}

@@ -79,7 +79,7 @@ describe("a card that fits its content", () => {
   });
 
   it("keeps a single action bar and chooses its layout from its own width", () => {
-    const html = render(manualEmailSnapshot());
+    const html = render(creatorBatchSnapshot());
     expect(html.match(/data-result-actions="true"/g)).toHaveLength(1);
     expect(SHELL_SOURCE).toContain("useCompactWidth()");
     // A media query inside an iframe reports the outer view, so it would stay

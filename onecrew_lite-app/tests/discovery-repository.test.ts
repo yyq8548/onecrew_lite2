@@ -1,0 +1,52 @@
+import assert from "node:assert/strict";
+import { mkdtemp } from "node:fs/promises";
+import { join } from "node:path";
+import { DatabaseSync } from "node:sqlite";
+import { test } from "node:test";
+import { fileURLToPath } from "node:url";
+import { initializeNewCreatorDatabase } from "../src/storage/creator-schema.ts";
+import { createPrivateDirectory } from "../src/storage/private-backup.ts";
+import { DiscoveryRepository } from "../src/discovery/repository.ts";
+
+test("真实schema90发现搜索领取原子计费，双连接互斥，回执与零结果严格区分", async () => {
+  const directory = await mkdtemp(fileURLToPath(new URL("../../.scratch/discovery-repository-", import.meta.url)));
+  const path = join(await createPrivateDirectory(join(directory, "private")), "creator.sqlite");
+  await initializeNewCreatorDatabase(path); const db = new DatabaseSync(path), other = new DatabaseSync(path);
+  const first = new DiscoveryRepository(db), second = new DiscoveryRepository(other);
+  try {
+    db.exec("PRAGMA foreign_keys=ON"); other.exec("PRAGMA foreign_keys=ON");
+    first.create({ id: "discovery-local", brief: "找鞋子作者", opencli_version: "1.8.8", criteria: {}, scopes: [{ platform: "youtube", profile_ref: "work", keywords: ["shoe review", "sneaker review"] }], target_count: 2, max_calls: 2 });
+    assert.throws(() => first.claimSearch("discovery-local", 1, "youtube", "work"));
+    first.approve("discovery-local", 1);
+    const claim = first.claimSearch("discovery-local", 1, "youtube", "work");
+    assert.equal(claim.query, "shoe review"); assert.throws(() => second.claimSearch("discovery-local", 1, "youtube", "work"));
+    first.finishSearch(claim, "technical_stop", "opencli_command_failed", []);
+    assert.equal(db.prepare("SELECT COUNT(*) AS n FROM discovery_search_completions").get()?.n, 0);
+    assert.throws(() => first.finishSearch(claim, "completed", null, []));
+    const next = second.claimSearch("discovery-local", 1, "youtube", "work"); assert.equal(next.query, "sneaker review");
+    second.finishSearch(next, "completed", null, []);
+    assert.equal(db.prepare("SELECT used_calls FROM discovery_campaigns").get()?.used_calls, 2);
+    assert.equal(db.prepare("SELECT COUNT(*) AS n FROM discovery_search_completions").get()?.n, 1);
+    assert.throws(() => first.claimSearch("discovery-local", 1, "youtube", "work"), /budget_exhausted/);
+    first.increaseBudget("verified-owner", { decisionId: "decision-1", planId: "discovery-local", expectedRevision: 1, expectedMaxCalls: 2, newMaxCalls: 3 });
+    first.increaseBudget("verified-owner", { decisionId: "decision-1", planId: "discovery-local", expectedRevision: 1, expectedMaxCalls: 2, newMaxCalls: 3 });
+    assert.throws(() => second.increaseBudget("other-owner", { decisionId: "decision-1", planId: "discovery-local", expectedRevision: 1, expectedMaxCalls: 2, newMaxCalls: 3 }), /idempotency_conflict/);
+    first.adjustTarget("verified-owner", { decisionId: "target-1", planId: "discovery-local", expectedRevision: 1, expectedTargetCount: 2, newTargetCount: 1 });
+    second.adjustTarget("verified-owner", { decisionId: "target-1", planId: "discovery-local", expectedRevision: 1, expectedTargetCount: 2, newTargetCount: 1 });
+    assert.equal(first.getPlan("discovery-local").target_count, 1);
+    assert.equal(first.getPlan("discovery-local").used_calls, 2);
+    assert.throws(() => second.adjustTarget("verified-owner", { decisionId: "target-1", planId: "discovery-local", expectedRevision: 1, expectedTargetCount: 2, newTargetCount: 3 }), /idempotency_conflict/);
+    first.create({ id: "restart", brief: "找作者", opencli_version: "1.8.8", criteria: { automatic_query_expansion: true }, scopes: [{ platform: "youtube", profile_ref: "work", keywords: ["review"] }], target_count: 2, max_calls: 4 });
+    first.approve("restart", 1); const interrupted = first.claimSearch("restart", 1, "youtube", "work");
+    assert.equal(second.recoverInterruptedSearches(), 1);
+    assert.throws(() => first.claimSearch("restart", 1, "youtube", "work"), /explicit_recovery_required/);
+    const recovery = second.claimSearch("restart", 1, "youtube", "work", true);
+    assert.equal(recovery.query, interrupted.query); assert.equal(recovery.callNumber, 2);
+    assert.throws(() => first.finishSearch(interrupted, "completed", null, []), /claim_stale/);
+    second.finishSearch(recovery, "completed", null, []);
+    const expected = [{ platform: "youtube", profile_ref: "work", keywords: ["review"] }], additions = [{ platform: "youtube", profile_ref: "work", keywords: ["author review"] }];
+    first.appendQueries("verified-owner", "restart", 1, expected, additions);
+    assert.throws(() => second.appendQueries("verified-owner", "restart", 1, expected, additions), /plan_changed/);
+    assert.equal(first.claimSearch("restart", 1, "youtube", "work").query, "author review");
+  } finally { other.close(); db.close(); }
+});

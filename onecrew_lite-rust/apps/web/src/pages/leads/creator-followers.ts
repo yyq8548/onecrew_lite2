@@ -8,7 +8,7 @@ const FALLBACK_PLATFORMS: readonly CreatorPlatform[] = [
 
 export function primaryFollowerEntry(
   summary: Pick<CreatorSummary, "follower_counts" | "primary_platform" | "platforms">,
-): [CreatorPlatform, number] | null {
+): [CreatorPlatform, number | bigint] | null {
   const counts = summary.follower_counts;
   if (summary.primary_platform && counts[summary.primary_platform] != null) {
     return [summary.primary_platform, counts[summary.primary_platform]!];

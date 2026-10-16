@@ -51,7 +51,7 @@
     {
       "allowed_values": [],
       "browser_required": true,
-      "command": "onecrew-pinterest-reader/search-users",
+      "command": "onecrew-pinterest-reader/search-pins",
       "platform": "pinterest",
       "registered": true,
       "scope_kind": "query"

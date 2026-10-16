@@ -8,7 +8,6 @@ import {
 import { queryKeysForRuntimeChangeScopes } from "@/lib/runtime-change";
 import { CREATOR_GROUPS_QUERY_KEY } from "@/lib/creator-groups";
 import {
-  RESEND_CREDENTIALS_QUERY_KEY,
   YOUTUBE_CREDENTIALS_QUERY_KEY,
 } from "@/lib/runtime-query";
 
@@ -16,7 +15,6 @@ describe("runtime change query invalidation mapping", () => {
   it("refreshes local credential projections and derived mailboxes together", () => {
     expect(queryKeysForRuntimeChangeScopes(["service_credentials"])).toEqual([
       YOUTUBE_CREDENTIALS_QUERY_KEY,
-      RESEND_CREDENTIALS_QUERY_KEY,
       MAILBOX_QUERY_KEY,
     ]);
   });

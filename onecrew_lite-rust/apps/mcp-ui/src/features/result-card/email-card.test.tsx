@@ -101,12 +101,11 @@ describe("prepared message preview", () => {
     }
   });
 
-  it("keeps the confirmation semantics of the card it replaces", () => {
+  it("keeps historical email content readable without sending actions", () => {
     const html = render(manualEmailSnapshot());
-    expect(html).toContain("确认");
-    expect(html).toContain(">取消</button>");
-    expect(html).toContain("修改需求");
-    expect(html.match(/data-result-actions="true"/g)).toHaveLength(1);
+    expect(html).not.toContain(">取消</button>");
+    expect(html).not.toContain("修改需求");
+    expect(html).not.toContain("data-result-actions");
     // The approval prompt is the confirm button's own meaning. Repeating the
     // server's sentence beside it said the same thing twice, in English, on a
     // card whose every other word was the reader's language.
@@ -146,7 +145,7 @@ describe("prepared message preview", () => {
     expect(trigger).toBeDefined();
     expect(trigger).not.toContain("aria-expanded");
     // The decision stays reachable while the details are one step away.
-    expect(html.match(/data-result-actions="true"/g)).toHaveLength(1);
+    expect(html).not.toContain("data-result-actions");
   });
 
   it("shows the whole message rather than paging a letter like a list", () => {

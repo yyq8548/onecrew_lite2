@@ -34,6 +34,7 @@ pub(crate) fn prepare_invocation<'entry>(
     schema_revision: &str,
     arguments: Value,
 ) -> Result<PreparedInvocation<'entry>, ExecuteFailure> {
+    reject_retired_operation(entry)?;
     validate_invocation(
         entry,
         context.surface,
@@ -159,6 +160,7 @@ pub(crate) async fn dispatch_prepared(
 pub(crate) async fn dispatch_prepared_output(
     prepared: PreparedInvocation<'_>,
 ) -> Result<BindingOutput, ExecuteFailure> {
+    reject_retired_operation(prepared.entry)?;
     let PreparedInvocation {
         entry,
         binding_context,
@@ -194,6 +196,13 @@ pub(crate) async fn dispatch_prepared_output(
         ));
     }
     Ok(output)
+}
+
+fn reject_retired_operation(entry: &OperationEntry) -> Result<(), ExecuteFailure> {
+    if onecrew_local_runtime::is_retired_operation(entry.metadata.id.as_str()) {
+        return Err(ExecuteFailure::unknown_operation());
+    }
+    Ok(())
 }
 
 fn validate_invocation(

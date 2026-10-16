@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import manifest from "@mcp-ui/lib/generated/contracts/manifest.json";
 import { RESULT_VIEW_KINDS } from "@mcp-ui/features/result-card/components/result-views";
+import { RETIRED_PRESENTATIONS } from "@mcp-ui/features/result-card/retired-sending";
 import { CONTINUATION_CONTEXT_KINDS, PENDING_ACTION_KINDS, parseResultSnapshot } from "@mcp-ui/lib/result-contract";
 import { SNAPSHOT } from "@mcp-ui/test-support/fixtures";
 
@@ -57,7 +58,7 @@ function expectSameMembers(label: string, handwritten: readonly string[], genera
 
 describe("handwritten kind vocabularies match the generated contract manifest", () => {
   it("gives every presentation kind a business view (result-views.tsx)", () => {
-    expectSameMembers("presentation kinds", RESULT_VIEW_KINDS, vocabularyContaining("search_plan_editor"));
+    expectSameMembers("presentation kinds", [...RESULT_VIEW_KINDS, ...RETIRED_PRESENTATIONS], vocabularyContaining("search_plan_editor"));
   });
 
   it("checks the semantics of every pending-action kind (parse.ts)", () => {

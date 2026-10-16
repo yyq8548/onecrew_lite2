@@ -21,31 +21,31 @@ async fn browser_x_chat_contract_is_required_and_rejected_before_any_connection_
             OperatorAccountPlatform::X,
             XChatConnectionPreference::Enabled,
             None,
-            "X with x_chat_preference=enabled requires a non-empty x_chat_passcode",
+            crate::RETIRED_OPERATION_CODE,
         ),
         (
             OperatorAccountPlatform::X,
             XChatConnectionPreference::Enabled,
             Some("   "),
-            "X with x_chat_preference=enabled requires a non-empty x_chat_passcode",
+            crate::RETIRED_OPERATION_CODE,
         ),
         (
             OperatorAccountPlatform::X,
             XChatConnectionPreference::Disabled,
             Some("must-not-be-accepted"),
-            "X with x_chat_preference=disabled does not accept x_chat_passcode",
+            crate::RETIRED_OPERATION_CODE,
         ),
         (
             OperatorAccountPlatform::Instagram,
             XChatConnectionPreference::Enabled,
             None,
-            "Instagram requires x_chat_preference=disabled and does not accept x_chat_passcode",
+            crate::RETIRED_OPERATION_CODE,
         ),
         (
             OperatorAccountPlatform::Instagram,
             XChatConnectionPreference::Disabled,
             Some("must-not-be-accepted"),
-            "Instagram requires x_chat_preference=disabled and does not accept x_chat_passcode",
+            crate::RETIRED_OPERATION_CODE,
         ),
     ];
     for (index, (account_platform, preference, passcode, expected_error)) in
@@ -104,7 +104,7 @@ async fn browser_x_chat_contract_is_required_and_rejected_before_any_connection_
         .unwrap_err();
     assert_eq!(
         configure_error,
-        "X with x_chat_preference=disabled does not accept x_chat_passcode"
+        crate::RETIRED_OPERATION_CODE
     );
     {
         let flows = platform.pending_account_connections.lock().unwrap();
@@ -136,8 +136,8 @@ async fn browser_probe_failure_has_zero_connection_side_effects() {
                 username: Some("proxy-user-secret".into()),
                 password: Some("proxy-password-secret".into()),
             },
-            x_chat_preference: XChatConnectionPreference::Enabled,
-            x_chat_passcode: Some("chat-passcode-secret".into()),
+            x_chat_preference: XChatConnectionPreference::Disabled,
+            x_chat_passcode: None,
             idempotency_key: "browser-probe-failure".into(),
         })
         .await

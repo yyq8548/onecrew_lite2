@@ -1,8 +1,19 @@
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 
-import { validateResultSnapshot } from "@mcp-ui/lib/generated/contracts/validators/ResultSnapshot.js";
+import { wireResultSnapshot, wireClaimedContinuation, isU64 } from "@onecrew/runtime-contracts/result-wire";
+import { parseApplicationJson, stringifyApplicationJson } from "@onecrew/runtime-contracts/json";
 import { validateDmFailure } from "@mcp-ui/lib/generated/contracts/validators/DmFailure.js";
-import { validateClaimedResultContinuation } from "@mcp-ui/lib/generated/contracts/validators/ClaimedResultContinuation.js";
+function validateResultSnapshot(value: unknown): value is ResultSnapshot {
+  const result = wireResultSnapshot.safeParse(value);
+  validateResultSnapshot.errors = result.success ? [] : result.error.issues.map(issue => {
+    const field = issue.path.at(-1);
+    const missing = issue.code === "invalid_type" && issue.path.reduce<unknown>((current, key) => typeof current === "object" && current !== null ? Reflect.get(current, key) : undefined, value) === undefined;
+    return { instancePath: `/${issue.path.join("/")}`, schemaPath: `#/${issue.path.filter(part => typeof part === "string" && /^[A-Za-z_]+$/.test(part)).join("/")}`, keyword: missing ? "required" : "schema", params: missing && typeof field === "string" ? { missingProperty: field } : {} };
+  });
+  return result.success;
+}
+validateResultSnapshot.errors = [] as { instancePath: string; schemaPath: string; keyword: string; params: Record<string, unknown> }[];
+const validateClaimedResultContinuation = (value: unknown): value is ClaimedResultContinuation => wireClaimedContinuation.safeParse(value).success;
 import { choiceAnswerShapeValid, choiceAnswersWithinBudget, searchPlanDescriptionValid, searchPlanEditorDraftValid, searchPlanKeywordsValid } from "@mcp-ui/lib/result-contract/invariants";
 
 import type {
@@ -36,8 +47,15 @@ const IDENTIFIER = /^[A-Za-z0-9._:-]{1,128}$/u;
 
 export function parseInitialResult(payload: CallToolResult): InitialResultParse {
   const meta = asRecord(payload._meta);
-  if (!meta || !(RESULT_META_KEY in meta)) return { status: "missing" };
-  const snapshot = parseResultSnapshot(meta[RESULT_META_KEY]);
+  if (!meta) return { status: "missing" };
+  if (meta["onecrew/lossless-required"] === true && typeof meta["onecrew/result-json"] !== "string") return { status: "invalid" };
+  if (!(RESULT_META_KEY in meta) && !("onecrew/result-json" in meta)) return { status: "missing" };
+  let value = meta[RESULT_META_KEY];
+  if (typeof meta["onecrew/result-json"] === "string") {
+    try { value = parseApplicationJson(meta["onecrew/result-json"]); }
+    catch { return { status: "invalid" }; }
+  }
+  const snapshot = parseResultSnapshot(value);
   return snapshot && meta.viewUUID === snapshot.binding.view.identity
     ? { status: "valid", snapshot }
     : { status: "invalid" };
@@ -107,8 +125,7 @@ export function parseResultStateFailure(value: unknown): ResultStateFailure | nu
   if (!item || typeof item.code !== "string") return null;
   if (item.code === "revision_conflict" || item.code === "continuation_revision_conflict") {
     return exactKeys(item, ["code", "current_revision"]) &&
-        Number.isSafeInteger(item.current_revision) &&
-        (item.current_revision as number) > 0
+        positiveInteger(item.current_revision)
       ? item as ResultStateFailure
       : null;
   }
@@ -218,7 +235,7 @@ function creatorPreviewSemanticsValid(preview: CreatorSavePreview): boolean {
   const scoreValid = preview.score === null ||
     (Number.isSafeInteger(preview.score) && preview.score >= 0 && preview.score <= 100);
   return new Set(routeIds).size === routeIds.length &&
-    Number.isSafeInteger(preview.expires_at) && preview.expires_at >= 0 && optionalText(preview.avatar_url) &&
+    isU64(preview.expires_at) && optionalText(preview.avatar_url) &&
     scoreValid && intentValid &&
     validReasons[preview.status].includes(preview.reason) &&
     preview.routes.every(route => boundedText(route.route_id) && boundedText(route.display_value));
@@ -288,7 +305,7 @@ function presentationSemanticsValid(snapshot: ResultSnapshot): boolean {
     !boundedText(presentation.title) ||
     !optionalText(presentation.summary) ||
     presentation.sections.length > maxSections ||
-    new TextEncoder().encode(JSON.stringify(presentation)).length > maxBytes
+    new TextEncoder().encode(stringifyApplicationJson(presentation)).length > maxBytes
   ) return false;
   return presentation.sections.every((section) => {
     if (section.kind === "creator_save_rows") return creatorOutcomesSemanticsValid(section.rows);
@@ -381,7 +398,7 @@ function parseClaimedContinuation(value: unknown): ClaimedResultContinuation | n
     binding,
     continuation_revision: item.continuation_revision,
     lease_id: item.lease_id,
-    request: { message: request.message, context, ...("requires_model_context" in request ? { requires_model_context: request.requires_model_context as boolean } : {}) },
+    request: { message: request.message, context, requires_model_context: request.requires_model_context === true },
     dispatch_started_at_ms: item.dispatch_started_at_ms,
     dispatch_not_after_ms: item.dispatch_not_after_ms,
   };
@@ -539,12 +556,12 @@ function parseAnswers(value: unknown): ResultChoiceAnswer[] | null {
   return answersAreUnique(answers) && choiceAnswersWithinBudget(answers) ? answers : null;
 }
 
-function positiveInteger(value: unknown): value is number {
-  return Number.isSafeInteger(value) && (value as number) > 0;
+function positiveInteger(value: unknown): value is number | bigint {
+  return isU64(value) && BigInt(value) > 0n;
 }
 
-function timestamp(value: unknown): value is number {
-  return Number.isSafeInteger(value) && (value as number) >= 0;
+function timestamp(value: unknown): value is number | bigint {
+  return isU64(value);
 }
 
 function boundedText(value: unknown): value is string {

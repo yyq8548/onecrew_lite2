@@ -1,4 +1,16 @@
 use super::*;
+
+#[test]
+fn export_mcp_search_node_oracle() {
+    let Some(output) = std::env::var_os("ONECREW_MCP_SEARCH_ORACLE") else { return; };
+    let registry = production_registry();
+    let rows = OPERATION_EVAL_CASES.iter().map(|case| {
+        let input = ToolSearchInput { query: SearchText::parse(case.query).unwrap(), toolkits: vec![case.toolkit], effects: vec![], limit: None };
+        let result = registry.tool_search_v2(SurfaceId::Full, &input);
+        json!({"input":input,"expected_id":case.expected_id,"result":result})
+    }).collect::<Vec<_>>();
+    std::fs::write(output, serde_json::to_vec_pretty(&rows).unwrap()).unwrap();
+}
 use onecrew_local_runtime::ToolkitId;
 
 #[test]
@@ -93,7 +105,7 @@ fn standalone_operation_search_does_not_fabricate_a_playbook() {
 }
 
 #[test]
-fn matched_playbook_returns_linked_primary_and_related_operations() {
+fn retired_mail_playbook_and_its_writes_are_absent_from_search() {
     let registry = production_registry();
     let result = search(
         &registry,
@@ -101,33 +113,9 @@ fn matched_playbook_returns_linked_primary_and_related_operations() {
         vec![ToolkitId::Email],
         Vec::new(),
     );
-    assert_eq!(
-        result.playbooks[0].id.as_str(),
-        "playbook.email.draft-and-send"
-    );
-    let roles = result
-        .operations
-        .iter()
-        .map(|operation| (operation.id.as_str(), operation.match_role))
-        .collect::<Vec<_>>();
-    assert!(roles.contains(&("email.draft.save", CatalogMatchRole::Primary)));
-    assert!(roles.contains(&("email.draft.send", CatalogMatchRole::Primary)));
-    assert!(roles.contains(&("email.draft.get", CatalogMatchRole::Related)));
-    assert!(roles.contains(&("email.thread.list", CatalogMatchRole::Related)));
-    let primary_ids = result.playbooks[0]
-        .primary_operation_ids
-        .iter()
-        .map(|id| id.as_str())
-        .collect::<std::collections::BTreeSet<_>>();
-    assert!(result.operations.iter().all(|operation| {
-        (operation.match_role == CatalogMatchRole::Primary)
-            == primary_ids.contains(operation.id.as_str())
-    }));
-    assert!(
-        result.operations[..primary_ids.len()]
-            .iter()
-            .all(|operation| operation.match_role == CatalogMatchRole::Primary)
-    );
+    assert!(result.playbooks.is_empty());
+    assert!(result.operations.iter().all(|operation|
+        !onecrew_local_runtime::is_retired_operation(operation.id.as_str())));
 }
 
 #[test]

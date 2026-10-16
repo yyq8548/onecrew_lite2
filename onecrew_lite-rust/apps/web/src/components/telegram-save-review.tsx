@@ -12,6 +12,11 @@ import {
 } from "@/lib/telegram-candidate";
 import type { CreatorRecord } from "@/lib/creator";
 
+function formatExpiry(value: number | bigint, locale: string): string {
+  const milliseconds = BigInt(value) * 1000n;
+  return milliseconds > 8_640_000_000_000_000n ? `${value}s (Unix)` : new Intl.DateTimeFormat(locale, { dateStyle: "short", timeStyle: "medium" }).format(new Date(Number(milliseconds)));
+}
+
 const TELEGRAM_SCORE_GRADE_KEYS: Record<ScoreGrade, "outreach.telegram.reviewGradeExcellent" | "outreach.telegram.reviewGradeGood" | "outreach.telegram.reviewGradeMedium" | "outreach.telegram.reviewGradeLow" | "outreach.telegram.reviewGradeUnrated"> = {
   excellent: "outreach.telegram.reviewGradeExcellent",
   good: "outreach.telegram.reviewGradeGood",
@@ -50,7 +55,7 @@ export function TelegramSaveReview({ snapshot, onSnapshot, onClose, onSaved }: {
   const pageCount = Math.max(1, Math.ceil(rows.length / 5));
   const page = Math.min(requestedPage, pageCount - 1);
   const selections = creatorSaveSelections(rows, selectedRoutes);
-  const expired = rows.some(({ preview }) => preview.expires_at * 1000 <= now);
+  const expired = rows.some(({ preview }) => BigInt(preview.expires_at) * 1000n <= BigInt(now));
   const blocked = creatorSaveReviewBlocked(rows);
   const canConfirm = rows.length > 0 && !expired && !blocked && !needsReceipt && selections.every((row) => row.confirmed_route_ids.length > 0);
 
@@ -107,7 +112,7 @@ export function TelegramSaveReview({ snapshot, onSnapshot, onClose, onSaved }: {
               {route.collision.status !== "none" && <span className="block text-xs text-destructive">{t("outreach.telegram.reviewCollision")}</span>}
             </span>
           </label>)}</div>
-          <p className="text-xs text-muted-foreground">{t("outreach.telegram.reviewExpires", { date: new Intl.DateTimeFormat(i18n.resolvedLanguage ?? i18n.language, { dateStyle: "short", timeStyle: "medium" }).format(new Date(preview.expires_at * 1000)) })}</p>
+          <p className="text-xs text-muted-foreground">{t("outreach.telegram.reviewExpires", { date: formatExpiry(preview.expires_at, i18n.resolvedLanguage ?? i18n.language) })}</p>
         </section>)}
         {pageCount > 1 && <nav aria-label={t("outreach.telegram.reviewPages")} className="flex items-center justify-between gap-2">
           <Button variant="outline" size="sm" disabled={busy || page === 0} onClick={() => setRequestedPage(page - 1)}>{t("outreach.telegram.reviewPrevious")}</Button>

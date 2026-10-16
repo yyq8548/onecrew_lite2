@@ -44,11 +44,11 @@ describe("saved contact route actions", () => {
       platform: "tiktok", target_kind: "creator", external_id: "tto:provider-id", handle: null,
       display_name: "Creator", profile_url: "https://www.tiktok.com/@profile.creator", public_data: {}, origin: "initial_platform_account",
     };
-    const rows = savedContactRouteRows([direct], [noHandle], undefined, false);
+    const rows = savedContactRouteRows([direct], [noHandle], false);
     expect(rows.map(routeExternalActionUrl)).toEqual([
       "https://www.tiktok.com/@profile.creator", "https://www.tiktok.com/@url.creator",
     ]);
-    const [withoutProfile] = savedContactRouteRows([], [{ ...noHandle, external_id: "12345678", profile_url: null }], undefined, false);
+    const [withoutProfile] = savedContactRouteRows([], [{ ...noHandle, external_id: "12345678", profile_url: null }], false);
     expect(routeExternalActionUrl(withoutProfile!)).toBeNull();
   });
 
@@ -56,7 +56,7 @@ describe("saved contact route actions", () => {
     const handle = urlRoute(21, "tiktok", "@real.creator");
     handle.locator.kind = "handle";
     const invalid = urlRoute(22, "tiktok", "https://example.com/@other");
-    const rows = savedContactRouteRows([handle, invalid], [], undefined, false);
+    const rows = savedContactRouteRows([handle, invalid], [], false);
     expect(rows.map(routeExternalActionUrl)).toEqual(["https://www.tiktok.com/@real.creator", null]);
   });
 
@@ -77,16 +77,15 @@ describe("saved contact route actions", () => {
   }];
 
   it("composes archived website, link hub, YouTube and account routes without external actions", () => {
-    const rows = savedContactRouteRows(routes, accounts, vi.fn(), true);
+    const rows = savedContactRouteRows(routes, accounts, true);
     expect(rows).toHaveLength(4);
     for (const row of rows) {
       expect(routeExternalActionUrl(row)).toBeNull();
-      expect(row.onEmail).toBeUndefined();
     }
   });
 
   it("keeps the composed external actions for an active Creator", () => {
-    const rows = savedContactRouteRows(routes, accounts, undefined, false);
+    const rows = savedContactRouteRows(routes, accounts, false);
     expect(rows.map(routeExternalActionUrl)).toEqual([
       "https://x.com/example",
       "https://example.com",
@@ -100,7 +99,7 @@ describe("saved contact route actions", () => {
     const deleteOnly = urlRoute(5, "website", "https://delete.example", ["delete"]);
     const onEdit = vi.fn();
     const onDelete = vi.fn();
-    const rows = savedContactRouteRows([editable, deleteOnly], accounts, undefined, false, onEdit, onDelete);
+    const rows = savedContactRouteRows([editable, deleteOnly], accounts, false, onEdit, onDelete);
 
     expect(rows[0].key).toMatch(/^account:/);
     expect(rows[0].onEdit).toBeUndefined();
@@ -137,7 +136,7 @@ describe("saved contact route actions", () => {
       },
     }];
     const onDelete = vi.fn();
-    const [row] = savedContactRouteRows([derivedInitial], [], undefined, false, undefined, onDelete);
+    const [row] = savedContactRouteRows([derivedInitial], [], false, undefined, onDelete);
 
     expect(row.onDelete).toBeTypeOf("function");
     row.onDelete?.();
@@ -146,7 +145,7 @@ describe("saved contact route actions", () => {
 
   it("removes all route mutation actions in read-only details", () => {
     const editable = urlRoute(6, "website", "https://editable.example", ["update", "delete"]);
-    const rows = savedContactRouteRows([editable], accounts, undefined, true, vi.fn(), vi.fn());
+    const rows = savedContactRouteRows([editable], accounts, true, vi.fn(), vi.fn());
     expect(rows.every((row) => !row.onEdit && !row.onDelete)).toBe(true);
   });
 });

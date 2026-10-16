@@ -1084,3 +1084,137 @@ pub(super) fn create_current_schema_unchecked(connection: &Connection) -> Result
         .pragma_update(None, "user_version", super::CURRENT_SCHEMA_VERSION)
         .map_err(|error| error.to_string())
 }
+
+#[cfg(test)]
+#[test]
+fn export_schema90_node_compatibility_fixture() {
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../..")
+        .canonicalize()
+        .unwrap();
+    let requested =
+        std::env::var_os("ONECREW_SCHEMA_ORACLE_DIRECTORY").map(std::path::PathBuf::from);
+    let scratch = root.join(".scratch");
+    std::fs::create_dir_all(&scratch).unwrap();
+    let automatic = requested.is_none().then(|| {
+        tempfile::Builder::new()
+            .prefix("creator-oracle-")
+            .tempdir_in(&scratch)
+            .unwrap()
+    });
+    let output = requested
+        .unwrap_or_else(|| automatic.as_ref().unwrap().path().to_path_buf())
+        .canonicalize()
+        .unwrap();
+    assert!(output.starts_with(root.join(".scratch")));
+    let destination = output.join("creator-schema90-oracle.sqlite");
+    assert!(
+        !destination.exists(),
+        "oracle output must be a new isolated file"
+    );
+    let connection = Connection::open(&destination).unwrap();
+    create_current_schema_unchecked(&connection).unwrap();
+    super::validation::validate_current_database(&connection).unwrap();
+    let predecessor = output.join("creator-schema89-oracle.sqlite");
+    assert!(!predecessor.exists());
+    connection
+        .execute("VACUUM INTO ?1", [predecessor.to_str().unwrap()])
+        .unwrap();
+    let previous = Connection::open(&predecessor).unwrap();
+    super::migrations::v89_to_v90::strip_reference(&previous).unwrap();
+    previous.pragma_update(None, "user_version", 89).unwrap();
+    super::validation::validate_database_for_version(&previous, 89).unwrap();
+    type Strip = fn(&Connection) -> Result<(), String>;
+    let strips: &[(i64, Strip)] = &[
+        (89, super::migrations::v88_to_v89::strip_reference),
+        (88, super::migrations::v87_to_v88::strip_reference),
+        (87, super::migrations::v86_to_v87::strip_reference),
+        (86, super::migrations::v85_to_v86::strip_reference),
+        (85, super::migrations::v84_to_v85::strip_reference),
+        (84, super::migrations::v83_to_v84::strip_reference),
+        (83, super::migrations::v82_to_v83::strip_reference),
+        (82, super::migrations::v81_to_v82::strip_reference),
+        (81, super::migrations::v80_to_v81::strip_reference),
+        (80, super::migrations::v79_to_v80::strip_reference),
+        (79, super::migrations::v78_to_v79::strip_reference),
+        (78, super::migrations::v77_to_v78::strip_reference),
+        (77, super::migrations::v76_to_v77::strip_reference),
+        (76, super::migrations::v75_to_v76::strip_reference),
+        (75, super::migrations::v74_to_v75::strip_reference),
+        (74, super::migrations::v73_to_v74::strip_reference),
+        (73, super::migrations::v72_to_v73::strip_reference),
+        (72, super::migrations::v71_to_v72::strip_reference),
+        (71, super::migrations::v70_to_v71::strip_reference),
+        (70, super::migrations::v69_to_v70::strip_reference),
+        (69, super::migrations::v68_to_v69::strip_reference),
+        (68, super::migrations::v67_to_v68::strip_reference),
+        (67, super::migrations::v66_to_v67::strip_reference),
+        (66, super::migrations::v65_to_v66::strip_reference),
+        (65, super::migrations::v64_to_v65::strip_reference),
+        (64, super::migrations::v63_to_v64::strip_reference),
+        (63, super::migrations::v62_to_v63::strip_reference),
+        (62, super::migrations::v61_to_v62::strip_reference),
+        (61, super::migrations::v60_to_v61::strip_reference),
+        (60, super::migrations::v59_to_v60::strip_reference),
+        (
+            59,
+            super::migrations::v58_to_v59::strip_language_samples_reference,
+        ),
+        (
+            57,
+            super::migrations::oracle_strip_library_identity_versions,
+        ),
+        (56, super::migrations::oracle_strip_identity_reviews),
+        (55, super::migrations::strip_target_increases_reference),
+        (54, super::migrations::restore_review_v1_reference),
+        (53, super::migrations::strip_budget_increases_reference),
+        (52, super::migrations::strip_video_read_failures_reference),
+        (51, super::migrations::strip_review_reference),
+        (50, super::migrations::strip_library_source_reference),
+        (49, super::migrations::strip_content_identity_reference),
+        (48, super::migrations::strip_profile_identity_reference),
+        (47, super::migrations::strip_identity_reference),
+        (46, super::migrations::strip_twitter_content_reference),
+        (45, super::migrations::strip_twitter_reference),
+        (44, super::migrations::strip_content_reference),
+    ];
+    let predecessors: &[(i64, Strip)] = &[
+        (42, super::migrations::downgrade_reference_to_v42),
+        (41, super::migrations::downgrade_reference_to_v41),
+        (40, super::migrations::downgrade_reference_to_v40),
+        (39, super::migrations::downgrade_reference_to_v39),
+        (38, super::migrations::downgrade_reference_to_v38),
+        (37, super::migrations::downgrade_reference_to_v37),
+        (36, super::migrations::downgrade_reference_to_v36),
+        (35, super::migrations::downgrade_reference_to_v35),
+        (34, super::migrations::downgrade_reference_to_v34),
+        (33, super::migrations::downgrade_reference_to_v33),
+        (32, super::migrations::downgrade_reference_to_v32),
+        (31, super::migrations::downgrade_reference_to_v31),
+        (30, super::migrations::downgrade_reference_to_v30),
+        (29, super::migrations::downgrade_reference_to_v29),
+        (28, super::migrations::downgrade_reference_to_v28),
+        (27, super::migrations::downgrade_reference_to_v27),
+    ];
+    for version in 27..=88 {
+        let path = output.join(format!("creator-schema{version}-oracle.sqlite"));
+        assert!(!path.exists());
+        connection
+            .execute("VACUUM INTO ?1", [path.to_str().unwrap()])
+            .unwrap();
+        let predecessor = Connection::open(&path).unwrap();
+        for (before, strip) in strips {
+            if version < *before {
+                strip(&predecessor).unwrap();
+            }
+        }
+        if let Some((_, downgrade)) = predecessors.iter().find(|(value, _)| *value == version) {
+            downgrade(&predecessor).unwrap();
+        }
+        predecessor
+            .pragma_update(None, "user_version", version)
+            .unwrap();
+        super::validation::validate_database_for_version(&predecessor, version).unwrap();
+    }
+    println!("schema90 oracle fixture: {}", destination.display());
+}

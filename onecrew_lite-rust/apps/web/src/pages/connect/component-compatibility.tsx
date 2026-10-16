@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { checkComponentCompatibility } from "@/lib/component-compatibility";
+import { formatEpochMilliseconds } from "@/lib/creator";
 
 export function ComponentCompatibility({ version, hash }: { version: string; hash: string }) {
   const { t, i18n } = useTranslation("shell");
@@ -13,7 +14,7 @@ export function ComponentCompatibility({ version, hash }: { version: string; has
     <summary className="cursor-pointer font-medium">{t("compatibility.title")} · {version} · {hash.slice(0, 12)}</summary>
     <div className="space-y-3 pt-3">
       {report && <>
-        <p>{t("compatibility.builtAt", { time: new Date(report.built_at * 1000).toLocaleString(i18n.resolvedLanguage) })}</p>
+        <p>{t("compatibility.builtAt", { time: formatEpochMilliseconds(BigInt(report.built_at) * 1000n, i18n.resolvedLanguage, { year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric", second: "numeric" }) })}</p>
         <dl className="grid grid-cols-2 gap-2">
           {[
             ["onecrew_lite", report.version, "ready"],
@@ -25,7 +26,7 @@ export function ComponentCompatibility({ version, hash }: { version: string; has
             {state !== "ready" && <p className="text-xs text-muted-foreground">{state}</p>}
           </div>)}
         </dl>
-        <p className="text-xs text-muted-foreground">{t("compatibility.checkedAt", { time: new Date(report.checked_at * 1000).toLocaleTimeString(i18n.resolvedLanguage) })}</p>
+        <p className="text-xs text-muted-foreground">{t("compatibility.checkedAt", { time: formatEpochMilliseconds(BigInt(report.checked_at) * 1000n, i18n.resolvedLanguage, { hour: "numeric", minute: "numeric", second: "numeric" }) })}</p>
       </>}
       {query.isError && <p role="alert">{t("compatibility.failed")}</p>}
       <Button size="sm" variant="outline" disabled={query.isFetching} onClick={() => { void query.refetch(); }}>{t(query.isFetching ? "compatibility.checking" : "compatibility.check")}</Button>

@@ -1,0 +1,28 @@
+{
+  "count": 20000,
+  "objective": "Shoe reviewers",
+  "material": {
+    "approved_at": 1792083117,
+    "approved_scopes": [{ "keywords": ["shoes"], "platform": "youtube", "profile_ref": "fixture" }],
+    "campaign_id": "authenticated-review",
+    "candidate_evidence_hash": "c3242b3eeb6b6a3c892a4c5d539a33ec5504cb7b16c348e5dc4404a26f622ffc",
+    "candidate_id": "4f4210a9-fb4e-436d-b9eb-967d534ddbed",
+    "criteria": { "category": "shoes", "language": "", "min_subscribers": 8000, "region": "", "requires_ai_tool_demo": false, "requires_public_tool_url": false },
+    "criteria_revision": 1,
+    "format_version": 1,
+    "hit": {
+      "author_id": null, "author_label": "Same Name", "author_observed_at": null, "author_url": null,
+      "campaign_id": "authenticated-review", "captured_at": 1792083117,
+      "id": "6a1baf4b-4fbb-4bc2-b510-6e2a1adf360f", "platform": "youtube", "profile_ref": "fixture",
+      "search_keyword": "shoes", "source_url": "https://www.youtube.com/watch?v=WR04bU_yV5k", "title": "Running shoe review"
+    },
+    "material_hash": "fbd130919d29832afd1714e8b675cb158661d66aa499f02b510df3d7d7e285f5",
+    "native_author_id": "UCaaaaaaaaaaaaaaaaaaaaaa",
+    "public_pages": [],
+    "transcript": null,
+    "video_description": "My running shoe review. My other account, also owned by me: https://www.youtube.com/channel/UCbbbbbbbbbbbbbbbbbbbbbb"
+  },
+  "prompt_sha256": "70d5d262ab629cfcb985fb29e568ae75a723b634b9fba71b25a56cac07beb4ae",
+  "reassess_request_id": "initial-v1-544ca387a1ace92c5784242b9d1963711b8f6dd0180591d8db0767cdbe56a85b",
+  "request_id": "initial-v1-a53e76324ae7aa8b2c74d778881e74ffbf348eb010540d6e8c3db05ae6b326e3"
+}

@@ -2,6 +2,62 @@ use crate::*;
 use serde_json::json;
 
 #[test]
+fn export_discovery_video_hydration_node_oracle() {
+    let Some(output) = std::env::var_os("ONECREW_VIDEO_HYDRATION_ORACLE_DIRECTORY") else { return; };
+    let output = std::path::PathBuf::from(output); std::fs::create_dir_all(&output).unwrap();
+    let directory = tempfile::tempdir().unwrap(); let owner = CreatorRuntime::open(directory.path(), CreatorGateways::default()).unwrap();
+    owner.create_discovery_campaign(CreateDiscoveryCampaignInput {
+        id: "video-hydration".into(), brief: "Shoe reviewers".into(), opencli_version: "1.8.8".into(),
+        criteria: json!({"min_subscribers":8000,"category":"shoes","requires_ai_tool_demo":false,"requires_public_tool_url":false}), target_count:2,max_calls:Some(10),
+        scopes:vec![DiscoveryPlatformScope {platform:"youtube".into(),profile_ref:"fixture".into(),keywords:vec!["shoe review".into()]}],
+    }).unwrap();
+    owner.approve_discovery_campaign("video-hydration",1).unwrap();
+    let search=owner.claim_discovery_search("video-hydration",1,"youtube","fixture").unwrap();
+    owner.finish_discovery_search(FinishDiscoverySearchInput {claim:search,status:"completed".into(),stop_code:None,search_hits:vec![DiscoverySearchHitInput {source_url:"https://www.youtube.com/watch?v=WR04bU_yV5k".into(),title:"Running shoe review".into(),author_label:"Same Name".into(),author_id:None,author_url:None}]}).unwrap();
+    let hit=owner.list_discovery_search_hits(ListDiscoverySearchHitsInput {campaign_id:"video-hydration".into(),after_id:None,limit:100}).unwrap().remove(0);
+    let snapshot=|suffix:&str| {let db=rusqlite::Connection::open(directory.path().join("crm.db")).unwrap();db.execute("VACUUM INTO ?1",[output.join(format!("{suffix}.sqlite")).to_str().unwrap()]).unwrap();};
+    snapshot("before");let claim=owner.claim_discovery_video("video-hydration",1,"fixture",&hit.id).unwrap();snapshot("claimed");
+    let candidate=UpsertDiscoveryCandidateInput {campaign_id:"video-hydration".into(),expected_revision:1,platform:"youtube".into(),source_profile_ref:"fixture".into(),platform_account_id:"UCaaaaaaaaaaaaaaaaaaaaaa".into(),display_name:"Same Name".into(),profile_url:"https://www.youtube.com/channel/UCaaaaaaaaaaaaaaaaaaaaaa".into(),evidence:json!({"source_urls":[claim.source_url],"subscribers_raw":"20K subscribers","subscribers_source_url":claim.source_url,"captured_at":std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs(),"video_title":"Running shoe review","video_description":"My running shoe review.","public_links":[]})};
+    owner.finish_discovery_video(FinishDiscoveryVideoInput {claim:claim.clone(),candidate:Some(candidate.clone()),stop_code:None}).unwrap();snapshot("after");
+    std::fs::write(output.join("oracle.json"),serde_json::to_vec_pretty(&json!({"claim":claim,"candidate":candidate,"material":owner.prepare_discovery_review_material("video-hydration",1,&hit.id).unwrap()})).unwrap()).unwrap();
+}
+
+#[test]
+fn export_discovery_profile_hydration_node_oracle() {
+    let Some(output) = std::env::var_os("ONECREW_PROFILE_HYDRATION_ORACLE_DIRECTORY") else { return; };
+    let output = std::path::PathBuf::from(output);
+    std::fs::create_dir_all(&output).unwrap();
+    let directory = tempfile::tempdir().unwrap();
+    let owner = CreatorRuntime::open(directory.path(), CreatorGateways::default()).unwrap();
+    owner.create_discovery_campaign(CreateDiscoveryCampaignInput {
+        id: "profile-hydration".into(), brief: "Keyboard creators".into(), opencli_version: "1.8.8".into(),
+        criteria: json!({"min_followers":1000,"language":"English"}), target_count: 2, max_calls: Some(10),
+        scopes: vec![DiscoveryPlatformScope { platform: "pinterest".into(), profile_ref: "dedicated".into(), keywords: vec!["keyboard".into()] }],
+    }).unwrap();
+    owner.approve_discovery_campaign("profile-hydration", 1).unwrap();
+    let search = owner.claim_discovery_search("profile-hydration", 1, "pinterest", "dedicated").unwrap();
+    owner.finish_discovery_search(FinishDiscoverySearchInput {
+        claim: search, status: "completed".into(), stop_code: None,
+        search_hits: vec![DiscoverySearchHitInput { source_url: "https://www.pinterest.com/native_author/".into(), title: "Display Name".into(), author_label: "Display Name".into(), author_id: Some("9876543210123456789".into()), author_url: Some("https://www.pinterest.com/native_author/".into()) }],
+    }).unwrap();
+    let DiscoveryStep::ReadProfile { search_hit_id } = owner.plan_discovery_step("profile-hydration", 1).unwrap() else { panic!("expected original profile step"); };
+    let snapshot = |suffix: &str| {
+        let db = rusqlite::Connection::open(directory.path().join("crm.db")).unwrap();
+        db.execute("VACUUM INTO ?1", [output.join(format!("{suffix}.sqlite")).to_str().unwrap()]).unwrap();
+    };
+    snapshot("before");
+    let claim = owner.claim_discovery_profile("profile-hydration", 1, &search_hit_id).unwrap();
+    snapshot("claimed");
+    let native = json!({"author_id":"9876543210123456789","username":"native_author","author_label":"Display Name","profile_url":"https://www.pinterest.com/native_author/","follower_count":12000,"bio":"Original keyboard reviews. Business: studio@example.org","public_links":["https://studio.example.org/contact"]});
+    let receipt = owner.finish_discovery_profile(FinishDiscoveryProfileInput { claim: claim.clone(), native_profile: Some(native.clone()), stop_code: None }).unwrap();
+    snapshot("after");
+    let candidates = owner.list_discovery_candidates(ListDiscoveryCandidatesInput { campaign_id: "profile-hydration".into(), after_id: None, limit: 100 }).unwrap();
+    let material = owner.prepare_discovery_review_material("profile-hydration", 1, &search_hit_id).unwrap();
+    let counts = owner.count_discovery_candidates("profile-hydration").unwrap();
+    std::fs::write(output.join("oracle.json"), serde_json::to_vec_pretty(&json!({"claim":claim,"native":native,"receipt":receipt,"candidates":candidates,"material":material,"counts":counts})).unwrap()).unwrap();
+}
+
+#[test]
 fn pinterest_native_profile_persists_unknown_followers_and_never_recommends_from_contacts_alone() {
     for (followers, language_required) in [
         (None, true),

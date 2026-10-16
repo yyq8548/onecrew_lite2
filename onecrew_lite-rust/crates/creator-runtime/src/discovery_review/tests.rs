@@ -9,6 +9,20 @@ use serde_json::json;
 
 const LINK: &str = "https://example.com/tool";
 
+#[test]
+fn export_discovery_review_node_oracle() {
+    let Some(path) = std::env::var_os("ONECREW_DISCOVERY_REVIEW_NODE_ORACLE") else { return; };
+    let directory = tempfile::tempdir().unwrap();
+    let (owner, hit) = setup(directory.path());
+    let encode = || {
+        let basis = owner.repository.read_discovery_review_basis("review",1,&hit).unwrap();
+        let expected = build_material(basis.clone()).unwrap();
+        serde_json::json!({"basis":{"campaign_id":basis.campaign_id,"revision":basis.revision,"criteria_json":basis.criteria_json,"scopes_json":basis.scopes_json,"approved_at":basis.approved_at,"hit":basis.hit,"candidate_id":basis.candidate_id,"native_author_id":basis.native_author_id,"native_followers":basis.native_followers,"native_follower_estimate":basis.native_follower_estimate,"native_profile":basis.native_profile,"evidence_json":basis.evidence_json,"transcript":basis.transcript,"source_description":basis.source_description,"native_content":basis.native_content,"language_samples":basis.language_samples,"pages":basis.pages},"expected":expected})
+    };
+    let first = encode(); add_receipts(&owner,&hit);
+    std::fs::write(path,serde_json::to_vec_pretty(&vec![first,encode()]).unwrap()).unwrap();
+}
+
 #[tokio::test]
 async fn appended_queries_support_review_and_library_without_invalidating_previous_material() {
     let dir = tempfile::tempdir().unwrap();

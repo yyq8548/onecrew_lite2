@@ -526,3 +526,49 @@ fn ledger_receipt_or_request_corruption_cannot_create_a_group() {
     basis.reviews[0].request_hash = "0".repeat(64);
     assert_eq!(build(basis).unwrap_err(), "identity_groups_ledger_invalid");
 }
+
+#[test]
+fn export_discovery_identity_node_oracle() {
+    let Some(directory) = std::env::var_os("ONECREW_IDENTITY_ORACLE_DIRECTORY") else { return; };
+    let directory = std::path::PathBuf::from(directory);
+    std::fs::create_dir_all(&directory).unwrap();
+    let (owner, pair) = super::super::tests::setup_shampoo_owned_links(&directory);
+    crate::discovery_contacts::legacy_approval_fixture(&directory);
+    review_shampoo(&owner, &pair.campaign_id, &pair.left_search_hit_id);
+    review_shampoo(&owner, &pair.campaign_id, &pair.right_search_hit_id);
+    let snapshot = |name: &str| {
+        let database = rusqlite::Connection::open(directory.join("crm.db")).unwrap();
+        database.execute("VACUUM INTO ?1", [directory.join(name).to_str().unwrap()]).unwrap();
+    };
+    snapshot("baseline.sqlite");
+    let material = owner.prepare_discovery_identity_merge_material(pair.clone()).unwrap();
+    let input = super::super::submission::tests::input(&owner, pair.clone());
+    let hash = super::super::submission::request_hash("operator", &input).unwrap();
+    let before = owner.get_discovery_identity_groups(&pair.campaign_id, 1).unwrap();
+    let receipt = owner.submit_discovery_identity_review("operator", input.clone()).unwrap();
+    let merged = owner.get_discovery_identity_groups(&pair.campaign_id, 1).unwrap();
+    snapshot("merged.sqlite");
+    let fresh_material = owner.prepare_discovery_review_material(&pair.campaign_id, 1, &pair.left_search_hit_id).unwrap();
+    owner.submit_discovery_review("operator", crate::SubmitDiscoveryReviewInput {
+        campaign_id: pair.campaign_id.clone(), expected_revision: 1, search_hit_id: pair.left_search_hit_id.clone(),
+        material_hash: fresh_material.material_hash, request_id: "shampoo-updated".into(),
+        reviewer: DiscoveryReviewer { kind: DiscoveryReviewerKind::Agent, label: "source-bound shampoo reviewer".into() },
+        findings: vec![crate::DiscoveryReviewFinding {
+            criterion: crate::DiscoveryReviewCriterion::CategoryContent, outcome: crate::DiscoveryReviewOutcome::Supported,
+            rationale: "The saved native author description explicitly identifies this as a shampoo review.".into(),
+            citations: vec![crate::DiscoveryReviewQuote::Description { quote: "My shampoo review.".into() }],
+            tool: None, match_level: None, country_code: None,
+        }],
+    }).unwrap();
+    let stale = owner.get_discovery_identity_groups(&pair.campaign_id, 1).unwrap();
+    snapshot("stale.sqlite");
+    let revocation_input = RevokeDiscoveryIdentityReviewInput {
+        campaign_id: pair.campaign_id.clone(), expected_revision: 1, decision_id: "revoke-groups".into(), revokes_decision_id: input.decision_id.clone(),
+        reviewer: DiscoveryReviewer { kind: DiscoveryReviewerKind::Agent, label: "identity correction".into() }, rationale: "Withdraw earlier relationship while retaining both sources.".into(),
+    };
+    let revoked_receipt = owner.revoke_discovery_identity_review("operator", revocation_input.clone()).unwrap();
+    let revoked = owner.get_discovery_identity_groups(&pair.campaign_id, 1).unwrap();
+    snapshot("revoked.sqlite");
+    let cases = serde_json::json!({ "pair": pair, "material": material, "input": input, "request_hash": hash, "before": before, "receipt": receipt, "merged": merged, "stale": stale, "revocation_input": revocation_input, "revoked_receipt": revoked_receipt, "revoked": revoked });
+    std::fs::write(directory.join("oracle.json"), serde_json::to_vec_pretty(&cases).unwrap()).unwrap();
+}

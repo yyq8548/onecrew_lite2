@@ -13,9 +13,13 @@ cli({
       throw new ArgumentError('Expected an exact YouTube video ID');
     }
     try { return await readVideoEvidence(page, args.video); }
-    catch {
-      // Raw provider failures can contain page state or transient network URLs.
-      throw new CommandExecutionError('OneCrew video evidence could not be verified');
+    catch (error) {
+      // 原始错误可能含页面状态，仅返回已知诊断代码。
+      const markers = ['AUTH_REQUIRED', 'ONECREW_YOUTUBE_VIDEO_UNAVAILABLE',
+        'ONECREW_YOUTUBE_LAYOUT_UNSUPPORTED', 'ONECREW_YOUTUBE_IDENTITY_INVALID',
+        'ONECREW_YOUTUBE_DESCRIPTION_UNAVAILABLE'];
+      const marker = markers.find(code => typeof error?.message === 'string' && error.message.includes(code));
+      throw new CommandExecutionError(marker ?? 'OneCrew video evidence could not be verified');
     }
   },
 });

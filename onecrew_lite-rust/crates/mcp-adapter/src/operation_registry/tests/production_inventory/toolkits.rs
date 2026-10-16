@@ -26,17 +26,17 @@ fn production_toolkit_and_playbook_inventory_is_exact() {
     assert_eq!(
         counts,
         [
-            (ToolkitId::X, 20),
-            (ToolkitId::Instagram, 16),
-            (ToolkitId::Telegram, 18),
+            (ToolkitId::X, 16),
+            (ToolkitId::Instagram, 14),
+            (ToolkitId::Telegram, 16),
             (ToolkitId::Youtube, 9),
-            (ToolkitId::OneCrew, 67),
-            (ToolkitId::Email, 29),
+            (ToolkitId::OneCrew, 61),
+            (ToolkitId::Email, 13),
         ]
         .into_iter()
         .collect()
     );
-    assert_eq!(registry.operation_ids_and_surfaces().len(), 159);
+    assert_eq!(registry.operation_ids_and_surfaces().len(), 129);
     for removed in [
         "task.setup_form",
         "task.list",
@@ -72,7 +72,6 @@ fn production_toolkit_and_playbook_inventory_is_exact() {
     }
 
     let expected_playbooks = [
-        "playbook.email.draft-and-send",
         "playbook.email.inbox-triage",
         "playbook.instagram.connection-browser",
         "playbook.instagram.creator-discovery",
@@ -81,15 +80,11 @@ fn production_toolkit_and_playbook_inventory_is_exact() {
         "playbook.onecrew.creator-contact-confirm",
         "playbook.onecrew.creator-manual-batch-create",
         "playbook.onecrew.creator-profile-update",
-        "playbook.onecrew.direct-message",
-        "playbook.recipe.email-best-route",
         "playbook.recipe.find-instagram-creators",
         "playbook.recipe.find-telegram-administrators",
         "playbook.recipe.find-x-creators",
         "playbook.recipe.find-youtube-creators",
-        "playbook.recipe.instagram-best-route",
         "playbook.recipe.triage-email-and-onecrew",
-        "playbook.recipe.x-best-route",
         "playbook.telegram.community-discovery",
         "playbook.telegram.connection-phone",
         "playbook.telegram.connection-qr",
@@ -125,7 +120,7 @@ fn production_toolkit_and_playbook_inventory_is_exact() {
         registry.operation_ids_and_surfaces().len()
             + registry.playbook_ids().len()
             + registry.toolkit_guide_ids().len(),
-        159 + expected_playbooks.len() + 6
+        129 + expected_playbooks.len() + 6
     );
 
     for surface in [

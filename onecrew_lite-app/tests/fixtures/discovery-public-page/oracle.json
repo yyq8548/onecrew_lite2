@@ -1,0 +1,86 @@
+{
+  "claim": {
+    "call_number": 3,
+    "input": {
+      "campaign_id": "pages",
+      "candidate_id": "2f5d114f-801a-4659-8f3c-a5b9fd6e04e2",
+      "expected_revision": 1,
+      "profile_ref": "dedicated",
+      "requested_url": "https://example.com/tool"
+    },
+    "search_hit_id": "5c35d6ab-a206-43bb-8184-05555a2b3d24",
+    "source_url": "https://www.youtube.com/watch?v=LR04bU_yV5k"
+  },
+  "completed": {
+    "call_number": 3,
+    "candidate_id": "2f5d114f-801a-4659-8f3c-a5b9fd6e04e2",
+    "captured_at": 1792087474,
+    "document_url": "https://example.com/tool",
+    "markdown_excerpt": "An observed AI tool page.",
+    "platform_account_id": "UC1234567890",
+    "profile_ref": "dedicated",
+    "requested_url": "https://example.com/tool",
+    "search_hit_id": "5c35d6ab-a206-43bb-8184-05555a2b3d24",
+    "source_excerpt": "Join https://discord.gg/2abyjxr4v6 . The tool I use: (https://example.com/tool).",
+    "source_url": "https://www.youtube.com/watch?v=LR04bU_yV5k",
+    "status": "completed",
+    "stop_code": null,
+    "title": "Tool",
+    "truncated": false
+  },
+  "failed": {
+    "call_number": 4,
+    "candidate_id": "e36e9606-bc0d-46c9-9d1b-d045cee1ce22",
+    "captured_at": 1792087474,
+    "document_url": null,
+    "markdown_excerpt": "",
+    "platform_account_id": "UC1234567890",
+    "profile_ref": "dedicated",
+    "requested_url": "https://example.com/tool",
+    "search_hit_id": "f2c0784a-abd4-43e7-84c6-69162b268122",
+    "source_excerpt": "Join https://discord.gg/2abyjxr4v6 . The tool I use: (https://example.com/tool).",
+    "source_url": "https://www.youtube.com/watch?v=LR04bU_yV5k",
+    "status": "failed",
+    "stop_code": "opencli_risk_control",
+    "title": "",
+    "truncated": false
+  },
+  "input": {
+    "campaign_id": "pages",
+    "candidate_id": "2f5d114f-801a-4659-8f3c-a5b9fd6e04e2",
+    "expected_revision": 1,
+    "profile_ref": "dedicated",
+    "requested_url": "https://example.com/tool"
+  },
+  "old_claim": {
+    "call_number": 3,
+    "input": {
+      "campaign_id": "pages",
+      "candidate_id": "e36e9606-bc0d-46c9-9d1b-d045cee1ce22",
+      "expected_revision": 1,
+      "profile_ref": "dedicated",
+      "requested_url": "https://example.com/tool"
+    },
+    "search_hit_id": "f2c0784a-abd4-43e7-84c6-69162b268122",
+    "source_url": "https://www.youtube.com/watch?v=LR04bU_yV5k"
+  },
+  "planned": {
+    "campaign_id": "pages",
+    "candidate_id": "2f5d114f-801a-4659-8f3c-a5b9fd6e04e2",
+    "expected_revision": 1,
+    "profile_ref": "dedicated",
+    "requested_url": "https://example.com/tool"
+  },
+  "resumed": {
+    "call_number": 4,
+    "input": {
+      "campaign_id": "pages",
+      "candidate_id": "e36e9606-bc0d-46c9-9d1b-d045cee1ce22",
+      "expected_revision": 1,
+      "profile_ref": "dedicated",
+      "requested_url": "https://example.com/tool"
+    },
+    "search_hit_id": "f2c0784a-abd4-43e7-84c6-69162b268122",
+    "source_url": "https://www.youtube.com/watch?v=LR04bU_yV5k"
+  }
+}

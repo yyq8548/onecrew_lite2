@@ -45,6 +45,8 @@ mod opencli;
 mod outreach;
 mod owner_execution;
 mod profiles;
+mod retired_operations;
+pub use retired_operations::{RETIRED_OPERATION_CODE, is_retired_operation, is_retired_result};
 mod proxy;
 mod search_plan;
 mod telegram;

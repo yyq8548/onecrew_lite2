@@ -1,6 +1,15 @@
 {
   "schema_version": 1,
   "analysis_date": "2026-10-15",
+  "upstream_sync": {
+    "reviewed_at": "2026-10-16",
+    "commit": "8d931ab08448bcded456c210ebc29ad9709a68a5",
+    "baseline": "efc3c6eb69507b9809bb30279d9af26156d075e3",
+    "changed_paths": 177,
+    "implementation": "TypeScript migration; retain current Windows, browser, identity and permission fixes",
+    "outbound_scope": "Mail page GmailBulk only",
+    "mac_acceptance": "unfinished"
+  },
   "github_repository": "https://github.com/yyq8548/onecrew_lite.git",
   "handoff_branch": "codex/typescript-migration-handoff",
   "lite": {
@@ -53,5 +62,5 @@
     "version": "0.1.8",
     "implementation_copied": false
   },
-  "migration_status": "analysis_and_plan_only"
+  "migration_status": "source_implemented_windows_candidate_verified_external_acceptance_pending"
 }

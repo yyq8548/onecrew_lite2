@@ -1,6 +1,7 @@
 import { invoke } from "./local-runtime";
-import type { DiscoveryIdentityMergeMaterial, DiscoveryIdentityMergeMaterialInput, DiscoveryIdentityReviewReceipt, GetDiscoveryIdentityReviewInput, SubmitDiscoveryIdentityReviewInput, RevokeDiscoveryIdentityReviewInput } from "./generated/discovery-contracts";
-import { validateDiscoveryIdentityMergeMaterial } from "./generated/discovery-contracts/validators/DiscoveryIdentityMergeMaterial.js";
+import type { DiscoveryIdentityMergeMaterialInput, DiscoveryIdentityReviewReceipt, GetDiscoveryIdentityReviewInput, SubmitDiscoveryIdentityReviewInput, RevokeDiscoveryIdentityReviewInput } from "./generated/discovery-contracts";
+import { discoveryIdentityMergeMaterial, type DiscoveryIdentityMergeMaterial } from "@onecrew/runtime-contracts/discovery";
+const validateDiscoveryIdentityMergeMaterial = (value: unknown): value is DiscoveryIdentityMergeMaterial => discoveryIdentityMergeMaterial.safeParse(value).success;
 import { validateDiscoveryIdentityReviewReceipt } from "./generated/discovery-contracts/validators/DiscoveryIdentityReviewReceipt.js";
 
 export async function getIdentityReviewMaterial(input: DiscoveryIdentityMergeMaterialInput): Promise<DiscoveryIdentityMergeMaterial> {

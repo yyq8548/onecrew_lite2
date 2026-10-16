@@ -30,8 +30,8 @@ export function hiddenFollowerCounts(
   shownPlatform: CreatorPlatform,
   locale?: string,
 ): string[] {
-  const counts = (summary.follower_counts ?? {}) as Partial<Record<CreatorPlatform, number>>;
-  return (Object.entries(counts) as [CreatorPlatform, number][])
+  const counts = (summary.follower_counts ?? {}) as Partial<Record<CreatorPlatform, number | bigint>>;
+  return (Object.entries(counts) as [CreatorPlatform, number | bigint][])
     .filter(([platform]) => platform !== shownPlatform)
     .map(([platform, count]) => `${PLATFORM_LABEL[platform]} ${formatCount(count, locale)}`);
 }

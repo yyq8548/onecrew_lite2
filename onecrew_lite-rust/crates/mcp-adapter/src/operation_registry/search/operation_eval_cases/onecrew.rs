@@ -178,16 +178,6 @@ pub(super) const CASES: &[OperationEvalCase] = &[
         expected_id: "onecrew.creator.contact_route.update",
     },
     OperationEvalCase {
-        query: "prepare creator content reply",
-        toolkit: ToolkitId::OneCrew,
-        expected_id: "onecrew.creator.content_reply.prepare",
-    },
-    OperationEvalCase {
-        query: "send creator content reply",
-        toolkit: ToolkitId::OneCrew,
-        expected_id: "onecrew.creator.content_reply.send",
-    },
-    OperationEvalCase {
         query: "delete creator permanently",
         toolkit: ToolkitId::OneCrew,
         expected_id: "onecrew.creator.delete",
@@ -293,29 +283,9 @@ pub(super) const CASES: &[OperationEvalCase] = &[
         expected_id: "onecrew.outreach.conversation.list",
     },
     OperationEvalCase {
-        query: "prepare outreach message",
-        toolkit: ToolkitId::OneCrew,
-        expected_id: "onecrew.outreach.message.prepare",
-    },
-    OperationEvalCase {
-        query: "send outreach message",
-        toolkit: ToolkitId::OneCrew,
-        expected_id: "onecrew.outreach.message.send",
-    },
-    OperationEvalCase {
         query: "get outreach relationship",
         toolkit: ToolkitId::OneCrew,
         expected_id: "onecrew.outreach.relationship.get",
-    },
-    OperationEvalCase {
-        query: "prepare outreach relationship action",
-        toolkit: ToolkitId::OneCrew,
-        expected_id: "onecrew.outreach.relationship.prepare",
-    },
-    OperationEvalCase {
-        query: "update outreach relationship",
-        toolkit: ToolkitId::OneCrew,
-        expected_id: "onecrew.outreach.relationship.update",
     },
     OperationEvalCase {
         query: "acknowledge reply triage",

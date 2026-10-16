@@ -452,7 +452,7 @@ async fn v2_attended_confirmation_invokes_the_owner_exactly_once() {
 }
 
 #[tokio::test]
-async fn v2_requested_secret_presentation_fails_before_owner_and_never_echoes_the_secret() {
+async fn v2_retired_secret_operation_fails_before_owner_and_never_echoes_the_secret() {
     let bearer = format!("v2-secret-{}", rand::random::<u64>());
     let (platform, _directory) = test_platform();
     let handle = McpAdapter::start(
@@ -463,7 +463,7 @@ async fn v2_requested_secret_presentation_fails_before_owner_and_never_echoes_th
     .await
     .expect("start adapter");
     let client = connect(&handle, &bearer).await;
-    let contracts = contracts(&client, &["x.chat.passcode.set"]).await;
+    let contracts = contracts(&client, &["onecrew.ask_user_question"]).await;
     let sentinel = "SECRET_SENTINEL_DO_NOT_ECHO";
     let rejected = call(
         &client,
@@ -486,7 +486,7 @@ async fn v2_requested_secret_presentation_fails_before_owner_and_never_echoes_th
     .await;
     assert_eq!(rejected.is_error, Some(true));
     let wire = serde_json::to_string(&rejected).unwrap();
-    assert!(wire.contains("presentation_unavailable"));
+    assert!(wire.contains("unknown_operation"));
     assert!(!wire.contains(sentinel));
 
     client.cancel().await.expect("close client");

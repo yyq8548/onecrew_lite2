@@ -815,8 +815,8 @@ declare_operations! {
     ONECREW_WORKFLOW_GUIDE => {
         id: "onecrew.workflow.guide",
         toolkit: OneCrew,
-        title: "Workflow guidance: find, enrich, outreach",
-        summary: "Read-only Q&A guidance for finding creators, enriching profiles, and outreach. Omit topic for a directory, or choose a registered scenario for questions, steps, discovery queries and examples. This does not execute business actions, send messages, or create scheduled work.",
+        title: "Workflow guidance: find, enrich",
+        summary: "Read-only Q&A guidance for finding creators and enriching profiles. Omit topic for a directory, or choose a registered scenario for questions, steps, discovery queries and examples. This does not execute business actions, send messages, or create scheduled work.",
         surfaces: [McpBinding, WebNavigation],
     },
     TELEGRAM_COMMUNITIES_SEARCH => {
@@ -1005,7 +1005,7 @@ declare_operations! {
         id: "x.connection.get",
         toolkit: X,
         title: "X connection detail",
-        summary: "Read one local X operator connection and return safe identity, configuration, credential availability, and X Chat passcode status.",
+        summary: "Read one local X operator connection and return safe identity, configuration, and credential availability.",
         surfaces: [McpBinding, WebNavigation],
     },
     X_CONNECTION_RECONNECT_BEGIN => {
@@ -1155,21 +1155,20 @@ pub(super) static TOOLKITS: &[ToolkitSummary] = &[
         id: "toolkit.email",
         toolkit: ToolkitId::Email,
         title: "Email",
-        summary: "Email workflows for drafts, templates, confirmed sending, inbox sync, threads, and connected mailboxes.",
-        purpose: "Use Email capabilities to manage canonical drafts and templates, send confirmed messages, read threads, synchronize inbound mail, and maintain a connected mailbox.",
+        summary: "Read email history, inbox sync, threads, and connected mailboxes.",
+        purpose: "Read recorded mail and synchronize inbound mail. User sending is available only through GmailBulk on the Mail page.",
         connection_model: "Provider mail uses a tagged mailbox reference backed by a vault-held service credential. Local draft and template work may not require provider access.",
         identifier_semantics: &[
             "Mailbox references, local draft IDs, provider message IDs, and thread IDs are separate domains.",
-            "Reply using the canonical thread and message identifiers returned by Email operations.",
+            "Read history using the canonical thread and message identifiers returned by Email operations.",
         ],
         capability_categories: &[
-            "drafts and templates",
-            "confirmed sending",
+            "historical drafts and templates",
             "threads and inbound mail",
             "mailbox lifecycle",
         ],
         gotchas: &[
-            "Saving a draft does not send it.",
+            "Historical drafts and templates cannot resume single-message sending.",
             "A provider acceptance response is not a substitute for declared delivery or thread readback.",
             "If a mail provider call fails, run email.connection.check once and report its status; do not retry the failed call until the check returns ok.",
         ],
@@ -1179,7 +1178,7 @@ pub(super) static TOOLKITS: &[ToolkitSummary] = &[
         toolkit: ToolkitId::Instagram,
         title: "Instagram",
         summary: "A visual social network centered on creator profiles, photos, Reels, comments, and direct messages.",
-        purpose: "Use Instagram capabilities to find accounts, inspect profiles and content, check relationships, exchange direct messages, and manage the connected operator session.",
+        purpose: "Find accounts, inspect public profiles and content, and manage the connected operator session.",
         connection_model: "Provider work uses a tagged Instagram operator account established by the attended browser login flow.",
         identifier_semantics: &[
             "Instagram handles and media locators remain Instagram-specific.",
@@ -1188,7 +1187,6 @@ pub(super) static TOOLKITS: &[ToolkitSummary] = &[
         capability_categories: &[
             "account discovery and profiles",
             "media and comments",
-            "relationships and direct messages",
             "operator account lifecycle",
         ],
         gotchas: &[
@@ -1203,7 +1201,7 @@ pub(super) static TOOLKITS: &[ToolkitSummary] = &[
         toolkit: ToolkitId::OneCrew,
         title: "onecrew_lite",
         summary: "OneCrew's local system for Creators, contact routes, conversations, and outreach history.",
-        purpose: "Use OneCrew for durable Creator records, reviewed platform saves and outreach, confirmed contact routes, conversations, classifications, and revision-aware local changes.",
+        purpose: "Use OneCrew for durable Creator records, reviewed platform saves, confirmed contact routes, historical conversations, classifications, and revision-aware local changes.",
         connection_model: "OneCrew records are local. Outreach derives its operator from the selected route or conversation; use each operation's exact input and connection contract.",
         identifier_semantics: &[
             "OneCrew record IDs are durable local identities and are not provider handles.",
@@ -1234,7 +1232,7 @@ pub(super) static TOOLKITS: &[ToolkitSummary] = &[
         toolkit: ToolkitId::Telegram,
         title: "Telegram",
         summary: "A messaging platform organized around private chats, groups, channels, and their administrators.",
-        purpose: "Use Telegram capabilities to find communities, inspect or resolve community participants, exchange messages where authorized, and manage an MTProto operator session.",
+        purpose: "Find public communities, inspect or resolve community participants, and manage an MTProto operator session.",
         connection_model: "Provider work uses a tagged Telegram operator account. Login can continue through QR, phone code, OTP, or 2FA steps and may require a configured SOCKS5 proxy.",
         identifier_semantics: &[
             "Chat, channel, user, and message identifiers are distinct Telegram domains.",
@@ -1244,7 +1242,6 @@ pub(super) static TOOLKITS: &[ToolkitSummary] = &[
         capability_categories: &[
             "community discovery",
             "participants and administrators",
-            "messages",
             "operator account lifecycle",
         ],
         gotchas: &[
@@ -1259,7 +1256,7 @@ pub(super) static TOOLKITS: &[ToolkitSummary] = &[
         toolkit: ToolkitId::X,
         title: "X",
         summary: "A public social network for real-time conversations, posts, relationships, and creator profiles.",
-        purpose: "Find people by searching posts with x.posts.search.advanced and inspecting their authors. Read selected profiles, recent posts and threads to verify the requested criteria, then use separate operations for relationships, messaging or account lifecycle.",
+        purpose: "Find people by searching posts with x.posts.search.advanced and inspecting their authors. Read selected public profiles, recent posts and threads to verify the requested criteria, and manage the operator account lifecycle.",
         connection_model: "Provider work uses a tagged X operator account. Browser login and reconnect are attended lifecycle steps; connection identity remains X-specific.",
         identifier_semantics: &[
             "Handles identify X accounts; preserve the returned spelling when passing them to another X operation.",
@@ -1269,7 +1266,6 @@ pub(super) static TOOLKITS: &[ToolkitSummary] = &[
             "author discovery through advanced post search",
             "profiles and recent activity",
             "posts and threads",
-            "relationships and direct messages",
             "operator account lifecycle",
         ],
         gotchas: &[

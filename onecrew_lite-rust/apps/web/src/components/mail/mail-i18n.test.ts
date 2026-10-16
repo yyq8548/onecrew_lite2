@@ -1,10 +1,7 @@
 import i18next from "i18next";
 import { describe, expect, it } from "vitest";
 
-import COMPOSER_SOURCE from "./composer-sheet.tsx?raw";
 import RECIPIENT_SOURCE from "./recipient-picker.tsx?raw";
-import TEMPLATE_EDITOR_SOURCE from "./template-editor-dialog.tsx?raw";
-import TEMPLATE_LIBRARY_SOURCE from "./template-library.tsx?raw";
 import WORKSPACE_SOURCE from "./mail-workspace.tsx?raw";
 import { EmailTemplatePaginationLimitError } from "./queries";
 import { emailTemplateLoadErrorDescription } from "./template-error-presentation";
@@ -35,24 +32,18 @@ describe("Mail i18n contract", () => {
     const source = [
       MAIL_PAGE_SOURCE,
       WORKSPACE_SOURCE,
-      COMPOSER_SOURCE,
       RECIPIENT_SOURCE,
-      TEMPLATE_LIBRARY_SOURCE,
-      TEMPLATE_EDITOR_SOURCE,
     ].join("\n");
 
     expect(source).not.toMatch(/toast\.(?:success|error|info|warning)\(\s*["'`]/u);
-    expect(source.match(/description:\s*String\(error\)/gu)?.length).toBeGreaterThanOrEqual(12);
+    expect(source).toContain("description: String(error)");
   });
 
   it("uses the mail namespace in every stateful Mail surface", () => {
     for (const source of [
       MAIL_PAGE_SOURCE,
       WORKSPACE_SOURCE,
-      COMPOSER_SOURCE,
       RECIPIENT_SOURCE,
-      TEMPLATE_LIBRARY_SOURCE,
-      TEMPLATE_EDITOR_SOURCE,
     ]) {
       expect(source).toContain('useTranslation("mail")');
     }

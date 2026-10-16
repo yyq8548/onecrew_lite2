@@ -2,6 +2,33 @@ use super::*;
 use crate::discovery_review::initial_match;
 use crate::*;
 use serde_json::json;
+#[test]
+fn export_discovery_contact_lookup_node_oracle() {
+    let Ok(output) = std::env::var("ONECREW_CONTACT_LOOKUP_ORACLE_DIRECTORY") else { return; };
+    let output = std::path::PathBuf::from(output);
+    std::fs::create_dir_all(&output).unwrap();
+    fn snapshot(path: &std::path::Path, output: &std::path::Path, name: &str) {
+        rusqlite::Connection::open(path.join("crm.db")).unwrap().execute("VACUUM INTO ?1", [output.join(name).to_str().unwrap()]).unwrap();
+    }
+    let directory = tempfile::tempdir().unwrap();
+    let (owner, _) = fixture(directory.path(), Some(DiscoveryMatchLevel::Good));
+    let planned = owner.repository.next_discovery_contact_lookup("bili-shoes", &[]).unwrap().unwrap();
+    snapshot(directory.path(), &output, "before.sqlite");
+    let claim = owner.repository.claim_discovery_contact_lookup(planned.clone()).unwrap();
+    snapshot(directory.path(), &output, "claimed.sqlite");
+    let mut completion = claim.clone();
+    completion.status = "completed".into();
+    completion.links = vec!["https://runner.example/contact".into()];
+    let completed = owner.repository.finish_discovery_contact_lookup(completion).unwrap();
+    snapshot(directory.path(), &output, "completed.sqlite");
+    let page_claim = owner.claim_discovery_public_page(DiscoveryPublicPageInput {campaign_id:completed.campaign_id.clone(),expected_revision:completed.expected_revision,candidate_id:completed.candidate_id.clone(),profile_ref:completed.profile_ref.clone(),requested_url:completed.links[0].clone()}).unwrap();
+    let page = owner.finish_discovery_public_page(FinishDiscoveryPublicPageInput {hidden_email_available:false,claim:page_claim.clone(),document_url:Some(completed.links[0].clone()),title:"Runner contact".into(),markdown_excerpt:"Official: https://space.bilibili.com/168310298 Email runner@example.com".into(),truncated:false,stop_code:None}).unwrap();
+    snapshot(directory.path(), &output, "contacted.sqlite");
+    let invalid_directory = tempfile::tempdir().unwrap();
+    let (_invalid, _) = fixture(invalid_directory.path(), None);
+    snapshot(invalid_directory.path(), &output, "unscored.sqlite");
+    std::fs::write(output.join("oracle.json"), serde_json::to_vec_pretty(&json!({"planned":planned,"claim":claim,"completed":completed,"page_claim":page_claim,"page":page})).unwrap()).unwrap();
+}
 fn fixture(path: &std::path::Path, level: Option<DiscoveryMatchLevel>) -> (CreatorRuntime, String) {
     fixture_with_description(path, level, "这期实测新款跑鞋的缓震和抓地力。")
 }

@@ -1,0 +1,84 @@
+{
+  "claim": {
+    "call_number": 3,
+    "campaign_id": "web-source-flow",
+    "expected_revision": 1,
+    "origin_platform": "yahoo",
+    "profile_ref": "dedicated",
+    "search_hit_id": "32895b74-b09f-46a8-910e-e1c0c3b2b328",
+    "source_url": "https://www.douyin.com/video/7688639864627214835",
+    "target_platform": "douyin",
+    "video_id": "7688639864627214835"
+  },
+  "material": {
+    "content": {
+      "author_id": "MS4wLjABAAAA_native_author_123456789",
+      "author_label": "Native keyboard creator",
+      "evidence_source": "visible_native_video_caption",
+      "post_id": "7688639864627214835",
+      "profile_url": "https://www.douyin.com/user/MS4wLjABAAAA_native_author_123456789",
+      "source_url": "https://www.douyin.com/video/7688639864627214835",
+      "text": "Original keyboard review.",
+      "text_truncated": false
+    },
+    "profile": {
+      "adapter_version": "1.0.0",
+      "author_id": "MS4wLjABAAAA_native_author_123456789",
+      "author_label": "Native keyboard creator",
+      "bio": "Business studio@example.org",
+      "bio_truncated": false,
+      "evidence_source": "visible_profile_header",
+      "follower_count": 4892,
+      "follower_text": "4892",
+      "profile_url": "https://www.douyin.com/user/MS4wLjABAAAA_native_author_123456789",
+      "public_links": [
+        "https://creator.example.com/contact"
+      ]
+    }
+  },
+  "result": {
+    "candidate_id": "eb0e44c9-77a4-4a91-9464-865b47fac859",
+    "captured_at": 1792088472,
+    "claim": {
+      "call_number": 3,
+      "campaign_id": "web-source-flow",
+      "expected_revision": 1,
+      "origin_platform": "yahoo",
+      "profile_ref": "dedicated",
+      "search_hit_id": "32895b74-b09f-46a8-910e-e1c0c3b2b328",
+      "source_url": "https://www.douyin.com/video/7688639864627214835",
+      "target_platform": "douyin",
+      "video_id": "7688639864627214835"
+    },
+    "is_primary_source": true,
+    "native_author_id": "MS4wLjABAAAA_native_author_123456789",
+    "native_material": {
+      "content": {
+        "author_id": "MS4wLjABAAAA_native_author_123456789",
+        "author_label": "Native keyboard creator",
+        "evidence_source": "visible_native_video_caption",
+        "post_id": "7688639864627214835",
+        "profile_url": "https://www.douyin.com/user/MS4wLjABAAAA_native_author_123456789",
+        "source_url": "https://www.douyin.com/video/7688639864627214835",
+        "text": "Original keyboard review.",
+        "text_truncated": false
+      },
+      "profile": {
+        "adapter_version": "1.0.0",
+        "author_id": "MS4wLjABAAAA_native_author_123456789",
+        "author_label": "Native keyboard creator",
+        "bio": "Business studio@example.org",
+        "bio_truncated": false,
+        "evidence_source": "visible_profile_header",
+        "follower_count": 4892,
+        "follower_text": "4892",
+        "profile_url": "https://www.douyin.com/user/MS4wLjABAAAA_native_author_123456789",
+        "public_links": [
+          "https://creator.example.com/contact"
+        ]
+      }
+    },
+    "status": "completed",
+    "stop_code": null
+  }
+}

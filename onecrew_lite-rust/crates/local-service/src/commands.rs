@@ -52,6 +52,9 @@ macro_rules! web_commands {
                 arguments: Value,
                 origin: &onecrew_local_runtime::ResultOrigin,
             ) -> Result<Value, Value> {
+                if self.is_retired() {
+                    return Err(Value::from(onecrew_local_runtime::RETIRED_OPERATION_CODE));
+                }
                 let mut arguments = arguments.as_object().cloned()
                     .ok_or_else(|| Value::from("command_arguments_must_be_object"))?;
                 match self {
@@ -384,6 +387,30 @@ web_commands! {
 }
 
 impl CommandName {
+    fn is_retired(self) -> bool {
+        matches!(self,
+            Self::onecrew_operator_account_x_chat_passcode_set_in_app
+            | Self::onecrew_operator_account_x_chat_passcode_clear_in_app
+            | Self::connect_resend_credential
+            | Self::list_resend_credentials
+            | Self::delete_resend_credential
+            | Self::test_resend_credential
+            | Self::onecrew_relationship_update_prepare
+            | Self::onecrew_outreach_message_prepare
+            | Self::onecrew_outreach_message_send_prepare
+            | Self::onecrew_outreach_confirm
+            | Self::onecrew_outreach_cancel
+            | Self::onecrew_conversation_sync
+            | Self::onecrew_email_draft_save
+            | Self::onecrew_email_draft_trash
+            | Self::onecrew_email_draft_restore
+            | Self::onecrew_email_draft_send
+            | Self::onecrew_email_template_save
+            | Self::onecrew_email_template_delete
+            | Self::onecrew_email_template_render
+        )
+    }
+
     fn argument_error(self, error: Value) -> Value {
         // Preserve the existing locale command's single validation error.
         if self == Self::set_application_locale {
@@ -424,6 +451,35 @@ fn encode<T: Serialize, E: Serialize>(result: Result<T, E>) -> Result<Value, Val
 mod tests {
     use super::*;
     use serde_json::json;
+
+    #[tokio::test]
+    async fn retired_commands_fail_before_argument_decoding_or_owner_startup() {
+        let directory = tempfile::tempdir().unwrap();
+        let state = crate::ServiceState::new(
+            directory.path().into(), &[], "/test/onecrew".into(), "test".into(),
+        );
+        let origin = onecrew_local_runtime::ResultOrigin::new("web:retirement").unwrap();
+        let retired = CommandName::ALL.iter().filter(|command| command.is_retired()).collect::<Vec<_>>();
+        assert_eq!(retired.len(), 19);
+        for command in retired {
+            for arguments in [Value::Null, json!({}), json!({"secret": "must-not-reach-owner"})] {
+                assert_eq!(command.dispatch(&state, arguments, &origin).await,
+                    Err(json!(onecrew_local_runtime::RETIRED_OPERATION_CODE)));
+            }
+        }
+        for command in [
+            CommandName::onecrew_gmail_bulk_recipients,
+            CommandName::onecrew_gmail_bulk_list,
+            CommandName::onecrew_gmail_bulk_prepare,
+            CommandName::onecrew_gmail_bulk_control,
+            CommandName::onecrew_creator_save_confirm,
+            CommandName::onecrew_creator_import_confirm,
+            CommandName::onecrew_outreach_result_get,
+            CommandName::onecrew_email_thread_get,
+        ] {
+            assert!(!command.is_retired());
+        }
+    }
 
     #[test]
     fn dm_command_failure_serializes_native_evidence_without_effect_or_retry_inference() {

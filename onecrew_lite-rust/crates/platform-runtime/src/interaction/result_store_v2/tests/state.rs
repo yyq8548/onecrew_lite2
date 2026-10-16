@@ -1,6 +1,21 @@
 use super::*;
 
 #[test]
+fn retired_confirmation_preserves_readable_history_without_consuming_authority() {
+    let store = ResultMemoryStore::new();
+    let mut input = confirmation_input(b"retained-peer-continuation");
+    input.batch.outcomes[0].operation_id = crate::OperationId::EMAIL_MANUAL_SEND.as_str().into();
+    input.batch.outcomes[0].disposition = CallDisposition::NotRun { reason: "confirmation_required".into() };
+    input.presentation.kind = ResultPresentationKind::new("email_confirmation").unwrap();
+    let reference = store.mint_from_execute(input).unwrap();
+    let available = present(&store, reference);
+    assert!(matches!(store.submit_result_review(&available.binding, crate::OwnerReviewSelection::Confirm),
+        Err(ResultStoreError::InvalidState(crate::RETIRED_OPERATION_CODE))));
+    let current = store.current(&available.binding).unwrap();
+    assert_eq!(current, available);
+}
+
+#[test]
 fn custom_choice_text_is_a_distinct_answer_and_submits_once() {
     let store = ResultMemoryStore::new();
     let reference = store.mint_from_execute(choice_input()).unwrap();

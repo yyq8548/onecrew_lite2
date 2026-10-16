@@ -12,10 +12,11 @@ fn production_registry_builds_without_changing_public_surface_construction() {
     )
     .unwrap();
     assert_eq!(
-        registry.operation_ids_and_surfaces().len()
-            + registry.playbook_ids().len()
-            + registry.toolkit_guide_ids().len(),
-        191
+        registry.operation_ids_and_surfaces().len(),
+        registry.catalog().operations().filter(|operation|
+            operation.supports(onecrew_local_runtime::CatalogSurface::McpBinding)
+                && !onecrew_local_runtime::is_retired_operation(operation.id.as_str())
+        ).count()
     );
     assert!(!registry.operation_ids_and_surfaces().is_empty());
     let prepare = EntryId::parse("onecrew.search.plan.prepare").unwrap();
@@ -149,8 +150,6 @@ fn phase_six_connection_and_credential_operation_inventory_is_exact_and_surface_
         "x.connection.browser.status",
         "x.connection.browser.complete",
         "x.connection.browser.cancel",
-        "x.chat.passcode.set",
-        "x.chat.passcode.clear",
         "x.connection.disconnect",
         "x.connection.reconnect.prepare",
         "x.connection.reconnect.begin",
@@ -182,11 +181,8 @@ fn phase_six_connection_and_credential_operation_inventory_is_exact_and_surface_
         "youtube.credential.rotate",
         "youtube.credential.rename",
         "youtube.credential.delete",
-        "email.credential.connect",
-        "email.credential.rotate",
-        "email.credential.delete",
     ];
-    assert_eq!(expected.len(), 40);
+    assert_eq!(expected.len(), 35);
     for id in expected {
         let id = EntryId::parse(id).unwrap();
         assert!(registry.entry(&id, SurfaceId::Full).is_some(), "{id}");
@@ -237,27 +233,12 @@ fn phase_six_connection_and_credential_operation_inventory_is_exact_and_surface_
             &["/password"][..],
         ),
         (
-            "x.chat.passcode.set",
-            SecretClass::VaultBound,
-            &["/x_chat_passcode"][..],
-        ),
-        (
             "youtube.credential.connect",
             SecretClass::VaultBound,
             &["/api_key"][..],
         ),
         (
             "youtube.credential.rotate",
-            SecretClass::VaultBound,
-            &["/api_key"][..],
-        ),
-        (
-            "email.credential.connect",
-            SecretClass::VaultBound,
-            &["/api_key"][..],
-        ),
-        (
-            "email.credential.rotate",
             SecretClass::VaultBound,
             &["/api_key"][..],
         ),

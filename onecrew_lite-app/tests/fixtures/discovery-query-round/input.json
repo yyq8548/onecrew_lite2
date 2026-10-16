@@ -1,0 +1,22 @@
+{
+  "additions": [
+    {
+      "keywords": [
+        "headphones comfort test"
+      ],
+      "platform": "youtube",
+      "profile_ref": "work"
+    }
+  ],
+  "campaign_id": "query-round",
+  "expected_scopes": [
+    {
+      "keywords": [
+        "headphone review"
+      ],
+      "platform": "youtube",
+      "profile_ref": "work"
+    }
+  ],
+  "revision": 1
+}

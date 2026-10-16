@@ -47,7 +47,6 @@ function externalUrl(channel: string, value: string, locatorKind?: LocatorKind) 
 export function SavedContactRoutes({
   routes,
   accounts = [],
-  onEmail,
   onEdit,
   onDelete,
   scrollable = true,
@@ -55,7 +54,6 @@ export function SavedContactRoutes({
 }: {
   routes: CreatorContactRouteRecord[];
   accounts?: CreatorAccountView[];
-  onEmail?: (route: CreatorContactRouteRecord) => void;
   onEdit?: (route: CreatorContactRouteRecord) => void;
   onDelete?: (route: CreatorContactRouteRecord) => void;
   scrollable?: boolean;
@@ -64,7 +62,7 @@ export function SavedContactRoutes({
   return (
     <RouteViewport
       scrollable={scrollable}
-      rows={savedContactRouteRows(routes, accounts, onEmail, readOnly, onEdit, onDelete)}
+      rows={savedContactRouteRows(routes, accounts, readOnly, onEdit, onDelete)}
     />
   );
 }
@@ -85,7 +83,6 @@ export type ContactRouteRow = {
   selectionLocked?: boolean;
   onCheckedChange?: (checked: boolean) => void;
   platform?: CreatorPlatform;
-  onEmail?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
   allowExternalAction?: boolean;
@@ -94,7 +91,6 @@ export type ContactRouteRow = {
 export function savedContactRouteRows(
   routes: CreatorContactRouteRecord[],
   accounts: CreatorAccountView[],
-  onEmail: ((route: CreatorContactRouteRecord) => void) | undefined,
   readOnly: boolean,
   onEdit?: (route: CreatorContactRouteRecord) => void,
   onDelete?: (route: CreatorContactRouteRecord) => void,
@@ -119,9 +115,6 @@ export function savedContactRouteRows(
       sources: record.observations.map((item) => item.source.kind),
       sourceUrls: record.observations.flatMap((item) => item.source.source_url ? [item.source.source_url] : []),
       collision: "none",
-      onEmail: !readOnly && record.locator.channel === "email" && onEmail
-        ? () => onEmail(record)
-        : undefined,
       onEdit: !readOnly && record.allowed_actions.includes("update") && onEdit
         ? () => onEdit(record)
         : undefined,
@@ -223,11 +216,6 @@ function RouteRow({ row }: { row: ContactRouteRow }) {
       {row.attach?.state === "busy" && (
         <Button size="sm" variant="outline" className="shrink-0" disabled>
           <Loader2 className="size-4 animate-spin" />{t("contactRoutes.attach")}
-        </Button>
-      )}
-      {row.onEmail && (
-        <Button size="sm" className="shrink-0" onClick={row.onEmail}>
-          <Mail className="size-4" />{t("contactRoutes.email")}
         </Button>
       )}
       {(row.onEdit || row.onDelete) && (

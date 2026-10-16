@@ -5,7 +5,6 @@ import {
   Inbox,
   MailOpen,
   MoreHorizontal,
-  Reply,
   Trash2,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -71,7 +70,6 @@ export function MailboxUnavailable({ mailbox }: { mailbox: MailboxDetail | null 
 export function EmailMessageDisplay({
   messages,
   selectedId,
-  onReply,
   onBack,
   backButtonRef,
   threadFolder,
@@ -81,7 +79,6 @@ export function EmailMessageDisplay({
 }: {
   messages: EmailMessageView[];
   selectedId?: string | null;
-  onReply?: (message: EmailMessageView) => void;
   onBack?: () => void;
   backButtonRef?: Ref<HTMLButtonElement>;
   threadFolder?: EmailThreadFolder;
@@ -151,11 +148,6 @@ export function EmailMessageDisplay({
             </TooltipTrigger>
             <TooltipContent>{t("message.actions.deleteTooltip")}</TooltipContent>
           </Tooltip>
-        )}
-        {onReply && (
-          <Button variant="ghost" size="sm" className="ml-auto gap-1.5" onClick={() => onReply(focused)}>
-            <Reply />{t("common.reply")}
-          </Button>
         )}
       </div>
       <ScrollArea className="min-h-0 flex-1">

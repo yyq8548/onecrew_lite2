@@ -1,17 +1,19 @@
 import { invoke } from "./local-runtime";
-import type { ExecutionInput, ExecutionStatus } from "./generated/discovery-contracts";
-import { validateExecutionStatus } from "./generated/discovery-contracts/validators/ExecutionStatus.js";
+import type { ExecutionInput } from "./generated/discovery-contracts";
+import { discoveryExecutionStatus, type ExecutionStatus } from "@onecrew/runtime-contracts/discovery";
 
 export function parseExecution(value: unknown): ExecutionStatus | null {
   if (value === null) return null;
-  if (!validateExecutionStatus(value)) throw new Error("discovery_execution_status_invalid");
-  if (value.library) {
-    const url = new URL(value.library.web_url);
-    if (value.library.campaign_id !== value.campaign_id || url.protocol !== "http:" || url.hostname !== "127.0.0.1"
+  const parsed = discoveryExecutionStatus.safeParse(value);
+  if (!parsed.success) throw new Error("discovery_execution_status_invalid");
+  const status = parsed.data;
+  if (status.library) {
+    const url = new URL(status.library.web_url);
+    if (status.library.campaign_id !== status.campaign_id || url.protocol !== "http:" || url.hostname !== "127.0.0.1"
       || !url.port || url.username || url.password || url.search || url.hash
-      || url.pathname !== `/library/${value.library.table_id}`) throw new Error("discovery_execution_library_invalid");
+      || url.pathname !== `/library/${status.library.table_id}`) throw new Error("discovery_execution_library_invalid");
   }
-  return value;
+  return status;
 }
 export async function getDiscoveryExecution() {
   return parseExecution(await invoke<unknown>("onecrew_discovery_execution_get"));

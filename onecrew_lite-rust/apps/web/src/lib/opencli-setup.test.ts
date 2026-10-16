@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import backendInventory from "../../../../crates/opencli/src/addons.rs?raw";
-import { canInstallOpenCliAddons, installOpenCliAddons, openCliSetupReportSchema, openOpenCliSetupPage, recoverOpenCliBridge, repairOpenCliInstallation, selectedProfileIsConnected, type OpenCliSetupReport } from "./opencli-setup";
+import { canInstallOpenCliAddons, canRepairOpenCliAddons, installOpenCliAddons, openCliSetupReportSchema, openOpenCliSetupPage, recoverOpenCliBridge, repairOpenCliInstallation, selectedProfileIsConnected, type OpenCliSetupReport } from "./opencli-setup";
 import { invoke } from "./local-runtime";
 
 vi.mock("./local-runtime", () => ({ invoke: vi.fn(), isRuntimeAvailable: () => false }));
@@ -66,6 +66,12 @@ describe("OpenCLI setup selection", () => {
     expect(invoke).toHaveBeenCalledTimes(3); // No automatic retry in the client.
   });
   it("allows only missing compatible bundled files, independently of browser login", () => {
+    const conflict = { ...report, addons: report.addons.map(addon => addon.id === "onecrew-tiktok" ? { ...addon, state: "conflict" as const } : addon) };
+    expect(canRepairOpenCliAddons(conflict)).toBe(true);
+    expect(canRepairOpenCliAddons({ ...conflict, version: "1.8.9" })).toBe(false);
+    expect(canRepairOpenCliAddons({ ...conflict, addons: [...conflict.addons.slice(1)] })).toBe(false);
+    expect(canRepairOpenCliAddons({ ...conflict, addons: conflict.addons.map(addon => addon.id === "onecrew-youtube" ? { ...addon, state: "unavailable" } : addon) })).toBe(false);
+    expect(canRepairOpenCliAddons(report)).toBe(false);
     expect(canInstallOpenCliAddons(report)).toBe(true);
     expect(canInstallOpenCliAddons({ ...report, version: "1.8.9" })).toBe(false);
     expect(canInstallOpenCliAddons({ ...report, addons: [] })).toBe(false);

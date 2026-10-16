@@ -67,11 +67,6 @@ fn destructive_intents_do_not_cross_into_reads_or_setup_playbooks() {
             "onecrew.creator.group.delete",
         ),
         (
-            "Delete a saved mail template",
-            ToolkitId::Email,
-            "email.template.delete",
-        ),
-        (
             "Disconnect an Instagram operator account",
             ToolkitId::Instagram,
             "instagram.connection.disconnect",

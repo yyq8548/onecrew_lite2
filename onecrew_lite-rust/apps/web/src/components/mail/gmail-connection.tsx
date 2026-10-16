@@ -2,31 +2,29 @@ import { useState } from "react";
 import { RefreshCw, Plus } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { creatorInvoke } from "@/lib/creator";
+import { MAIL_ACCESS_CONNECTIONS_KEY, listMailAccessConnections, createGmailConnectUrl, refreshGmailMailboxes, gmailAuthorizationComplete } from "@/lib/gmail-connection";
 import { Button } from "@/components/ui/button";
 import { MAILBOX_QUERY_KEY } from "@/components/mail/queries";
-
-type Connection = { id: string; provider: string; email: string; status: string };
 
 export function GmailConnection() {
   const { t } = useTranslation("mail");
   const queryClient = useQueryClient();
   const [url, setUrl] = useState<string | null>(null);
   const connections = useQuery({
-    queryKey: ["mail-access-connections"],
-    queryFn: () => creatorInvoke<Connection[]>("onecrew_mail_access_connections"),
+    queryKey: MAIL_ACCESS_CONNECTIONS_KEY,
+    queryFn: listMailAccessConnections,
     retry: false,
   });
   const connect = useMutation({
-    mutationFn: () => creatorInvoke<string>("onecrew_gmail_connect_url"),
+    mutationFn: createGmailConnectUrl,
     onMutate: () => setUrl(null),
     onSuccess: setUrl,
   });
   const refresh = useMutation({
-    mutationFn: () => creatorInvoke<Connection[]>("onecrew_gmail_refresh"),
+    mutationFn: refreshGmailMailboxes,
     onSuccess: async data => {
       setUrl(null);
-      queryClient.setQueryData(["mail-access-connections"], data);
+      queryClient.setQueryData(MAIL_ACCESS_CONNECTIONS_KEY, data);
       await queryClient.invalidateQueries({ queryKey: MAILBOX_QUERY_KEY });
     },
   });
@@ -46,7 +44,7 @@ export function GmailConnection() {
       {refresh.isSuccess && <p role="status">{t("gmail.refreshed")}</p>}
       {(connect.isError || connections.isError || refresh.isError) && <p role="alert">{t("gmail.failed")}</p>}
       {connections.data?.filter(c => c.provider === "google").map(c => (
-        <p key={c.id}>{c.email} · {c.status === "connected" ? t("gmail.connected") : t("gmail.reconnect")}</p>
+        <p key={c.id}>{c.email} · {gmailAuthorizationComplete(c) ? t("gmail.connected") : c.status === "connected" ? t("gmail.partialAuthorization") : t("gmail.reconnect")}</p>
       ))}
       <p className="text-muted-foreground">{t("gmail.authorizationOnly")}</p>
       <p className="text-muted-foreground">{t("gmail.switchHint")}</p>

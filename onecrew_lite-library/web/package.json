@@ -1,5 +1,5 @@
 {
-  "name": "onecrew-web",
+  "name": "onecrew-library-web",
   "private": true,
   "type": "module",
   "scripts": {
@@ -36,6 +36,6 @@
     "@vitejs/plugin-react": "^5.0.4",
     "tailwindcss": "^4.3.3",
     "vite": "^7.1.7",
-    "onecrew": "workspace:*"
+    "onecrew": "workspace:onecrew_lite_tables@*"
   }
 }

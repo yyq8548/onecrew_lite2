@@ -121,7 +121,7 @@ describe("a disclosure that replaces the body instead of growing it", () => {
   it("sends the prepared message's internals to the detail view and keeps the decision reachable", () => {
     const html = render(manualEmailSnapshot());
     expect(html).not.toContain("mail-details");
-    expect(html.match(/data-result-actions="true"/g)).toHaveLength(1);
+    expect(html).not.toContain("data-result-actions");
 
     const model = emailPreview(manualEmailSnapshot().presentation)!;
     const details = renderToStaticMarkup(createElement(AppLocaleProvider, { locale: "zh-CN", children: createElement(EmailDetails, { model }) }));

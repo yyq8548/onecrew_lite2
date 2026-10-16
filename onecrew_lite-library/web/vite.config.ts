@@ -15,6 +15,7 @@ export default defineConfig(async ({ command }) => {
     apiTarget = runtime.url;
   }
   return {
+    base: process.env.VITE_ONECREW_UNIFIED === '1' ? '/library/' : '/',
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: { '@': path.resolve(process.cwd(), 'src') },

@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SERVICE_STATUS_QUERY_KEY, logoutFromService, refreshCodexPluginStatus, useServiceStatus } from "@/lib/connect";
-import type { LocalServiceStatus } from "@/lib/generated/creator-sync-contracts";
+import type { LocalServiceStatus } from "@onecrew/runtime-contracts/status";
 import { formatDate } from "@/lib/creator";
 import { pluginRepairDiagnostic } from "@/lib/plugin-status";
 import { OpenCliSearch, OpenCliWizard } from "@/pages/connect/opencli-wizard";
@@ -87,7 +87,7 @@ export function Connect({ freeEdition = false, freePage = "connections", onFreeN
                 <StatusRow label={t("service.installationState")}>{t(`service.pluginState.${displayedPlugin.state}`)}</StatusRow>
                 <StatusRow label={t("service.enabledLabel")}>{t(displayedPlugin.enabled === true ? "service.enabled" : displayedPlugin.enabled === false ? "service.disabled" : "service.unknown")}</StatusRow>
                 {displayedPlugin.installed_version && <StatusRow label={t("service.versionLabel")}>{displayedPlugin.installed_version}</StatusRow>}
-                {displayedPlugin.last_verified_at && Number.isFinite(new Date(displayedPlugin.last_verified_at * 1000).getTime())
+                {displayedPlugin.last_verified_at != null
                   ? <StatusRow label={t("service.lastChecked")}>{formatDate(displayedPlugin.last_verified_at, i18n.language)}</StatusRow> : null}
               </dl>
               {pluginRepair && <Alert className="mt-3"><AlertDescription>{t(`service.pluginRepair.${pluginRepair}`)}</AlertDescription></Alert>}

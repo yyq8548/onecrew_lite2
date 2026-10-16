@@ -1037,7 +1037,7 @@ function CreatorDetail({ record, onStage }: { record: CreatorRecord; onStage: (s
         : t("common.unavailable");
   const archived = isArchivedCreator(record);
   const actionsEnabled = creatorDetailActionsEnabled(archived);
-  const followerEntries = Object.entries(record.creator.follower_counts ?? {}) as [CreatorPlatform, number][];
+  const followerEntries = Object.entries(record.creator.follower_counts ?? {}) as [CreatorPlatform, number | bigint][];
 
   useEffect(() => {
     if (editingRoute && (!actionsEnabled || !record.contact_routes.some((route) => (

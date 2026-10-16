@@ -1,0 +1,26 @@
+{
+  "name": "@onecrew/runtime-contracts",
+  "version": "0.7.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./browser-connection": "./src/browser-connection.ts",
+    "./bootstrap": "./src/bootstrap.ts",
+    "./json": "./src/json.ts",
+    "./stored-json": "./src/stored-json.ts",
+    "./fields": "./src/fields.ts",
+    "./creators": "./src/creators.ts",
+    "./creator-save": "./src/creator-save.ts",
+    "./choice": "./src/choice.ts",
+    "./results": "./src/results.ts",
+    "./result-wire": "./src/result-wire.ts",
+    "./search-plan": "./src/search-plan.ts",
+    "./discovery": "./src/discovery.ts",
+    "./status": "./src/status.ts"
+  },
+  "dependencies": {
+    "jsonc-parser": "3.3.1",
+    "lossless-json": "4.3.1",
+    "zod": "4.6.5"
+  }
+}

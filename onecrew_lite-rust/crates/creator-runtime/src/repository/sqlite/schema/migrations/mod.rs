@@ -85,6 +85,10 @@ pub(in crate::repository::sqlite) use v51_to_v52::strip_video_read_failures_refe
 pub(in crate::repository::sqlite) use v52_to_v53::strip_budget_increases_reference;
 pub(in crate::repository::sqlite) use v53_to_v54::restore_review_v1_reference;
 pub(in crate::repository::sqlite) use v54_to_v55::strip_target_increases_reference;
+#[cfg(test)]
+pub(in crate::repository::sqlite) use v55_to_v56::strip_identity_reviews_reference as oracle_strip_identity_reviews;
+#[cfg(test)]
+pub(in crate::repository::sqlite) use v56_to_v57::strip_library_identity_versions_reference as oracle_strip_library_identity_versions;
 pub(in crate::repository::sqlite) fn strip_library_identity_versions_reference(
     connection: &Connection,
 ) -> Result<(), String> {

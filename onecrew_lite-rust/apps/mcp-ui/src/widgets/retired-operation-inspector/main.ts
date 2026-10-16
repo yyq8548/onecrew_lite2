@@ -1,4 +1,4 @@
-import { App, PostMessageTransport } from "@modelcontextprotocol/ext-apps";
+import { App, PostMessageTransport } from "@modelcontextprotocol/ext-apps/app-with-deps";
 
 const app = new App(
   { name: "onecrew-retired-card", version: __MCP_UI_VERSION__ },

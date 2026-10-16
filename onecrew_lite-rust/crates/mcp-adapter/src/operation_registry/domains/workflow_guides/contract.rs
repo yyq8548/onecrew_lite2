@@ -39,7 +39,6 @@ impl JsonSchema for Topic {
 pub(super) enum Category {
     Find,
     Enrich,
-    Outreach,
 }
 
 impl Category {
@@ -47,7 +46,6 @@ impl Category {
         match value {
             "find" => Some(Self::Find),
             "enrich" => Some(Self::Enrich),
-            "outreach" => Some(Self::Outreach),
             _ => None,
         }
     }
@@ -56,7 +54,7 @@ impl Category {
 #[derive(Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub(super) struct GuideInput {
-    /// Omit to list the three categories and their available scenarios.
+    /// Omit to list the available search and enrichment scenarios.
     topic: Option<Topic>,
 }
 
@@ -127,7 +125,7 @@ pub(super) fn project(guides: &GuideRegistry, input: GuideInput) -> GuideOutput 
             definition.workflow.into(),
         ],
         tool_discovery_queries: definition.queries.iter().map(|value| (*value).into()).collect(),
-        confirmation_boundary: "This tool provides guidance only: it does not execute business operations or create durable tasks. Guidance is not authorization to write or send; do not write to Creator before user confirmation. Saves and updates must follow the user's actual authorization and the current owner's confirmation contract. Contacting anyone requires explicit send authorization and must preserve the current review, confirmation, and readback flow.".into(),
+        confirmation_boundary: "This tool provides guidance only: it does not execute business operations or create durable tasks. Guidance is not authorization to write; do not write to Creator before user confirmation. Saves and updates must follow the user's actual authorization and the current owner's confirmation contract. User sending is available only through GmailBulk on the Mail page.".into(),
         expected_output: vec![definition.expected.into()], example: definition.example.into(),
     } }
 }

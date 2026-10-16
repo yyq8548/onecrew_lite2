@@ -1,0 +1,30 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { stringifyApplicationJson } from "../src/contracts/application-json.ts";
+import { partitionLegacyTableSync } from "../src/sync/legacy-table-sync.ts";
+import { registerTableSyncResult, tableSyncKey, tableSyncStoreSchema } from "../src/sync/table-sync-store.ts";
+
+test("legacy queue partitions users without reassigning consent or losing retry identities and u64", async () => {
+  const state = tableSyncStoreSchema.parse({ tables: {} });
+  registerTableSyncResult(state, "selected", "campaign");
+  registerTableSyncResult(state, "other", "campaign");
+  state.tables[tableSyncKey("selected", "campaign")]!.sequence = 18446744073709551615n;
+  state.tables[tableSyncKey("other", "campaign")]!.status = "needs_attention";
+  state.consent_user = "other";
+  state.consent_operation = { action: "revoke", operation_id: "892e43f0-1f2a-46ed-b8e6-e27ee7a52b32" };
+  const bytes = Buffer.from(stringifyApplicationJson(state));
+  const selected = await partitionLegacyTableSync(bytes, "selected");
+  assert.deepEqual(Object.keys(selected.selected.tables), [tableSyncKey("selected", "campaign")]);
+  assert.equal(selected.selected.tables[tableSyncKey("selected", "campaign")]!.sequence, 18446744073709551615n);
+  assert.equal(selected.selected.consent_operation, null);
+  assert.deepEqual(selected.otherUserIds, ["other"]);
+  const other = await partitionLegacyTableSync(bytes, "other");
+  assert.deepEqual(other.selected.consent_operation, state.consent_operation);
+  assert.equal(other.selected.tables[tableSyncKey("other", "campaign")]!.status, "needs_attention");
+  assert.equal(stringifyApplicationJson(state), bytes.toString());
+  state.consent_user = null;
+  await assert.rejects(partitionLegacyTableSync(Buffer.from(stringifyApplicationJson(state)), "selected"), /consent_owner_missing/);
+  state.consent_operation = null;
+  state.tables[tableSyncKey("selected", "campaign")]!.user_id = "other";
+  await assert.rejects(partitionLegacyTableSync(Buffer.from(stringifyApplicationJson(state)), "selected"), /owner_invalid/);
+});

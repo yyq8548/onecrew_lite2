@@ -19,7 +19,6 @@ import {
 import { CONVERSATION_LIST_QUERY_KEY } from "@/lib/conversations";
 import { CREATOR_GROUPS_QUERY_KEY } from "@/lib/creator-groups";
 import {
-  RESEND_CREDENTIALS_QUERY_KEY,
   YOUTUBE_CREDENTIALS_QUERY_KEY,
 } from "@/lib/runtime-query";
 
@@ -58,10 +57,9 @@ const QUERY_KEYS_BY_SCOPE: Record<Exclude<RuntimeChangeScope, "all">, readonly Q
   operator_accounts: [CONNECTED_ACCOUNTS_QUERY_KEY],
   service_credentials: [
     YOUTUBE_CREDENTIALS_QUERY_KEY,
-    RESEND_CREDENTIALS_QUERY_KEY,
     MAILBOX_QUERY_KEY,
   ],
-  email_folders: [EMAIL_FOLDER_LIST_ROOT_QUERY_KEY],
+  email_folders: [EMAIL_FOLDER_LIST_ROOT_QUERY_KEY, MAILBOX_QUERY_KEY],
   email_threads: [
     EMAIL_FOLDER_LIST_ROOT_QUERY_KEY,
     EMAIL_THREAD_LIST_ROOT_QUERY_KEY,

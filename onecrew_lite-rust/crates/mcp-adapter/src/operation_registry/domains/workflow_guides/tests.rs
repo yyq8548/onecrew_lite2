@@ -6,7 +6,7 @@ use crate::operation_registry::{
 };
 use serde_json::json;
 
-const TOPICS: [&str; 12] = [
+const TOPICS: [&str; 8] = [
     "find-batch",
     "find-one",
     "find-replies",
@@ -15,11 +15,21 @@ const TOPICS: [&str; 12] = [
     "enrich-scores",
     "enrich-routes",
     "enrich-one",
-    "outreach-send",
-    "outreach-batch",
-    "outreach-followup",
-    "outreach-sync",
 ];
+
+#[test]
+fn export_workflow_guides_node_oracle() {
+    let Some(directory) = std::env::var_os("ONECREW_WORKFLOW_GUIDES_ORACLE_DIRECTORY") else { return; };
+    let directory = std::path::PathBuf::from(directory);
+    std::fs::create_dir_all(&directory).unwrap();
+    let guides = registry::registered().unwrap();
+    let mut outputs = serde_json::Map::new();
+    outputs.insert("directory".into(), serde_json::to_value(contract::project(guides, serde_json::from_value(json!({})).unwrap())).unwrap());
+    for topic in TOPICS {
+        outputs.insert(topic.into(), serde_json::to_value(contract::project(guides, serde_json::from_value(json!({"topic": topic})).unwrap())).unwrap());
+    }
+    std::fs::write(directory.join("workflow-guides.json"), serde_json::to_vec_pretty(&outputs).unwrap()).unwrap();
+}
 
 #[test]
 fn workflow_operation_references_must_exist_in_the_supplied_catalog() {
@@ -78,6 +88,10 @@ fn registered_definitions_directory_lookup_and_topic_schema_share_one_source() {
     }
     assert!(guides.lookup("unregistered-topic").is_none());
     assert!(serde_json::from_value::<contract::Topic>(json!("unregistered-topic")).is_err());
+    for retired in ["outreach-send", "outreach-batch", "outreach-followup", "outreach-sync"] {
+        assert!(guides.lookup(retired).is_none());
+        assert!(serde_json::from_value::<contract::Topic>(json!(retired)).is_err());
+    }
 }
 
 #[test]
@@ -472,7 +486,6 @@ async fn guide_discovery_contract_and_calls_need_no_runtime_owner() {
             "workflow guidance",
             "find creators guidance",
             "enrich profiles guidance",
-            "outreach guidance",
         ] {
             let search: ToolSearchInput = serde_json::from_value(json!({"query":query})).unwrap();
             let result = registry.tool_search_v2(surface, &search);
@@ -549,12 +562,12 @@ async fn guide_discovery_contract_and_calls_need_no_runtime_owner() {
                     result["guide"]["confirmation_boundary"]
                         .as_str()
                         .unwrap()
-                        .contains("explicit send authorization")
+                        .contains("GmailBulk on the Mail page")
                 );
             } else {
                 assert_eq!(result["kind"], "directory");
                 let categories = result["categories"].as_array().unwrap();
-                assert_eq!(categories.len(), 3);
+                assert_eq!(categories.len(), 2);
                 let actual = categories
                     .iter()
                     .flat_map(|category| {
@@ -569,6 +582,10 @@ async fn guide_discovery_contract_and_calls_need_no_runtime_owner() {
             }
         }
         for invalid in [
+            json!({"topic":"outreach-send"}),
+            json!({"topic":"outreach-batch"}),
+            json!({"topic":"outreach-followup"}),
+            json!({"topic":"outreach-sync"}),
             json!({"topic":"schedule-find"}),
             json!({"topic":"unknown"}),
             json!({"send":true}),

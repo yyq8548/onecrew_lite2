@@ -582,7 +582,14 @@ fn referenced_operation_ids_are_registered() {
     for file in reference_inputs() {
         for (index, line) in file.text.lines().enumerate() {
             for literal in operation_id_literals(line, &prefixes) {
-                if registered.contains(literal) {
+                let historical_result = matches!((file.path, literal),
+                    ("apps/mcp-ui/src/test-support/dm-failure-fixture.ts", "onecrew.outreach.message.send")
+                    | ("apps/mcp-ui/src/test-support/email-fixture.ts", "email.manual.send"));
+                if historical_result {
+                    assert!(onecrew_local_runtime::is_retired_operation(literal));
+                    assert!(!registered.contains(literal));
+                    assert!(registry.catalog().operation(literal).is_some());
+                } else if registered.contains(literal) {
                     resolved += 1;
                 } else {
                     unregistered.push(format!("{}:{}: `{literal}`", file.path, index + 1));

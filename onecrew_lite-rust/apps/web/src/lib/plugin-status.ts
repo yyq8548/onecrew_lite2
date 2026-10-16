@@ -1,4 +1,4 @@
-import type { LocalServiceStatus } from "./generated/creator-sync-contracts";
+import type { LocalServiceStatus } from "@onecrew/runtime-contracts/status";
 
 /** Registration failures the service reports, repaired only by `onecrew plugin install`. */
 export const PLUGIN_REPAIR_DIAGNOSTICS = [

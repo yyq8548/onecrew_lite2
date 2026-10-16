@@ -88,7 +88,7 @@ export type CreatorSummary = {
   /** Agent explanation of the score, shown on hover. */
   assessment?: string | null;
   /** Latest known follower/subscriber count per platform. */
-  follower_counts: Partial<Record<CreatorPlatform, number>>;
+  follower_counts: Partial<Record<CreatorPlatform, number | bigint>>;
   last_touch_at?: number | null;
   pinned_at?: number | null;
   platform_account_count: number;
@@ -102,7 +102,7 @@ export type CreatorSummary = {
 export type CreatorGroup = {
   id: string;
   name: string;
-  revision: number;
+  revision: number | bigint;
   position: number;
   created_at: number;
   updated_at: number;
@@ -141,13 +141,13 @@ export type CreateCreatorGroupInput = { name: string };
 
 export type UpdateCreatorGroupInput = {
   group_id: string;
-  expected_revision: number;
+  expected_revision: number | bigint;
   name: string;
 };
 
 export type DeleteCreatorGroupInput = {
   group_id: string;
-  expected_revision: number;
+  expected_revision: number | bigint;
 };
 
 export type DeleteCreatorGroupResult = {
@@ -277,7 +277,7 @@ export type CreatorTransferCreator = {
   display_name: string;
   tags: string[];
   score: number | null;
-  follower_counts: Partial<Record<CreatorPlatform, number>>;
+  follower_counts: Partial<Record<CreatorPlatform, number | bigint>>;
   pinned: boolean;
   relationship: { stage: CreatorStage };
   accounts: CreatorTransferAccount[];
@@ -414,7 +414,7 @@ export type Creator = {
   /** Agent explanation of the score. */
   assessment?: string | null;
   /** Latest known follower/subscriber count per platform. */
-  follower_counts: Partial<Record<CreatorPlatform, number>>;
+  follower_counts: Partial<Record<CreatorPlatform, number | bigint>>;
   created_at: number;
   updated_at: number;
   archived_at?: number | null;
@@ -429,7 +429,7 @@ export type UpdateCreatorInput = {
   notes?: string | null;
   score?: number | null;
   assessment?: string | null;
-  follower_counts?: Partial<Record<CreatorPlatform, number>> | null;
+  follower_counts?: Partial<Record<CreatorPlatform, number | bigint>> | null;
 };
 
 export type CreatorRelationship = {
@@ -1549,8 +1549,9 @@ function formattingLocale(explicitLocale?: string): string {
 }
 
 /** Formats an epoch-second timestamp in the user's local time zone. */
-export function formatDate(epoch: number | null | undefined, locale?: string) {
+export function formatDate(epoch: number | bigint | null | undefined, locale?: string) {
   if (!epoch) return "—";
+  if (typeof epoch === "bigint" && (epoch > 8_640_000_000_000n || epoch < -8_640_000_000_000n)) return `${epoch}s (Unix)`;
   return new Intl.DateTimeFormat(formattingLocale(locale), {
     year: "numeric",
     month: "2-digit",
@@ -1558,16 +1559,22 @@ export function formatDate(epoch: number | null | undefined, locale?: string) {
     hour: "2-digit",
     minute: "2-digit",
     hourCycle: "h23",
-  }).format(new Date(epoch * 1000));
+  }).format(new Date(Number(epoch) * 1000));
 }
 
 export function formatCount(value: unknown, locale?: string) {
+  if (typeof value === "bigint") return new Intl.NumberFormat(formattingLocale(locale), { maximumFractionDigits: 1, notation: "compact" }).format(value);
   const number = typeof value === "number" ? value : Number(value ?? 0);
   if (!Number.isFinite(number)) return "0";
   return new Intl.NumberFormat(formattingLocale(locale), {
     maximumFractionDigits: 1,
     notation: "compact",
   }).format(number);
+}
+
+export function formatEpochMilliseconds(value: number | bigint, locale: string | undefined, options: Intl.DateTimeFormatOptions): string {
+  if (typeof value === "bigint" && (value > 8_640_000_000_000_000n || value < -8_640_000_000_000_000n)) return `${value}ms (Unix)`;
+  return new Intl.DateTimeFormat(locale, options).format(Number(value));
 }
 
 // ===== Reply triage and inbox attention =====

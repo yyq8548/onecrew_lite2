@@ -57,7 +57,7 @@ const accounts = {
     cookieImport: {
       macos: {
         title: "macOS may request Apple Keychain authorization",
-        description: "When importing Cookies, the system may show a Chrome Safe Storage authorization prompt. Enter the current Mac user's login password only in the system prompt. The system password never enters this app and is not an X Chat passcode.",
+        description: "When importing Cookies, the system may show a Chrome Safe Storage authorization prompt. Enter the current Mac user's login password only in the system prompt. The system password never enters this app.",
       },
       windows: {
         title: "Cookies will be decrypted by the current Windows user",
@@ -258,14 +258,6 @@ const accounts = {
     profileName: "Profile name",
     profilePlaceholder: "For example, x-us-01",
     profileDescription: "Each profile is an isolated Chrome sign-in environment with its own Cookies and residential proxy. It is separate from your everyday browser and every other profile. Timezone and language align with the proxy region, while the hardware fingerprint uses the real values from this computer.",
-    xChatQuestion: "Enable X Chat?",
-    xChatEnabled: "Enable X Chat",
-    xChatEnabledDescription: "After a passcode is configured, the app can send messages and unlock X Chat conversations.",
-    xChatDisabled: "Not now",
-    xChatDisabledDescription: "The X account can still be connected, but this app cannot send messages or unlock X Chat conversations.",
-    passcodeLabel: "X Chat passcode",
-    passcodePlaceholder: "Enter the X Chat passcode",
-    passcodeHint: "Enter only the X Chat passcode here, not the system user's login password.",
     loginIntro: "An isolated window will open in the real Chrome installation through this residential proxy. Confirm the fingerprint below before signing in to {{platform}}.",
     fingerprintTitle: "Sign-in fingerprint",
     fingerprint: {
@@ -283,10 +275,6 @@ const accounts = {
     importDescription: "Read the sign-in Cookies from this Chrome profile using the system credential provider, validate them through the same residential proxy, and save them encrypted on this computer.",
     connected: "Connected @{{username}}",
     profileSummary: "Chrome · profile {{profile}}",
-    validation: {
-      selectXChat: "Choose whether to enable X Chat",
-      passcodeRequired: "An X Chat passcode is required when X Chat is enabled",
-    },
     toasts: {
       browserOpened: "Chrome opened",
       browserOpenedDescription: "Isolated window · sign in to {{platform}} there",
@@ -336,7 +324,6 @@ const accounts = {
       menuAria: "Open account actions for @{{username}}",
       verify: "Verify identity (whoami)",
       relogin: "Sign in again with Chrome",
-      xChat: "X Chat settings",
       proxy: "Configure residential proxy",
       disconnect: "Disconnect",
     },
@@ -364,39 +351,6 @@ const accounts = {
       verifyFailed: "Verification failed",
       disconnected: "Disconnected @{{username}}",
       disconnectFailed: "Could not disconnect the account",
-    },
-  },
-  xChat: {
-    status: {
-      configured: { label: "X Chat configured", description: "A passcode is saved for sending messages and unlocking X Chat conversations." },
-      notConfigured: { label: "X Chat not configured", description: "This app cannot currently send messages or unlock X Chat conversations." },
-      unavailable: { label: "X Chat status unavailable", description: "The encrypted credential for this account cannot be read locally right now." },
-      notApplicable: { label: "X Chat not applicable", description: "This platform does not use an X Chat passcode." },
-    },
-    dialog: {
-      title: "X Chat settings",
-      description: "Manage the X Chat passcode stored locally for @{{username}}. This does not change the passcode on the X website.",
-      replace: "Replace X Chat passcode",
-      enableAndSet: "Enable and set X Chat passcode",
-      enabledDescription: "After saving, the new value will be used to send messages or unlock X Chat conversations.",
-      disableAndClear: "Disable and clear X Chat passcode",
-      disabledDescription: "Explicitly clear the locally stored value. X login Cookies and the account connection are preserved.",
-      newPasscode: "New X Chat passcode",
-      passcodePlaceholder: "Enter the X Chat passcode",
-      passcodeHint: "Enter only the X Chat passcode here, not the system user's login password.",
-      disableWarningTitle: "Disabling prevents X Chat access",
-      disableWarningDescription: "The account will remain connected, but this app will be unable to read X Chat conversations or send X Chat messages.",
-      disableAction: "Disable and clear",
-      saveAction: "Save new passcode",
-      enableAction: "Enable X Chat",
-    },
-    toasts: {
-      updated: "X Chat passcode updated",
-      enabled: "X Chat enabled",
-      savedDescription: "A new encrypted local configuration was saved for @{{username}}",
-      cleared: "X Chat passcode cleared",
-      clearedDescription: "@{{username}} can no longer send messages or unlock X Chat conversations through this app",
-      saveFailed: "X Chat settings could not be saved",
     },
   },
   telegram: {

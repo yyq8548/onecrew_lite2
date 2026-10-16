@@ -19,6 +19,7 @@ import { resultClientFailureCopy, reviewRevisionAfterSnapshot } from "./presenta
 import { ResultCardView } from "./view";
 import { ResultFailureShell } from "./components/shell";
 import { reviseSearchPlanWithReadback } from "@mcp-ui/features/result-card/search-plan-revision";
+import { isRetiredSendingResult } from "./retired-sending";
 
 export function ResultCard({ appClient, initial }: { appClient: App; initial: ResultSnapshot }) {
   const [snapshot, setSnapshot] = useState(initial);
@@ -101,6 +102,7 @@ export function ResultCard({ appClient, initial }: { appClient: App; initial: Re
   // Each pending continuation revision is dispatched once, whichever path
   // sees it first: the user action's own chain or a hydrated remount.
   function startContinuation(pending: ResultSnapshot) {
+    if (isRetiredSendingResult(pending)) return;
     if (pending.continuation.state !== "pending") return;
     const key = `${pending.binding.result_ref}:${pending.continuation.continuation_revision}`;
     if (continuationAttempts.current.has(key)) return;
@@ -174,6 +176,7 @@ export function ResultCard({ appClient, initial }: { appClient: App; initial: Re
   }, [appClient, failure, recoveryFailure, hydrated, snapshot, pollTick]);
 
   async function transition(action: () => Promise<ResultSnapshot | ResultSnapshotOutput>, confirmsReview = false) {
+    if (isRetiredSendingResult(latestSnapshot.current)) return;
     if (!hydrated || inFlight.current || revisionBlocked || latestSnapshot.current.state.kind !== "available") return;
     inFlight.current = true;
     submittedPolls.current = 0;

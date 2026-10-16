@@ -1,4 +1,9 @@
 import { platformDisplayName } from "@/lib/platform-display";
+import { DiscoveryPlanRequirements } from "./discovery-plan-requirements";
+import { discoveryProviderFailureKey } from "@/lib/discovery-execution-error";
+import { isU64 } from "@onecrew/runtime-contracts/result-wire";
+import { creatorU64 } from "@onecrew/runtime-contracts/creators";
+import { stringifyApplicationJson } from "@onecrew/runtime-contracts/json";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown, Download, ExternalLink, Loader2, Settings2 } from "lucide-react";
@@ -18,7 +23,7 @@ import { discoveryDraftProgressKey, getDiscoveryDraftProgress } from "@/lib/disc
 import { discoveryLibraryFailureKey } from "@/lib/discovery-library-error";
 import { checkpointExecution, loadRunCheckpoint, loadRunHistory, type DiscoveryRunCheckpoint } from "@/lib/discovery-run-checkpoint";
 import { authorGroupsKey, authorGroupsRefreshInterval, discoveryLibrarySyncKey, getDiscoveryAuthorGroups } from "@/lib/discovery-author-groups";
-import { DISCOVERY_DEFAULTS, loadDiscoveryPreferences, saveDiscoveryPreferences, discoveryPlanningBrief, discoveryProductBrief, discoveryPlanningScopeOverrides, discoveryEditedScopes } from "@/lib/discovery-draft-preferences";
+import { DISCOVERY_DEFAULTS, loadDiscoveryPreferences, saveDiscoveryPreferences, discoveryPlanningBrief, discoveryPlanningScopeOverrides, discoveryEditedScopes } from "@/lib/discovery-draft-preferences";
 import { loadOpenCliAuthObservations, OPENCLI_AUTH_CHANGED, excludedSearchPlatforms, preflightOpenCliSearch } from "@/lib/opencli-auth";
 import {
   approveDiscoveryCampaign, canRecoverDiscoverySearch, canVerifyDiscovery, countDiscoveryCandidates, createDiscoveryCampaign, getDiscoveryCampaign, getDiscoveryContent, prepareDiscoveryDraft,
@@ -66,7 +71,7 @@ export function SavedContentEvidence({ read }: { read: DiscoveryContentRead }) {
   const { t, i18n } = useTranslation("shell");
   const content = read.native_content;
   return <div className="mt-2 space-y-1 text-xs">
-    <p>{read.status}{read.stop_code ? ` · ${read.stop_code}` : ""}</p>
+    <p>{read.status}{read.stop_code ? ` · ${t(discoveryProviderFailureKey(read.stop_code))}` : ""}</p>
     {content && "bvid" in content && <>
       <p>{content.title} · MID {read.claim.author_id}</p>
       <p className="whitespace-pre-wrap break-words">{content.description}</p>
@@ -140,7 +145,7 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
     mutationFn: async (request: DiscoveryCodexRequest) => {
       const result = await prepareDiscoveryDraft({ id: request.id, brief: request.brief,
         profile_ref: request.profileRef, opencli_version: request.version,
-        target_count: request.targetCount, max_calls: request.maxCalls, min_followers_override: request.minFollowersOverride, criteria_overrides: request.criteriaOverrides, scope_overrides: request.scopeOverrides });
+        target_count: request.targetCount, max_calls: request.maxCalls, read_budget: request.readBudget, min_followers_override: request.minFollowersOverride, criteria_overrides: request.criteriaOverrides, scope_overrides: request.scopeOverrides, refinement: request.refinement });
       if (!matchesDiscoveryCodexRequest(result, request)) throw new Error("discovery_draft_conflict");
       return result;
     },
@@ -191,15 +196,19 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
   const [targetEdited, setTargetEdited] = useState(false);
   const targetCount = targetInput === "" ? NaN : targetInput;
   const [maxCalls, setMaxCalls] = useState<number | null>(DISCOVERY_DEFAULTS.maxCalls);
+  const [budgetEdited, setBudgetEdited] = useState(false);
   // A new client's sentence must not inherit the old AI demo example as
   // unrequested hard criteria. Explicit values are reviewed before approval.
-  const [followersInput, setMinSubscribers] = useState<number | "">(savedPreferences?.followersEdited ? savedPreferences.minSubscribers : DISCOVERY_DEFAULTS.minSubscribers);
+  const [followersInput, setMinSubscribers] = useState<number | bigint | "">(savedPreferences?.followersEdited ? savedPreferences.minSubscribers : DISCOVERY_DEFAULTS.minSubscribers);
   const minSubscribers = followersInput === "" ? NaN : followersInput;
   const [followersEdited, setFollowersEdited] = useState(savedPreferences?.followersEdited ?? false);
   const [requireDemo, setRequireDemo] = useState(false);
   const [requireToolLink, setRequireToolLink] = useState(false);
   useEffect(() => { setPreferencesStatus(null); }, [brief, region, language, category, minSubscribers, targetCount, maxCalls, keywords, platforms, v2exNodes, redditCommunities, tagInputs, categoryInputs, requireDemo, requireToolLink]);
-  const planningBrief = discoveryPlanningBrief({ brief, region, language, category, keywords,
+  const editingSource = editingFrom ? queryClient.getQueryData<DiscoveryCampaign>(["opencli-campaign", editingFrom]) : undefined;
+  const planningBrief = discoveryPlanningBrief({ brief, region,
+    language: editingSource && language === (editingSource.criteria.language ?? "") ? "" : language,
+    category: editingSource && category === (editingSource.criteria.category ?? "") ? "" : category, keywords,
     expandAllSources: expandedFrom !== null,
     defaultPlatforms: ["youtube"],
     platformRestriction: platformsEdited ? platforms : undefined });
@@ -338,8 +347,8 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
     onError: () => { void campaign.refetch(); void candidates.refetch(); void counts.refetch(); },
   });
   const recoverSearch = useMutation({
-    mutationFn: (input: { id: string; revision: number; platform: string; profileRef: string }) =>
-      searchDiscoveryOnce(input.id, input.revision, input.platform, input.profileRef),
+    mutationFn: (input: { id: string; revision: number; platform: string; profileRef: string; recovery?: { expected_stop_code: string; expected_stopped_at: number } }) =>
+      searchDiscoveryOnce(input.id, input.revision, input.platform, input.profileRef, input.recovery),
     retry: false,
     onSuccess: result => queryClient.setQueryData(["opencli-campaign", result.id], result),
     onSettled: (_result, _error, input) => Promise.all([
@@ -356,13 +365,17 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
     && suppliedScopes.every(scope => scope.keywords.length === 0 || validDiscoveryScope(scope.platform, scope.keywords))
     && Number.isInteger(targetCount) && targetCount > 0 && targetCount <= 10000 && (maxCalls === null || (Number.isInteger(maxCalls) && maxCalls >= platforms.length && maxCalls <= 10000)) && minSubscribers >= 0;
   const preparePlan = (startAfterPrepare = false) => {
+    const previous = editingFrom ? queryClient.getQueryData<DiscoveryCampaign>(["opencli-campaign", editingFrom]) : undefined;
     aiDraft.mutate({ id: draftId,
     brief: planningBrief, profileRef, version, platforms: platformsEdited ? platforms : availablePlatforms,
-    targetCount: targetEdited ? targetCount : null, maxCalls, startAfterPrepare,
+    targetCount: previous && targetCount === previous.target_count ? null : targetEdited ? targetCount : null,
+    maxCalls: null, readBudget: { mode: budgetEdited ? "explicit" : "default", limit: maxCalls }, startAfterPrepare,
+    refinement: previous ? { campaign_id: previous.id, expected_revision: previous.revision } : undefined,
     minFollowersOverride: followersEdited ? minSubscribers : null,
     scopeOverrides: discoveryPlanningScopeOverrides(suppliedScopes),
     criteriaOverrides: { region: "",
-      language: language.trim() || (editingFrom ? "" : null), category: category.trim() || null,
+      language: previous && language === (previous.criteria.language ?? "") ? null : language.trim() || (editingFrom ? "" : null),
+      category: previous && category === (previous.criteria.category ?? "") ? null : category.trim() || null,
       requires_ai_tool_demo: requireDemo, requires_public_tool_url: requireToolLink } });
   };
   const current = campaign.data;
@@ -404,7 +417,7 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
   // Reviews submitted through MCP can change qualification without spending a
   // provider call. Include saved review proofs so the open Web page reconciles
   // those changes into Library on its next candidate refresh.
-  const candidateReviewVersion = JSON.stringify(visibleCandidates.map(candidate => [
+  const candidateReviewVersion = stringifyApplicationJson(visibleCandidates.map(candidate => [
     candidate.id, candidate.verdict, candidate.evidence.reviewed_category_content,
     candidate.evidence.reviewed_apparel_content, candidate.evidence.reviewed_residence, candidate.evidence.reviewed_language, candidate.evidence.reviewed_match,
   ]));
@@ -449,6 +462,7 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
     setTargetEdited(false);
     setPlatformsEdited(false);
     setMaxCalls(DISCOVERY_DEFAULTS.maxCalls);
+    setBudgetEdited(false);
     setMinSubscribers(DISCOVERY_DEFAULTS.minSubscribers);
     setFollowersEdited(false);
     setPreferencesStatus(null);
@@ -471,13 +485,14 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
     setLanguage(typeof criterion("language") === "string" ? criterion("language") as string : "");
     setCategory(typeof criterion("category") === "string" ? criterion("category") as string : "");
     const threshold = criterion("min_subscribers") ?? criterion("min_followers");
-    if (typeof threshold === "number" && Number.isSafeInteger(threshold)) { setMinSubscribers(threshold); setFollowersEdited(true); }
+    if (isU64(threshold)) { setMinSubscribers(threshold); setFollowersEdited(true); }
     setRequireDemo(criterion("requires_ai_tool_demo") === true);
     setRequireToolLink(criterion("requires_public_tool_url") === true);
     setTargetCount(current.target_count);
     setTargetEdited(true);
     setPlatforms(availablePlatforms);
     setMaxCalls(null);
+    setBudgetEdited(true);
     setV2exNodes(current.scopes.find(scope => scope.platform === "v2ex-node")?.keywords.join(", ") ?? "");
     setRedditCommunities(current.scopes.find(scope => scope.platform === "reddit-subreddit")?.keywords.join(", ") ?? "");
     setTagInputs(Object.fromEntries(current.scopes.filter(scope => TAG_SEARCH_PLATFORMS.some(platform => platform === scope.platform))
@@ -491,13 +506,14 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
     startExpanded();
     setExpandedFrom(null);
     setEditingFrom(previous.id);
-    setBrief(discoveryProductBrief(previous.brief));
+    setBrief("");
     setPlatforms(previous.scopes.map(scope => scope.platform));
     setPlatformsEdited(true);
     // Old settings may be execution prose. Explicit form values supersede them.
     setRequireDemo(false);
     setRequireToolLink(false);
     setMaxCalls(previous.max_calls);
+    setBudgetEdited(false);
   };
   const exportForLibrary = async () => {
     if (!current || exporting) return;
@@ -576,11 +592,14 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
           const sentence = event.target.value;
           setBrief(sentence);
           setDraftId(crypto.randomUUID());
+          if (editingFrom) return;
           setEditingFrom(null);
           setExpandedFrom(null);
           setTargetEdited(false);
           setPlatformsEdited(false);
           setFollowersEdited(false);
+          setBudgetEdited(false);
+          setMaxCalls(DISCOVERY_DEFAULTS.maxCalls);
           setTargetCount(DISCOVERY_DEFAULTS.targetCount);
           setMinSubscribers(DISCOVERY_DEFAULTS.minSubscribers);
           setPlatforms(availablePlatforms.filter(platform => platform === "youtube"));
@@ -608,8 +627,8 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
         <p className="text-xs text-muted-foreground">{t(expandedFrom ? "opencliPilot.criteriaGuideReview" : "opencliPilot.criteriaGuide")}</p>
         <div className="grid gap-1"><Label htmlFor="discovery-language">{t("opencliPilot.language")}</Label><Input id="discovery-language" placeholder={t("opencliPilot.any")} value={language} onChange={event => setLanguage(event.target.value)} /></div>
         <div className="grid gap-1"><Label htmlFor="discovery-category">{t("opencliPilot.category")}</Label><p className="text-xs text-muted-foreground">{t("opencliPilot.categoryHelp")}</p><Input id="discovery-category" placeholder={t("opencliPilot.autoCategory")} value={category} maxLength={160} onChange={event => setCategory(event.target.value)} /></div>
-        <div className="grid gap-1 sm:grid-cols-2 sm:gap-3"><div><Label htmlFor="discovery-followers">{t("opencliPilot.minSubscribers")}</Label><Input id="discovery-followers" type="number" min={0} placeholder="2000" value={followersInput} onChange={event => { setMinSubscribers(event.target.value === "" ? "" : Number(event.target.value)); setFollowersEdited(event.target.value !== ""); }} /></div><div><Label htmlFor="discovery-target">{t("opencliPilot.target")}</Label><Input id="discovery-target" type="number" min={1} value={targetInput} onChange={event => { setTargetEdited(true); setTargetCount(event.target.value === "" ? "" : Number(event.target.value)); }} /></div></div>
-        <div><Label htmlFor="discovery-max-calls">{t("opencliPilot.maxCalls")}</Label><Input id="discovery-max-calls" type="number" min={Math.max(1, platforms.length)} max={10000} step={1} value={maxCalls ?? ""} aria-describedby="discovery-budget-help" onChange={event => setMaxCalls(event.target.value === "" ? null : Number(event.target.value))} /><p id="discovery-budget-help" className="text-xs text-muted-foreground">{t("opencliPilot.maxCallsHelp")}</p></div>
+        <div className="grid gap-1 sm:grid-cols-2 sm:gap-3"><div><Label htmlFor="discovery-followers">{t("opencliPilot.minSubscribers")}</Label><Input id="discovery-followers" type="number" min={0} placeholder="2000" value={String(followersInput)} onChange={event => { const value = event.target.value; const parsed = creatorU64.safeParse(/^\d+$/.test(value) ? BigInt(value) : Number(value)); setMinSubscribers(value === "" ? "" : parsed.success ? parsed.data : NaN); setFollowersEdited(value !== ""); }} /></div><div><Label htmlFor="discovery-target">{t("opencliPilot.target")}</Label><Input id="discovery-target" type="number" min={1} value={targetInput} onChange={event => { setTargetEdited(true); setTargetCount(event.target.value === "" ? "" : Number(event.target.value)); }} /></div></div>
+        <div><Label htmlFor="discovery-max-calls">{t("opencliPilot.maxCalls")}</Label><Input id="discovery-max-calls" type="number" min={Math.max(1, platforms.length)} max={10000} step={1} value={maxCalls ?? ""} aria-describedby="discovery-budget-help" onChange={event => { setBudgetEdited(true); setMaxCalls(event.target.value === "" ? null : Number(event.target.value)); }} /><p id="discovery-budget-help" className="text-xs text-muted-foreground">{t("opencliPilot.maxCallsHelp")}</p></div>
         <p className="text-xs text-muted-foreground">{t("opencliPilot.criteriaWarning")}</p>
         {platforms.some(platform => platform !== "v2ex-node" && platform !== "reddit-subreddit" && !TAG_SEARCH_PLATFORMS.some(source => source === platform) && !CATEGORY_SEARCH_PLATFORMS.some(source => source === platform)) && <div className="grid gap-1"><Label htmlFor="discovery-keywords">{t("opencliPilot.keywords")}</Label><p className="text-xs text-muted-foreground">{t("opencliPilot.keywordsHelp")}</p><Input id="discovery-keywords" value={keywords} onChange={event => setKeywords(event.target.value)} placeholder={t("opencliPilot.keywordExample")} /></div>}
         <Collapsible><CollapsibleTrigger asChild><Button variant="secondary" className="h-11 w-full justify-between border text-base font-semibold"><span className="flex items-center gap-2"><Settings2 className="size-4" />{t("opencliPilot.manualSources")}</span><ChevronDown className="size-4" /></Button></CollapsibleTrigger><CollapsibleContent className="grid gap-3 pt-3">
@@ -688,7 +707,8 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
         </details>}
         {execution.isError && <Alert><AlertDescription>{t("opencliPilot.statusDisconnected")}</AlertDescription></Alert>}
         {counts.isError && <Alert variant="destructive"><AlertDescription>{t("opencliPilot.candidatesFailed")}</AlertDescription></Alert>}
-        {current.phase === "draft" && <div className="rounded-md border p-3 text-sm"><p className="font-medium">{t("opencliPilot.approvalBounds")}</p><p>{current.scopes.map(scope => platformDisplayName(scope.platform)).join(", ")}</p><p>{t("opencliPilot.frozenThreshold", { count: current.criteria.min_subscribers ?? current.criteria.min_followers ?? 0 })}</p>{current.criteria.region && <p>{t("opencliPilot.frozenRegion", { value: current.criteria.region })}</p>}<p>{t("opencliPilot.frozenLanguage", { value: current.criteria.language || t("opencliPilot.any") })}</p><p>{t("opencliPilot.frozenCategory", { value: current.criteria.category || t("opencliPilot.any") })}</p>{current.scopes.map(scope => <p key={`${scope.platform}:${scope.profile_ref}`}>{t("opencliPilot.frozenKeywords", { value: `${platformDisplayName(scope.platform)}: ${scope.keywords.join(", ")}` })}</p>)}<p>{t("opencliPilot.frozenBudget", { target: current.target_count, calls: current.max_calls ?? "∞", version: current.opencli_version })}</p></div>}
+        {current.phase === "draft" && <div className="rounded-md border p-3 text-sm"><p className="font-medium">{t("opencliPilot.approvalBounds")}</p><p>{current.scopes.map(scope => platformDisplayName(scope.platform)).join(", ")}</p><p>{t("opencliPilot.frozenThreshold", { value: String(current.criteria.min_subscribers ?? current.criteria.min_followers ?? 0) })}</p>{current.criteria.region && <p>{t("opencliPilot.frozenRegion", { value: current.criteria.region })}</p>}<p>{t("opencliPilot.frozenLanguage", { value: current.criteria.language || t("opencliPilot.any") })}</p><p>{t("opencliPilot.frozenCategory", { value: current.criteria.category || t("opencliPilot.any") })}</p>{current.scopes.map(scope => <p key={`${scope.platform}:${scope.profile_ref}`}>{t("opencliPilot.frozenKeywords", { value: `${platformDisplayName(scope.platform)}: ${scope.keywords.join(", ")}` })}</p>)}<p>{t("opencliPilot.frozenBudget", { target: current.target_count, calls: current.max_calls ?? "∞", version: current.opencli_version })}</p></div>}
+        <DiscoveryPlanRequirements criteria={current.criteria} />
         {current.phase === "active" && <Button variant="secondary" className="h-11 border font-semibold" disabled={running || pausing || verify.isPending || recoverSearch.isPending || current.platform_runs.some(run => run.status === "searching")} onClick={editPlan}><Settings2 className="size-4" />{t("opencliPilot.editPlan")}</Button>}
         {current.phase === "active" && <Collapsible className="discovery-disclosure"><CollapsibleTrigger asChild><Button variant="ghost">{t("opencliPilot.adjustPlan")}</Button></CollapsibleTrigger>
           <CollapsibleContent className="space-y-3 pb-4">
@@ -705,20 +725,20 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
         <CollapsibleTrigger asChild><Button variant="ghost">{t("opencliPilot.platformRunsDetails")}</Button></CollapsibleTrigger>
         <CollapsibleContent className="space-y-3 pt-3">
         {current.phase === "active" && <div className="grid gap-1"><Label htmlFor="discovery-active-platform">{t("opencliPilot.platformStatusFilter")}</Label><select id="discovery-active-platform" className="h-9 rounded-md border bg-background px-3 text-sm" value={activePlatform} onChange={event => setActivePlatform(event.target.value)}>{current.scopes.filter(scope => !excludedPlatforms.includes(scope.platform)).map(scope => <option key={scope.platform} value={scope.platform}>{platformDisplayName(scope.platform)}</option>)}</select></div>}
-        {run && <p className="text-sm text-muted-foreground">{t("opencliPilot.runStatus", { status: discoveryRunStageKey(run.status) ? t(discoveryRunStageKey(run.status)!) : run.status, calls: run.calls_used })}{run.stop_code ? ` · ${run.stop_code}` : ""}</p>}
+        {run && <p className="text-sm text-muted-foreground">{t("opencliPilot.runStatus", { status: discoveryRunStageKey(run.status) ? t(discoveryRunStageKey(run.status)!) : run.status, calls: run.calls_used })}{run.stop_code ? ` · ${t(discoveryProviderFailureKey(run.stop_code))}` : ""}</p>}
         {coverage && <p className="text-sm text-muted-foreground">{t("opencliPilot.coverage", coverage)}</p>}
         <div className="space-y-3 text-sm">{current.platform_runs.map(item => <div key={`${item.platform}:${item.profile_ref}`} className="flex flex-wrap justify-between gap-2 border-b pb-3">
           <p className="font-medium">{platformDisplayName(item.platform)}</p><p>{discoveryRunStageKey(item.status) ? t(discoveryRunStageKey(item.status)!) : item.status} · {item.calls_used}</p>
-          {item.stop_code && <p className="basis-full break-words text-sm text-muted-foreground">{item.stop_code}</p>}
+          {item.stop_code && <p className="basis-full break-words text-sm text-muted-foreground">{t(discoveryProviderFailureKey(item.stop_code))}</p>}
         </div>)}</div>
         {run?.status === "technical_stop" && <Alert><AlertDescription>{t(run.stop_code === "interrupted_read" ? "opencliPilot.interruptedSearchHelp" : "opencliPilot.technicalStop")}</AlertDescription></Alert>}
-        {run?.status === "technical_stop" && run.stop_code === "interrupted_read" && <Button variant="outline"
+        {run?.status === "technical_stop" && canRecoverDiscoverySearch(current, profileRef, activePlatform) && <Button variant="outline"
           disabled={running || verify.isPending || recoverSearch.isPending || !canRecoverDiscoverySearch(current, profileRef, activePlatform)}
           onClick={() => {
             if (running || verify.isPending || recoverSearch.isPending || !canRecoverDiscoverySearch(current, profileRef, activePlatform)) return;
-            recoverSearch.mutate({ id: current.id, revision: current.revision, platform: activePlatform, profileRef });
+            recoverSearch.mutate({ id: current.id, revision: current.revision, platform: activePlatform, profileRef, ...(run.stop_code && run.stop_code !== "interrupted_read" && typeof run.updated_at === "number" ? { recovery: { expected_stop_code: run.stop_code, expected_stopped_at: run.updated_at } } : {}) });
           }}>
-          {recoverSearch.isPending && <Loader2 className="size-4 animate-spin" />}{t("opencliPilot.recoverInterruptedSearch", { platform: activePlatform })}
+          {recoverSearch.isPending && <Loader2 className="size-4 animate-spin" />}{t(run.stop_code === "interrupted_read" ? "opencliPilot.recoverInterruptedSearch" : "opencliPilot.recoverRepairedSearch", { platform: activePlatform })}
         </Button>}
         {recoverSearch.isError && recoverSearch.variables.id === current.id && <Alert variant="destructive"><AlertDescription>{t("opencliPilot.stepFailed")}</AlertDescription></Alert>}
         {run?.status === "unauthorized" && <Alert><AlertDescription>{t("opencliPilot.accountRequired", { platform: activePlatform })}</AlertDescription></Alert>}
@@ -731,7 +751,7 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
         <details className="discovery-disclosure">
           <summary>{t("opencliPilot.planDetails")}</summary>
           <div className="space-y-2 py-4 text-sm text-muted-foreground break-words">
-            <p>{t("opencliPilot.frozenThreshold", { count: current.criteria.min_subscribers ?? current.criteria.min_followers ?? 0 })}</p>
+            <p>{t("opencliPilot.frozenThreshold", { value: String(current.criteria.min_subscribers ?? current.criteria.min_followers ?? 0) })}</p>
 
 
             <p>{t("opencliPilot.frozenBudget", { target: current.target_count, calls: current.max_calls ?? "∞", version: current.opencli_version })}</p>

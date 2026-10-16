@@ -42,6 +42,7 @@ pub(crate) fn project_directory(catalog: &CapabilityCatalog) -> Vec<ToolkitDirec
                 .filter(|operation| {
                     operation.toolkit_id == toolkit.toolkit
                         && operation.supports(CatalogSurface::WebNavigation)
+                        && !onecrew_local_runtime::is_retired_operation(operation.id.as_str())
                 })
                 .map(|operation| ToolkitOperationSummary {
                     id: operation.id.as_str().to_owned(),
@@ -156,10 +157,6 @@ mod tests {
         assert_eq!(
             *target,
             serde_json::json!({"id":"onecrew.discovery.target.increase","title":"Adjust discovery Campaign target","summary":"Record an authenticated, idempotent decision to raise or lower the approved Campaign target while preserving frozen criteria, sources and read budget."})
-        );
-        target["title"] = serde_json::json!("Increase discovery Campaign target");
-        target["summary"] = serde_json::json!(
-            "Record an authenticated, idempotent decision to increase the approved Campaign target while preserving frozen criteria, sources and read budget."
         );
         let expected: serde_json::Value = serde_json::from_str(include_str!(
             "../../platform-runtime/src/catalog/fixtures/directory-full.json"

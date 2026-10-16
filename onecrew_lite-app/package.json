@@ -1,0 +1,66 @@
+{
+  "name": "onecrew_lite-app",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.32.1",
+  "engines": {
+    "node": "26.7.0"
+  },
+  "scripts": {
+    "cli": "node src/cli.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test tests/*.test.ts",
+    "probe:native": "node src/native-capabilities/probe.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "@onecrew/runtime-contracts": "workspace:*",
+    "@hono/node-server": "2.1.1",
+    "@mtcute/core": "0.32.4",
+    "@mtcute/node": "0.32.4",
+    "acorn": "8.19.0",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "cheerio": "1.2.0",
+    "exceljs": "4.4.0",
+    "fs-native-extensions": "1.5.0",
+    "hono": "4.13.8",
+    "jszip": "3.10.1",
+    "lossless-json": "4.3.1",
+    "mailparser": "3.9.39",
+    "minisearch": "7.2.0",
+    "nodemailer": "10.1.1",
+    "onecrew_lite_tables": "workspace:*",
+    "p-queue": "10.0.0",
+    "proxy-chain": "3.0.1",
+    "qrcode": "1.5.4",
+    "sax": "1.6.1",
+    "semver": "7.8.5",
+    "set-cookie-parser": "3.1.3",
+    "smol-toml": "1.9.0",
+    "snowball-stemmers": "0.6.0",
+    "sql-parser-cst": "0.42.3",
+    "stream-chain": "4.2.1",
+    "uuid": "13.0.0",
+    "wreq-js": "3.2.0",
+    "yauzl": "3.4.0",
+    "zod": "4.6.5"
+  },
+  "optionalDependencies": {
+    "@primno/dpapi": "2.0.1"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "9.6.0",
+    "@types/deno": "2.7.0",
+    "@types/mailparser": "3.9.0",
+    "@types/node": "26.6.2",
+    "@types/qrcode": "1.5.6",
+    "@types/sax": "1.2.7",
+    "@types/semver": "7.8.0",
+    "@types/snowball-stemmers": "0.6.2",
+    "@types/yauzl": "3.4.0",
+    "esbuild": "0.28.2",
+    "typescript": "5.9.3"
+  }
+}

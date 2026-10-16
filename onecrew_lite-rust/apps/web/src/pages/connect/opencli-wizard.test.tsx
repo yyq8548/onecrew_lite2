@@ -71,9 +71,9 @@ describe("OpenCLI platform connection inventory", () => {
       expect(render("missing", true)).toContain('disabled=""');
       expect(render("ready")).toContain(catalog.opencli.addonsInstalled);
       expect(render("ready")).not.toContain(catalog.opencli.installAddons);
-      for (const state of ["conflict", "unavailable"] as const) {
-        expect(render(state)).toContain('disabled=""');
-      }
+      expect(render("unavailable")).toContain('disabled=""');
+      expect(render("conflict")).not.toContain('disabled=""');
+      expect(render("conflict")).toContain(catalog.opencli.repairAddons);
       expect(render("missing", false, true)).toContain(catalog.opencli.addonsFailed);
       expect(calls).toBe(0); // Rendering/checking never installs.
     });

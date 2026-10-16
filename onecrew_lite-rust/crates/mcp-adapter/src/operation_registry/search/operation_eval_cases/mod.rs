@@ -17,7 +17,7 @@ pub(super) struct OperationEvalCase {
 pub(super) const OPERATION_EVAL_CASES: &[OperationEvalCase] = &aggregate_cases();
 
 /// Preserve the original toolkit and record order for exhaustive recall evaluation.
-const fn aggregate_cases() -> [OperationEvalCase; 159] {
+const fn aggregate_cases() -> [OperationEvalCase; 129] {
     let sources = [
         onecrew::CASES,
         email::CASES,
@@ -27,7 +27,7 @@ const fn aggregate_cases() -> [OperationEvalCase; 159] {
         x::CASES,
         youtube::CASES,
     ];
-    let mut cases = [sources[0][0]; 159];
+    let mut cases = [sources[0][0]; 129];
     let mut source_index = 0;
     let mut target_index = 0;
     while source_index < sources.len() {

@@ -8,8 +8,6 @@ import {
   type EmailDraft,
   type EmailDraftGetInput,
   type EmailDraftSummary,
-  type EmailDraftMutationInput,
-  type EmailDraftSendResult,
   type EmailDraftState,
   type EmailFolder,
   type EmailFolderSummary,
@@ -29,9 +27,7 @@ import {
   type MailboxSyncStatus,
   type RenderedEmailTemplate,
   type RenderEmailTemplateInput,
-  type SaveEmailDraftInput,
   type SaveEmailTemplateInput,
-  type SendEmailDraftInput,
   type SyncMailboxRequest,
   type UpdateEmailThreadDispositionInput,
   type Page,
@@ -154,18 +150,6 @@ export const listEmailDrafts = (input: ListEmailDraftsInput) => (
 );
 export const getEmailDraft = (input: EmailDraftGetInput) => (
   creatorInvoke<EmailDraft>("onecrew_email_draft_get", { input })
-);
-export const saveEmailDraft = (input: SaveEmailDraftInput) => (
-  creatorInvoke<EmailDraft>("onecrew_email_draft_save", { input })
-);
-export const trashEmailDraft = (input: EmailDraftMutationInput) => (
-  creatorInvoke<EmailDraft>("onecrew_email_draft_trash", { input })
-);
-export const restoreEmailDraft = (input: EmailDraftMutationInput) => (
-  creatorInvoke<EmailDraft>("onecrew_email_draft_restore", { input })
-);
-export const sendEmailDraft = (input: SendEmailDraftInput) => (
-  creatorInvoke<EmailDraftSendResult>("onecrew_email_draft_send", { input })
 );
 
 /** 模板 query 族唯一的失效入口（UI-05）：库、选择器、写信浮层都从这里刷新。 */

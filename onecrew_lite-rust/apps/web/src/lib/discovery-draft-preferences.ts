@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { isU64 } from "@onecrew/runtime-contracts/result-wire";
+import { parseApplicationJson, stringifyApplicationJson } from "@onecrew/runtime-contracts/json";
 import { CATEGORY_SEARCH_PLATFORMS, TAG_SEARCH_PLATFORMS } from "./opencli-discovery";
 
 export const DISCOVERY_DEFAULTS = { minSubscribers: 2000, targetCount: 30, maxCalls: null } as const;
@@ -6,7 +8,7 @@ const text = z.string().max(4000);
 const labels = z.record(z.string(), text);
 const preferencesSchema = z.object({
   format: z.literal(1), brief: text, region: text, language: text, category: text,
-  minSubscribers: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER),
+  minSubscribers: z.custom<number | bigint>(isU64),
   followersEdited: z.boolean(), targetCount: z.number().int().min(1).max(10000),
   maxCalls: z.number().int().min(1).max(10000).nullable(), keywords: text, v2exNodes: text,
   redditCommunities: text, tagInputs: labels, categoryInputs: labels,
@@ -16,13 +18,13 @@ export type DiscoveryDraftPreferences = z.infer<typeof preferencesSchema>;
 const KEY = "onecrew-discovery-form-v1";
 
 export function loadDiscoveryPreferences(storage: Pick<Storage, "getItem">): DiscoveryDraftPreferences | null {
-  try { const value = preferencesSchema.safeParse(JSON.parse(storage.getItem(KEY) ?? "null")); return value.success ? value.data : null; }
+  try { const value = preferencesSchema.safeParse(parseApplicationJson(storage.getItem(KEY) ?? "null")); return value.success ? value.data : null; }
   catch { return null; }
 }
 export function saveDiscoveryPreferences(storage: Pick<Storage, "setItem">, input: DiscoveryDraftPreferences): boolean {
   const parsed = preferencesSchema.safeParse(input);
   if (!parsed.success) return false;
-  try { storage.setItem(KEY, JSON.stringify(parsed.data)); return true; } catch { return false; }
+  try { storage.setItem(KEY, stringifyApplicationJson(parsed.data)); return true; } catch { return false; }
 }
 
 // Explicit user edits accompany the product brief; blank fields do not invent

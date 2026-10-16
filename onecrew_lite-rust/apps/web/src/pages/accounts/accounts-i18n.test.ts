@@ -11,11 +11,9 @@ import CONNECT_DIALOG_SOURCE from "./connect-dialog.tsx?raw";
 import CONNECT_WIZARD_SOURCE from "./connect-wizard.tsx?raw";
 import PROXY_SOURCE from "./proxy.tsx?raw";
 import RELOGIN_SOURCE from "./relogin-dialog.tsx?raw";
-import RESEND_SOURCE from "./resend-credential-dialog.tsx?raw";
 import SHARED_SOURCE from "./shared.tsx?raw";
 import TELEGRAM_SOURCE from "./tg-login.tsx?raw";
 import TOOLKIT_SOURCE from "./toolkit-catalog.tsx?raw";
-import X_CHAT_SOURCE from "./x-chat-passcode-dialog.tsx?raw";
 import YOUTUBE_SOURCE from "./youtube-key-dialog.tsx?raw";
 
 const UI_SOURCES = [
@@ -27,11 +25,9 @@ const UI_SOURCES = [
   CONNECT_WIZARD_SOURCE,
   PROXY_SOURCE,
   RELOGIN_SOURCE,
-  RESEND_SOURCE,
   SHARED_SOURCE,
   TELEGRAM_SOURCE,
   TOOLKIT_SOURCE,
-  X_CHAT_SOURCE,
   YOUTUBE_SOURCE,
 ] as const;
 
@@ -71,7 +67,6 @@ describe("Accounts translations", () => {
     const source = UI_SOURCES.join("\n");
     expect(source).not.toMatch(/toast(?:\.(?:success|error|warning|info))?\(\s*["'`]/);
     expect(source).toContain("description: String(error)");
-    expect(source).toContain("toast.success(result.health.message");
   });
 
   it("uses the onecrew_lite product name in fixed Accounts copy", () => {

@@ -30,7 +30,7 @@ function Preview() {
  const change=(i:number)=>{setIndex(i);setNotice('');setCancelled(null);setRequest(null);setInitialPlan(false);setInitialInstruction('');};
  const cancel=()=>{
   if(!current || current.state.kind!=='available')return;
-  setCancelled({...current,binding:{...current.binding,revision:current.binding.revision+1},pending_action:null,state:{kind:'resolved',code:'user_cancelled',summary:english?'This request was cancelled.':'本次请求已取消。'},presentation:{...current.presentation,sections:[]},batch:{outcomes:current.batch.outcomes.map(row=>({...row,disposition:{kind:'not_run',reason:'user_cancelled'},summary:english?'This request was cancelled.':'本次请求已取消。',resource_refs:[]}))},continuation:{state:'not_requested',continuation_revision:current.continuation.continuation_revision,dispatch_started_at_ms:null,dispatch_not_after_ms:null}});
+  setCancelled({...current,binding:{...current.binding,revision:BigInt(current.binding.revision)+1n},pending_action:null,state:{kind:'resolved',code:'user_cancelled',summary:english?'This request was cancelled.':'本次请求已取消。'},presentation:{...current.presentation,sections:[]},batch:{outcomes:current.batch.outcomes.map(row=>({...row,disposition:{kind:'not_run',reason:'user_cancelled'},summary:english?'This request was cancelled.':'本次请求已取消。',resource_refs:[]}))},continuation:{state:'not_requested',continuation_revision:current.continuation.continuation_revision,dispatch_started_at_ms:null,dispatch_not_after_ms:null}});
   setNotice('');
  };
  const select=(answers:ResultChoiceAnswer[])=>{

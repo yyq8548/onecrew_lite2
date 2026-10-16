@@ -9,6 +9,36 @@ use serde_json::json;
 const LINK: &str = "https://example.com/tool";
 
 #[test]
+fn export_discovery_public_page_node_oracle() {
+    let Ok(output) = std::env::var("ONECREW_PUBLIC_PAGE_ORACLE_DIRECTORY") else { return; };
+    let output = std::path::PathBuf::from(output);
+    std::fs::create_dir_all(&output).unwrap();
+    fn snapshot(owner_path: &std::path::Path, output: &std::path::Path, name: &str) {
+        let database = rusqlite::Connection::open(owner_path.join("crm.db")).unwrap();
+        database.execute("VACUUM INTO ?1", [output.join(name).to_str().unwrap()]).unwrap();
+    }
+    let directory = tempfile::tempdir().unwrap();
+    let (owner, input) = setup(directory.path(), 10);
+    let planned = owner.repository.next_discovery_public_page("pages", &[]).unwrap();
+    snapshot(directory.path(), &output, "before.sqlite");
+    let claim = owner.claim_discovery_public_page(input.clone()).unwrap();
+    snapshot(directory.path(), &output, "claimed.sqlite");
+    let result = owner.finish_discovery_public_page(completed(claim.clone())).unwrap();
+    snapshot(directory.path(), &output, "completed.sqlite");
+    let interrupted_directory = tempfile::tempdir().unwrap();
+    let (interrupted_owner, interrupted_input) = setup(interrupted_directory.path(), 10);
+    let old_claim = interrupted_owner.claim_discovery_public_page(interrupted_input.clone()).unwrap();
+    interrupted_owner.interrupt_discovery_searches().unwrap();
+    snapshot(interrupted_directory.path(), &output, "interrupted.sqlite");
+    let resumed = interrupted_owner.claim_discovery_public_page(interrupted_input).unwrap();
+    let failed = interrupted_owner.finish_discovery_public_page(FinishDiscoveryPublicPageInput {
+        hidden_email_available:false,claim:resumed.clone(),document_url:None,title:String::new(),markdown_excerpt:String::new(),truncated:false,stop_code:Some("opencli_risk_control".into()),
+    }).unwrap();
+    snapshot(interrupted_directory.path(), &output, "failed.sqlite");
+    std::fs::write(output.join("oracle.json"), serde_json::to_vec_pretty(&json!({"input":input,"planned":planned,"claim":claim,"completed":result,"old_claim":old_claim,"resumed":resumed,"failed":failed})).unwrap()).unwrap();
+}
+
+#[test]
 fn contact_navigation_skips_product_links_but_keeps_author_sites() {
     for link in [
         "https://amzn.to/example",

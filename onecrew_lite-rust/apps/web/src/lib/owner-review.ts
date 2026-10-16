@@ -1,9 +1,10 @@
 // Shared Web projection of the runtime result owner; no client-authored authority.
+import { wireResultSnapshot } from "@onecrew/runtime-contracts/result-wire";
 export type OwnerResultBinding = {
   result_ref: string;
   view: { identity: string; kind: "read_only" | "confirmation" | "choice" };
   fingerprint: string;
-  revision: number;
+  revision: number | bigint;
   origin: string;
 };
 export type CreatorSaveRoute = {
@@ -16,8 +17,8 @@ export type CreatorSavePreviewRow = {
     display_name: string | null; platform: string; handle: string | null;
     profile_url: string | null; avatar_url: string | null; identity_status: string;
     identity_creator_ids: string[]; notes: string | null; score: number | null;
-    assessment: string | null; follower_counts: Record<string, number>;
-    routes: CreatorSaveRoute[]; expires_at: number;
+    assessment: string | null; follower_counts: Record<string, number | bigint>;
+    routes: CreatorSaveRoute[]; expires_at: number | bigint;
   };
 };
 export type CreatorSaveRowOutcome = {
@@ -38,6 +39,15 @@ export type OwnerReviewSnapshot = {
   )[] };
 };
 export type CreatorSaveRouteSelection = { row_id: string; confirmed_route_ids: string[] };
+
+export function parseOwnerReviewSnapshot(value: unknown): OwnerReviewSnapshot {
+  const snapshot = wireResultSnapshot.parse(value);
+  const pending = snapshot.pending_action;
+  if (pending !== null && pending.kind !== "creator_save_batch" && pending.kind !== "confirm") throw new Error("unexpected_creator_save_review");
+  const sections = snapshot.presentation.sections.filter(section => section.kind === "creator_save_rows" || section.kind === "fields" || section.kind === "items" || section.kind === "notice");
+  if (sections.length !== snapshot.presentation.sections.length) throw new Error("unexpected_creator_save_presentation");
+  return { ...snapshot, pending_action: pending, presentation: { ...snapshot.presentation, sections } };
+}
 
 /** Authority is supplied by the authenticated service session on every request. */
 export function webResultBinding(binding: OwnerResultBinding) {

@@ -3,13 +3,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from "@/components/ui/sheet";
-import type { SubmitDiscoveryReviewInput } from "@/lib/generated/discovery-contracts";
+import type { SubmitDiscoveryReviewInput } from "@/lib/discovery-review";
 import { discoveryReviewKey, getDiscoveryReview, evaluateDiscoveryMatch, reviewRefreshInterval, type ReviewMaterial, type ReviewRequest } from "@/lib/discovery-review";
 import { syncDiscoveryLibrary } from "@/lib/opencli-discovery";
 import { collectDiscoveryEvidence } from "@/lib/discovery-evidence";
 import { PublicPageReceipt } from "./discovery-public-page";
 
-type Criterion = SubmitDiscoveryReviewInput["findings"][number]["criterion"];
+type Criterion = Extract<SubmitDiscoveryReviewInput["findings"][number]["criterion"], string> | `requirement:${number}`;
 type Outcome = SubmitDiscoveryReviewInput["findings"][number]["outcome"];
 type DraftFinding = { outcome: Outcome; rationale: string; citation: string; quote: string; toolName: string; corroboration: string; corroborationQuote: string; countryCode: string; matchLevel?: "excellent" | "good" | "medium" | "low" };
 const emptyFinding = (): DraftFinding => ({ outcome: "insufficient", rationale: "", citation: "", quote: "", toolName: "", corroboration: "", corroborationQuote: "", countryCode: "" });
@@ -22,6 +22,7 @@ export function reviewCriteria(material: ReviewMaterial): Criterion[] {
   ] as const).filter(([key]) => criteria[key] !== false).map(([, criterion]) => criterion);
   return [
     ...legacy,
+    ...(Array.isArray(criteria.requirements) ? criteria.requirements.map((_, index) => `requirement:${index}` as const) : []),
     ...(criteria.category === "服装" ? ["apparel_business_content" as const] : []),
     ...(typeof criteria.category === "string" && criteria.category.length > 0 && criteria.category !== "服装"
       ? ["category_content" as const] : []),
@@ -85,7 +86,7 @@ export function buildReviewFindings(material: ReviewMaterial, drafts: Partial<Re
       && (!tool || !draft.toolName.trim()
         || !(tool.title.toLowerCase().includes(draft.toolName.trim().toLowerCase())
           || draft.quote.toLowerCase().includes(draft.toolName.trim().toLowerCase())))) return null;
-    result.push({ criterion, outcome: draft.outcome, rationale: draft.rationale.trim(),
+    result.push({ criterion: criterion.startsWith("requirement:") ? { requirement: Number(criterion.slice(12)) } : criterion as Extract<SubmitDiscoveryReviewInput["findings"][number]["criterion"], string>, outcome: draft.outcome, rationale: draft.rationale.trim(),
       citations: [...(citation ? [citation] : []), ...(corroboration ? [corroboration] : [])],
       tool: tool ? { name: draft.toolName.trim(), requested_url: tool.requested_url } : null,
       ...(residence ? { country_code: draft.countryCode } : {}),
@@ -98,12 +99,17 @@ export function buildReviewFindings(material: ReviewMaterial, drafts: Partial<Re
 export function ReviewMaterialContent({ material }: { material: ReviewMaterial }) {
   const { t, i18n } = useTranslation("shell");
   const transcript = material.transcript;
+  const criteria = material.criteria && typeof material.criteria === "object" ? material.criteria as Record<string, unknown> : {};
+  const requirements: unknown[] = Array.isArray(criteria.requirements) ? criteria.requirements : [];
   return <div className="space-y-4 break-words text-sm">
     <p className="text-muted-foreground">{t("opencliPilot.reviewLimit")}</p>
     <p>{material.hit.source_url}</p>
     <p>{t("opencliPilot.reviewAuthor", { id: material.native_author_id })}</p>
     <p>{t("opencliPilot.reviewRevision", { revision: material.criteria_revision })}</p>
-    {typeof material.native_followers === "number" && <p>{t("opencliPilot.reviewNativeFollowers", { count: material.native_followers })}</p>}
+    {requirements.length > 0 && <ul className="list-disc pl-5">{requirements.map((requirement, index) => <li key={index}>
+      {typeof requirement === "object" && requirement !== null && "excerpt" in requirement && typeof requirement.excerpt === "string" ? requirement.excerpt : t("opencliPilot.additionalConditions")}
+    </li>)}</ul>}
+    {material.native_followers != null && <p>{t("opencliPilot.reviewNativeFollowers", { value: String(material.native_followers) })}</p>}
     {material.native_follower_estimate && <p>{t("opencliPilot.reviewApproximateFollowers", {
       display: material.native_follower_estimate.display,
       lower: material.native_follower_estimate.lower.toLocaleString(i18n.resolvedLanguage),

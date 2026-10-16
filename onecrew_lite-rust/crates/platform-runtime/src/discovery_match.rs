@@ -11,6 +11,23 @@ use sha2::{Digest, Sha256};
 
 pub const DISCOVERY_SCORE_CONCURRENCY: usize = 2;
 
+#[cfg(test)]
+#[tokio::test]
+async fn export_discovery_match_node_oracle() {
+    let Some(path) = std::env::var_os("ONECREW_DISCOVERY_MATCH_NODE_ORACLE") else { return; };
+    let directory = tempfile::tempdir().unwrap();
+    let platform = LocalPlatform::open(directory.path()).unwrap();
+    crate::discovery_identity_test_support::authenticate(&platform, "fixture-operator");
+    let pair = crate::discovery_identity_test_support::saved_pair_with_author_ids(&platform,["UCaaaaaaaaaaaaaaaaaaaaaa","UCbbbbbbbbbbbbbbbbbbbbbb"]);
+    let input = DiscoveryReviewMaterialInput { campaign_id:pair.campaign_id,expected_revision:1,search_hit_id:pair.left_search_hit_id };
+    let (material,count,preserve) = platform.creators().unwrap().prepare_initial_match_material_async(input.campaign_id.clone(),1,input.search_hit_id.clone()).await.unwrap();
+    assert!(!preserve);
+    let DiscoveryMatchPreparation::Model(prepared) = platform.prepare_discovery_match(input.clone()).await.unwrap() else { panic!("Original fixture must require semantic review"); };
+    let reassessed = platform.prepare_match_inner(input,true,|_,_|{}).await.unwrap();
+    let DiscoveryMatchPreparation::Model(reassessed) = reassessed else { panic!("Reassessment must require semantic review"); };
+    std::fs::write(path,serde_json::to_vec_pretty(&serde_json::json!({"material":material,"count":count,"request_id":prepared.request_id,"prompt":prepared.prompt,"reassess_request_id":reassessed.request_id})).unwrap()).unwrap();
+}
+
 /// Bound model concurrency and prevent concurrent reviews of one native author.
 pub(crate) struct ScoreGate {
     slots: tokio::sync::Semaphore,

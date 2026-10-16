@@ -28,6 +28,59 @@ const SURFACES: [SurfaceId; 7] = [
     SurfaceId::Skills,
 ];
 
+#[test]
+fn export_native_search_node_contracts() {
+    let Some(path) = std::env::var_os("ONECREW_NATIVE_SEARCH_NODE_CONTRACTS") else { return; };
+    let directory = tempfile::tempdir().unwrap();
+    let platform = Arc::new(LocalPlatform::open(directory.path()).unwrap());
+    let creators = platform.creators().unwrap();
+    let operator_accounts: Arc<dyn OperatorAccountWorkflow> = Arc::new(PlatformRuntimeOperatorAccountWorkflow::new(Arc::clone(&platform)));
+    let registry = build_registry(RegistryOwners { platform, creators, operator_accounts }, Arc::new(onecrew_local_runtime::CapabilityCatalog::build().unwrap())).unwrap();
+    let rows: Vec<_> = ["youtube.channels.search", "youtube.videos.search", "instagram.users.search", "telegram.communities.search", "x.posts.search.advanced"].into_iter().map(|id| {
+        let parsed = super::descriptor::EntryId::parse(id).unwrap();
+        let RegistryEntry::Operation(operation) = registry.entry(&parsed, SurfaceId::Full).unwrap() else { panic!("search operation missing") };
+        assert!(operation.binding.supports_search_plan());
+        let connection_value = if id.starts_with("youtube.") { json!({"kind":"service_credential","toolkit":"youtube","credential_id":"selected"}) } else { json!({"kind":"operator_account","toolkit":if id.starts_with("instagram.") {"instagram"} else if id.starts_with("telegram.") {"telegram"} else {"x"},"operator_account_id":"selected"}) };
+        let connection: super::descriptor::ConnectionRef = serde_json::from_value(connection_value.clone()).unwrap();
+        let arguments = if id.starts_with("x.") { json!({"all_words":["headphone review"]}) } else { json!({"query":"headphone review"}) };
+        let prepared = super::execution::prepare_invocation(operation, super::execution::ExecutionContext { surface:SurfaceId::Full, request_id:"native-search-oracle".into(), connection:Some(&connection), confirmed:false }, operation.input.revision(), arguments.clone()).unwrap();
+        let token = prepared.search_scope_token(super::execution::SearchScopePurpose::InitialPlan).unwrap().unwrap();
+        json!({"operation_id":id,"connection":operation.connection,"input_schema":operation.input.document(),"schema_revision":operation.input.revision(),"initial_scope":{"operation_id":id,"schema_revision":operation.input.revision(),"connection":connection_value,"arguments":arguments},"initial_token":token})
+    }).collect();
+    std::fs::write(path, serde_json::to_vec_pretty(&rows).unwrap()).unwrap();
+}
+
+#[test]
+fn retired_operations_are_hidden_from_real_registry_and_contract_reads() {
+    let directory = tempfile::tempdir().unwrap();
+    let platform = Arc::new(LocalPlatform::open(directory.path()).unwrap());
+    let catalog = Arc::new(onecrew_local_runtime::CapabilityCatalog::build().unwrap());
+    let retired = catalog.operations().filter(|operation|
+        onecrew_local_runtime::is_retired_operation(operation.id.as_str()))
+        .map(|operation| operation.id.as_str()).collect::<Vec<_>>();
+    assert_eq!(retired.len(), 30);
+    let registry = build_registry(RegistryOwners {
+        creators: platform.creators().unwrap(),
+        operator_accounts: Arc::new(PlatformRuntimeOperatorAccountWorkflow::new(Arc::clone(&platform))),
+        platform,
+    }, catalog).unwrap();
+    for surface in SURFACES {
+        assert!(registry.toolkit_directory(surface).iter()
+            .flat_map(|toolkit| &toolkit.operations)
+            .all(|operation| !onecrew_local_runtime::is_retired_operation(&operation.id)));
+        for id in &retired {
+            assert!(registry.tool_get_v2(surface, &ToolGetInput {
+                operation_ids: vec![super::descriptor::EntryId::parse(*id).unwrap()],
+                include_output_schema: true,
+            }).is_err());
+        }
+    }
+    for id in ["onecrew.creator.candidate.batch.save", "onecrew.search.plan.prepare", "onecrew.ask_user_question", "email.thread.get", "x.profile.get"] {
+        let id = super::descriptor::EntryId::parse(id).unwrap();
+        assert!(registry.entry(&id, SurfaceId::Full).is_some());
+    }
+}
+
 fn metadata(entry: &EntryMetadata) -> Value {
     json!({
         "id": entry.id,
@@ -176,6 +229,7 @@ fn registry_contract_snapshot_is_exportable() {
                     "view_kind": operation.view_kind,
                     "input_schema": operation.input.document(),
                     "input_revision": operation.input.revision(),
+                    "supports_search_plan": operation.binding.supports_search_plan(),
                     "output_schema": operation.output.document(),
                     "output_revision": operation.output.revision(),
                     "approval_request": operation.approval_request.as_ref().map(|value| &value.message),

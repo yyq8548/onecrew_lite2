@@ -60,7 +60,7 @@ export function MailItemList({
   query: string;
   emptyDescription: string;
   onSelectThread: (threadId: string) => void;
-  onSelectDraft: (draftId: string) => void;
+  onSelectDraft?: (draftId: string) => void;
 }) {
   const { t } = useTranslation("mail");
   const normalized = query.trim().toLocaleLowerCase();
@@ -81,7 +81,8 @@ export function MailItemList({
                 key={`draft:${draft.id}`}
                 variant="outline"
                 className="h-auto w-full flex-col items-stretch gap-2 whitespace-normal p-3 text-left font-normal"
-                onClick={() => onSelectDraft(draft.id)}
+                disabled={!onSelectDraft}
+                onClick={() => onSelectDraft?.(draft.id)}
               >
                 <span className="flex min-w-0 items-center gap-2">
                   <FilePenLine className="size-4 shrink-0 text-muted-foreground" />

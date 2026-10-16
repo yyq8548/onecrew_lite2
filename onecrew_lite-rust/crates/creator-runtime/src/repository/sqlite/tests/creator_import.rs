@@ -60,6 +60,41 @@ fn transfer_creator(
 }
 
 #[test]
+fn export_creator_import_node_compatibility_fixture() {
+    let Some(output) = std::env::var_os("ONECREW_CREATOR_IMPORT_ORACLE_DIRECTORY") else {
+        return;
+    };
+    let output = std::path::PathBuf::from(output);
+    std::fs::create_dir_all(&output).unwrap();
+    for version in [2_u16, 3, 4] {
+        let (directory, repository) = repository();
+        let mut creator = transfer_creator(
+            "source", "Oracle Creator", CreatorTransferPlatform::X, "oracle-x", "oracle_writer",
+        );
+        if version >= 3 { creator.tags = vec!["研究".into()]; }
+        if version >= 4 {
+            creator.notes = Some("Public import source evidence".into());
+            creator.contact_routes.push(CreatorTransferContactRoute {
+                save_order: 0, channel: ContactChannel::Wechat, locator_kind: LocatorKind::Handle,
+                normalized_value: "oracle_wx".into(), display_value: "Oracle_WX".into(),
+                confidence: CreatorTransferConfidence::Asserted,
+                source_kinds: vec![SourceKind::CreatorImport],
+            });
+        }
+        let current = crate::creator_transfer::build_creator_bundle(vec![creator]).unwrap();
+        let staged = if version == 2 {
+            crate::creator_transfer::legacy_v2_projection_for_test(current.clone())
+        } else { current.clone() };
+        let prepared = repository.prepare_creator_import(staged.clone()).unwrap();
+        std::fs::write(output.join(format!("v{version}.bundle.json")), staged.to_staged_import_json_bytes().unwrap()).unwrap();
+        std::fs::write(output.join(format!("v{version}.xlsx")), current.to_xlsx_bytes().unwrap()).unwrap();
+        std::fs::write(output.join(format!("v{version}.prepared.json")), serde_json::to_vec(&prepared).unwrap()).unwrap();
+        let connection = Connection::open(directory.path().join("crm.db")).unwrap();
+        connection.execute("VACUUM INTO ?1", [output.join(format!("v{version}.sqlite")).to_str().unwrap()]).unwrap();
+    }
+}
+
+#[test]
 fn import_tags_fill_empty_preserve_absent_and_block_nonempty_conflicts() {
     let (_directory, repository) = repository();
     let mut incoming = transfer_creator(

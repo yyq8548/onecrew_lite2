@@ -1,4 +1,5 @@
 import { discoveryProductBrief } from "@/lib/discovery-draft-preferences";
+import { formatEpochMilliseconds } from "@/lib/creator";
 import { discoveryExecutionFailureKey } from "@/lib/discovery-execution-error";
 import { ExternalLink, Loader2, MoreHorizontal, Pause, Play, AlertCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -12,11 +13,11 @@ export function DiscoveryOverview({ campaign, counts, stage, running, busy, prof
   campaign: DiscoveryCampaign; counts: DiscoveryCandidateCounts | undefined; stage: WorkspaceStage;
   running: boolean; busy: boolean; profileChanged: boolean; syncing: boolean;
   library: Awaited<ReturnType<typeof syncDiscoveryLibrary>> | null; syncFailed: boolean;
-  syncPending?: boolean; syncErrorKey?: ReturnType<typeof discoveryLibraryFailureKey>; syncedAt?: number | null; failurePhase?: string; failureCode?: string;
+  syncPending?: boolean; syncErrorKey?: ReturnType<typeof discoveryLibraryFailureKey>; syncedAt?: number | bigint | null; failurePhase?: string; failureCode?: string;
   onSync: () => void; onStart: () => void; onPause: () => void; onAnother: () => void; onExpanded: () => void; canExpand: boolean; onIssues: () => void; onFailure?: () => void;
 }) {
   const { t, i18n } = useTranslation("shell");
-  const n = (value: number | undefined) => value === undefined ? "—" : new Intl.NumberFormat(i18n.resolvedLanguage).format(value);
+  const n = (value: number | bigint | undefined) => value === undefined ? "—" : new Intl.NumberFormat(i18n.resolvedLanguage).format(value);
   const runs = campaign.platform_runs;
   const executionErrorKey = discoveryExecutionFailureKey(failureCode);
   const attempted = runs.filter(run => run.status !== "unsearched").length;
@@ -66,7 +67,7 @@ export function DiscoveryOverview({ campaign, counts, stage, running, busy, prof
         <Button variant="outline" disabled={syncing} onClick={onSync}>{syncing && <Loader2 className="size-4 animate-spin" aria-hidden />}{t("opencliPilot.resyncLibrary")}</Button>
       </div>
       {library && <p className="text-sm tabular-nums text-muted-foreground">{t("opencliPilot.librarySynced", { total: n(library.total_hits), added: n(library.inserted_rows) })}</p>}
-      {syncedAt && <p className="text-xs text-muted-foreground">{t("opencliPilot.lastSync")} {new Intl.DateTimeFormat(i18n.resolvedLanguage, { hour: "2-digit", minute: "2-digit", second: "2-digit" }).format(syncedAt)}</p>}
+      {syncedAt && <p className="text-xs text-muted-foreground">{t("opencliPilot.lastSync")} {formatEpochMilliseconds(syncedAt, i18n.resolvedLanguage, { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</p>}
       {syncPending && !syncFailed && <p role="status" className="text-sm text-muted-foreground">{t("opencliPilot.syncPending")}</p>}
       {syncFailed && <p role="alert" className="text-sm text-destructive">{t(`opencliPilot.${syncErrorKey ?? "newResultsSyncFailed"}`)}</p>}
     </div>

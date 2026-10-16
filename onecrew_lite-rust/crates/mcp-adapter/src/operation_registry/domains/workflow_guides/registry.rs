@@ -11,7 +11,6 @@ use std::{
 const GROUPS: &[GuideGroup] = &[
     super::find::GROUP,
     super::enrich::GROUP,
-    super::outreach::GROUP,
 ];
 
 #[derive(Clone, Debug, PartialEq, Eq)]

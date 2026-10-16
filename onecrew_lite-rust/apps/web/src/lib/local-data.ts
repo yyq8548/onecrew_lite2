@@ -3,16 +3,16 @@
 import { invoke } from "@/lib/local-runtime";
 import { appI18n } from "@/i18n";
 import zhCNShell from "@/i18n/locales/zh-CN/shell";
-import type { DataStartupStatus } from "@/lib/generated/creator-sync-contracts";
-import { validateDataStartupStatus } from "@/lib/generated/creator-sync-contracts/validators/DataStartupStatus.js";
+import { dataStartupStatus, type DataStartupStatus } from "@onecrew/runtime-contracts/status";
 
 export type { DataStartupStatus };
 type LocalDataFailureKind = NonNullable<DataStartupStatus["failure"]>["kind"];
 
 export async function inspectLocalData(): Promise<DataStartupStatus> {
   const result = await invoke<unknown>("local_data_status");
-  if (!validateDataStartupStatus(result)) throw new Error("invalid_data_startup_status");
-  return result;
+  const parsed = dataStartupStatus.safeParse(result);
+  if (!parsed.success) throw new Error("invalid_data_startup_status");
+  return parsed.data;
 }
 
 const FAILURE_KEYS = {

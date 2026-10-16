@@ -50,6 +50,14 @@ impl LocalPlatform {
         self: &Arc<Self>,
         grant: SubmittedOwnerGrant,
     ) -> Result<OwnerCallCompletion, OwnerExecutionFailure> {
+        if matches!(grant.kind(), OwnerReviewKind::Outreach | OwnerReviewKind::Email) {
+            return Err(OwnerExecutionFailure {
+                code: crate::RETIRED_OPERATION_CODE,
+                message: "This sending operation has been retired. Use Gmail bulk mail from the Mail page.",
+                effect: OwnerExecutionEffect::KnownNoEffect,
+                dm_failure: None,
+            });
+        }
         let context = grant.context().clone();
         let locale = grant.locale();
         match grant.kind() {

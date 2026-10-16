@@ -1,0 +1,693 @@
+{
+  "before": {
+    "campaign_id": "merge-review",
+    "counts": {
+      "identity_groups": 2,
+      "native_accounts": 2,
+      "qualified_identity_groups": 2,
+      "qualified_native_accounts": 2,
+      "qualified_native_only_groups": 2,
+      "stale_identity_reviews": 0,
+      "unbound_source_hits": 0
+    },
+    "criteria_revision": 1,
+    "groups": [
+      {
+        "decision_ids": [],
+        "group_id": "1aa7d894b7e60239a4772d93e1236430893d89c35995339d749e40e6810822e5",
+        "has_same_author_review": false,
+        "members": [
+          {
+            "candidate_id": "8200ec7b-df83-4378-90ff-d3e8a6b4f94f",
+            "display_name": "Same Name",
+            "native_author_id": "UC1234567890",
+            "platform": "youtube",
+            "profile_url": "https://www.youtube.com/channel/UC1234567890",
+            "reasons": [],
+            "sources": [
+              {
+                "candidate_id": "8200ec7b-df83-4378-90ff-d3e8a6b4f94f",
+                "evidence_version": "3c27e3201a70b0ddfb245d9105cbbb3fbc28679fc39bfee7beaa359aba367699",
+                "followers": "~20000",
+                "hit": {
+                  "author_id": null,
+                  "author_label": "Same Name",
+                  "author_observed_at": null,
+                  "author_url": null,
+                  "campaign_id": "merge-review",
+                  "captured_at": 1792080910,
+                  "id": "23fa4c13-a832-47d3-8262-262f33c7f980",
+                  "platform": "youtube",
+                  "profile_ref": "dedicated",
+                  "search_keyword": "shampoo",
+                  "source_url": "https://www.youtube.com/watch?v=WR04bU_yV5k",
+                  "title": "Shampoo"
+                },
+                "native_author_id": "UC1234567890",
+                "reasons": [],
+                "verdict": "qualified"
+              }
+            ],
+            "verdict": "qualified"
+          }
+        ],
+        "qualified_member_count": 1
+      },
+      {
+        "decision_ids": [],
+        "group_id": "cc7db223a5902f80582c08d73add4fcd3ffdf0eb46829bd26d7dd171f2033cdd",
+        "has_same_author_review": false,
+        "members": [
+          {
+            "candidate_id": "837eff3e-c76a-4292-8d29-5ca785f76aff",
+            "display_name": "Same Name",
+            "native_author_id": "UC1234567891",
+            "platform": "youtube",
+            "profile_url": "https://www.youtube.com/channel/UC1234567891",
+            "reasons": [],
+            "sources": [
+              {
+                "candidate_id": "837eff3e-c76a-4292-8d29-5ca785f76aff",
+                "evidence_version": "7a1b8c4f6da7259ec7b25cce60e82a07930530246887e9ff9c86676b88616e71",
+                "followers": "~20000",
+                "hit": {
+                  "author_id": null,
+                  "author_label": "Same Name",
+                  "author_observed_at": null,
+                  "author_url": null,
+                  "campaign_id": "merge-review",
+                  "captured_at": 1792080910,
+                  "id": "71665a42-5857-4f63-b201-a20710540a83",
+                  "platform": "youtube",
+                  "profile_ref": "dedicated",
+                  "search_keyword": "shampoo",
+                  "source_url": "https://www.youtube.com/watch?v=LR04bU_yV5k",
+                  "title": "Shampoo"
+                },
+                "native_author_id": "UC1234567891",
+                "reasons": [],
+                "verdict": "qualified"
+              }
+            ],
+            "verdict": "qualified"
+          }
+        ],
+        "qualified_member_count": 1
+      }
+    ],
+    "reviews": [],
+    "snapshot_hash": "11205fc9ab741d2a1e1f02dbca07ecc47f86f2003897d2ce3ac709c19cf9f747"
+  },
+  "input": {
+    "decision": "same_author",
+    "decision_id": "identity-decision",
+    "findings": [
+      {
+        "citation": {
+          "kind": "description",
+          "quote": "My shampoo review. My other account, also owned by me: https://www.youtube.com/channel/UC1234567891"
+        },
+        "relationship": "self_owned_account",
+        "source_search_hit_id": "23fa4c13-a832-47d3-8262-262f33c7f980"
+      },
+      {
+        "citation": {
+          "kind": "description",
+          "quote": "My shampoo review. My other account, also owned by me: https://www.youtube.com/channel/UC1234567890"
+        },
+        "relationship": "self_owned_account",
+        "source_search_hit_id": "71665a42-5857-4f63-b201-a20710540a83"
+      }
+    ],
+    "material_hash": "8b88db06d05cee8c62dad2d49f290f37ff60c079cdd6082bf4e842925d9e31f6",
+    "pair": {
+      "campaign_id": "merge-review",
+      "expected_revision": 1,
+      "left_search_hit_id": "23fa4c13-a832-47d3-8262-262f33c7f980",
+      "right_search_hit_id": "71665a42-5857-4f63-b201-a20710540a83"
+    },
+    "rationale": "Both native authors explicitly identify the other bound account as their own in saved author-owned descriptions. This is an audited reviewer judgment, not proof from names or product links.",
+    "reviewer": {
+      "kind": "agent",
+      "label": "source-bound identity reviewer"
+    }
+  },
+  "material": {
+    "accounts": [
+      {
+        "approved_at": 1792080910,
+        "approved_scopes": [
+          {
+            "keywords": [
+              "shampoo"
+            ],
+            "platform": "youtube",
+            "profile_ref": "dedicated"
+          }
+        ],
+        "campaign_id": "merge-review",
+        "candidate_evidence_hash": "5b2c5e21220ccb7329bee3203db04f7bc4601eebcc0d427b1d5a3beafc534f42",
+        "candidate_id": "8200ec7b-df83-4378-90ff-d3e8a6b4f94f",
+        "criteria": {
+          "category": "shampoo",
+          "language": "",
+          "min_subscribers": 10000,
+          "region": "",
+          "requires_ai_tool_demo": false,
+          "requires_public_tool_url": false
+        },
+        "criteria_revision": 1,
+        "format_version": 1,
+        "hit": {
+          "author_id": null,
+          "author_label": "Same Name",
+          "author_observed_at": null,
+          "author_url": null,
+          "campaign_id": "merge-review",
+          "captured_at": 1792080910,
+          "id": "23fa4c13-a832-47d3-8262-262f33c7f980",
+          "platform": "youtube",
+          "profile_ref": "dedicated",
+          "search_keyword": "shampoo",
+          "source_url": "https://www.youtube.com/watch?v=WR04bU_yV5k",
+          "title": "Shampoo"
+        },
+        "material_hash": "d9c8f66e579adc20c50b551ea359907084ae731692efcdce5eaefc7fa2ea7264",
+        "native_author_id": "UC1234567890",
+        "public_pages": [],
+        "transcript": null,
+        "video_description": "My shampoo review. My other account, also owned by me: https://www.youtube.com/channel/UC1234567891"
+      },
+      {
+        "approved_at": 1792080910,
+        "approved_scopes": [
+          {
+            "keywords": [
+              "shampoo"
+            ],
+            "platform": "youtube",
+            "profile_ref": "dedicated"
+          }
+        ],
+        "campaign_id": "merge-review",
+        "candidate_evidence_hash": "b70db19f89848b4bc6855c537f1e8613f2f2ba3e1e908de017b286681a584145",
+        "candidate_id": "837eff3e-c76a-4292-8d29-5ca785f76aff",
+        "criteria": {
+          "category": "shampoo",
+          "language": "",
+          "min_subscribers": 10000,
+          "region": "",
+          "requires_ai_tool_demo": false,
+          "requires_public_tool_url": false
+        },
+        "criteria_revision": 1,
+        "format_version": 1,
+        "hit": {
+          "author_id": null,
+          "author_label": "Same Name",
+          "author_observed_at": null,
+          "author_url": null,
+          "campaign_id": "merge-review",
+          "captured_at": 1792080910,
+          "id": "71665a42-5857-4f63-b201-a20710540a83",
+          "platform": "youtube",
+          "profile_ref": "dedicated",
+          "search_keyword": "shampoo",
+          "source_url": "https://www.youtube.com/watch?v=LR04bU_yV5k",
+          "title": "Shampoo"
+        },
+        "material_hash": "e00eefc0c6d8faf52e844ca8dd0256ddbd9c592d5c4059e29072a4320757d75d",
+        "native_author_id": "UC1234567891",
+        "public_pages": [],
+        "transcript": null,
+        "video_description": "My shampoo review. My other account, also owned by me: https://www.youtube.com/channel/UC1234567890"
+      }
+    ],
+    "campaign_id": "merge-review",
+    "criteria_revision": 1,
+    "format_version": 1,
+    "material_hash": "8b88db06d05cee8c62dad2d49f290f37ff60c079cdd6082bf4e842925d9e31f6"
+  },
+  "merged": {
+    "campaign_id": "merge-review",
+    "counts": {
+      "identity_groups": 1,
+      "native_accounts": 2,
+      "qualified_identity_groups": 1,
+      "qualified_native_accounts": 2,
+      "qualified_native_only_groups": 0,
+      "stale_identity_reviews": 0,
+      "unbound_source_hits": 0
+    },
+    "criteria_revision": 1,
+    "groups": [
+      {
+        "decision_ids": [
+          "identity-decision"
+        ],
+        "group_id": "43a00f273ded5c4cbbe5e95e7b8ff7ae31e0e0bf81d0b0309d4e418a8f97f237",
+        "has_same_author_review": true,
+        "members": [
+          {
+            "candidate_id": "8200ec7b-df83-4378-90ff-d3e8a6b4f94f",
+            "display_name": "Same Name",
+            "native_author_id": "UC1234567890",
+            "platform": "youtube",
+            "profile_url": "https://www.youtube.com/channel/UC1234567890",
+            "reasons": [],
+            "sources": [
+              {
+                "candidate_id": "8200ec7b-df83-4378-90ff-d3e8a6b4f94f",
+                "evidence_version": "3c27e3201a70b0ddfb245d9105cbbb3fbc28679fc39bfee7beaa359aba367699",
+                "followers": "~20000",
+                "hit": {
+                  "author_id": null,
+                  "author_label": "Same Name",
+                  "author_observed_at": null,
+                  "author_url": null,
+                  "campaign_id": "merge-review",
+                  "captured_at": 1792080910,
+                  "id": "23fa4c13-a832-47d3-8262-262f33c7f980",
+                  "platform": "youtube",
+                  "profile_ref": "dedicated",
+                  "search_keyword": "shampoo",
+                  "source_url": "https://www.youtube.com/watch?v=WR04bU_yV5k",
+                  "title": "Shampoo"
+                },
+                "native_author_id": "UC1234567890",
+                "reasons": [],
+                "verdict": "qualified"
+              }
+            ],
+            "verdict": "qualified"
+          },
+          {
+            "candidate_id": "837eff3e-c76a-4292-8d29-5ca785f76aff",
+            "display_name": "Same Name",
+            "native_author_id": "UC1234567891",
+            "platform": "youtube",
+            "profile_url": "https://www.youtube.com/channel/UC1234567891",
+            "reasons": [],
+            "sources": [
+              {
+                "candidate_id": "837eff3e-c76a-4292-8d29-5ca785f76aff",
+                "evidence_version": "7a1b8c4f6da7259ec7b25cce60e82a07930530246887e9ff9c86676b88616e71",
+                "followers": "~20000",
+                "hit": {
+                  "author_id": null,
+                  "author_label": "Same Name",
+                  "author_observed_at": null,
+                  "author_url": null,
+                  "campaign_id": "merge-review",
+                  "captured_at": 1792080910,
+                  "id": "71665a42-5857-4f63-b201-a20710540a83",
+                  "platform": "youtube",
+                  "profile_ref": "dedicated",
+                  "search_keyword": "shampoo",
+                  "source_url": "https://www.youtube.com/watch?v=LR04bU_yV5k",
+                  "title": "Shampoo"
+                },
+                "native_author_id": "UC1234567891",
+                "reasons": [],
+                "verdict": "qualified"
+              }
+            ],
+            "verdict": "qualified"
+          }
+        ],
+        "qualified_member_count": 2
+      }
+    ],
+    "reviews": [
+      {
+        "receipt": {
+          "campaign_id": "merge-review",
+          "candidate_ids": [
+            "8200ec7b-df83-4378-90ff-d3e8a6b4f94f",
+            "837eff3e-c76a-4292-8d29-5ca785f76aff"
+          ],
+          "created_at": 1792080910,
+          "criteria_revision": 1,
+          "decision_id": "identity-decision",
+          "kind": "same_author",
+          "material_hash": "8b88db06d05cee8c62dad2d49f290f37ff60c079cdd6082bf4e842925d9e31f6",
+          "native_author_ids": [
+            "UC1234567890",
+            "UC1234567891"
+          ],
+          "operator_account_id": "operator",
+          "platforms": [
+            "youtube",
+            "youtube"
+          ],
+          "policy_version": "reciprocal-native-account-review-v1",
+          "revokes_decision_id": null
+        },
+        "state": "current"
+      }
+    ],
+    "snapshot_hash": "6060615c1bc90b32c87bccf4d3416763e5caaac0f0e009b6177c847f182c0cd4"
+  },
+  "pair": {
+    "campaign_id": "merge-review",
+    "expected_revision": 1,
+    "left_search_hit_id": "23fa4c13-a832-47d3-8262-262f33c7f980",
+    "right_search_hit_id": "71665a42-5857-4f63-b201-a20710540a83"
+  },
+  "receipt": {
+    "campaign_id": "merge-review",
+    "candidate_ids": [
+      "8200ec7b-df83-4378-90ff-d3e8a6b4f94f",
+      "837eff3e-c76a-4292-8d29-5ca785f76aff"
+    ],
+    "created_at": 1792080910,
+    "criteria_revision": 1,
+    "decision_id": "identity-decision",
+    "kind": "same_author",
+    "material_hash": "8b88db06d05cee8c62dad2d49f290f37ff60c079cdd6082bf4e842925d9e31f6",
+    "native_author_ids": [
+      "UC1234567890",
+      "UC1234567891"
+    ],
+    "operator_account_id": "operator",
+    "platforms": [
+      "youtube",
+      "youtube"
+    ],
+    "policy_version": "reciprocal-native-account-review-v1",
+    "revokes_decision_id": null
+  },
+  "request_hash": "de6d8c75e7967e4af7a4ccd12a22ce3841a265d3ce9690b6eb4c1968613277a7",
+  "revocation_input": {
+    "campaign_id": "merge-review",
+    "decision_id": "revoke-groups",
+    "expected_revision": 1,
+    "rationale": "Withdraw earlier relationship while retaining both sources.",
+    "reviewer": {
+      "kind": "agent",
+      "label": "identity correction"
+    },
+    "revokes_decision_id": "identity-decision"
+  },
+  "revoked": {
+    "campaign_id": "merge-review",
+    "counts": {
+      "identity_groups": 2,
+      "native_accounts": 2,
+      "qualified_identity_groups": 2,
+      "qualified_native_accounts": 2,
+      "qualified_native_only_groups": 2,
+      "stale_identity_reviews": 0,
+      "unbound_source_hits": 0
+    },
+    "criteria_revision": 1,
+    "groups": [
+      {
+        "decision_ids": [],
+        "group_id": "1aa7d894b7e60239a4772d93e1236430893d89c35995339d749e40e6810822e5",
+        "has_same_author_review": false,
+        "members": [
+          {
+            "candidate_id": "8200ec7b-df83-4378-90ff-d3e8a6b4f94f",
+            "display_name": "Same Name",
+            "native_author_id": "UC1234567890",
+            "platform": "youtube",
+            "profile_url": "https://www.youtube.com/channel/UC1234567890",
+            "reasons": [],
+            "sources": [
+              {
+                "candidate_id": "8200ec7b-df83-4378-90ff-d3e8a6b4f94f",
+                "evidence_version": "7e9c4b468fc426eb2b00dd82feb2cbb573d052299f222aa8012531f00b255b52",
+                "followers": "~20000",
+                "hit": {
+                  "author_id": null,
+                  "author_label": "Same Name",
+                  "author_observed_at": null,
+                  "author_url": null,
+                  "campaign_id": "merge-review",
+                  "captured_at": 1792080910,
+                  "id": "23fa4c13-a832-47d3-8262-262f33c7f980",
+                  "platform": "youtube",
+                  "profile_ref": "dedicated",
+                  "search_keyword": "shampoo",
+                  "source_url": "https://www.youtube.com/watch?v=WR04bU_yV5k",
+                  "title": "Shampoo"
+                },
+                "native_author_id": "UC1234567890",
+                "reasons": [],
+                "verdict": "qualified"
+              }
+            ],
+            "verdict": "qualified"
+          }
+        ],
+        "qualified_member_count": 1
+      },
+      {
+        "decision_ids": [],
+        "group_id": "cc7db223a5902f80582c08d73add4fcd3ffdf0eb46829bd26d7dd171f2033cdd",
+        "has_same_author_review": false,
+        "members": [
+          {
+            "candidate_id": "837eff3e-c76a-4292-8d29-5ca785f76aff",
+            "display_name": "Same Name",
+            "native_author_id": "UC1234567891",
+            "platform": "youtube",
+            "profile_url": "https://www.youtube.com/channel/UC1234567891",
+            "reasons": [],
+            "sources": [
+              {
+                "candidate_id": "837eff3e-c76a-4292-8d29-5ca785f76aff",
+                "evidence_version": "7a1b8c4f6da7259ec7b25cce60e82a07930530246887e9ff9c86676b88616e71",
+                "followers": "~20000",
+                "hit": {
+                  "author_id": null,
+                  "author_label": "Same Name",
+                  "author_observed_at": null,
+                  "author_url": null,
+                  "campaign_id": "merge-review",
+                  "captured_at": 1792080910,
+                  "id": "71665a42-5857-4f63-b201-a20710540a83",
+                  "platform": "youtube",
+                  "profile_ref": "dedicated",
+                  "search_keyword": "shampoo",
+                  "source_url": "https://www.youtube.com/watch?v=LR04bU_yV5k",
+                  "title": "Shampoo"
+                },
+                "native_author_id": "UC1234567891",
+                "reasons": [],
+                "verdict": "qualified"
+              }
+            ],
+            "verdict": "qualified"
+          }
+        ],
+        "qualified_member_count": 1
+      }
+    ],
+    "reviews": [
+      {
+        "receipt": {
+          "campaign_id": "merge-review",
+          "candidate_ids": [
+            "8200ec7b-df83-4378-90ff-d3e8a6b4f94f",
+            "837eff3e-c76a-4292-8d29-5ca785f76aff"
+          ],
+          "created_at": 1792080910,
+          "criteria_revision": 1,
+          "decision_id": "identity-decision",
+          "kind": "same_author",
+          "material_hash": "8b88db06d05cee8c62dad2d49f290f37ff60c079cdd6082bf4e842925d9e31f6",
+          "native_author_ids": [
+            "UC1234567890",
+            "UC1234567891"
+          ],
+          "operator_account_id": "operator",
+          "platforms": [
+            "youtube",
+            "youtube"
+          ],
+          "policy_version": "reciprocal-native-account-review-v1",
+          "revokes_decision_id": null
+        },
+        "state": "revoked"
+      },
+      {
+        "receipt": {
+          "campaign_id": "merge-review",
+          "candidate_ids": [
+            "8200ec7b-df83-4378-90ff-d3e8a6b4f94f",
+            "837eff3e-c76a-4292-8d29-5ca785f76aff"
+          ],
+          "created_at": 1792080910,
+          "criteria_revision": 1,
+          "decision_id": "revoke-groups",
+          "kind": "revoke",
+          "material_hash": "8b88db06d05cee8c62dad2d49f290f37ff60c079cdd6082bf4e842925d9e31f6",
+          "native_author_ids": [
+            "UC1234567890",
+            "UC1234567891"
+          ],
+          "operator_account_id": "operator",
+          "platforms": [
+            "youtube",
+            "youtube"
+          ],
+          "policy_version": "audited-native-identity-revocation-v1",
+          "revokes_decision_id": "identity-decision"
+        },
+        "state": "current"
+      }
+    ],
+    "snapshot_hash": "515e65ec8a1135e98b3e13a1806176c3e4032a4f92209ebb5ccb3be80b247367"
+  },
+  "revoked_receipt": {
+    "campaign_id": "merge-review",
+    "candidate_ids": [
+      "8200ec7b-df83-4378-90ff-d3e8a6b4f94f",
+      "837eff3e-c76a-4292-8d29-5ca785f76aff"
+    ],
+    "created_at": 1792080910,
+    "criteria_revision": 1,
+    "decision_id": "revoke-groups",
+    "kind": "revoke",
+    "material_hash": "8b88db06d05cee8c62dad2d49f290f37ff60c079cdd6082bf4e842925d9e31f6",
+    "native_author_ids": [
+      "UC1234567890",
+      "UC1234567891"
+    ],
+    "operator_account_id": "operator",
+    "platforms": [
+      "youtube",
+      "youtube"
+    ],
+    "policy_version": "audited-native-identity-revocation-v1",
+    "revokes_decision_id": "identity-decision"
+  },
+  "stale": {
+    "campaign_id": "merge-review",
+    "counts": {
+      "identity_groups": 2,
+      "native_accounts": 2,
+      "qualified_identity_groups": 2,
+      "qualified_native_accounts": 2,
+      "qualified_native_only_groups": 2,
+      "stale_identity_reviews": 1,
+      "unbound_source_hits": 0
+    },
+    "criteria_revision": 1,
+    "groups": [
+      {
+        "decision_ids": [],
+        "group_id": "1aa7d894b7e60239a4772d93e1236430893d89c35995339d749e40e6810822e5",
+        "has_same_author_review": false,
+        "members": [
+          {
+            "candidate_id": "8200ec7b-df83-4378-90ff-d3e8a6b4f94f",
+            "display_name": "Same Name",
+            "native_author_id": "UC1234567890",
+            "platform": "youtube",
+            "profile_url": "https://www.youtube.com/channel/UC1234567890",
+            "reasons": [],
+            "sources": [
+              {
+                "candidate_id": "8200ec7b-df83-4378-90ff-d3e8a6b4f94f",
+                "evidence_version": "7e9c4b468fc426eb2b00dd82feb2cbb573d052299f222aa8012531f00b255b52",
+                "followers": "~20000",
+                "hit": {
+                  "author_id": null,
+                  "author_label": "Same Name",
+                  "author_observed_at": null,
+                  "author_url": null,
+                  "campaign_id": "merge-review",
+                  "captured_at": 1792080910,
+                  "id": "23fa4c13-a832-47d3-8262-262f33c7f980",
+                  "platform": "youtube",
+                  "profile_ref": "dedicated",
+                  "search_keyword": "shampoo",
+                  "source_url": "https://www.youtube.com/watch?v=WR04bU_yV5k",
+                  "title": "Shampoo"
+                },
+                "native_author_id": "UC1234567890",
+                "reasons": [],
+                "verdict": "qualified"
+              }
+            ],
+            "verdict": "qualified"
+          }
+        ],
+        "qualified_member_count": 1
+      },
+      {
+        "decision_ids": [],
+        "group_id": "cc7db223a5902f80582c08d73add4fcd3ffdf0eb46829bd26d7dd171f2033cdd",
+        "has_same_author_review": false,
+        "members": [
+          {
+            "candidate_id": "837eff3e-c76a-4292-8d29-5ca785f76aff",
+            "display_name": "Same Name",
+            "native_author_id": "UC1234567891",
+            "platform": "youtube",
+            "profile_url": "https://www.youtube.com/channel/UC1234567891",
+            "reasons": [],
+            "sources": [
+              {
+                "candidate_id": "837eff3e-c76a-4292-8d29-5ca785f76aff",
+                "evidence_version": "7a1b8c4f6da7259ec7b25cce60e82a07930530246887e9ff9c86676b88616e71",
+                "followers": "~20000",
+                "hit": {
+                  "author_id": null,
+                  "author_label": "Same Name",
+                  "author_observed_at": null,
+                  "author_url": null,
+                  "campaign_id": "merge-review",
+                  "captured_at": 1792080910,
+                  "id": "71665a42-5857-4f63-b201-a20710540a83",
+                  "platform": "youtube",
+                  "profile_ref": "dedicated",
+                  "search_keyword": "shampoo",
+                  "source_url": "https://www.youtube.com/watch?v=LR04bU_yV5k",
+                  "title": "Shampoo"
+                },
+                "native_author_id": "UC1234567891",
+                "reasons": [],
+                "verdict": "qualified"
+              }
+            ],
+            "verdict": "qualified"
+          }
+        ],
+        "qualified_member_count": 1
+      }
+    ],
+    "reviews": [
+      {
+        "receipt": {
+          "campaign_id": "merge-review",
+          "candidate_ids": [
+            "8200ec7b-df83-4378-90ff-d3e8a6b4f94f",
+            "837eff3e-c76a-4292-8d29-5ca785f76aff"
+          ],
+          "created_at": 1792080910,
+          "criteria_revision": 1,
+          "decision_id": "identity-decision",
+          "kind": "same_author",
+          "material_hash": "8b88db06d05cee8c62dad2d49f290f37ff60c079cdd6082bf4e842925d9e31f6",
+          "native_author_ids": [
+            "UC1234567890",
+            "UC1234567891"
+          ],
+          "operator_account_id": "operator",
+          "platforms": [
+            "youtube",
+            "youtube"
+          ],
+          "policy_version": "reciprocal-native-account-review-v1",
+          "revokes_decision_id": null
+        },
+        "state": "evidence_changed"
+      }
+    ],
+    "snapshot_hash": "a703c76af966bc23a1a2511ca2ebdf96dd60d118805dac6209fc00b4f3534c14"
+  }
+}

@@ -1,5 +1,5 @@
 import { creatorInvoke, type CreatorRecord } from "@/lib/creator";
-import { webResultBinding, type OwnerReviewSnapshot, type CreatorSavePreviewRow, type CreatorSaveRouteSelection } from "@/lib/owner-review";
+import { parseOwnerReviewSnapshot, webResultBinding, type OwnerReviewSnapshot, type CreatorSavePreviewRow, type CreatorSaveRouteSelection } from "@/lib/owner-review";
 import { z } from "zod";
 
 const administratorSchema = z.object({
@@ -79,17 +79,17 @@ export async function readTelegramCommunityAdministrators(source: TelegramAdmini
 }
 
 export function prepareTelegramAdministratorSave(administrator: TelegramAdministrator, community: TelegramCommunityAdministrators["community"], source: TelegramAdministratorSource) {
-  return creatorInvoke<OwnerReviewSnapshot>("onecrew_creator_save_prepare", {
+  return creatorInvoke<unknown>("onecrew_creator_save_prepare", {
     input: { candidates: [telegramAdministratorCandidateInput(administrator, community, source)] },
-  });
+  }).then(parseOwnerReviewSnapshot);
 }
 
 export function confirmTelegramAdministratorSave(snapshot: OwnerReviewSnapshot, selections: CreatorSaveRouteSelection[]) {
-  return creatorInvoke<OwnerReviewSnapshot>("onecrew_creator_save_confirm", { input: { binding: webResultBinding(snapshot.binding), selections } });
+  return creatorInvoke<unknown>("onecrew_creator_save_confirm", { input: { binding: webResultBinding(snapshot.binding), selections } }).then(parseOwnerReviewSnapshot);
 }
 
 export function readCreatorSaveResult(snapshot: OwnerReviewSnapshot) {
-  return creatorInvoke<OwnerReviewSnapshot>("onecrew_creator_save_result_get", { input: webResultBinding(snapshot.binding) });
+  return creatorInvoke<unknown>("onecrew_creator_save_result_get", { input: webResultBinding(snapshot.binding) }).then(parseOwnerReviewSnapshot);
 }
 
 export function readSavedTelegramCreator(creatorId: string) {

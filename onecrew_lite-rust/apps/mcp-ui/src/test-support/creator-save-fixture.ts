@@ -30,7 +30,8 @@ export function creatorSaveSnapshot(preview = CREATOR_SAVE_PREVIEW): ResultSnaps
 
 export function creatorSavedSnapshot(): ResultSnapshot {
   const current = creatorSaveSnapshot();
-  return { ...current, binding: { ...current.binding, revision: current.binding.revision + 1 }, pending_action: null, completed_sections_count: 1,
+  current.binding.revision++;
+  return { ...current, binding: { ...current.binding }, pending_action: null, completed_sections_count: 1,
     batch: { outcomes: [{ ...current.batch.outcomes[0]!, disposition: { kind: "succeeded" }, resource_refs: [{ kind: "creator", id: "creator-demo", label: "Demo beauty creator" }] }] },
     state: { kind: "resolved", code: "creator_save_completed", summary: "Creator saved to OneCrew." },
     presentation: { kind: "creator_save_batch_outcome", title: "Creator saved", summary: "Creator saved to OneCrew.", sections: [{kind:"creator_save_rows",rows:[{row_id:"save.creator.1",display_name:CREATOR_SAVE_PREVIEW.display_name,platform:CREATOR_SAVE_PREVIEW.platform,handle:CREATOR_SAVE_PREVIEW.handle,profile_url:CREATOR_SAVE_PREVIEW.profile_url,avatar_url:CREATOR_SAVE_PREVIEW.avatar_url,status:"saved",operation:"added",reason:null,creator_id:"creator-demo",failure_code:null,confirmed_route_ids:["route-profile"]}]}] },

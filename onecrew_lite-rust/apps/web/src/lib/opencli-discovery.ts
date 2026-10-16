@@ -1,12 +1,15 @@
 import { z } from "zod";
+import { isU64 } from "@onecrew/runtime-contracts/result-wire";
+import { stringifyApplicationJson } from "@onecrew/runtime-contracts/json";
+const u64 = z.custom<number | bigint>(isU64);
 import { invoke } from "./local-runtime";
 import { additionalNativeContentSchema, additionalNativePlatforms, additionalNativeContentBound, linkedinAccount } from "./discovery-native-content";
 
-const runSchema = z.object({ platform: z.string(), profile_ref: z.string(), status: z.string(), calls_used: z.number(), stop_code: z.string().nullable() });
+const runSchema = z.object({ platform: z.string(), profile_ref: z.string(), status: z.string(), calls_used: z.number(), stop_code: z.string().nullable(), updated_at: z.number().int().optional() });
 const campaignSchema = z.object({
   id: z.string(), phase: z.string(), revision: z.number(), brief: z.string(),
   opencli_version: z.string(),
-  criteria: z.object({ min_subscribers: z.number().optional(), min_followers: z.number().optional(), region: z.string().optional(), language: z.string().optional(), category: z.string().optional(), requires_ai_tool_demo: z.boolean().optional(), requires_public_tool_url: z.boolean().optional() }).passthrough(),
+  criteria: z.object({ min_subscribers: u64.optional(), min_followers: u64.optional(), region: z.string().optional(), language: z.string().optional(), category: z.string().optional(), requires_ai_tool_demo: z.boolean().optional(), requires_public_tool_url: z.boolean().optional() }).passthrough(),
   target_count: z.number(), max_calls: z.number().nullable(), used_calls: z.number(),
   scopes: z.array(z.object({ platform: z.string(), profile_ref: z.string(), keywords: z.array(z.string()) })),
   platform_runs: z.array(runSchema),
@@ -32,7 +35,7 @@ const candidateSchema = z.object({
     contact_status: z.object({ has_contact: z.boolean(), manual_email_required: z.boolean() }).optional(),
     source_urls: z.array(z.string().url()),
     public_links: z.array(z.string().url()).optional(),
-    assessment: z.object({ reasons: z.array(z.string()), subscribers_normalized: z.number().nullable(),
+    assessment: z.object({ reasons: z.array(z.string()), subscribers_normalized: u64.nullable(),
       match_rating: z.object({ level: z.enum(["excellent", "good", "medium", "low"]), reason: z.string(), source_url: z.string().url() }).nullable().optional(),
     }).optional(),
   }).passthrough(),
@@ -58,15 +61,17 @@ export async function listRecentDiscoveryCampaigns(): Promise<DiscoveryCampaignS
 export async function prepareDiscoveryDraft(input: {
   id: string; brief: string; profile_ref: string; opencli_version: string;
   target_count: number | null; max_calls: number | null;
-  min_followers_override?: number | null;
+  read_budget?: { mode: "default" | "explicit"; limit: number | null };
+  min_followers_override?: number | bigint | null;
   scope_overrides?: { platform: string; keywords: string[] }[];
+  refinement?: { campaign_id: string; expected_revision: number } | null;
   criteria_overrides?: { region: string | null; language: string | null; category: string | null; requires_ai_tool_demo: boolean; requires_public_tool_url: boolean };
 }): Promise<DiscoveryCampaign> {
   return campaignSchema.parse(await invoke<unknown>("onecrew_discovery_draft_prepare", { input }));
 }
 const librarySyncSchema = z.object({
   campaign_id: z.string(), table_id: z.string(), web_url: z.string().url(),
-  total_hits: z.number().int().nonnegative(), inserted_rows: z.number().int().nonnegative(),
+  total_hits: u64, inserted_rows: u64,
 });
 export type DiscoveryLibrarySync = z.infer<typeof librarySyncSchema>;
 
@@ -295,7 +300,7 @@ const webSourceSchema = z.object({
     && (read.status==="completed" ? read.native_author_id!==null && read.candidate_id!==null && read.stop_code===null && read.native_material!==null
       && read.native_material.channelId===read.native_author_id && read.native_material.videoId===read.claim.video_id
       && read.native_material.sourceUrl===`https://www.youtube.com/watch?v=${read.claim.video_id}`
-      && new TextEncoder().encode(JSON.stringify(read.native_material)).length<=65536
+      && new TextEncoder().encode(stringifyApplicationJson(read.native_material)).length<=65536
       : read.native_author_id===null && read.candidate_id===null && !read.is_primary_source && read.native_material===null && read.stop_code!==null);
 });
 const facebookIdentitySourceSchema = z.string().regex(/^https:\/\/www\.facebook\.com\/[A-Za-z0-9.]{1,100}\/?$/).refine(source => {
@@ -310,7 +315,7 @@ const facebookIdentitySchema = z.object({
 }).strict().refine(read=>read.status==="completed"
   ? read.stop_code===null && read.native_identity!==null && read.native_identity.source_url===read.claim.source_url
     && read.native_identity.profile_url.replace(/\/$/,"").toLowerCase()===read.claim.source_url.replace(/\/$/,"").toLowerCase()
-    && new TextEncoder().encode(JSON.stringify(read.native_identity)).length<=4000
+    && new TextEncoder().encode(stringifyApplicationJson(read.native_identity)).length<=4000
   : read.stop_code!==null && read.native_identity===null);
 const advanceResultSchema = z.object({ step: stepSchema, campaign: campaignSchema, counts: countsSchema,
   facebook_identity:facebookIdentitySchema.optional(),
@@ -501,16 +506,18 @@ export function canVerifyDiscovery(campaign: DiscoveryCampaign, profileRef: stri
 /** Explicit recovery only; ordinary full-source runs never replay an uncertain read. */
 export function canRecoverDiscoverySearch(campaign: DiscoveryCampaign, profileRef: string, platform: string): boolean {
   const run = campaign.platform_runs.find(item => item.platform === platform && item.profile_ref === profileRef);
-  return run?.status === "technical_stop" && run.stop_code === "interrupted_read"
-    && !campaign.platform_runs.some(item => item.status === "searching")
-    && canSearchDiscovery(campaign, profileRef, platform);
+  const scope = campaign.scopes.find(item => item.platform === platform && item.profile_ref === profileRef);
+  const repairedCodes = ["provider_endpoint_not_found", "provider_response_invalid_json", "provider_response_shape_invalid", "provider_response_http_error", "provider_source_unavailable", "opencli_command_unavailable", "opencli_command_failed", "opencli_invalid_output", "opencli_output_too_large"];
+  return campaign.phase === "active" && (campaign.max_calls === null || campaign.used_calls < campaign.max_calls) && run?.status === "technical_stop" && !!scope
+    && !campaign.platform_runs.some(item => item.status === "searching" || item.status === "unsearched")
+    && (run.stop_code === "interrupted_read" || typeof run.updated_at === "number" && !!run.stop_code && repairedCodes.includes(run.stop_code) && run.calls_used < scope.keywords.length);
 }
 
 export type DiscoveryDraft = {
   id: string;
   brief: string;
   opencli_version: string;
-  criteria: { min_subscribers: number; region: string; language: string; category?: string; requires_ai_tool_demo: boolean; requires_public_tool_url: boolean };
+  criteria: { min_subscribers: number | bigint; region: string; language: string; category?: string; requires_ai_tool_demo: boolean; requires_public_tool_url: boolean };
   scopes: { platform: string; profile_ref: string; keywords: string[] }[];
   target_count: number;
   max_calls: number | null;
@@ -552,8 +559,8 @@ export async function searchDiscoveryYoutubeOnce(id: string, expectedRevision: n
   return campaignSchema.parse(z.object({ campaign: z.unknown(), returned_hits: z.number() }).parse(result).campaign);
 }
 
-export async function searchDiscoveryOnce(id: string, expectedRevision: number, platform: string, profileRef: string): Promise<DiscoveryCampaign> {
-  const result = await invoke<unknown>("onecrew_discovery_search_once", { id, expectedRevision, platform, profileRef, limit: 10 });
+export async function searchDiscoveryOnce(id: string, expectedRevision: number, platform: string, profileRef: string, recovery?: { expected_stop_code: string; expected_stopped_at: number }): Promise<DiscoveryCampaign> {
+  const result = await invoke<unknown>("onecrew_discovery_search_once", { id, expectedRevision, platform, profileRef, limit: 10, ...(recovery ? { recovery } : {}) });
   const campaign = campaignSchema.parse(z.object({ campaign: z.unknown(), returned_hits: z.number() }).parse(result).campaign);
   if (campaign.id !== id || campaign.revision !== expectedRevision) throw new Error("discovery_revision_changed");
   return campaign;

@@ -18,10 +18,13 @@ describe("same-result successive owner reviews", () => {
     review.batch.outcomes[0]!.operation_id = "onecrew.outreach.message.send";
     expect(parseResultSnapshot(review)).not.toBeNull();
     const handlers = { onConfirm() {}, onSelect() {}, onCancel() {}, onRequestEdit() {} };
-    expect(renderToStaticMarkup(createElement(ResultCardView, { snapshot: review, busy: false, ...handlers }))).toContain("Frozen message");
+    const historicalReview = renderToStaticMarkup(createElement(ResultCardView, { snapshot: review, busy: false, ...handlers }));
+    expect(historicalReview).toContain("Frozen message");
+    expect(historicalReview).not.toContain("Confirm message");
+    expect(historicalReview).not.toContain("data-result-actions");
     const outcome = structuredClone(review);
     outcome.pending_action = null;
-    outcome.binding.revision += 1;
+    outcome.binding.revision++;
     outcome.completed_sections_count = 1;
     outcome.state = { kind: "unknown", code: "outreach_record_pending", summary: "Remote receipt verified; local recording is pending." };
     outcome.presentation = { kind: "outreach_outcome", title: "Message outcome", summary: null,
@@ -38,7 +41,7 @@ describe("same-result successive owner reviews", () => {
   it("starts fresh choices after an acknowledged second review even when local row/route IDs repeat", () => {
     const first = creatorSaveSnapshot();
     const second = structuredClone(first);
-    second.binding.revision += 2;
+    second.binding.revision++; second.binding.revision++;
     if (first.pending_action?.kind !== "creator_save_batch" || second.pending_action?.kind !== "creator_save_batch") throw new Error("review fixture");
     second.pending_action.review.rows[0]!.preview.display_name = "A different Creator";
     const previousDraft = initialCreatorBatchDraft(first.pending_action.review.rows);
@@ -50,7 +53,7 @@ describe("same-result successive owner reviews", () => {
   it("preserves a draft for a plain conflict read, but resets when completed-prefix growth proves the next review", () => {
     const before = creatorSaveSnapshot();
     const next = structuredClone(before);
-    next.binding.revision += 2;
+    next.binding.revision++; next.binding.revision++;
     expect(reviewRevisionAfterSnapshot(before.binding.revision, before, next, false)).toBe(before.binding.revision);
     next.completed_sections_count = 1;
     next.presentation.sections = creatorSavedSnapshot().presentation.sections;

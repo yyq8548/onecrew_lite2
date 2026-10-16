@@ -3,16 +3,6 @@ use onecrew_local_runtime::ToolkitId;
 
 pub(super) const CASES: &[OperationEvalCase] = &[
     OperationEvalCase {
-        query: "X clear chat passcode",
-        toolkit: ToolkitId::X,
-        expected_id: "x.chat.passcode.clear",
-    },
-    OperationEvalCase {
-        query: "X set chat passcode",
-        toolkit: ToolkitId::X,
-        expected_id: "x.chat.passcode.set",
-    },
-    OperationEvalCase {
         query: "X cancel browser connection",
         toolkit: ToolkitId::X,
         expected_id: "x.connection.browser.cancel",
@@ -71,16 +61,6 @@ pub(super) const CASES: &[OperationEvalCase] = &[
         query: "X operator reconnect status",
         toolkit: ToolkitId::X,
         expected_id: "x.connection.reconnect.status",
-    },
-    OperationEvalCase {
-        query: "X sync one conversation thread into the local store",
-        toolkit: ToolkitId::X,
-        expected_id: "x.conversation.sync",
-    },
-    OperationEvalCase {
-        query: "X send a direct message reply inside an open conversation",
-        toolkit: ToolkitId::X,
-        expected_id: "x.message.send",
     },
     OperationEvalCase {
         query: "X post thread",

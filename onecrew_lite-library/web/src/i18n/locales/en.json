@@ -15,6 +15,7 @@
   "account": {
     "login": "Sign in",
     "loginTitle": "Sign in to onecrew_lite",
+    "unifiedSignIn": "Sign in to onecrew_lite, then reopen Library.",
     "loginDescription": "Sign in to access your tables and connections.",
     "loginSuccess": "Sign in successful",
     "returningToApp": "Returning you to your app…",
@@ -42,6 +43,8 @@
     "tryAgain": "Try again",
     "openLogin": "Open sign in",
     "unavailable": "Account service is unavailable.",
+    "reauthorizationRequired": "Account authorization expired. Authorize again; existing tables and data are preserved.",
+    "reauthorize": "Authorize again",
     "loginError": "Unable to start sign in.",
     "logoutError": "Unable to sign out. Please try again.",
     "copyError": "Unable to copy diagnostics.",

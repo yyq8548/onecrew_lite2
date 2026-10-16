@@ -8,6 +8,47 @@ use onecrew_creator_runtime::{
 use schemars::JsonSchema;
 use serde::Serialize;
 
+#[cfg(test)]
+mod retirement_tests {
+    use super::*;
+
+    #[test]
+    fn retired_email_owner_cannot_submit_and_history_stays_readable() {
+        let directory = tempfile::tempdir().unwrap();
+        let platform = crate::LocalPlatform::open(directory.path()).unwrap();
+        let origin = crate::ResultOrigin::new("web:retired-mail").unwrap();
+        let context = crate::OwnerReviewContext::new(origin.clone(), "retired-call", "email.draft.send", None).unwrap();
+        let review = crate::PreparedOwnerReview::email(
+            PreparedEmailAction {
+                intent: EmailSendIntent::Draft(SendEmailDraftInput {
+                    draft_id: onecrew_creator_runtime::EmailDraftId::new("retained-draft"),
+                    expected_revision: 1,
+                    idempotency_key: "retained-send-intent".into(),
+                }),
+                idempotency_key: "retained-send-intent".into(),
+                expires: Instant::now() + std::time::Duration::from_secs(60),
+            },
+            context,
+            crate::PresentationProjection {
+                kind: crate::ResultPresentationKind::new("email_confirmation").unwrap(),
+                title: "Retained email review".into(), summary: None, sections: vec![],
+            },
+            "Retained confirmation".into(), "Confirm".into(),
+        ).unwrap();
+        let reference = platform.mint_owner_review(review, crate::ExecutedBatch {
+            outcomes: vec![crate::ExecutedCallOutcome {
+                call_id: "retired-call".into(), operation_id: "email.draft.send".into(),
+                disposition: crate::CallDisposition::NotRun { reason: "confirmation_required".into() },
+                summary: "Retained email review".into(), resource_refs: vec![],
+            }],
+        }, None, vec![]).unwrap();
+        let available = platform.present_result(&reference, &origin).unwrap();
+        assert!(matches!(platform.submit_owner_review(&available.binding, crate::OwnerReviewSelection::Confirm),
+            Err(crate::ResultStoreError::InvalidState(crate::RETIRED_OPERATION_CODE))));
+        assert_eq!(platform.read_current_result(&available.binding).unwrap(), available);
+    }
+}
+
 /// The exact Creator email send one review froze. It is serialized only inside
 /// the sealed authority bytes and is never decoded back from a wire payload,
 /// so no caller can substitute a different recipient, body, or draft revision.

@@ -1,5 +1,6 @@
 import { hc, parseResponse } from 'hono/client';
 import type { AppType } from 'onecrew/rpc';
+import { clearUnifiedSession, connectUnifiedSession, unifiedRuntimeMode } from './unified-runtime.js';
 
 const signalAccessState = (status: number, body: unknown) => {
   if (!body || typeof body !== 'object' || !('error' in body)) return;
@@ -50,7 +51,26 @@ const customFetch: typeof fetch = async (input, init) => {
   const headers = new Headers(input instanceof Request ? input.headers : undefined);
   new Headers(init?.headers).forEach((value, key) => headers.set(key, value));
   if (businessRequest && accountId) headers.set('X-OneCrew-Account-Id', accountId);
-  const response = await fetch(input, { ...init, headers });
+  if (unifiedRuntimeMode) {
+    const session = await connectUnifiedSession();
+    if (businessRequest) assertCurrentBusinessScope(generation, accountId);
+    if (businessRequest && session.accountId !== accountId)
+      throw new Error('Response belongs to a previous account session');
+    headers.set('X-OneCrew-Account-Id', session.accountId);
+    headers.set('X-OneCrew-Auth-Epoch', session.epoch);
+    const method = init?.method ?? (input instanceof Request ? input.method : 'GET');
+    if (!['GET', 'HEAD'].includes(method.toUpperCase()))
+      headers.set('X-OneCrew-CSRF', session.csrf);
+  }
+  const response = await fetch(input, {
+    ...init,
+    headers,
+    ...(unifiedRuntimeMode ? { credentials: 'same-origin', cache: 'no-store' } : {}),
+  });
+  if (unifiedRuntimeMode && [401, 403, 409].includes(response.status)) {
+    clearUnifiedSession();
+    window.dispatchEvent(new Event('onecrew:access-changed'));
+  }
   if (businessRequest) assertCurrentBusinessScope(generation, accountId);
   if (!response.ok) {
     const body = await response

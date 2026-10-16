@@ -2,6 +2,14 @@ use super::*;
 use crate::*;
 use serde_json::json;
 
+fn export_language_snapshot(directory: &std::path::Path, suffix: &str) {
+    let Some(output) = std::env::var_os("ONECREW_LANGUAGE_ORACLE_DIRECTORY") else { return; };
+    let output = std::path::PathBuf::from(output);
+    std::fs::create_dir_all(&output).unwrap();
+    let db = rusqlite::Connection::open(directory.join("crm.db")).unwrap();
+    db.execute("VACUUM INTO ?1", [output.join(format!("tiktok-{suffix}.sqlite")).to_str().unwrap()]).unwrap();
+}
+
 #[tokio::test]
 async fn tiktok_language_reads_only_matched_post_once_without_commenter_ids() {
     let dir = tempfile::tempdir().unwrap();
@@ -86,6 +94,7 @@ async fn tiktok_language_reads_only_matched_post_once_without_commenter_ids() {
         .get_discovery_campaign("tiktok-language")
         .unwrap()
         .used_calls;
+    export_language_snapshot(dir.path(), "before");
     {
         let ordinal = 1;
         assert_eq!(
@@ -112,6 +121,14 @@ async fn tiktok_language_reads_only_matched_post_once_without_commenter_ids() {
             }],
         };
         let mut extended = sample.clone();
+        export_language_snapshot(dir.path(), "claimed");
+        if let Some(output) = std::env::var_os("ONECREW_LANGUAGE_ORACLE_DIRECTORY") {
+            let claim_json = json!({"campaign_id":claim.campaign_id,"revision":claim.revision,"search_hit_id":claim.search_hit_id,
+                "candidate_id":claim.candidate_id,"platform":claim.platform,"profile_ref":claim.profile_ref,
+                "author_id":claim.author_id,"author_handle":claim.author_handle,"root_url":claim.root_url,"ordinal":claim.ordinal,
+                "call_number":claim.call_number,"previous_urls":claim.previous_urls,"saved_content_urls":claim.saved_content_urls});
+            std::fs::write(std::path::PathBuf::from(output).join("tiktok.json"), serde_json::to_vec_pretty(&json!({"claim":claim_json,"sample":sample})).unwrap()).unwrap();
+        }
         extended.comments = (1..=5)
             .map(|i| DiscoveryLanguageComment {
                 source_url: claim.root_url.clone(),
@@ -140,6 +157,7 @@ async fn tiktok_language_reads_only_matched_post_once_without_commenter_ids() {
             .finish_discovery_language_async(claim, Some(sample), None)
             .await
             .unwrap();
+        export_language_snapshot(dir.path(), "finished");
         require_fresh_language_review(&owner, "tiktok-language", &hit, ordinal).await;
     }
     assert!(

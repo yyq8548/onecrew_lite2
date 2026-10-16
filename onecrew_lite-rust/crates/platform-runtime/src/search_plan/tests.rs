@@ -10,6 +10,17 @@ fn draft() -> SearchPlanEditorDraft {
 }
 
 #[test]
+fn export_discovery_search_plan_node_oracle() {
+    let Some(path) = std::env::var_os("ONECREW_DISCOVERY_SEARCH_PLAN_ORACLE") else { return; };
+    let mut scopes = vec![draft().scopes.remove(0)];
+    let mut varied = scopes[0].clone();
+    varied.arguments = serde_json::from_value(serde_json::json!({"2":"two","10":"ten","z":{"😀":1,"\u{e000}":2},"u64":18446744073709551615u64})).unwrap();
+    scopes.push(varied);
+    let cases: Vec<_> = scopes.into_iter().map(|scope| serde_json::json!({"scope":scope,"token":scope.approval_token().unwrap()})).collect();
+    std::fs::write(path, serde_json::to_vec_pretty(&cases).unwrap()).unwrap();
+}
+
+#[test]
 fn operation_plan_schema_has_no_provider_union_or_retired_fields() {
     let schema = serde_json::to_value(schemars::schema_for!(SearchPlanEditorDraft)).unwrap();
     let wire = serde_json::to_string(&schema).unwrap();

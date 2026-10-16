@@ -1,7 +1,7 @@
 //! Sealed entries and their search index provide surface-filtered queries.
 use super::error::RegistryBuildError;
 use crate::operation_registry::{
-    descriptor::{EntryId, RegistryEntry, SurfaceId},
+    descriptor::{EntryId, RegistryEntry, SurfaceId, SurfaceSet},
     search::SearchIndex,
     v2::{
         ToolGetFailure, ToolGetInput, ToolGetResult, ToolSearchInput, ToolSearchResult,
@@ -23,9 +23,38 @@ pub(crate) struct OperationRegistry {
 
 impl OperationRegistry {
     pub(super) fn from_entries(
-        entries: BTreeMap<EntryId, RegistryEntry>,
+        mut entries: BTreeMap<EntryId, RegistryEntry>,
         catalog: Arc<CapabilityCatalog>,
     ) -> Result<Self, RegistryBuildError> {
+        entries.retain(|id, entry| {
+            if onecrew_local_runtime::is_retired_operation(id.as_str()) {
+                return false;
+            }
+            match entry {
+                RegistryEntry::Playbook(playbook) => playbook.primary_operation_ids.iter()
+                    .chain(&playbook.supporting_operation_ids)
+                    .chain(playbook.recommended_steps.iter().flat_map(|step| &step.operation_ids))
+                    .all(|id| !onecrew_local_runtime::is_retired_operation(id.as_str())),
+                RegistryEntry::Operation(_) | RegistryEntry::ToolkitGuide(_) => true,
+            }
+        });
+        let active_toolkits = entries.values().filter_map(|entry| match entry {
+            RegistryEntry::Operation(operation) => Some(operation),
+            _ => None,
+        }).flat_map(|operation| operation.metadata.surfaces.iter()
+            .map(|surface| (operation.metadata.toolkit, surface)))
+            .collect::<BTreeSet<_>>();
+        entries.retain(|_, entry| {
+            let RegistryEntry::ToolkitGuide(guide) = entry else { return true; };
+            let surfaces = guide.metadata.surfaces.iter()
+                .filter(|surface| active_toolkits.contains(&(guide.metadata.toolkit, *surface)))
+                .collect::<Vec<_>>();
+            if surfaces.is_empty() {
+                return false;
+            }
+            guide.metadata.surfaces = SurfaceSet::new(surfaces).expect("nonempty active toolkit surfaces");
+            true
+        });
         let search_index =
             SearchIndex::build(&entries).map_err(|_| RegistryBuildError::SearchIndexBuild)?;
         Ok(Self {

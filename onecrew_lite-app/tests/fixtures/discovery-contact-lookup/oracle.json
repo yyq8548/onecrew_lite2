@@ -1,0 +1,78 @@
+{
+  "claim": {
+    "author_label": "Runner",
+    "call_number": 4,
+    "campaign_id": "bili-shoes",
+    "candidate_id": "d9e63e0e-30df-447f-bba5-a53022356533",
+    "expected_revision": 1,
+    "links": [],
+    "method": "search",
+    "native_author_id": "168310298",
+    "profile_ref": "dedicated",
+    "query": "\"Runner\" (contact OR email OR Telegram)",
+    "status": "reading",
+    "stop_code": null,
+    "username": null
+  },
+  "completed": {
+    "author_label": "Runner",
+    "call_number": 4,
+    "campaign_id": "bili-shoes",
+    "candidate_id": "d9e63e0e-30df-447f-bba5-a53022356533",
+    "expected_revision": 1,
+    "links": [
+      "https://runner.example/contact"
+    ],
+    "method": "search",
+    "native_author_id": "168310298",
+    "profile_ref": "dedicated",
+    "query": "\"Runner\" (contact OR email OR Telegram)",
+    "status": "completed",
+    "stop_code": null,
+    "username": null
+  },
+  "page": {
+    "call_number": 5,
+    "candidate_id": "d9e63e0e-30df-447f-bba5-a53022356533",
+    "captured_at": 1792087788,
+    "document_url": "https://runner.example/contact",
+    "markdown_excerpt": "Official: https://space.bilibili.com/168310298 Email runner@example.com",
+    "platform_account_id": "168310298",
+    "profile_ref": "dedicated",
+    "requested_url": "https://runner.example/contact",
+    "search_hit_id": "05474648-5c24-4426-aa36-2ab403189550",
+    "source_excerpt": "\"Runner\" (contact OR email OR Telegram)",
+    "source_url": "https://www.bilibili.com/video/BV1shoe00001",
+    "status": "completed",
+    "stop_code": null,
+    "title": "Runner contact",
+    "truncated": false
+  },
+  "page_claim": {
+    "call_number": 5,
+    "input": {
+      "campaign_id": "bili-shoes",
+      "candidate_id": "d9e63e0e-30df-447f-bba5-a53022356533",
+      "expected_revision": 1,
+      "profile_ref": "dedicated",
+      "requested_url": "https://runner.example/contact"
+    },
+    "search_hit_id": "05474648-5c24-4426-aa36-2ab403189550",
+    "source_url": "https://www.bilibili.com/video/BV1shoe00001"
+  },
+  "planned": {
+    "author_label": "Runner",
+    "call_number": 0,
+    "campaign_id": "bili-shoes",
+    "candidate_id": "d9e63e0e-30df-447f-bba5-a53022356533",
+    "expected_revision": 1,
+    "links": [],
+    "method": "search",
+    "native_author_id": "168310298",
+    "profile_ref": "dedicated",
+    "query": "\"Runner\" (contact OR email OR Telegram)",
+    "status": "planned",
+    "stop_code": null,
+    "username": null
+  }
+}

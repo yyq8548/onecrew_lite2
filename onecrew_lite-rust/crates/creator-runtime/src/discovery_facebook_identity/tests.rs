@@ -2,6 +2,36 @@ use crate::*;
 use serde_json::{Value, json};
 const CAMPAIGN: &str = "facebook-native-identity";
 
+#[tokio::test]
+async fn export_discovery_facebook_identity_targets_node_oracle() {
+    let Some(output) = std::env::var_os("ONECREW_FACEBOOK_IDENTITY_TARGETS_ORACLE_DIRECTORY") else { return; };
+    let output = std::path::PathBuf::from(output); std::fs::create_dir_all(&output).unwrap();
+    let (directory, owner, _) = setup();
+    let snapshot = |name: &str| { rusqlite::Connection::open(directory.path().join("crm.db")).unwrap().execute("VACUUM INTO ?1", [output.join(name).to_str().unwrap()]).unwrap(); };
+    let hit = next(&owner); snapshot("before.sqlite");
+    let identity_claim = owner.claim_discovery_facebook_identity(CAMPAIGN, 1, &hit).unwrap(); snapshot("identity-claimed.sqlite");
+    let identity = owner.finish_discovery_facebook_identity(FinishDiscoveryFacebookIdentityInput { native_identity:Some(native(&identity_claim)),claim:identity_claim.clone(),stop_code:None }).unwrap(); snapshot("identity-completed.sqlite");
+    let profile_claim = owner.claim_discovery_profile(CAMPAIGN, 1, &hit).unwrap();
+    let native_profile = json!({"adapter_version":"2.0.0","id":profile_claim.author_id,"display_name":"Native creator","follower_count":null,"follower_text":"1.3M followers","profile_url":profile_claim.author_url,"observed_profile_url":identity_claim.source_url.trim_end_matches('/'),"contact_links":[],"evidence_source":"native_profile_header_response"});
+    owner.finish_discovery_profile(FinishDiscoveryProfileInput { native_profile:Some(native_profile),claim:profile_claim,stop_code:None }).unwrap(); snapshot("profile-completed.sqlite");
+    let targets_claim = owner.claim_discovery_facebook_targets_async(CAMPAIGN.into(),1,hit.clone()).await.unwrap(); snapshot("targets-claimed.sqlite");
+    let urls = vec!["https://www.facebook.com/reel/1075265928641482".into(),"https://www.facebook.com/reel/2542739356215319".into()];
+    let targets = owner.finish_discovery_facebook_targets_async(targets_claim.clone(),Some(urls),None).await.unwrap(); snapshot("targets-completed.sqlite");
+    std::fs::write(output.join("oracle.json"),serde_json::to_vec_pretty(&json!({"campaign":CAMPAIGN,"hit":hit,"identity_claim":identity_claim,"identity":identity,"targets_claim":targets_claim,"targets":targets})).unwrap()).unwrap();
+}
+
+#[tokio::test]
+async fn export_discovery_facebook_content_node_oracle() {
+    let Some(output) = std::env::var_os("ONECREW_FACEBOOK_CONTENT_ORACLE_DIRECTORY") else { return; };
+    let output = std::path::PathBuf::from(output); std::fs::create_dir_all(&output).unwrap();
+    let (directory, owner, hit) = originals_ready().await;
+    let snapshot = |suffix: &str| { let db = rusqlite::Connection::open(directory.path().join("crm.db")).unwrap(); db.execute("VACUUM INTO ?1", [output.join(format!("{suffix}.sqlite")).to_str().unwrap()]).unwrap(); };
+    snapshot("before"); let first = owner.claim_discovery_content(CAMPAIGN, 1, &hit).unwrap(); snapshot("claimed");
+    owner.finish_discovery_content(FinishDiscoveryContentInput { claim: first, native_content: None, stop_code: Some("opencli_command_failed".into()) }).unwrap(); snapshot("failed");
+    let second = owner.claim_discovery_content(CAMPAIGN, 1, &hit).unwrap(); snapshot("second-claimed");
+    owner.finish_discovery_content(FinishDiscoveryContentInput { native_content: Some(json!({"post_id":"2542739356215319","author_id":second.author_id,"source_url":second.source_url,"text":"What's the Worst Tech Linus Still Uses?","text_truncated":false})),claim:second,stop_code:None }).unwrap(); snapshot("after");
+}
+
 fn setup() -> (tempfile::TempDir, CreatorRuntime, Vec<String>) {
     let dir = tempfile::tempdir().unwrap();
     let owner = CreatorRuntime::open(dir.path(), CreatorGateways::default()).unwrap();

@@ -30,6 +30,7 @@ import { SearchPlanCard } from "@mcp-ui/features/result-card/components/search-p
 import { CreatorSaveBatchCard } from "./components/creator-save-batch-card";
 import { CompletedResultSections } from "./components/completed-sections";
 import { DmFailureNotice } from "./components/dm-failure-notice";
+import { isRetiredSendingResult } from "./retired-sending";
 
 type ResultCardProps = {
   snapshot: ResultSnapshot;
@@ -52,6 +53,16 @@ type ResultCardProps = {
 };
 
 export function ResultCardView(props: ResultCardProps) {
+  if (isRetiredSendingResult(props.snapshot)) {
+    return <AppLocaleProvider locale={props.snapshot.locale}>
+      {props.dmFailure && <DmFailureNotice failure={props.dmFailure} />}
+      <ResultCardBody {...props} snapshot={{
+        ...props.snapshot,
+        pending_action: null,
+        binding: { ...props.snapshot.binding, view: { ...props.snapshot.binding.view, kind: "read_only" } },
+      }} />
+    </AppLocaleProvider>;
+  }
   return <AppLocaleProvider locale={props.snapshot.locale}>
     {props.recoveryFailure && <RecoveryNotice busy={props.busy} onRecover={props.onRecover} />}
     {props.dmFailure && <DmFailureNotice failure={props.dmFailure} />}

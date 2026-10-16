@@ -3,7 +3,6 @@ mod contract;
 mod definition;
 mod enrich;
 mod find;
-mod outreach;
 mod registry;
 
 use contract::{GuideInput, GuideOutput};
@@ -36,7 +35,7 @@ pub(super) fn register(builder: &mut RegistryBuilder) -> Result<(), RegistryBuil
             domain_id: "workflow-guides".into(),
             aliases: vec![
                 "workflow guidance".into(),
-                "creator discovery enrichment outreach".into(),
+                "creator discovery enrichment".into(),
             ],
             surfaces: SurfaceSet::new([SurfaceId::Full, SurfaceId::Compact, SurfaceId::Creators])
                 .expect("guide surfaces"),

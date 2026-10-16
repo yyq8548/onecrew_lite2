@@ -34,6 +34,7 @@ fn navigation(catalog: &CapabilityCatalog) -> Value {
                     .filter(|operation| {
                         operation.toolkit_id == toolkit.toolkit
                             && operation.supports(CatalogSurface::WebNavigation)
+                            && !crate::is_retired_operation(operation.id.as_str())
                     })
                     .map(|operation| {
                         json!({
@@ -125,10 +126,6 @@ fn production_navigation_matches_frozen_directory_content_and_order() {
     assert_eq!(
         *target,
         json!({"id":"onecrew.discovery.target.increase","title":"Adjust discovery Campaign target","summary":"Record an authenticated, idempotent decision to raise or lower the approved Campaign target while preserving frozen criteria, sources and read budget."})
-    );
-    target["title"] = json!("Increase discovery Campaign target");
-    target["summary"] = json!(
-        "Record an authenticated, idempotent decision to increase the approved Campaign target while preserving frozen criteria, sources and read budget."
     );
     let identity_ids = [
         "onecrew.discovery.identity.material.get",

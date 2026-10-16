@@ -737,8 +737,7 @@ fn profile_mcp_readback_preserves_native_receipt_without_provider_or_budget() {
     );
 }
 
-const EXPECTED_IDS: [&str; 19] = [
-    "onecrew.creator.content_reply.send",
+const EXPECTED_IDS: [&str; 18] = [
     "onecrew.creator.archive",
     "onecrew.creator.candidate.save",
     "onecrew.creator.candidate.batch.save",
@@ -760,7 +759,7 @@ const EXPECTED_IDS: [&str; 19] = [
 ];
 
 #[test]
-fn fixture_registers_exactly_the_19_creator_write_ids_on_current_surfaces() {
+fn fixture_registers_exactly_the_18_creator_write_ids_on_current_surfaces() {
     let directory = tempfile::tempdir().expect("temporary data directory");
     let platform = Arc::new(
         onecrew_local_runtime::LocalPlatform::open(directory.path()).expect("local platform"),
@@ -806,7 +805,6 @@ fn fixture_registers_exactly_the_19_creator_write_ids_on_current_surfaces() {
             "onecrew.creator.candidate.save",
             "onecrew.creator.candidate.batch.save",
             "onecrew.creator.contact_route.delete.confirm",
-            "onecrew.creator.content_reply.send",
             "onecrew.creator.delete",
             "onecrew.creator.group.delete",
         ])
@@ -902,33 +900,6 @@ fn safety_contracts_construct_with_owner_pointers_readbacks_and_typed_recovery()
         onecrew_local_runtime::LocalPlatform::open(directory.path()).expect("local platform"),
     );
     let registry = registry(platform);
-
-    let reply = operation(&registry, "onecrew.creator.content_reply.send");
-    assert_eq!(reply.effect, EffectClass::ExternalWrite);
-    assert_eq!(
-        reply.safety.confirmation.mode,
-        ConfirmationMode::AttendedPrompt
-    );
-    assert!(reply.safety.confirmation.parameter_pointers.is_empty());
-    assert_eq!(
-        reply.binding.output_class(),
-        crate::operation_registry::execution::BindingOutputClass::OwnerReview
-    );
-    assert!(
-        reply.input.document()["properties"]
-            .get("confirmed")
-            .is_none()
-    );
-    assert_eq!(
-        reply.safety.idempotency.mode,
-        IdempotencyMode::OwnerInputIdentity
-    );
-    assert_eq!(reply.safety.audit, AuditMode::OwnerRecorded);
-    assert_eq!(
-        reply.safety.readback.mode,
-        ReadbackMode::InlineOwnerVerified
-    );
-    assert!(reply.approval_request.is_some());
 
     let delete = operation(&registry, "onecrew.creator.contact_route.delete.confirm");
     assert_eq!(

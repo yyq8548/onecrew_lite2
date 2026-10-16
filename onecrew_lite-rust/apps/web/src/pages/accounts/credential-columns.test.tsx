@@ -11,7 +11,6 @@ import type { ServiceCredential } from "@/types";
 import ACCOUNTS_SOURCE from "../Accounts.tsx?raw";
 import {
   credentialRows,
-  resendCredentialColumns,
   youtubeCredentialColumns,
   type CredentialRow,
 } from "./credential-columns";
@@ -73,13 +72,6 @@ function youtubeTable(rows: CredentialRow[]) {
   );
 }
 
-function resendTable(rows: CredentialRow[]) {
-  return renderTable(
-    resendCredentialColumns({ t, locale, onTest: vi.fn(), onDelete: vi.fn() }),
-    rows,
-    t("credentials.empty.resend"),
-  );
-}
 
 describe("credential tables", () => {
   it("renders every YouTube column and pins the row's controls to the right", () => {
@@ -107,32 +99,10 @@ describe("credential tables", () => {
     expect(html.match(/flex:0 0 132px/g)).toHaveLength(2);
   });
 
-  it("renders every Resend column with its own test control and pinned actions", () => {
-    const html = resendTable(credentialRows(
-      [credential({
-        provider: "resend",
-        label: "team-mailbox",
-        metadata: { email_address: "team@example.com", display_name: "Team" },
-      })],
-      null,
-    ));
-
-    for (const column of ["identity", "senderEmail", "status", "recentStatus", "actions"] as const) {
-      expect(html).toContain(t(`credentials.columns.${column}`));
-    }
-    expect(html).toContain("team@example.com");
-    expect(html).toContain("Team");
-    expect(html).toContain(t("credentials.neverCalled"));
-    expect(html).toContain(`aria-label="${t("credentials.actions.testResend")}"`);
-    expect(html).toContain(`aria-label="${t("credentials.actions.delete")}"`);
-    expect(html).not.toContain(`aria-label="${t("credentials.actions.edit")}"`);
-    expect(html.match(/position:sticky/g)).toHaveLength(2);
-    expect(html.match(/flex:0 0 92px/g)).toHaveLength(2);
-  });
 
   it("shows a failing credential's status and recent error, and the masked local-only line", () => {
-    const html = resendTable(credentialRows(
-      [credential({ provider: "resend", last_error: "provider rejected the key" })],
+    const html = youtubeTable(credentialRows(
+      [credential({ last_error: "provider rejected the key" })],
       null,
     ));
     expect(html).toContain(t("credentials.statuses.needsAttention"));
@@ -152,7 +122,6 @@ describe("credential tables", () => {
 
   it("keeps the empty state of each credential list", () => {
     expect(youtubeTable([])).toContain(t("credentials.empty.youtube"));
-    expect(resendTable([])).toContain(t("credentials.empty.resend"));
   });
 
   it("keeps account management scoped to Gmail", () => {

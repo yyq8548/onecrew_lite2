@@ -184,19 +184,9 @@ fn fixed_playbook_eval_covers_the_complete_registered_use_case_set() {
             expected: "playbook.onecrew.creator-manual-batch-create",
         },
         Case {
-            query: "Save an email draft, send the confirmed revision, and verify its thread",
-            toolkits: &[ToolkitId::Email],
-            expected: "playbook.email.draft-and-send",
-        },
-        Case {
             query: "Sync inbound email, inspect threads, and record a Creator triage verdict",
             toolkits: &[ToolkitId::Email, ToolkitId::OneCrew],
             expected: "playbook.email.inbox-triage",
-        },
-        Case {
-            query: "Resolve a Creator contact target, prepare a direct message, send, and read status",
-            toolkits: &[ToolkitId::OneCrew],
-            expected: "playbook.onecrew.direct-message",
         },
         Case {
             query: "Search X creators, inspect profiles, and save one candidate as a Creator",
@@ -217,21 +207,6 @@ fn fixed_playbook_eval_covers_the_complete_registered_use_case_set() {
             query: "Find a Telegram community, discover administrators, and save one as a Creator",
             toolkits: &[ToolkitId::Telegram, ToolkitId::OneCrew],
             expected: "playbook.recipe.find-telegram-administrators",
-        },
-        Case {
-            query: "Resolve the best Creator contact route, draft an email, send, and verify the thread",
-            toolkits: &[ToolkitId::OneCrew, ToolkitId::Email],
-            expected: "playbook.recipe.email-best-route",
-        },
-        Case {
-            query: "Verify an X connection, resolve the Creator route, and send a confirmed message",
-            toolkits: &[ToolkitId::X, ToolkitId::OneCrew],
-            expected: "playbook.recipe.x-best-route",
-        },
-        Case {
-            query: "Verify an Instagram connection, resolve the Creator route, and send a confirmed message",
-            toolkits: &[ToolkitId::Instagram, ToolkitId::OneCrew],
-            expected: "playbook.recipe.instagram-best-route",
         },
         Case {
             query: "Sync email, record Creator verdicts, verify triage, and acknowledge resolved reminders",
@@ -359,7 +334,7 @@ fn fixed_standalone_operation_eval_preserves_recall_across_all_toolkits() {
 #[test]
 fn fixed_operation_eval_covers_every_registered_operation_at_recall_six() {
     let registry = production_registry();
-    assert_eq!(OPERATION_EVAL_CASES.len(), 159);
+    assert_eq!(OPERATION_EVAL_CASES.len(), 129);
 
     let expected_ids = OPERATION_EVAL_CASES
         .iter()

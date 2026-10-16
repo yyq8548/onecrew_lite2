@@ -368,6 +368,29 @@ impl StringFallback for String {
 }
 
 #[cfg(test)]
+#[test]
+fn export_public_platform_read_node_oracle() {
+    let directory = std::path::PathBuf::from(std::env::var("ONECREW_PUBLIC_READ_ORACLE_DIRECTORY").unwrap());
+    std::fs::create_dir_all(&directory).unwrap();
+    let mut timelines = Vec::new();
+    for (name, raw) in [
+        ("home", include_str!("../fixtures/home_timeline.json")),
+        ("search", include_str!("../fixtures/search_timeline.json")),
+        ("thread", include_str!("../fixtures/tweet_detail.json")),
+        ("list", include_str!("../fixtures/list_timeline.json")),
+    ] {
+        let input: Value = serde_json::from_str(raw).unwrap();
+        timelines.push(serde_json::json!({"name": name, "input": input, "expected": parse_timeline(&input)}));
+    }
+    let profiles = [
+        serde_json::json!({"rest_id":"7","core":{"name":"Core","screen_name":"core"},"avatar":{"image_url":"https://example.com/avatar"}}),
+        serde_json::json!({"rest_id":"8","legacy":{"followers_count":u64::MAX,"friends_count":"9,007,199,254,740,993","statuses_count":"+12","favourites_count":-1,"following":true,"followed_by":false,"can_dm":false,"entities":{"url":{"urls":[{"url":"https://t.co/a","expanded_url":"https://example.com","display_url":"example.com"}]},"description":{"urls":[{"expanded_url":"https://example.com","display_url":"example.com"},{"url":"mailto:public@example.com"}]}}},"is_blue_verified":true}),
+        serde_json::json!({"rest_id":"9","__typename":"UserUnavailable"}),
+    ].into_iter().map(|input| serde_json::json!({"input":input,"expected":parse_user(&input)})).collect::<Vec<_>>();
+    std::fs::write(directory.join("x.json"), serde_json::to_vec_pretty(&serde_json::json!({"timelines":timelines,"profiles":profiles})).unwrap()).unwrap();
+}
+
+#[cfg(test)]
 mod tests {
     use super::*;
 

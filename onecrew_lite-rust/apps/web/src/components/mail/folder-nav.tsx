@@ -1,10 +1,8 @@
 import {
   Archive,
   FilePenLine,
-  Files,
   Inbox,
   MailOpen,
-  PenLine,
   Send,
   Trash2,
   type LucideIcon,
@@ -98,70 +96,5 @@ export function MailFolderNav({
         );
       })}
     </nav>
-  );
-}
-
-export function ComposeButton({
-  collapsed,
-  disabled,
-  onClick,
-}: {
-  collapsed: boolean;
-  disabled: boolean;
-  onClick: () => void;
-}) {
-  const { t } = useTranslation("mail");
-  const button = (
-    <Button
-      variant="outline"
-      size={collapsed ? "icon" : "default"}
-      className={cn(collapsed ? "size-9" : "w-full")}
-      disabled={disabled}
-      aria-label={t("common.compose")}
-      onClick={onClick}
-    >
-      <PenLine />
-      {!collapsed && <span>{t("common.compose")}</span>}
-    </Button>
-  );
-  if (!collapsed) return button;
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span className="inline-flex rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" tabIndex={disabled ? 0 : undefined} aria-label={t("common.compose")}>
-          {button}
-        </span>
-      </TooltipTrigger>
-      <TooltipContent side="right">{t("common.compose")}</TooltipContent>
-    </Tooltip>
-  );
-}
-
-export function TemplatesButton({
-  collapsed,
-  onClick,
-}: {
-  collapsed: boolean;
-  onClick: () => void;
-}) {
-  const { t } = useTranslation("mail");
-  const button = (
-    <Button
-      variant="outline"
-      size={collapsed ? "icon" : "default"}
-      className={cn(collapsed ? "size-9" : "w-full")}
-      aria-label={t("templates.buttonLabel")}
-      onClick={onClick}
-    >
-      <Files />
-      {!collapsed && <span>{t("templates.button")}</span>}
-    </Button>
-  );
-  if (!collapsed) return button;
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>{button}</TooltipTrigger>
-      <TooltipContent side="right">{t("templates.buttonLabel")}</TooltipContent>
-    </Tooltip>
   );
 }

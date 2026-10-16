@@ -7,7 +7,6 @@ import {
   Check,
   ExternalLink,
   Fingerprint,
-  KeyRound,
   MoreHorizontal,
   ShieldCheck,
   Trash2,
@@ -43,8 +42,6 @@ import { browserConnectionReady } from "./browser-environment";
 import { PlatformTile } from "./shared";
 import { ProxyDialog } from "./proxy";
 import { ReloginDialog } from "./relogin-dialog";
-import { XChatPasscodeDialog } from "./x-chat-passcode-dialog";
-import { xChatPasscodeStatusView } from "./x-chat-passcode-state";
 
 const sourceLabel = (p: Platform, t: TFunction<"accounts">) =>
   p === "telegram" ? t("accountTable.source.telegram") : t("accountTable.source.browser");
@@ -61,7 +58,6 @@ function RowActions({ account, onChanged, browserStatus }: { account: Account; o
   const { t } = useTranslation("accounts");
   const [proxyOpen, setProxyOpen] = useState(false);
   const [reloginOpen, setReloginOpen] = useState(false);
-  const [xChatOpen, setXChatOpen] = useState(false);
   const [disconnectOpen, setDisconnectOpen] = useState(false);
   const isBrowser = account.platform === "x" || account.platform === "instagram";
   const browserReady = browserConnectionReady(browserStatus);
@@ -117,11 +113,6 @@ function RowActions({ account, onChanged, browserStatus }: { account: Account; o
               <ExternalLink className="size-4" /> {t("accountTable.actions.relogin")}
             </DropdownMenuItem>
           )}
-          {account.platform === "x" && (
-            <DropdownMenuItem onClick={() => setXChatOpen(true)}>
-              <KeyRound className="size-4" /> {t("accountTable.actions.xChat")}
-            </DropdownMenuItem>
-          )}
           <DropdownMenuItem onClick={() => setProxyOpen(true)}>
             <ShieldCheck className="size-4" /> {t("accountTable.actions.proxy")}
           </DropdownMenuItem>
@@ -140,15 +131,6 @@ function RowActions({ account, onChanged, browserStatus }: { account: Account; o
           onOpenChange={setReloginOpen}
           onDone={onChanged}
           browserStatus={browserStatus}
-        />
-      )}
-      {account.platform === "x" && (
-        <XChatPasscodeDialog
-          key={xChatOpen ? `open-${account.x_chat_passcode_status}` : "closed"}
-          account={account}
-          open={xChatOpen}
-          onOpenChange={setXChatOpen}
-          onChanged={onChanged}
         />
       )}
       <Dialog open={disconnectOpen} onOpenChange={setDisconnectOpen}>
@@ -222,25 +204,12 @@ export function accountColumns(
       id: "status",
       header: t("accountTable.columns.status"),
       enableSorting: false,
-      cell: ({ row }) => {
-        const xChat = xChatPasscodeStatusView(row.original.x_chat_passcode_status, t);
-        const xChatTone = xChat.tone === "success"
-          ? tone.success
-          : xChat.tone === "warning"
-            ? tone.warning
-            : xChat.tone === "destructive"
-              ? "bg-destructive text-white"
-              : tone.muted;
+      cell: () => {
         return (
           <div className="flex flex-wrap gap-1.5">
             <Badge className={cn("border-transparent", tone.success)}>
               <Check className="mr-1 size-3" /> {t("accountTable.ready")}
             </Badge>
-            {platform === "x" && (
-              <Badge variant="secondary" className={cn("border-transparent", xChatTone)}>
-                {xChat.label}
-              </Badge>
-            )}
           </div>
         );
       },

@@ -27,7 +27,8 @@ export function creatorBatchOutcomeRows(statuses: CreatorSaveBatchOutcome["statu
 export function creatorBatchResultSnapshot(statuses?: CreatorSaveBatchOutcome["status"][]): ResultSnapshot {
   const rows = creatorBatchOutcomeRows(statuses); const base = creatorBatchSnapshot(rows.length);
   const unknown = rows.some(row => row.status === "unknown"); const partial = rows.some(row => row.status === "failed" || row.status === "not_run");
-  return { ...base, pending_action: null, completed_sections_count: 1, binding: { ...base.binding, revision: base.binding.revision + 1 },
+  base.binding.revision++;
+  return { ...base, pending_action: null, completed_sections_count: 1, binding: { ...base.binding },
     presentation: { ...base.presentation, kind: "creator_save_batch_outcome", sections: [{ kind: "creator_save_rows", rows }] },
     state: unknown ? { kind: "unknown", code: "creator_save_commit_unknown", summary: "存在未知结果，请逐项核对。" } : partial ? { kind: "failed", code: "creator_save_partial_failure", summary: "部分 Creator 未能保存。", retryable: false } : { kind: "resolved", code: "creator_save_completed", summary: "所选 Creator 已保存。" },
     batch: { outcomes: rows.map(row => ({ call_id: row.row_id, operation_id: "onecrew.creator.candidate.save", summary: row.status, resource_refs: row.creator_id ? [{ kind: "creator", id: row.creator_id, label: row.display_name }] : [], disposition: row.status === "saved" ? { kind: "succeeded" } : row.status === "failed" || row.status === "unknown" ? { kind: row.status, code: row.failure_code! } : { kind: "not_run", reason: row.status } })) },

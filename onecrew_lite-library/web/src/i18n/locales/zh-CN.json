@@ -15,6 +15,7 @@
   "account": {
     "login": "登录",
     "loginTitle": "登录 onecrew_lite",
+    "unifiedSignIn": "请先在 onecrew_lite 完成登录，再重新打开资料库。",
     "loginDescription": "登录后访问你的表格和连接。",
     "loginSuccess": "登录成功",
     "returningToApp": "即将返回应用…",
@@ -42,6 +43,8 @@
     "tryAgain": "重试",
     "openLogin": "打开登录",
     "unavailable": "账号服务不可用。",
+    "reauthorizationRequired": "账号授权已失效，请重新授权。现有表格和数据保留。",
+    "reauthorize": "重新授权",
     "loginError": "无法开始登录。",
     "logoutError": "无法退出登录，请重试。",
     "copyError": "无法复制诊断信息。",

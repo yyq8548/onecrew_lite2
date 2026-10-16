@@ -1,5 +1,7 @@
 import type { App } from "@modelcontextprotocol/ext-apps/react";
 import type { CallToolRequest, CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import { parseApplicationJson, stringifyApplicationJson } from "@onecrew/runtime-contracts/json";
+import { wireResultInput } from "@onecrew/runtime-contracts/result-wire";
 
 import {
   parseResultStateFailure,
@@ -55,9 +57,15 @@ export async function callResultState(app: App, input: ResultStateInput): Promis
   } catch {
     throw new ResultClientError({ kind: "transport" });
   }
-  const output = parseResultStateOutput(result.structuredContent);
+  const text = result.content.find(item => item.type === "text");
+  let decoded: unknown = result.structuredContent;
+  if (text?.type === "text") {
+    try { decoded = parseApplicationJson(text.text); }
+    catch { throw new ResultClientError({ kind: "invalid_response", reason: "unrecognized_root" }); }
+  }
+  const output = parseResultStateOutput(decoded);
   if (output && result.isError !== true) return output;
-  const failure = parseResultStateFailure(result.structuredContent);
+  const failure = parseResultStateFailure(decoded);
   if (failure) throw new ResultClientError({ kind: "server", failure });
   const diagnostics = resultResponseDiagnostics(result);
   throw new ResultClientError({
@@ -87,7 +95,7 @@ export async function reviseSearchPlan(app: App, binding: ResultBinding, patch: 
   const snapshot = requireSnapshot(await callResultState(app, { action: "revise_search_plan", binding, patch }));
   if (snapshot.binding.result_ref !== binding.result_ref || snapshot.binding.origin !== binding.origin ||
       snapshot.binding.fingerprint !== binding.fingerprint || snapshot.binding.view.identity !== binding.view.identity ||
-      snapshot.binding.revision !== binding.revision + 1 || snapshot.state.kind !== "available" ||
+      BigInt(snapshot.binding.revision) !== BigInt(binding.revision) + 1n || snapshot.state.kind !== "available" ||
       snapshot.presentation.kind !== "search_plan_editor" || snapshot.pending_action?.kind !== "search_plan") {
     throw new ResultClientError({ kind: "invalid_response", reason: "snapshot_consistency_rejected" });
   }
@@ -114,10 +122,12 @@ function requireSnapshot(output: ResultStateOutput): ResultSnapshot {
 }
 
 function callResultStateTool(app: App, input: ResultStateInput): Promise<CallToolResult> {
+  const normalized = wireResultInput.parse(input);
+  const requiresLossless = (value: unknown): boolean => typeof value === "bigint" || (typeof value === "object" && value !== null && Object.values(value).some(requiresLossless));
   // MCP Apps proxies this descriptor name to the App's originating server.
   // Namespacing belongs to the Host's model-facing surface, not App calls.
   return app.callServerTool(
-    { name: RESULT_STATE_TOOL_NAME, arguments: input as CallToolRequest["params"]["arguments"] },
+    { name: RESULT_STATE_TOOL_NAME, arguments: requiresLossless(normalized) ? { application_json: stringifyApplicationJson(normalized) } : normalized as CallToolRequest["params"]["arguments"] },
     { timeout: resultStateTimeoutMs(input) },
   );
 }

@@ -17,7 +17,6 @@ import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { PLATFORM_LABEL } from "@/lib/creator";
 import type { Platform } from "@/types";
 import {
@@ -32,11 +31,6 @@ import { Stepper } from "./shared";
 import { BrowserCookieImportAlert } from "./browser-cookie-import-alert";
 import { browserOperationErrorMessage } from "./browser-environment";
 import { ProxyFields, toProxyConfig, type ProxyProbe } from "./proxy";
-import {
-  canContinueFromProfileStep,
-  type XChatConnectionChoice,
-  xChatConnectionPayload,
-} from "./x-chat-passcode-state";
 
 const randomProfileName = (p: Platform) =>
   `${p === "instagram" ? "ig" : "x"}-${Math.random().toString(36).slice(2, 8)}`;
@@ -62,10 +56,6 @@ export function CreateProfileWizard({
   ] as const;
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
-  const [xChatPreference, setXChatPreference] = useState<XChatConnectionChoice>(
-    platform === "x" ? null : "disabled",
-  );
-  const [passcode, setPasscode] = useState("");
   const [type, setType] = useState("HTTP");
   const [ip, setIp] = useState("");
   const [port, setPort] = useState("");
@@ -188,12 +178,7 @@ export function CreateProfileWizard({
   }
 
   const canNext = [
-    canContinueFromProfileStep({
-      platform,
-      profileName: name,
-      preference: xChatPreference,
-      passcode,
-    }),
+    name.trim().length > 0,
     ip.trim().length > 0 && port.trim().length > 0,
     browserOpened,
     extracted !== null,
@@ -216,7 +201,6 @@ export function CreateProfileWizard({
       if (!flowId) {
         setBusy(true);
         try {
-          const xChat = xChatConnectionPayload({ platform, preference: xChatPreference, passcode }, t);
           const prepared = await prepareOperatorConnection({
             platform,
             intent: "connect",
@@ -229,7 +213,6 @@ export function CreateProfileWizard({
             flowId: prepared.flow_id,
             profileName: name.trim(),
             proxy: toProxyConfig(type, ip, port, user, pass),
-            ...xChat,
           });
         } catch (error) {
           toast.error(t("wizard.toasts.prepareFailed"), { description: String(error) });
@@ -239,12 +222,10 @@ export function CreateProfileWizard({
         setBusy(false);
       } else {
         try {
-          const xChat = xChatConnectionPayload({ platform, preference: xChatPreference, passcode }, t);
           await invoke("onecrew_operator_account_connection_configure_browser_in_app", {
             flowId,
             profileName: name.trim(),
             proxy: toProxyConfig(type, ip, port, user, pass),
-            ...xChat,
           });
         } catch (error) {
           toast.error(t("wizard.toasts.configureFailed"), { description: String(error) });
@@ -279,55 +260,6 @@ export function CreateProfileWizard({
                 {t("wizard.profileDescription")}
               </p>
             </div>
-            {platform === "x" && (
-              <div className="space-y-3">
-                <Label>{t("wizard.xChatQuestion")}</Label>
-                <RadioGroup
-                  value={xChatPreference ?? undefined}
-                  onValueChange={(value) => {
-                    const preference = value as Exclude<XChatConnectionChoice, null>;
-                    setXChatPreference(preference);
-                    if (preference === "disabled") setPasscode("");
-                  }}
-                  className="gap-2"
-                >
-                  <Label className="flex cursor-pointer items-start gap-3 rounded-lg border p-3 font-normal">
-                    <RadioGroupItem value="enabled" className="mt-0.5" />
-                    <span>
-                      <span className="block font-medium">{t("wizard.xChatEnabled")}</span>
-                      <span className="mt-0.5 block text-xs text-muted-foreground">
-                        {t("wizard.xChatEnabledDescription")}
-                      </span>
-                    </span>
-                  </Label>
-                  <Label className="flex cursor-pointer items-start gap-3 rounded-lg border p-3 font-normal">
-                    <RadioGroupItem value="disabled" className="mt-0.5" />
-                    <span>
-                      <span className="block font-medium">{t("wizard.xChatDisabled")}</span>
-                      <span className="mt-0.5 block text-xs text-muted-foreground">
-                        {t("wizard.xChatDisabledDescription")}
-                      </span>
-                    </span>
-                  </Label>
-                </RadioGroup>
-                {xChatPreference === "enabled" && (
-                  <div className="space-y-2">
-                    <Label htmlFor="passcode">{t("wizard.passcodeLabel")}</Label>
-                    <Input
-                      id="passcode"
-                      type="password"
-                      autoComplete="new-password"
-                      value={passcode}
-                      onChange={(e) => setPasscode(e.target.value)}
-                      placeholder={t("wizard.passcodePlaceholder")}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      {t("wizard.passcodeHint")}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
           </>
         )}
 

@@ -477,3 +477,31 @@ mod facebook_contact_navigation_tests {
         }
     }
 }
+
+#[cfg(test)]
+#[test]
+fn export_discovery_saved_profiles_node_oracle() {
+    let Some(path) = std::env::var_os("ONECREW_DISCOVERY_SAVED_PROFILES_NODE_ORACLE") else { return; };
+    let mut cases = Vec::new();
+    let facebook = serde_json::json!({"adapter_version":"1.0.0","id":"12345","display_name":"Creator","follower_count":null,"follower_text":"2K followers","profile_url":"https://www.facebook.com/profile.php?id=12345","evidence_source":"visible_numeric_profile_header"});
+    for (key,value) in [
+        ("follower_count", serde_json::Value::Null),
+        ("follower_count", serde_json::json!(2000)),
+        ("contact_links", serde_json::json!(["https://www.facebook.com/profile.php?id=12345&sk=about_contact_and_basic_info"])),
+        ("contact_links", serde_json::json!(["https://www.facebook.com/profile.php?id=999&sk=about_contact_and_basic_info"])),
+        ("observed_profile_url", serde_json::Value::Null),
+    ] {
+        let mut profile = facebook.clone(); profile[key] = value;
+        cases.push(serde_json::json!({"platform":"facebook","author":"12345","source":"https://www.facebook.com/profile.php?id=12345","profile":profile,"valid":valid_facebook_profile(&profile)}));
+    }
+    let mut counted = facebook.clone(); counted["follower_text"] = serde_json::json!("2,000 followers"); counted["follower_count"] = serde_json::json!(2000);
+    cases.push(serde_json::json!({"platform":"facebook","author":"12345","source":"https://www.facebook.com/profile.php?id=12345","profile":counted,"valid":valid_facebook_profile(&counted)}));
+    let modern = serde_json::json!({"adapter_version":"2.0.0","id":"12345","display_name":"Creator","follower_count":null,"follower_text":"2K followers","profile_url":"https://www.facebook.com/profile.php?id=12345","evidence_source":"native_profile_header_response","observed_profile_url":"https://www.facebook.com/creator.page","contact_links":["https://www.facebook.com/creator.page/directory_contact_info"]});
+    cases.push(serde_json::json!({"platform":"facebook","author":"12345","source":"https://www.facebook.com/creator.page","profile":modern,"valid":valid_facebook_profile(&modern)}));
+    let reddit = serde_json::json!({"adapter_version":"1.0.0","id":"t2_abc","username":"Creator","biography":"Public biography","follower_count":null,"profile_url":"https://www.reddit.com/user/Creator/","evidence_source":"native_profile_response"});
+    for key in [None,Some("follower_count"),Some("profile_url"),Some("evidence_source")] {
+        let mut profile = reddit.clone(); if let Some(key) = key { profile.as_object_mut().unwrap().remove(key); }
+        cases.push(serde_json::json!({"platform":"reddit","author":"t2_abc","source":"https://www.reddit.com/user/Creator/","profile":profile,"valid":valid_reddit_profile(&profile)}));
+    }
+    std::fs::write(path,serde_json::to_vec_pretty(&cases).unwrap()).unwrap();
+}
