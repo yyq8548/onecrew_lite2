@@ -21,7 +21,7 @@ import type { NativeOpenCliCommentSource } from "./native-comments.ts";
 import { bilibiliProfilePlan, instagramProfilePlan, tiktokProfilePlan, twitterIdentityPlan, twitterProfilePlan } from "./profiles.ts";
 import { bilibiliLanguagePlan, instagramCommentLanguagePlan, instagramRecentOriginalsPlan, tiktokLanguagePlan, tiktokRecentLanguagePlan } from "./language.ts";
 import { twitterPostIdentityPlan, twitterPostContentPlan, twitterLanguagePlan, twitterRecentContentPlan } from "./twitter-posts.ts";
-import { bilibiliVideoPlan } from "./bilibili-video.ts";
+import { bilibiliVideoPlan, bilibiliVideoPagePlan } from "./bilibili-video.ts";
 import { weiboProfilePlan, weiboPostPlan, weiboCommentsPlan } from "./weibo.ts";
 import { pinterestProfilePlan, pinterestContentPlan } from "./pinterest.ts";
 import { redditProfilePlan, redditRecentPlan, redditLanguagePlan, redditPostPlan } from "./reddit.ts";
@@ -247,7 +247,7 @@ export class OpenCliReader {
   facebookReelContent(binding: VerifiedOpenCliBrowserBinding, authorId: string, source: string) { return this.#native(binding, facebookReelPlan(authorId, source)); }
   facebookLanguageSample(binding: VerifiedOpenCliBrowserBinding, authorId: string, source: string) { return this.#native(binding, facebookLanguagePlan(authorId, source)); }
   facebookNativeOriginal(binding: VerifiedOpenCliBrowserBinding, authorId: string, base: string, source: string) { return this.#native(binding, facebookNativeOriginalPlan(authorId, base, source)); }
-  bilibiliVideoEvidence(binding: VerifiedOpenCliBrowserBinding, sourceUrl: string, authorId: string) { return this.#native(binding, bilibiliVideoPlan(sourceUrl, authorId)); }
+  bilibiliVideoEvidence(binding: VerifiedOpenCliBrowserBinding, sourceUrl: string, authorId: string) { return this.#native(binding, bilibiliVideoPagePlan(sourceUrl, authorId)); }
   tiktokRecentLanguageUrls(binding: VerifiedOpenCliBrowserBinding, username: string, authorId: string) { return this.#native(binding, tiktokRecentLanguagePlan(username, authorId)); }
   tiktokLanguageSample(binding: VerifiedOpenCliBrowserBinding, username: string, authorId: string, source: string) { return this.#native(binding, tiktokLanguagePlan(username, authorId, source)); }
   bilibiliLanguageSample(binding: VerifiedOpenCliBrowserBinding, mid: string, source: string) { return this.#native(binding, bilibiliLanguagePlan(mid, source)); }

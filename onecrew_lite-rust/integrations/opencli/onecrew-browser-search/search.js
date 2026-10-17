@@ -9,7 +9,7 @@ const root = new URL('../../', import.meta.resolve('@jackwener/opencli'));
 const metadata = JSON.parse(await readFile(new URL('package.json', root), 'utf8'));
 if (metadata.version !== '1.8.8') throw new Error('OneCrew search requires OpenCLI 1.8.8');
 for (const [site, name] of [
-  ['twitter','search'],
+  ['youtube','search'], ['twitter','search'],
   ['linkedin','people-search'], ['facebook','search'], ['zhihu','search'],
   ['douyin','search'], ['weibo','search'], ['tieba','search'],
   ['linkedin-learning','search'],

@@ -43,7 +43,7 @@ export function instagramSearchPageState(query = null, startedAt = 0) {
   if (/^\/accounts\/login/.test(location.pathname)) return { stop: 'auth' };
   if (/^\/(challenge|checkpoint)\//.test(location.pathname)) return { stop: 'risk' };
   if (location.pathname !== '/explore/') return { stop: 'read_redirect' };
-  const input = document.querySelector('input[aria-label="Search input"]');
+  const input = document.querySelector('input[aria-label="Search input"], input[aria-label="搜索输入"]');
   if (!input || !input.getClientRects().length) return { ready: false };
   if (query === null) return { ready: true };
   const keyword = [...document.querySelectorAll('a[href]')].some(anchor => {
@@ -81,11 +81,12 @@ export async function readInstagramSearch(page, args, ownPage) {
     await owned.goto('https://www.instagram.com/explore/');
     await waitForInstagramSearch(owned);
     if (!await owned.startNetworkCapture('/api/graphql')) throw new Error('ONECREW_INSTAGRAM_SEARCH_INVALID');
-    await owned.click('input[aria-label="Search input"]');
+    const inputSelector = 'input[aria-label="Search input"], input[aria-label="搜索输入"]';
+    await owned.click(inputSelector);
     const rawTiming = await owned.evaluate('({ startedAt: performance.now() })');
     const timing = rawTiming && 'session' in Object(rawTiming) && 'data' in Object(rawTiming) ? rawTiming.data : rawTiming;
     if (!Number.isFinite(timing?.startedAt) || timing.startedAt <= 0) throw new Error('ONECREW_INSTAGRAM_SEARCH_INVALID');
-    const filled = await owned.fillText('input[aria-label="Search input"]', query);
+    const filled = await owned.fillText(inputSelector, query);
     if (filled?.verified !== true) throw new Error('ONECREW_INSTAGRAM_SEARCH_INVALID');
     await waitForInstagramSearch(owned, query, timing.startedAt);
     // 页面渲染完本次结果后再读取一次捕获，避免清空仍在接收正文的请求。

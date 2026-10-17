@@ -18,6 +18,9 @@ test("真实数据库恢复核对停止时间与代码，保留计费且禁止�
     for (const [id, status, code, budget] of [
       ["repair", "technical_stop", "provider_response_invalid_json", 2],
       ["spent", "technical_stop", "provider_response_invalid_json", 1],
+      ["connection-daemon", "technical_stop", "opencli_daemon_unavailable", 2],
+      ["connection-extension", "technical_stop", "opencli_extension_unavailable", 2],
+      ["connection-profile", "technical_stop", "opencli_profile_unavailable", 2],
       ["auth", "unauthorized", "opencli_auth_required", 2],
       ["risk", "risk_control_stop", "opencli_risk_control", 2],
     ] as const) {
@@ -27,12 +30,12 @@ test("真实数据库恢复核对停止时间与代码，保留计费且禁止�
       repository.finishSearch(claim, status, code, []);
       const run = repository.getPlan(id).platform_runs[0]!;
       const checkpoint = { expected_stop_code: code, expected_stopped_at: run.updated_at };
-      if (id === "repair") {
+      if (id === "repair" || id.startsWith("connection-")) {
         assert.throws(() => repository.claimSearch(id, 1, "youtube", "work", true, { ...checkpoint, expected_stopped_at: run.updated_at - 1 }), /checkpoint_changed/);
         assert.throws(() => repository.claimSearch(id, 1, "youtube", "other", true, checkpoint), /outside_scope/);
         assert.equal(repository.getPlan(id).used_calls, 1);
         const next = repository.claimSearch(id, 1, "youtube", "work", true, checkpoint);
-        assert.equal(next.query, "second");
+        assert.equal(next.query, id.startsWith("connection-") ? "first" : "second");
         assert.equal(next.callNumber, 2);
         assert.throws(() => repository.claimSearch(id, 1, "youtube", "work", true, checkpoint), /budget_exhausted/);
         repository.finishSearch(next, "completed", null, []);

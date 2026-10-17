@@ -98,7 +98,21 @@ export function observeLinkedinProfile(source, handle, contactOverlay = false) {
   if (ids.size > 1) throw new Error('ONECREW_LINKEDIN_INVALID');
   if (ids.size === 0) return null;
   const paragraphs = [...header.querySelectorAll('p')].filter(visible).map(node => node.textContent.trim());
-  const count = paragraphs.find(text => /^(?:\d[\d,.\s]*|[\d.]+[KMB]) followers?$/i.test(text)) || '';
+  const isFollowerText=text=>/^(?:\d[\d,.\s]*|[\d.]+[KMB]) followers?$/i.test(text);
+  const followerTexts=new Set(paragraphs.filter(isFollowerText));
+  if(followerTexts.size===0) {
+    const activityLabels=new Set(['Activity','动态','動態','アクティビティ','활동','Actividad','Activité','Aktivitäten','Attività','Atividades','Activiteiten','Aktivitet','Aktywność','Aktivita','Faaliyet','Действия','Діяльність','Aktivitas','Hoạt động','النشاط']);
+    const activity=[...main.querySelectorAll('section')].find(section=>{
+      const headings=[...section.querySelectorAll('h2')];
+      return headings.length===1&&activityLabels.has(headings[0].textContent.trim());
+    });
+    for(const node of activity?[...activity.querySelectorAll('p')].filter(visible):[]) {
+      const value=node.textContent.trim();
+      if(isFollowerText(value)) followerTexts.add(value);
+    }
+  }
+  if(followerTexts.size>1) throw new Error('ONECREW_LINKEDIN_INVALID');
+  const count=[...followerTexts][0]||'';
   // A stable section anchor is preferred. Translated headings are locators only;
   // the paragraph text remains original and is never synthesized or translated.
   const aboutLabels = new Set(['About','关于','關於','概要','소개','Acerca de','À propos','Info','Informazioni','Sobre','Over','Om','O mnie','O mně','Hakkında','О себе','Про себе','Tentang','Giới thiệu','نبذة']);

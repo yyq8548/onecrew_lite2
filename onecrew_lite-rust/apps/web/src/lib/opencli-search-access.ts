@@ -7,12 +7,11 @@
 export type OpenCliSearchAccess = "login_required" | "extra_entitlement" | "public_browser" | "public_read" | "conditional";
 
 const requiresLogin = new Set([
-  "bilibili", "instagram", "twitter", "linkedin", "facebook",
-  "douyin", "weibo", "jike", "linux-do",
+  "bilibili", "instagram", "twitter", "linkedin", "facebook", "pinterest", "pinterest-pins", "pinterest-boards",
+  "youtube", "douyin", "weibo", "jike", "linux-do",
   "linkedin-learning", "douban-books", "douban-music",
 ]);
 const publicBrowser = new Set([
-  "youtube", "pinterest", "pinterest-pins", "pinterest-boards",
   "weixin", "hupu", "google", "google-images", "duckduckgo", "yahoo",
   "dribbble-shots", "dribbble-designers",
 ]);

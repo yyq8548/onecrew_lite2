@@ -20,7 +20,8 @@ import { readVaultMasterKey, readVaultSecret } from "../src/storage/vault-reader
 let oracle: string;
 before(async () => {
   oracle = await mkdtemp(fileURLToPath(new URL("../../.scratch/sqlite-staging-oracle-", import.meta.url)));
-  await promisify(execFile)(join(homedir(), ".cargo", "bin", process.platform === "win32" ? "cargo.exe" : "cargo"), ["test", "--locked", "-p", "onecrew-creator-runtime", "export_schema90_node_compatibility_fixture", "--", "--nocapture"], {
+  const cargo = process.env.CARGO ?? join(homedir(), ".cargo", "bin", process.platform === "win32" ? "cargo.exe" : "cargo");
+  await promisify(execFile)(cargo, ["test", "--locked", "-p", "onecrew-creator-runtime", "export_schema90_node_compatibility_fixture", "--", "--nocapture"], {
     cwd: fileURLToPath(new URL("../../onecrew_lite-rust", import.meta.url)), timeout: 600_000, maxBuffer: 1024 * 1024, windowsHide: true,
     env: { ...process.env, CARGO_INCREMENTAL: "0", ONECREW_SCHEMA_ORACLE_DIRECTORY: oracle },
   });

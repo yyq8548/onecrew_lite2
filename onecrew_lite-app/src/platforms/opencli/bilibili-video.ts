@@ -28,3 +28,13 @@ export function bilibiliVideoPlan(sourceUrl: string, authorId?: string) {
     return { bvid, author_id: author[2]!, author: author[1]!, source_url: sourceUrl, title, description, description_truncated: bytes < Buffer.byteLength(raw), requires_payment, pay_preview, payment_status_known: true };
   } } satisfies ReviewedOpenCliRead<unknown>;
 }
+
+export function bilibiliVideoPagePlan(sourceUrl: string, authorId: string) {
+  const native = bilibiliVideoPlan(sourceUrl, authorId);
+  const bvid = sourceUrl.slice(31);
+  return { site: "onecrew-bilibili-video", name: "read", args: ["-f", "json", "--", bvid, authorId], addons: ["onecrew-bilibili-video", "onecrew-browser-search"], maximumBytes: native.maximumBytes,
+    decode(value: unknown) {
+      return { ...native.decode(value), payment_status_known: false };
+    },
+  } satisfies ReviewedOpenCliRead<unknown>;
+}

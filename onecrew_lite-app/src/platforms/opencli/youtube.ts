@@ -51,7 +51,7 @@ export function youtubeVideoPlan(video: string) {
 }
 export function youtubeSearchPlan(query: string, limit: number) {
   if (!query.isWellFormed() || !query.trim() || [...query].length > 160 || /\p{Cc}/u.test(query) || !Number.isInteger(limit) || limit < 1 || limit > 50) inputError();
-  return { site: "youtube", name: "search", args: ["--limit", String(limit), "-f", "json", "--", query], addons: [], emptyOn66: () => [] as z.infer<typeof schema>[], decode(value: unknown) { return parsed(z.array(schema).max(50), value); } } satisfies ReviewedOpenCliRead<unknown>;
+  return { site: "onecrew-search-youtube", name: "search", args: ["--limit", String(limit), "-f", "json", "--", query], addons: ["onecrew-browser-search"], emptyOn66: () => [] as z.infer<typeof schema>[], decode(value: unknown) { return parsed(z.array(schema).max(50), value); } } satisfies ReviewedOpenCliRead<unknown>;
 }
 const schema = z.object({ rank: z.number().int().nonnegative().max(4294967295).nullable().default(null), title: text.default(""), channel: text.default(""), views: text.default(""), duration: text.default(""), published: text.default(""), url: text }).refine(row => youtubeUrl(row.url) !== null && !!row.title.trim() && [...row.title].length <= 500 && !/\p{Cc}/u.test(row.title) && [...row.channel].length <= 200 && !/\p{Cc}/u.test(row.channel));
 export function youtubeTranscriptPlan(video: string) {

@@ -27,7 +27,14 @@ export function classifyOpenCliFailure(exitCode: number | null, stdout: Uint8Arr
   return new OpenCliError("opencli_command_failed", exitCode);
 }
 function classifyNativeReadFailure(output: string): OpenCliError | null {
+  if (output.includes("onecrew_youtube_search_bootstrap_timeout")) return new OpenCliError("opencli_timeout");
   const stages: readonly (readonly [string, OpenCliErrorCode])[] = [
+    ["onecrew_youtube_search_source_invalid", "provider_response_redirected"],
+    ["youtube search bootstrap data not found", "provider_response_shape_invalid"],
+    ["youtube search returned malformed result rows", "provider_response_shape_invalid"],
+    ["youtube search repeated a continuation cursor", "provider_response_shape_invalid"],
+    ["youtube search pagination stopped before satisfying the requested limit", "provider_response_shape_invalid"],
+    ["youtube search http", "provider_response_http_error"],
     ["onecrew_instagram_search_read_http_404", "provider_endpoint_not_found"],
     ["onecrew_instagram_search_read_http", "provider_response_http_error"],
     ["onecrew_instagram_search_read_redirect", "provider_response_redirected"],

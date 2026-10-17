@@ -1,8 +1,10 @@
 # 另一台电脑接手：onecrew_lite 迁移
 
-本分支已经包含 TypeScript/Node.js 统一程序实现。请先读 [当前交接、验证和下一步计划](14-handoff-status-and-next-plan.md)。当前保留范围见 [产品范围](08-current-scope.md)，接口见 [统一 HTTP 合同](10-unified-http-contract.md)，精确候选和实证见 [Windows 验证记录](11-windows-verification.md)。源码交付后按用户要求暂停，后续实现等待明确恢复。
+本分支已经包含 TypeScript/Node.js 统一程序实现。请先读 [当前交接、验证和下一步计划](14-handoff-status-and-next-plan.md)。当前保留范围见 [产品范围](08-current-scope.md)，接口见 [统一 HTTP 合同](10-unified-http-contract.md)，精确候选和实证见 [Windows 验证记录](11-windows-verification.md)、[Mac ARM 验证记录](15-mac-arm-verification.md)及 [Rust 搜索行为同步验收](18-rust-search-alignment.md)。用户已于 2026-10-16 恢复开发，继续未完成的开发和验收。
 
 **当前仓库：`yyq8548/onecrew_lite2`；分支：`codex/typescript-unified-gmail`。来源基线为 `efc3c6eb69507b9809bb30279d9af26156d075e3`，本轮批准迁入的上游为 `8d931ab08448bcded456c210ebc29ad9709a68a5`。不得用其他 main 替换该基线。**
+
+当前 Mac ARM candidate-17 已包含会话连接恢复及平台搜索修复，12 个平台已取得可作资格判断的证据；Instagram 搜索可返回账号，补证仍缺粉丝量和原创正文，最新重试返回 HTTP 429，已停止。具体结果见 [全平台搜索优化与复验](20-platform-search-optimization.md)和[四平台评分证据](21-four-platform-scoring-evidence.md)；首次搜索和平台登录要求见 [全平台搜索验收](19-platform-search-acceptance.md)。这些结果属于本地开发验收，尚未客户发布。
 
 ## 阅读顺序
 
@@ -26,4 +28,4 @@
 
 ## 接手完成条件
 
-新电脑克隆正确分支，核对实际提交，按 `14-handoff-status-and-next-plan.md` 构建并进行本机验收。原 `verify-handoff.mjs` 仅用于未修改的原始基线。用户恢复开发后从当前未完成项继续，记录失败与跳过，不把未来目标标为已经实现。
+新电脑克隆正确分支，核对实际提交，按 `14-handoff-status-and-next-plan.md` 构建并进行本机验收。原 `verify-handoff.mjs` 仅用于未修改的原始基线。从当前未完成项继续，记录失败与跳过，不把未来目标标为已经实现。

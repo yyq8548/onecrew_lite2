@@ -10,6 +10,7 @@ import { readDevelopmentBuildIdentity } from "../service/build-identity.ts";
 import JSZip from "jszip";
 import { load } from "cheerio";
 import { OPENCLI_ADDON_FILES } from "../platforms/opencli/addons.ts";
+import { supplementalLicense } from "./supplemental-license.ts";
 
 const execute = promisify(execFile);
 const root = fileURLToPath(new URL("../../../", import.meta.url));
@@ -45,7 +46,7 @@ export async function buildCandidate(options: { output: string; productVersion: 
       await mkdir(dirname(destination), { recursive: true }); await copyFile(source, destination);
     } else throw new Error(`package.input_not_regular:${source}`);
   }
-  const components: { name: string; version: string; license: string; licenseFiles: string[]; licenseEvidence?: "full_text" | "declared_only" }[] = [];
+  const components: { name: string; version: string; license: string; licenseFiles: string[]; licenseEvidence?: "full_text" | "declared_only"; licenseProvenance?: { file: string; source: string; sha256: string }[] }[] = [];
   const licensed = new Set<string>();
   async function licensePackage(packageRoot: string): Promise<void> {
     if (licensed.has(packageRoot)) return; licensed.add(packageRoot);
@@ -60,12 +61,18 @@ export async function buildCandidate(options: { output: string; productVersion: 
       const inherited = metadata.license === "MIT" ? join(teableRoot, "packages", "core", "LICENSE") : join(teableRoot, "LICENSE");
       await copyTree(inherited, join(stage, destination, "LICENSE")); licenseFiles.push(`${destination}/LICENSE`);
     }
+    const supplemental = !licenseFiles.length ? await supplementalLicense(packageRoot) : null;
+    const licenseProvenance = supplemental ? [{ file: `${destination}/LICENSE.verified`, source: supplemental.source, sha256: supplemental.sha256 }] : undefined;
+    if (supplemental) {
+      await copyTree(supplemental.path, join(stage, destination, "LICENSE.verified"));
+      licenseFiles.push(`${destination}/LICENSE.verified`);
+    }
     const licenseEvidence = licenseFiles.length ? "full_text" : "declared_only";
     if (!licenseFiles.length) {
       await copyTree(join(packageRoot, "package.json"), join(stage, destination, "package.json")); licenseFiles.push(`${destination}/package.json`);
     }
     const declaration = typeof metadata.license === "string" ? metadata.license : metadata.license || metadata.licenses ? JSON.stringify(metadata.license ?? metadata.licenses) : metadata.private === true ? "UNLICENSED" : licenseEvidence === "full_text" ? "SEE_LICENSE_FILES" : "UNKNOWN";
-    components.push({ name: String(metadata.name), version: String(metadata.version), license: declaration, licenseFiles, licenseEvidence });
+    components.push({ name: String(metadata.name), version: String(metadata.version), license: declaration, licenseFiles, licenseEvidence, ...(licenseProvenance ? { licenseProvenance } : {}) });
   }
   const packageRoots = new Set<string>();
   const hoisted = new Map<string, string>();

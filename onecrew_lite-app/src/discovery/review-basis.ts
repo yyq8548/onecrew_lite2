@@ -8,7 +8,7 @@ import { validateSavedDiscoveryInstagramProfile } from "./contact-profile-contra
 import { validateDiscoveryPinterestProfile, validateDiscoveryPinterestContent } from "./pinterest-material.ts";
 import { loadDiscoveryWebSourceReceipt } from "./web-receipt.ts";
 import { validateDiscoveryRetainedContent, validateDiscoveryRetainedProfile } from "./native-material.ts";
-import { parseDiscoveryDouyinFollowers } from "./qualification.ts";
+import { parseDiscoveryDouyinFollowers, parseDiscoveryFacebookFollowers } from "./qualification.ts";
 
 const scopesSchema = z.array(z.strictObject({ platform: z.string(), profile_ref: z.string(), keywords: z.array(z.string()) }));
 const object = (value: unknown): Record<string, unknown> => value !== null && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
@@ -172,6 +172,7 @@ export function loadDiscoveryReviewBasis(database: DatabaseSync, campaign: strin
     validateDiscoveryRetainedContent(platform, content.claim.author_id, content.claim.source_url, content.native_content);
     basis.native_followers = typeof native.follower_count === "number" || typeof native.follower_count === "bigint" ? native.follower_count : null;
     if (platform === "douyin" && typeof native.follower_text === "string") basis.native_follower_estimate = parseDiscoveryDouyinFollowers(native.follower_text);
+    if (platform === "facebook" && basis.native_followers === null && typeof native.follower_text === "string") basis.native_follower_estimate = parseDiscoveryFacebookFollowers(native.follower_text);
     basis.native_profile = { web_text: null, profile_url: authorUrl, observed_at: profile.captured_at, bio: bounded(native[["weibo", "linkedin", "douyin", "zhihu", "pixiv"].includes(platform) ? "bio" : "biography"], ["bluesky", "linkedin", "douyin", "zhihu", "hackernews", "pixiv"].includes(platform) ? 8000 : 2000), self_declared_location: null };
     basis.hit.author_id = platform === "linkedin" ? basis.native_author_id : profile.claim.author_id; basis.hit.author_url = authorUrl; basis.native_content = content;
   }

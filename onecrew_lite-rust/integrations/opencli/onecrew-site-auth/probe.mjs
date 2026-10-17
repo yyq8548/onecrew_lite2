@@ -18,13 +18,42 @@ export async function observeCurrentAccount(site, allowRequest = true) {
   if (site === 'linkedin-learning') site = 'linkedin';
   const origins = { bilibili: 'https://www.bilibili.com', tiktok: 'https://www.tiktok.com', instagram: 'https://www.instagram.com', facebook: 'https://www.facebook.com', zhihu: 'https://www.zhihu.com', douyin: 'https://www.douyin.com', linkedin: 'https://www.linkedin.com', weibo: 'https://weibo.com', tieba: 'https://tieba.baidu.com', medium: 'https://medium.com', nowcoder: 'https://www.nowcoder.com', douban: 'https://www.douban.com', pixiv: 'https://www.pixiv.net' };
   origins.twitter = 'https://x.com';
+  origins.pinterest = 'https://www.pinterest.com';
+  origins.youtube = 'https://www.youtube.com';
   if (/\/challenge\/|\/checkpoint\/|captcha|security\/check/.test(location.pathname)) return {};
   const visible = selector => Array.from(document.querySelectorAll(selector)).some(node => node.getClientRects().length > 0);
   const visibleText = (selector, pattern) => Array.from(document.querySelectorAll(selector)).some(node => node.getClientRects().length > 0 && pattern.test((node.textContent || '').trim()));
   const validId = value => (typeof value === 'string' && /^[1-9]\d{0,31}$/.test(value)) || (typeof value === 'number' && Number.isSafeInteger(value) && value > 0);
-  if (visible('iframe[src*="captcha"], #captcha, .captcha-container')) return {};
+  // Pinterest 常驻的 reCAPTCHA anchor 是标识，实际挑战使用 bframe。
+  const captchaSelector = site === 'pinterest'
+    ? 'iframe[src*="captcha"][src*="/bframe"], #captcha, .captcha-container'
+    : 'iframe[src*="captcha"], #captcha, .captcha-container';
+  if (visible(captchaSelector)) return {};
   if (site === 'douban' && location.origin === 'https://accounts.douban.com' && location.pathname.startsWith('/passport/login') && visible('input[name="username"], input[name="phone"]')) return { authenticated: false };
   if (location.origin !== origins[site]) return {};
+  if (site === 'youtube') {
+    // 当前访问者配置和顶部账号按钮共同证明登录，不读取视频作者资料。
+    const loggedIn = globalThis.ytcfg?.get?.('LOGGED_IN');
+    const account = visible('ytd-masthead #avatar-btn');
+    const login = visible('ytd-masthead a[href*="ServiceLogin"]');
+    if (loggedIn === true && account && !login) return { authenticated: true };
+    if (loggedIn === false && login && !account) return { authenticated: false };
+    return {};
+  }
+  if (site === 'pinterest') {
+    const login = visible('a[href="/login/"], [data-test-id="simple-login-button"]');
+    const own = Array.from(document.querySelectorAll('a[data-test-id="header-profile"], [data-test-id="header-profile"] a')).some(node => {
+      if (!node.getClientRects().length) return false;
+      const url = new URL(node.href, location.origin);
+      return url.origin === origins.pinterest && /^\/[A-Za-z0-9_]+\/?$/.test(url.pathname)
+        && !/^\/(login|signup|search|ideas|settings|today)\/?$/.test(url.pathname);
+    });
+    const account = visible('[data-test-id="header-accounts-options-button"]');
+    // 只接受当前账号导航；公开作者卡片和 Cookie 均不能证明登录。
+    if (own && account && !login) return { authenticated: true };
+    if (login && !own && !account) return { authenticated: false };
+    return {};
+  }
   if (site === 'twitter') {
     if (location.pathname === '/i/flow/login' && visible('input[autocomplete="username"]')) return { authenticated: false };
     const own = Array.from(document.querySelectorAll('a[data-testid="AppTabBar_Profile_Link"]')).some(node => {
@@ -100,6 +129,15 @@ export async function observeCurrentAccount(site, allowRequest = true) {
     // /me is a server-owned redirect to the current account, not a visited author.
     const path = location.pathname;
     if (/^\/login(?:\.php)?/.test(path) && visible('input[name="email"], input[name="pass"]')) return { authenticated: false };
+    // Saved-account landing pages require another sign-in step, even when an
+    // account name is displayed and no password input has been rendered yet.
+    if (path === '/' && visibleText('button, [role="button"]', /^(Continue|继续)$/)) {
+      const deviceLogin = Array.from(document.querySelectorAll('form[action]')).some(form => {
+        const action = new URL(form.getAttribute('action'), location.origin);
+        return action.origin === origins.facebook && action.pathname === '/login/device-based/login/caa/';
+      });
+      if (deviceLogin && visibleText('button, [role="button"]', /^(Use another profile|使用其他个人主页|使用其他账户)$/)) return { authenticated: false };
+    }
     const profile = /^\/profile\.php$/.test(path) && new URLSearchParams(location.search).has('id');
     const vanity = /^\/[A-Za-z0-9._-]+\/?$/.test(path) && !/^\/(me|login|checkpoint|recover|help)\/?$/.test(path);
     const account = visible('[aria-label="Your profile"], [aria-label="Account"], [aria-label="你的个人主页"], [aria-label="帐户"], [aria-label="账户"]');
@@ -176,6 +214,8 @@ export async function observeCurrentAccount(site, allowRequest = true) {
 export async function readSiteLogin(page, site) {
   const urls = { bilibili: 'https://www.bilibili.com/', tiktok: 'https://www.tiktok.com/explore', instagram: 'https://www.instagram.com/', facebook: 'https://www.facebook.com/me', zhihu: 'https://www.zhihu.com/', douyin: 'https://www.douyin.com/user/self', linkedin: 'https://www.linkedin.com/feed/', 'linkedin-learning': 'https://www.linkedin.com/learning/', weibo: 'https://weibo.com/', tieba: 'https://tieba.baidu.com/', medium: 'https://medium.com/', nowcoder: 'https://www.nowcoder.com/', douban: 'https://www.douban.com/mine/', pixiv: 'https://www.pixiv.net/' };
   urls.twitter = 'https://x.com/home';
+  urls.pinterest = 'https://www.pinterest.com/';
+  urls.youtube = 'https://www.youtube.com/';
   if (!urls[site]) throw new Error('Unsupported authentication site');
   const target = await openProbePage(page, urls[site]);
   const attempts = site === 'tiktok' ? 5 : 3;

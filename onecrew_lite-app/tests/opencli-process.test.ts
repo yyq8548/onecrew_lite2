@@ -46,6 +46,11 @@ test("原生读取失败保留阶段，授权与风控优先于接口错误且�
     ["onecrew_pinterest_read_resource", "provider_response_shape_invalid"],
     ["onecrew_youtube_layout_unsupported", "youtube_watch_layout_unsupported"],
     ["onecrew_youtube_description_unavailable", "youtube_description_unavailable"],
+    ["YouTube search bootstrap data not found", "provider_response_shape_invalid"],
+    ["YouTube search returned malformed result rows", "provider_response_shape_invalid"],
+    ["YouTube search HTTP 500", "provider_response_http_error"],
+    ["ONECREW_YOUTUBE_SEARCH_SOURCE_INVALID", "provider_response_redirected"],
+    ["ONECREW_YOUTUBE_SEARCH_BOOTSTRAP_TIMEOUT", "opencli_timeout"],
   ]) {
     const error = classify(marker!);
     assert.equal(error.code, code);

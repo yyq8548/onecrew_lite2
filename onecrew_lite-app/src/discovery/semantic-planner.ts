@@ -42,7 +42,7 @@ export async function loadOriginalDiscoveryQueryGuidance(path: string): Promise<
   if (!isAbsolute(path)) throw new Error("Discovery guidance requires a trusted absolute asset path");
   const bytes = await readFile(path); if (bytes.length > 65536) throw new Error("discovery_query_guidance_invalid");
   const value = new TextDecoder("utf-8", { fatal: true }).decode(bytes).replace(/\r\n/gu, "\n");
-  if (createHash("sha256").update(value).digest("hex") !== "da1a52eefe1a34dbe0aad19e0d12e55bd32f518c391457117dee21267ce28a39") throw new Error("discovery_query_guidance_changed"); return value;
+  if (createHash("sha256").update(value).digest("hex") !== "b456dd4a2d354db6494e695d294a0f7dbd4554ce328d0f8c24aeac919be93151") throw new Error("discovery_query_guidance_changed"); return value;
 }
 export function loadBundledDiscoveryQueryGuidance(): Promise<string> {
   return loadOriginalDiscoveryQueryGuidance(runtimeAssetPath("discovery/assets/search-query-guidance.txt", new URL("../../../onecrew_lite-rust/crates/platform-runtime/src/discovery_draft/search_query_guidance.txt", import.meta.url)));
@@ -68,7 +68,7 @@ export class DiscoverySemanticPlanner {
   readonly #client: SemanticStructuredClient;
   readonly #guidance: string;
   constructor(client: SemanticStructuredClient, verifiedGuidance: string) {
-    if (createHash("sha256").update(verifiedGuidance).digest("hex") !== "da1a52eefe1a34dbe0aad19e0d12e55bd32f518c391457117dee21267ce28a39") throw new Error("discovery_query_guidance_changed");
+    if (createHash("sha256").update(verifiedGuidance).digest("hex") !== "b456dd4a2d354db6494e695d294a0f7dbd4554ce328d0f8c24aeac919be93151") throw new Error("discovery_query_guidance_changed");
     this.#client = client; this.#guidance = verifiedGuidance;
   }
   async prepare(raw: unknown, sources: readonly RegisteredDiscoverySource[], signal: AbortSignal, assertCurrent: () => Promise<void>, onPhase?: (phase: "checking_codex" | "planning" | "validating_plan") => void, previous?: DiscoveryDraftPrevious) {

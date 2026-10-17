@@ -15,6 +15,9 @@ export async function withOwnedSearchPage(page, task) {
       await object.setActivePage(target);
       await object.evaluate('(' + waitForSearchDocument.toString() + ')()');
       const destination = new URL(url);
+      if (destination.hostname === 'www.youtube.com' && destination.pathname === '/results') {
+        await object.evaluate('(' + waitForYoutubeSearch.toString() + ')(' + JSON.stringify(destination.searchParams.get('search_query')) + ')');
+      }
       if (destination.hostname === 'www.facebook.com' && destination.pathname.startsWith('/search/')) {
         await object.evaluate('(' + waitForFacebookSearch.toString() + ')()');
       }
@@ -29,7 +32,9 @@ export async function withOwnedSearchPage(page, task) {
     return typeof value === 'function' ? value.bind(object) : value;
   }});
   try { return await task(wrapped); }
-  finally { if (target) await page.closeTab(target); }
+  finally {
+    if (target) await page.closeTab(target);
+  }
 }
 
 // newTab can return before a document exists. Native extractors attach DOM
@@ -40,6 +45,18 @@ export async function waitForSearchDocument() {
     if (poll < 39) await new Promise(resolve => setTimeout(resolve, 250));
   }
   throw new Error('ONECREW_SEARCH_DOCUMENT_TIMEOUT');
+}
+
+export async function waitForYoutubeSearch(query) {
+  for (let poll = 0; poll < 40; poll++) {
+    const current = new URL(location.href);
+    if (current.origin !== 'https://www.youtube.com' || current.pathname !== '/results'
+      || current.searchParams.get('search_query') !== query) throw new Error('ONECREW_YOUTUBE_SEARCH_SOURCE_INVALID');
+    const config = globalThis.ytcfg?.data_;
+    if (config?.INNERTUBE_API_KEY && config.INNERTUBE_CONTEXT && globalThis.ytInitialData?.contents) return;
+    if (poll < 39) await new Promise(resolve => setTimeout(resolve, 250));
+  }
+  throw new Error('ONECREW_YOUTUBE_SEARCH_BOOTSTRAP_TIMEOUT');
 }
 
 // Facebook can finish navigation while the result feed is still a skeleton.

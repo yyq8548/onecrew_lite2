@@ -37,7 +37,7 @@ export class BrowserSessions {
     this.#tickets.set(digest(value), { context, expires: performance.now() + 60_000 });
     return value;
   }
-  exchange(value: string) {
+  exchange(value: string, existingCookie?: string) {
     this.#prune();
     if (!validToken(value)) throw new BrowserSessionError();
     const key = digest(value);
@@ -45,6 +45,12 @@ export class BrowserSessions {
     this.#tickets.delete(key);
     if (!ticket) throw new BrowserSessionError();
     this.#accounts.assertCurrent(ticket.context);
+    const existing = existingCookie && validToken(existingCookie) ? this.#sessions.get(digest(existingCookie)) : undefined;
+    if (existing && existing.context.principal.user.id === ticket.context.principal.user.id && existing.context.epoch === ticket.context.epoch) {
+      this.#accounts.assertCurrent(existing.context);
+      existing.expires = performance.now() + 8 * 60 * 60_000;
+      return { cookie: existingCookie!, csrf: existing.csrf, accountId: existing.context.principal.user.id, epoch: existing.context.epoch };
+    }
     if (this.#sessions.size >= 128) throw new Error("Too many active browser sessions");
     const cookie = token();
     const csrf = token();

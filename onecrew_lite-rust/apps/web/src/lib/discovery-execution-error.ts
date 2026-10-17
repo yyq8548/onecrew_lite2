@@ -4,6 +4,19 @@ export function discoveryProviderFailureKey(code: string) {
 }
 export function discoveryExecutionFailureKey(code?: string) {
   switch (code) {
+    case "discovery_repository_busy":
+    case "creator_repository_overloaded":
+    case "creator_repository_read_pool_unavailable":
+    case "creator_repository_locked": return "repositoryBusy";
+    case "discovery_plan_missing":
+    case "creator_repository_campaign_missing": return "repositoryCampaignMissing";
+    case "discovery_repository_stopped":
+    case "creator_repository_closed":
+    case "creator_repository_cancelled": return "repositoryStopped";
+    case "discovery_repository_read_failed":
+    case "discovery_read_outcome_unknown":
+    case "creator_repository_read_failed":
+    case "creator_repository_outcome_unknown": return "repositoryReadFailed";
     case "discovery_draft_codex_login_required": return "queryCodexLoginRequired";
     case "discovery_draft_codex_unavailable": return "queryCodexUnavailable";
     case "discovery_draft_codex_timeout": return "queryCodexTimeout";

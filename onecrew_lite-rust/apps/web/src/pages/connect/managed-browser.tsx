@@ -61,9 +61,15 @@ export function ManagedBrowserSetup({ contextId, onConnected }: { contextId: str
     onError: error => setCleanupError(error),
   });
   const active = flow && !["completed", "canceled", "failed"].includes(flow.phase);
+  const errorCode = cleanupError instanceof Error ? cleanupError.message : cleanupError;
+  const errorMessage = errorCode === "browser.managed_challenge_tab_required" ? t("opencli.managedSelectConnectionTab")
+    : errorCode === "browser.managed_challenge_mismatch" ? t("opencli.managedChallengeMismatch")
+    : errorCode === "browser.owned_process_not_running" || errorCode === "browser.connection_expired" ? t("opencli.managedReconnectRequired")
+    : `${t("opencli.managedFailed")} ${String(errorCode)}`;
   return <section className="space-y-3 rounded-md border p-3" aria-label={t("opencli.managedTitle")}>
     <p className="text-sm font-medium">{t("opencli.managedTitle")}</p>
     <p className="text-sm text-muted-foreground">{t("opencli.managedDescription")}</p>
+    <p className="text-sm text-muted-foreground">{t("opencli.managedRestartHelp")}</p>
     {!active && <Button size="sm" variant="outline" disabled={action.isPending} onClick={() => action.mutate("begin")}>{t("opencli.managedBegin")}</Button>}
     {!active && bindings.data && bindings.data.length > 0 && <div className="flex flex-wrap gap-2">{bindings.data.map(binding => <Button key={binding.binding_id} size="sm" variant="outline" disabled={action.isPending} onClick={() => action.mutate({ bindingId: binding.binding_id, contextId: binding.context_id })}>{t("opencli.managedReopen", { profile: binding.context_id })}</Button>)}</div>}
     {bindings.isError && <p className="text-sm" role="alert">{t("opencli.managedHistoryFailed")}</p>}
@@ -75,6 +81,6 @@ export function ManagedBrowserSetup({ contextId, onConnected }: { contextId: str
       </div>
     </>}
     {flow?.phase === "completed" && <p className="text-sm" role="status">{t("opencli.managedConnected")}</p>}
-    {cleanupError !== undefined && <Alert variant="destructive"><AlertDescription>{t("opencli.managedFailed")} {cleanupError instanceof Error ? cleanupError.message : String(cleanupError)}</AlertDescription></Alert>}
+    {cleanupError !== undefined && <Alert variant="destructive"><AlertDescription>{errorMessage}</AlertDescription></Alert>}
   </section>;
 }

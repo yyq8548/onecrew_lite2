@@ -3,7 +3,17 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { z } from "zod";
 import { parseApplicationJson, stringifyApplicationJson } from "../src/contracts/application-json.ts";
-import { assessDiscoveryProfile, assessDiscoveryYoutube, assessedDiscoveryEvidence, mergePendingDiscoveryEvidence, parseDiscoveryDouyinFollowers } from "../src/discovery/qualification.ts";
+import { assessDiscoveryProfile, assessDiscoveryYoutube, assessedDiscoveryEvidence, mergePendingDiscoveryEvidence, parseDiscoveryDouyinFollowers, parseDiscoveryFacebookFollowers, assessDiscoveryFacebook } from "../src/discovery/qualification.ts";
+
+test("Facebook实际289K粉丝显示保留估计区间，门槛附近保持未知", () => {
+  const raw = "289K followers";
+  assert.deepEqual(parseDiscoveryFacebookFollowers(raw), { display: raw, nominal: 289000n, lower: 288000n, upper: 290000n });
+  const criteria = { requires_ai_tool_demo: false, requires_public_tool_url: false };
+  assert.equal(assessDiscoveryFacebook({ ...criteria, min_subscribers: 2000 }, {}, "61566847065209", raw).verdict, "qualified");
+  assert.deepEqual(assessDiscoveryFacebook({ ...criteria, min_subscribers: 289000 }, {}, "61566847065209", raw).reasons, ["subscriber_count_near_threshold"]);
+  assert.equal(assessDiscoveryFacebook({ ...criteria, min_subscribers: 300000 }, {}, "61566847065209", raw).verdict, "rejected");
+  for (const invalid of ["289K likes", "289K", "about 289K followers", "2,000 followers", "0.2K followers", "289K followers 10 following"]) assert.equal(parseDiscoveryFacebookFollowers(invalid), null);
+});
 
 test("35个原Rust资格运算case完整匹配，包括未知/阈值/语言/舍入与u64最大值", () => {
   const cases = z.array(z.object({ mode: z.enum(["profile", "youtube"]), criteria: z.unknown(), evidence: z.unknown(), author: z.string(), count: z.union([z.number(), z.bigint()]).nullable(), expected: z.unknown(), assessed_evidence: z.unknown() })).parse(parseApplicationJson(readFileSync(new URL("./fixtures/discovery-qualification-rust.json", import.meta.url))));

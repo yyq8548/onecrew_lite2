@@ -6,7 +6,7 @@ import { stringifyApplicationJson } from "../contracts/application-json.ts";
 import { parseApplicationJson } from "../contracts/application-json.ts";
 import type { CreatorSearchHit } from "../platforms/opencli/search-results.ts";
 import { discoveryPlanInput, discoveryScope, assertRegisteredDiscoveryScopes, appendDiscoveryQueries, type DiscoveryScope } from "./contracts.ts";
-import { canAdvanceSearchAfterStop, nextDiscoverySearchKeyword, repairedSearchRecoveryCodes, type DiscoverySearchRecovery } from "./stops.ts";
+import { browserConnectionRecoveryCodes, canAdvanceSearchAfterStop, nextDiscoverySearchKeyword, repairedSearchRecoveryCodes, type DiscoverySearchRecovery } from "./stops.ts";
 import { DiscoveryLibraryRepository } from "./library-repository.ts";
 import { DiscoveryReviewRepository } from "./review-repository.ts";
 import { loadDiscoveryReviewBasis } from "./review-basis.ts";
@@ -290,7 +290,7 @@ export class DiscoveryRepository {
         const index = scope.keywords.indexOf(run.active_query);
         if (index < 0) throw new Error("discovery_repair_checkpoint_changed");
         const completed = new Set(this.#db.prepare("SELECT search_keyword FROM discovery_search_completions WHERE discovery_campaign_id=? AND platform=? AND profile_ref=?").all(id, platform, profile).map(row => z.string().parse(row.search_keyword)));
-        query = scope.keywords.slice(index + 1).find(keyword => !completed.has(keyword)) ?? null;
+        query = browserConnectionRecoveryCodes.has(recovery.expected_stop_code) ? run.active_query : scope.keywords.slice(index + 1).find(keyword => !completed.has(keyword)) ?? null;
       }
       if (query === null || !scope.keywords.includes(query)) throw new Error("discovery_no_remaining_keyword");
       if (run.calls_used >= 4294967295 || head.used_calls >= 4294967295) throw new Error("discovery_call_counter_overflow");

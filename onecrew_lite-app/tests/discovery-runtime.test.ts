@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { copyFile, mkdtemp, readdir, rm } from "node:fs/promises";
+import { chmod, copyFile, mkdtemp, readdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
@@ -58,6 +58,7 @@ test("真实调度器排空原Rust已保存材料并发布实际Library，终止
     await databases.createNewAccount(context);
     const folders = (await readdir(directory)).filter(name => /^account-[a-f0-9]{64}$/u.test(name)); assert.equal(folders.length, 1);
     await copyFile(fileURLToPath(new URL("./fixtures/discovery-video-hydration/after.sqlite", import.meta.url)), join(directory, folders[0]!, "creator.sqlite"));
+    if (process.platform !== "win32") await chmod(join(directory, folders[0]!, "creator.sqlite"), 0o600);
     const repository = (await databases.discoveryResolver().resolve(context)).repository, plan = repository.getPlan("video-hydration"), before = repository.countCandidates(plan.id);
     const registry = new OperationRegistry(accounts); runtime.registerOperations(registry);
     await registry.execute("onecrew_discovery_execution_start", { input: { campaign_id: plan.id, expected_revision: plan.revision, profile_ref: plan.scopes[0]!.profile_ref, excluded_platforms: plan.scopes.map(scope => scope.platform) } }, context.principal.user.id, context.epoch);

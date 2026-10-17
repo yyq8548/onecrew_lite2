@@ -14,7 +14,7 @@ test("migration native lease conflicts with actual original Rust fslock and drai
   const rootPath = fileURLToPath(new URL("../../", import.meta.url)), scratch = join(rootPath, ".scratch", "legacy-quiescence-tests");
   await mkdir(scratch, { recursive: true });
   const target = join(scratch, "native");
-  await promisify(execFile)("cargo", ["build", "--offline", "--manifest-path", fileURLToPath(new URL("./native/legacy-lock-oracle/Cargo.toml", import.meta.url)), "--target-dir", target], { cwd: rootPath, windowsHide: true, timeout: 120_000, maxBuffer: 64 * 1024, env: { ...process.env, CARGO_INCREMENTAL: "0" } });
+  await promisify(execFile)(process.env.CARGO ?? "cargo", ["build", "--offline", "--manifest-path", fileURLToPath(new URL("./native/legacy-lock-oracle/Cargo.toml", import.meta.url)), "--target-dir", target], { cwd: rootPath, windowsHide: true, timeout: 120_000, maxBuffer: 64 * 1024, env: { ...process.env, CARGO_INCREMENTAL: "0" } });
   const root = await mkdtemp(join(scratch, "source-")), ownerDirectory = await createPrivateDirectory(join(root, "new-owner")), old = await createPrivateDirectory(join(root, "legacy")), library = await createPrivateDirectory(join(root, "library"));
   const owner = await acquireInstanceLock(ownerDirectory);
   const sources = { creator: join(old, "creator.sqlite"), vault: join(old, "vault.sqlite"), masterKey: join(old, "master.key"), libraryDirectory: library };

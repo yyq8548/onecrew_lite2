@@ -121,7 +121,7 @@ export async function listenLocalServer(options: LocalServerOptions) {
   if (options.browserSessions) app.post("/api/local/session", async context => {
     if (context.req.header("content-type")?.split(";")[0]?.trim() !== "application/json") return context.json({ error: { code: "request.json_required" } }, 415);
     const { ticket } = z.object({ ticket: z.string() }).strict().parse(await context.req.json());
-    const session = options.bootstrapSessions?.acceptsTicket(ticket) ? options.bootstrapSessions.exchange(ticket) : options.browserSessions!.exchange(ticket);
+    const session = options.bootstrapSessions?.acceptsTicket(ticket) ? options.bootstrapSessions.exchange(ticket) : options.browserSessions!.exchange(ticket, getCookie(context, browserCookieName(origin)));
     setCookie(context, browserCookieName(origin), session.cookie, { httpOnly: true, sameSite: "Strict", path: "/", maxAge: 8 * 60 * 60 });
     return context.json("scope" in session ? { csrf: session.csrf, scope: session.scope } : { csrf: session.csrf, accountId: session.accountId, epoch: session.epoch });
   });
@@ -209,6 +209,7 @@ export async function listenLocalServer(options: LocalServerOptions) {
   });
   app.onError((error, context) => {
     const failure = (code: string) => context.req.path.startsWith("/api/commands/") || context.req.path === "/api/creator-import" ? { ok: false, error: code } : { error: { code } };
+    if (context.req.path.startsWith("/api/commands/onecrew_managed_browser_connection_") && ["browser.managed_challenge_tab_required", "browser.managed_challenge_mismatch", "browser.owned_process_not_running", "browser.connection_expired"].includes(error.message)) return context.json(failure(error.message), 422);
     if (error instanceof z.ZodError || error instanceof SyntaxError || error instanceof TypeError && "code" in error && error.code === "ERR_ENCODING_INVALID_ENCODED_DATA") return context.json(failure("request.invalid_input"), 400);
     if ("code" in error && "status" in error) {
       const status = error.status;

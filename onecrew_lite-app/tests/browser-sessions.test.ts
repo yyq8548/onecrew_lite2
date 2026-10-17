@@ -40,6 +40,13 @@ test("real HTTP browser session consumes tickets and enforces CSRF, origin and a
     const handshake = await fetch(`${server.origin}/api/session`, { headers: { cookie } });
     assert.equal(handshake.status, 200);
     assert.deepEqual(await handshake.json(), { ok: true, result: { ...session, version: "0.7.1", transport: "local_http", protocol_version: 2 } });
+    const secondWorkspaceTicket = sessions.issueTicket(current);
+    const reopened = await fetch(`${server.origin}/api/local/session`, { method: "POST", headers: { origin: server.origin, "content-type": "application/json", cookie }, body: JSON.stringify({ ticket: secondWorkspaceTicket }) });
+    assert.equal(reopened.status, 200);
+    assert.equal(reopened.headers.get("set-cookie") === setCookie, true, "同一账号打开另一界面应保留当前会话");
+    const reopenedSession = await reopened.json();
+    assert.equal(reopenedSession.csrf === session.csrf, true);
+    assert.equal((await exchange(secondWorkspaceTicket)).status, 401);
     assert.equal((await exchange(ticket)).status, 401);
     const headers = { cookie, origin: server.origin, "content-type": "application/json", "x-onecrew-account-id": session.accountId, "x-onecrew-auth-epoch": session.epoch };
     const invoke = (extra: Record<string, string>) => fetch(`${server.origin}/api/operations/local.identity.read`, { method: "POST", headers: { ...headers, ...extra }, body: "{}" });
@@ -54,6 +61,11 @@ test("real HTTP browser session consumes tickets and enforces CSRF, origin and a
     assert.equal((await invoke({ "x-onecrew-csrf": session.csrf, "x-onecrew-account-id": "other-account" })).status, 409);
     accounts.activate(principal);
     assert.equal((await invoke({ "x-onecrew-csrf": session.csrf })).status, 401);
+    const changed = accounts.activate({ ...principal, user: { id: "other-account", email: "other@example.com" } });
+    const changedResponse = await fetch(`${server.origin}/api/local/session`, { method: "POST", headers: { origin: server.origin, "content-type": "application/json", cookie }, body: JSON.stringify({ ticket: sessions.issueTicket(changed) }) });
+    assert.equal(changedResponse.status, 200);
+    assert.equal(changedResponse.headers.get("set-cookie") === setCookie, false);
+    assert.equal((await changedResponse.json()).accountId, "other-account");
     sessions.clear();
   } finally { await server.close(); }
 });

@@ -24,7 +24,9 @@ test("real unified SEA cold and warm launches serve both UIs, native SQLite/PGli
   for (const resource of ["node_modules/@mtcute/wasm/mtcute.wasm", "node_modules/@mtcute/wasm/mtcute-simd.wasm", "resources/workflow-guides.json", "resources/browser/browser-profile-acl.ps1"]) assert.ok(manifest.files.some(file => file.path === resource), resource);
   const archive = parseApplicationJson(await readFile(join(dirname(binary), "archive.json"))) as { path: string; bytes: number; sha256: string };
   const archiveBytes = await readFile(join(dirname(binary), archive.path)); assert.equal(archiveBytes.length, archive.bytes); assert.equal(payloadDigest(archiveBytes), archive.sha256);
-  const env = { ...process.env, LOCALAPPDATA: root };
+  const cacheParent = process.platform === "darwin" ? join(root, "Library", "Caches") : root;
+  if (process.platform === "darwin") await mkdir(cacheParent, { recursive: true, mode: 0o700 });
+  const env = { ...process.env, LOCALAPPDATA: root, ...(process.platform === "darwin" ? { HOME: root } : {}) };
   async function invoke(command: string) {
     const result = await execute(binary, [command, "--data-dir", directory, ...(command === "start" ? ["--vault", join(directory, "vault.sqlite"), "--master-key", join(directory, "masterkey")] : [])], { env, windowsHide: true, timeout: 120_000, maxBuffer: 64 * 1024 });
     assert.ok(!result.stdout.includes("control_token") && !result.stdout.includes("Bearer"));
@@ -66,7 +68,7 @@ test("real unified SEA cold and warm launches serve both UIs, native SQLite/PGli
     const restartAt = performance.now(), next = await invoke("start"), warmRestartCliReadyMilliseconds = performance.now() - restartAt; running = true;
     assert.equal(next.port, first.port); assert.notEqual(next.instance_id, first.instance_id);
     assert.equal((await invoke("stop")).state, "stopped"); running = false;
-    const cache = join(root, "OneCrewLite", "cache", "runtime", manifest.payloadSha256);
+    const cache = join(cacheParent, "OneCrewLite", "cache", "runtime", manifest.payloadSha256);
     await writeFile(join(cache, "app", "cli.mjs"), "corrupted", { mode: 0o600 });
     await assert.rejects(invoke("status"), /package.cache_file_invalid|package.cache_hash_mismatch/u);
     await writeFile(join(scratch, `sea-acceptance-${manifest.payloadSha256.slice(0, 16)}-${randomUUID().slice(0, 8)}.json`), JSON.stringify({ productVersion: manifest.productVersion, target: manifest.target, payloadSha256: manifest.payloadSha256, executableBytes: (await readFile(binary)).byteLength, archiveBytes: archive.bytes, archiveSha256: archive.sha256, payloadFiles: manifest.files.length,

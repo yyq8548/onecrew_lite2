@@ -3,7 +3,7 @@ import type { OpenCliReader, VerifiedOpenCliBrowserBinding } from "../platforms/
 import { creatorSearchSource } from "../platforms/opencli/sources.ts";
 import { OpenCliError } from "../platforms/opencli/errors.ts";
 import type { DiscoveryRepository } from "./repository.ts";
-import type { DiscoverySearchRecovery } from "./stops.ts";
+import { browserConnectionRecoveryCodes, type DiscoverySearchRecovery } from "./stops.ts";
 
 export interface OwnedDiscoveryRepository {
   readonly owner: Readonly<{ accountId: string; tenantId: string; baseId: string }>;
@@ -27,6 +27,10 @@ export class DiscoverySearchExecutor {
     if (plan.opencli_version !== "1.8.8") throw new OpenCliError("opencli_version_changed");
     const browser = await this.#browsers.resolve(context, input.profileRef); await browser.assertCurrent(); this.#accounts.assertCurrent(context); owned.assertOwned();
     if (browser.profile !== input.profileRef) throw new Error("discovery_browser_profile_mismatch");
+    if (input.recovery && browserConnectionRecoveryCodes.has(input.recovery.expected_stop_code)) {
+      await this.#reader.checkBrowserProfile(browser);
+      await browser.assertCurrent(); this.#accounts.assertCurrent(context); owned.assertOwned();
+    }
     const claim = owned.repository.claimSearch(input.planId, input.revision, input.platform, input.profileRef, input.explicitRecovery ?? false, input.recovery ?? null);
     const result = await this.#reader.creatorSearch(browser, input.platform, claim.query, input.limit).then(hits => ({ hits }), error => ({ error }));
     owned.assertOwned();

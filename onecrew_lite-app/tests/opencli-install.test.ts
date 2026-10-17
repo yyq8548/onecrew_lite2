@@ -4,12 +4,17 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import { OpenCliAddons } from "../src/platforms/opencli/addons.ts";
+import { discoveryExecutionFailureCode } from "../src/discovery/execution-failure.ts";
 
 test("原bundle真实安装到隔离home，冲突必须显式修复且未知文件完整保留", async () => {
   const scratch = fileURLToPath(new URL("../../.scratch/opencli-addon-tests/", import.meta.url));
   await mkdir(scratch, { recursive: true }); const home = await mkdtemp(join(scratch, "home-"));
   const source = fileURLToPath(new URL("../../onecrew_lite-rust/integrations/opencli/", import.meta.url));
   const addons = new OpenCliAddons(source, home);
+  await assert.rejects(addons.requireReady("onecrew-youtube"), error => {
+    assert.equal(discoveryExecutionFailureCode(error), "opencli_command_unavailable");
+    return true;
+  });
   await assert.rejects(addons.install(false), { code: "opencli_invalid_input" });
   assert.equal((await addons.install(true)).every(item => item.state === "ready"), true);
   const unknown = join(home, ".opencli", "clis", "onecrew-youtube", "custom.js");

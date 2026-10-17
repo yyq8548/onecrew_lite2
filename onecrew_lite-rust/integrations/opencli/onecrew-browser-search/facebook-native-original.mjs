@@ -45,7 +45,7 @@ export async function readFacebookNativeOriginalPage(source,id,base,collect) {
           const matches=u.origin==='https://www.facebook.com'&&u.pathname==='/profile.php'&&ids.length===1&&ids[0]===id;
           if(!matches||links[0].innerText.trim()!==row.display_name)throw new Error('ONECREW_FACEBOOK_SOURCE_INVALID');
           const chars=Array.from(row.text);
-          return {post_id:post,author_id:id,source_url:source,text:chars.slice(0,8000).join(''),text_truncated:chars.length>8000};
+          return {post_id:post,author_id:id,source_url:source,text:chars.slice(0,8000).join(''),text_truncated:chars.length>8000||/…\s*See more\s*$/u.test(row.text)};
         }
       }
     }

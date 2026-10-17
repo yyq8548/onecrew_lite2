@@ -38,6 +38,16 @@ export function parseDiscoveryDouyinFollowers(raw: string): (SubscriberEstimate 
   if (nominal > MAX || upper > BigInt(Number.MAX_SAFE_INTEGER)) return null;
   return { display: raw, nominal, lower: nominal < resolution ? 0n : nominal - resolution, upper };
 }
+export function parseDiscoveryFacebookFollowers(raw: string): (SubscriberEstimate & { display: string }) | null {
+  const match = /^([1-9]\d*(?:\.\d{1,6})?)([KMB]) followers?$/iu.exec(raw.trim());
+  if (!match) return null;
+  const multiplier = ({ k: 1000n, m: 1000000n, b: 1000000000n })[match[2]!.toLowerCase()]!;
+  const decimals = match[1]!.split(".")[1]?.length ?? 0, factor = 10n ** BigInt(decimals);
+  if (factor > multiplier) return null;
+  const nominal = BigInt(match[1]!.replace(".", "")) * multiplier / factor, resolution = multiplier / factor;
+  if (nominal + resolution > BigInt(Number.MAX_SAFE_INTEGER)) return null;
+  return { display: raw.trim(), nominal, lower: nominal < resolution ? 0n : nominal - resolution, upper: nominal + resolution };
+}
 export function assessDiscoveryWithCount(rawCriteria: unknown, rawEvidence: unknown, author: string, estimate: SubscriberEstimate | null, youtubeContentSupported: boolean): DiscoveryAssessment {
   const criteria = object(rawCriteria), evidence = object(rawEvidence), sources = Array.isArray(evidence.source_urls) ? evidence.source_urls : [];
   const observed = (value: unknown) => typeof value === "string" && sources.some(source => source === value);
@@ -116,6 +126,9 @@ export function assessDiscoveryDouyin(criteria: unknown, evidence: unknown, auth
   const minimum = u64(values.min_subscribers) ?? u64(values.min_followers);
   if (estimate !== null && minimum !== null && estimate.lower < minimum && estimate.upper >= minimum && !result.reasons.includes("subscriber_count_near_threshold")) result.reasons.push("subscriber_count_near_threshold");
   return result;
+}
+export function assessDiscoveryFacebook(criteria: unknown, evidence: unknown, author: string, rawCount: string | null): DiscoveryAssessment {
+  return assessDiscoveryWithCount(criteria, evidence, author, rawCount === null ? null : parseDiscoveryFacebookFollowers(rawCount), false);
 }
 export function assessedDiscoveryEvidence(raw: unknown, assessment: DiscoveryAssessment): unknown {
   if (raw === null || typeof raw !== "object" || Array.isArray(raw)) return raw;

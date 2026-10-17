@@ -101,9 +101,9 @@ export async function runtimeRequest<T>(path: string, body: BodyInit, headers: R
     throw new Error("web_session_required");
   }
   if (response.status === 409) { invalidateSession(); throw new Error("access.account_changed"); }
-  if (!response.ok) throw new Error("local_runtime_request_failed");
   const envelope = parseApplicationJson(new Uint8Array(await response.arrayBuffer())) as Envelope<T>;
   if (!envelope.ok) throw envelope.error;
+  if (!response.ok) throw new Error("local_runtime_request_failed");
   return envelope.result;
 }
 

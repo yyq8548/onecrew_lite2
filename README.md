@@ -28,7 +28,7 @@
 
 打开工作台和 Library 默认复用 Codex 内置浏览器；搜索使用已验证的专用 Chrome 身份。先确认账号和平台连接，再确认搜索计划。缺少信息、登录失败、风控停止与有效零结果分别显示。
 
-Mac ARM / Intel 原生验收尚未完成。当前候选保持 `productionReady: false`，不将旧 Rust 安装包的验收结论套用到新版。
+Mac ARM 已完成本机配套构建及部分真实原生验收，详情见 [Mac ARM 验证记录](docs/migration/15-mac-arm-verification.md)。Mac ARM 完整客户安装、升级及宿主验收，以及 Mac Intel 原生验收仍未完成。当前候选保持 `productionReady: false`。
 
 ## 完整源码
 

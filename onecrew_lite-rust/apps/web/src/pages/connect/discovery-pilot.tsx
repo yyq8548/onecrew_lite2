@@ -432,7 +432,9 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
     autoSyncAttempted.current.add(syncKey);
     librarySync.mutate(current.id);
   }, [syncKey, current, activeExecution, running, librarySync.isPending, librarySync.mutate, syncFailure]);
-  const libraryResult = current ? currentExecution?.library ?? lastTables[current.id] ?? (librarySync.data?.campaign_id === current.id ? librarySync.data : null) : null;
+  const recentLibrarySync = current && librarySync.data?.campaign_id === current.id
+    && librarySync.submittedAt > Number(currentExecution?.synced_at ?? 0) ? librarySync.data : null;
+  const libraryResult = current ? recentLibrarySync ?? currentExecution?.library ?? lastTables[current.id] ?? null : null;
   const verifiedSourceUrls = useMemo(() => new Set(
     (candidates.data?.pages ?? []).flatMap(page => page.flatMap(candidate => candidate.evidence.source_urls)),
   ), [candidates.data]);
@@ -559,9 +561,9 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
     } finally { preflightBusy.current = false; setCheckingStartLogin(false); }
   };
 
-  const stage = currentExecution?.stage ?? (!running && current && counts.data && counts.data.qualified >= current.target_count ? "finished"
-    : discoveryStage(current, running, pausing,
-      runCheckpoint && (runCheckpoint.campaign_id !== current?.id || runCheckpoint.revision !== current?.revision) ? "" : executionStatus));
+  const stage = !running && current && counts.data && counts.data.qualified >= current.target_count ? "finished"
+    : currentExecution?.stage ?? discoveryStage(current, running, pausing,
+      runCheckpoint && (runCheckpoint.campaign_id !== current?.id || runCheckpoint.revision !== current?.revision) ? "" : executionStatus);
   const runHistory = current ? loadRunHistory(window.localStorage, current.id) : [];
   return <Card className="discovery-surface">
     {!current && <CardHeader><CardTitle className="text-2xl">{t("opencliPilot.title")}</CardTitle></CardHeader>}

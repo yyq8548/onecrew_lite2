@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { copyFile, mkdir, mkdtemp, readdir, rm } from "node:fs/promises";
+import { chmod, copyFile, mkdir, mkdtemp, readdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
@@ -31,6 +31,7 @@ for (const fixture of ["discovery-identity/merged.sqlite", "discovery-contacts/n
     assert.equal(directories.length, 1);
     const path = join(directory, directories[0]!, "creator.sqlite");
     await copyFile(fileURLToPath(new URL(`./fixtures/${fixture}`, import.meta.url)), path);
+    if (process.platform !== "win32") await chmod(path, 0o600);
     using original = new DatabaseSync(path, { readOnly: true });
     const plan = original.prepare("SELECT id,current_revision FROM discovery_campaigns ORDER BY id LIMIT 1").get()!;
     assert.equal(typeof plan.id, "string"); assert.equal(typeof plan.current_revision, "number");

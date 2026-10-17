@@ -4,13 +4,13 @@ import type { OpenCliAddonId } from "./addons.ts";
 
 interface SearchSource { readonly site: string; readonly name: string; readonly maximum: number; readonly addon: OpenCliAddonId | null; readonly discovery: boolean }
 export const CREATOR_SEARCH_SOURCES: Readonly<Record<string, SearchSource>> = Object.freeze({
-  youtube: { site: "youtube", name: "search", maximum: 50, addon: null, discovery: true },
+  youtube: { site: "onecrew-search-youtube", name: "search", maximum: 50, addon: "onecrew-browser-search", discovery: true },
   tiktok: { site: "onecrew-tiktok", name: "search", maximum: 50, addon: "onecrew-tiktok", discovery: true },
   instagram: { site: "onecrew-search-instagram", name: "search", maximum: 50, addon: "onecrew-browser-search", discovery: true },
   twitter: { site: "onecrew-search-twitter", name: "search", maximum: 50, addon: "onecrew-browser-search", discovery: true },
   linkedin: { site: "onecrew-search-linkedin", name: "people-search", maximum: 10, addon: "onecrew-browser-search", discovery: true },
   facebook: { site: "onecrew-search-facebook", name: "search", maximum: 50, addon: "onecrew-browser-search", discovery: true },
-  pinterest: { site: "onecrew-pinterest-reader", name: "search-users", maximum: 20, addon: "onecrew-browser-search", discovery: true },
+  pinterest: { site: "onecrew-pinterest-reader", name: "search-pins", maximum: 20, addon: "onecrew-browser-search", discovery: true },
   reddit: { site: "onecrew-search-reddit", name: "search", maximum: 50, addon: "onecrew-browser-search", discovery: true },
   bilibili: { site: "onecrew-bilibili", name: "search", maximum: 50, addon: "onecrew-bilibili", discovery: true },
   douyin: { site: "onecrew-search-douyin", name: "search", maximum: 30, addon: "onecrew-browser-search", discovery: true },

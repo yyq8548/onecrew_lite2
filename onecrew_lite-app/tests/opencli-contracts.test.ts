@@ -15,10 +15,10 @@ import { resolveOpenCliInstallation } from "../src/platforms/opencli/installatio
 
 const bundled = fileURLToPath(new URL("../../onecrew_lite-rust/integrations/opencli/", import.meta.url));
 
-test("当前13来源保留原注册合同，Pinterest按GitHub新实现使用账号搜索", async () => {
+test("当前13来源使用审核后的只读入口，YouTube绑定独立页面，Pinterest搜索账号", async () => {
   const fixture = z.object({ sources: z.array(z.object({ platform: z.string(), command: z.string(), browser_required: z.literal(true), registered: z.literal(true) })) }).parse(JSON.parse(await readFile(new URL("../../onecrew_lite-rust/crates/platform-runtime/src/discovery_draft/fixtures/registered-sources-2026-10-11.json", import.meta.url), "utf8")));
   const sources = Object.entries(CREATOR_SEARCH_SOURCES).filter(([, source]) => source.discovery).map(([platform, source]) => ({ platform, command: `${source.site}/${source.name}`, browser_required: true, registered: true }));
-  const expected = fixture.sources.map(source => source.platform === "pinterest" ? { ...source, command: "onecrew-pinterest-reader/search-users" } : source);
+  const expected = fixture.sources.map(source => source.platform === "pinterest" ? { ...source, command: "onecrew-pinterest-reader/search-pins" } : source.platform === "youtube" ? { ...source, command: "onecrew-search-youtube/search" } : source);
   assert.deepEqual(sources, expected);
   for (const source of RETIRED_CREATOR_SOURCES) assert.throws(() => creatorSearchSource(source), { code: "opencli_read_command_unavailable" });
   assert.throws(() => creatorSearchArguments("profile", "__proto__", "query", 1));
