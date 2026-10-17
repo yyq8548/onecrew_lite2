@@ -56,7 +56,7 @@ const common = {
   },
   runtimeUnavailable: {
     title: "Local onecrew_lite service unavailable",
-    description: "The local onecrew_lite service is unavailable. Run onecrew web to open a new authenticated page.",
+    description: "Click Open workbench on the OneCrew status card, or ask Codex to use OneCrew to reopen an authorized page.",
   },
   sidebar: {
     title: "Sidebar",

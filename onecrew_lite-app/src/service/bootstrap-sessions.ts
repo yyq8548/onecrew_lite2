@@ -21,11 +21,16 @@ export class BootstrapSessions {
     const value = token(); this.#tickets.set(digest(value), performance.now() + 60_000); return value;
   }
   acceptsTicket(value: string): boolean { this.#prune(); return valid(value) && this.#tickets.has(digest(value)); }
-  exchange(value: string) {
+  exchange(value: string, existingCookie?: string) {
     this.#prune();
     const key = valid(value) ? digest(value) : "";
     const exists = this.#tickets.delete(key);
     if (!exists) throw new BrowserSessionError();
+    const existing = valid(existingCookie) ? this.#sessions.get(digest(existingCookie)) : undefined;
+    if (existing) {
+      existing.expires = performance.now() + 20 * 60_000;
+      return { cookie: existingCookie!, csrf: existing.csrf, scope: "bootstrap" as const };
+    }
     if (this.#sessions.size >= 128) throw new Error("Too many bootstrap sessions");
     const cookie = token(), csrf = token();
     this.#sessions.set(digest(cookie), { csrf, expires: performance.now() + 20 * 60_000, flowId: null });

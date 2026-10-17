@@ -1,6 +1,6 @@
 # 全平台搜索优化与验收
 
-2026-10-16，本地 TypeScript 开发验证。当前运行 candidate-17，端口 53400，实例 `aeffc01f-4a76-4b28-8b2b-b866b8c5592b`。数据目录 `.scratch/mac-arm-live-data`、原浏览器身份 `jga2zn4u` 和 binding `724e8b59-dfd1-4f62-a949-a16e26da073f` 保持不变。历史首轮记录见 [首次搜索及登录检查](19-platform-search-acceptance.md)。四个平台本轮字段与证据详见 [四个平台的评分证据](21-four-platform-scoring-evidence.md)。
+2026-10-16，本地 TypeScript 开发验证。本次搜索验收使用 candidate-17，端口 53400，实例 `aeffc01f-4a76-4b28-8b2b-b866b8c5592b`；最新连接候选 candidate-22 见 [连接修复记录](22-connection-stability.md)。数据目录 `.scratch/mac-arm-live-data`、原浏览器身份 `jga2zn4u` 和 binding `724e8b59-dfd1-4f62-a949-a16e26da073f` 保持不变。历史首轮记录见 [首次搜索及登录检查](19-platform-search-acceptance.md)。四个平台本轮字段与证据详见 [四个平台的评分证据](21-four-platform-scoring-evidence.md)。
 
 ## 完成条件与停止边界
 

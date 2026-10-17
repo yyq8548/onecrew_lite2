@@ -21,19 +21,20 @@ function renderApp(locale: (typeof SUPPORTED_LOCALES)[number]) {
 }
 
 describe("the disconnected card", () => {
-  it("leads with the command that starts the service, and keeps retry beside it", () => {
+  it("offers a fresh authorized entry request and keeps retry beside it", () => {
     for (const locale of SUPPORTED_LOCALES) {
       const markup = renderApp(locale);
       const service = resources[locale].shell.service;
       expect(markup).toContain(service.disconnectedTitle);
-      expect(markup).toContain("onecrew web --no-browser");
+      expect(markup).toContain(service.openRequest);
+      expect(markup).toContain(service.openWorkspaceHelp);
+      expect(markup).not.toContain("onecrew web --no-browser");
       // Anchored on the element boundary: the description also tells the user
       // they may retry, so a bare substring would match that sentence first.
       const copy = markup.indexOf(`>${service.copyCommand}<`);
       const retry = markup.indexOf(`>${service.retry}<`);
       expect(copy).toBeGreaterThan(-1);
-      // The card now means the service is unreachable, so the command that
-      // starts it leads and retry follows.
+      // 先提供重新打开授权页面的请求，再提供连接重试。
       expect(retry).toBeGreaterThan(copy);
     }
   });

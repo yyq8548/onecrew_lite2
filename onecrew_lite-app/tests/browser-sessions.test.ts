@@ -5,9 +5,32 @@ import { z } from "zod";
 import { OperationRegistry } from "../src/application/operation-registry.ts";
 import { AccountContextService } from "../src/identity/account-context.ts";
 import { BrowserSessions } from "../src/service/browser-sessions.ts";
+import { BootstrapSessions } from "../src/service/bootstrap-sessions.ts";
 import { listenLocalServer } from "../src/service/http.ts";
 import { WebAssets } from "../src/service/web-assets.ts";
 import { fileURLToPath } from "node:url";
+
+test("opening both logged-out pages preserves the same pairing session and bound flow", async () => {
+  const accounts = new AccountContextService();
+  const bootstrap = new BootstrapSessions();
+  const server = await listenLocalServer({ port: 0, instanceId: randomUUID(), controlToken: randomBytes(32).toString("hex"), operations: new OperationRegistry(accounts), browserSessions: new BrowserSessions(accounts), bootstrapSessions: bootstrap });
+  const exchange = (ticket: string, cookie?: string) => fetch(`${server.origin}/api/local/session`, { method: "POST", headers: { origin: server.origin, "content-type": "application/json", ...(cookie ? { cookie } : {}) }, body: JSON.stringify({ ticket }) });
+  try {
+    const first = await exchange(bootstrap.issueTicket());
+    assert.equal(first.status, 200);
+    const cookie = first.headers.get("set-cookie")!.split(";")[0]!;
+    const cookieValue = cookie.slice(cookie.indexOf("=") + 1);
+    const session = await first.json();
+    bootstrap.bindPairing(cookieValue, "pairing-flow");
+    const ticket = bootstrap.issueTicket();
+    const second = await exchange(ticket, cookie);
+    assert.equal(second.status, 200);
+    assert.equal(second.headers.get("set-cookie") === first.headers.get("set-cookie"), true);
+    assert.equal((await second.json()).csrf === session.csrf, true);
+    assert.equal(bootstrap.authorize(cookieValue, session.csrf, true).flowId, "pairing-flow");
+    assert.equal((await exchange(ticket, cookie)).status, 401);
+  } finally { await server.close(); }
+});
 
 test("real HTTP browser session consumes tickets and enforces CSRF, origin and account epoch", async () => {
   const accounts = new AccountContextService();
@@ -39,6 +62,7 @@ test("real HTTP browser session consumes tickets and enforces CSRF, origin and a
     const session = z.object({ csrf: z.string(), accountId: z.string(), epoch: z.string() }).parse(await response.json());
     const handshake = await fetch(`${server.origin}/api/session`, { headers: { cookie } });
     assert.equal(handshake.status, 200);
+    assert.equal(handshake.headers.get("set-cookie") === setCookie, true, "有效握手应续期同一 Cookie，保持多页面 CSRF 一致");
     assert.deepEqual(await handshake.json(), { ok: true, result: { ...session, version: "0.7.1", transport: "local_http", protocol_version: 2 } });
     const secondWorkspaceTicket = sessions.issueTicket(current);
     const reopened = await fetch(`${server.origin}/api/local/session`, { method: "POST", headers: { origin: server.origin, "content-type": "application/json", cookie }, body: JSON.stringify({ ticket: secondWorkspaceTicket }) });

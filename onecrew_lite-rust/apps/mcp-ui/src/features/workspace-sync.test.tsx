@@ -34,7 +34,8 @@ it("shows the workbench Campaign progress instead of a generic connected message
   expect(html).toContain("累计读取失败");
   expect(html).not.toContain("Content language");
   expect(html).not.toContain("21/500");
-  expect(html).not.toMatch(/<(button|input|select|textarea)\b/);
+  expect(html).toContain("打开管理端");
+  expect(html).not.toMatch(/<(input|select|textarea)\b/);
 });
 
 it("refreshes the locale from the same service status as progress", async () => {
@@ -88,5 +89,6 @@ it("shows a typed stop diagnostic without accepting arbitrary error text or acti
   expect(html).toContain("卖手机架");
   expect(html).toContain("执行请求结果未确认");
   expect(html).not.toContain("水杯");
-  expect(html).not.toMatch(/<(button|input|select|textarea)\b/);
+  expect(html).toContain("打开管理端");
+  expect(html).not.toMatch(/<(input|select|textarea)\b/);
 });

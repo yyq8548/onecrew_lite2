@@ -26,12 +26,13 @@ export async function connectUnifiedSession(): Promise<UnifiedSession> {
         method: 'POST',
         credentials: 'same-origin',
         cache: 'no-store',
+        signal: AbortSignal.timeout(10_000),
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ticket: tickets[0] }),
       });
       if (!exchange.ok) throw new Error('Open Library again from OneCrew');
     }
-    const response = await fetch('/api/session', { credentials: 'same-origin', cache: 'no-store' });
+    const response = await fetch('/api/session', { credentials: 'same-origin', cache: 'no-store', signal: AbortSignal.timeout(10_000) });
     if (!response.ok) throw new Error('Open Library again from OneCrew');
     const value: unknown = await response.json();
     if (

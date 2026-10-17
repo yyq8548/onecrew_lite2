@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@mcp-ui/components/ui/button";
 import type { App } from "@modelcontextprotocol/ext-apps";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { parseWorkspaceActivity, type WorkspaceActivity } from "@mcp-ui/lib/result-contract/workspace";
 import { readWorkspaceActivity } from "@mcp-ui/lib/result-client/workspace";
 import { requestWorkspaceCard } from "@mcp-ui/lib/result-client/workspace-card-request";
+import { openWorkspace } from "@mcp-ui/lib/result-client/workspace-open";
 import { WorkspaceStatusView } from "./workspace-status-view";
 import { readWorkspaceHistory, writeWorkspaceHistory, validWorkspaceViewId } from "./workspace-history";
 
@@ -61,8 +62,21 @@ export function parseWorkspaceStatus(payload: CallToolResult): WorkspaceStatus |
     : value as WorkspaceStatus;
 }
 
-/** No controls: customer decisions always stay in the workbench. */
+// 状态卡只提供页面入口；业务选择和确认仍在工作台完成。
 export function WorkspaceStatusCard({ appClient, initial }: { appClient: App; initial: WorkspaceStatus }) {
+  const openingRef = useRef(false);
+  const [opening, setOpening] = useState(false);
+  const [openFailed, setOpenFailed] = useState(false);
+  const open = async (destination: "workbench" | "library") => {
+    if (openingRef.current) return;
+    openingRef.current = true;
+    setOpening(true);
+    setOpenFailed(false);
+    await openWorkspace(appClient, destination).then(
+      () => { openingRef.current = false; setOpening(false); },
+      () => { openingRef.current = false; setOpening(false); setOpenFailed(true); },
+    );
+  };
   const [notificationFailed, setNotificationFailed] = useState(false);
   const [sending, setSending] = useState(false);
   const [phase, setPhase] = useState<string>(initial.startup);
@@ -124,6 +138,11 @@ export function WorkspaceStatusCard({ appClient, initial }: { appClient: App; in
     };
   }, [appClient, initial.viewId]);
   return <div className="space-y-4">
+    <div className="flex flex-wrap gap-2">
+      <Button disabled={opening} onClick={() => { void open("workbench"); }}>{locale === "zh-CN" ? "打开管理端" : "Open workbench"}</Button>
+      {initial.library_url && <Button disabled={opening} onClick={() => { void open("library"); }}>{locale === "zh-CN" ? "打开资料库" : "Open Library"}</Button>}
+    </div>
+    {openFailed && <p role="alert">{locale === "zh-CN" ? "打开失败。请确认本地服务已启动后再次点击；每次点击都会申请新的授权入口。" : "Could not open. Check that the local service is running, then click again to request a fresh authorized link."}</p>}
     {history.map(item => <WorkspaceStatusView key={item.campaign_id} phase={item.campaign_id === activity?.campaign_id ? phase : "ready"}
       activity={item} error={item.campaign_id === activity?.campaign_id ? error : null} updatedAt={null}
       historical={item.campaign_id !== activity?.campaign_id}

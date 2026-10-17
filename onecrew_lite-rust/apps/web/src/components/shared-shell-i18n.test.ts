@@ -135,7 +135,7 @@ describe("shared shell translations", () => {
         ),
       );
       expect(markup).toContain("Local onecrew_lite service unavailable");
-      expect(markup).toContain("onecrew web");
+      expect(markup).toContain("Open workbench");
     } finally {
       await appI18n.changeLanguage(previousLanguage);
     }

@@ -4,6 +4,8 @@
 
 ## 目标与固定范围
 
+最新连接开发进度见 [管理端与资料库连接修复](22-connection-stability.md)：本机已切换 candidate-22 并安装配套插件，完成真实 HTTP、SDK、SEA 和网页回归，两个原有页面及原专用浏览器身份已恢复；旧宿主 MCP 进程重新加载及 Windows 本机验收仍须分别完成。
+
 当前进度保存：Mac ARM candidate-17 已包含会话 Cookie/CSRF 同账号复用、一次启动票据消费、专用浏览器重启说明及 OpenCLI 身份检查与恢复检查点。YouTube、TikTok、X、Reddit、Bilibili、Douyin、Weibo、Google、Yahoo、LinkedIn、Facebook、Pinterest 共 12 个平台已取得可作资格判断的证据，包含明确不符合条件的样本。Instagram 搜索可返回账号，粉丝量和原创正文仍待核实，最新重试返回 HTTP 429，已停止。成功平台不重复外部验收。详见 [搜索优化进度](20-platform-search-optimization.md)和[四平台评分证据](21-four-platform-scoring-evidence.md)。本次 GitHub 同步保存源码、测试和文档，不包含账号数据、浏览器配置及本地构建，也不执行客户发布。
 
 将原 Lite 主业务服务迁入 TypeScript/Node.js，与现有 Library、工作台和 MCP 卡片组成统一 SEA 程序，保留历史数据及明确的账号归属。源码基线为 `efc3c6eb69507b9809bb30279d9af26156d075e3`，本轮上游改动固定为 `8d931ab08448bcded456c210ebc29ad9709a68a5`；来源清单见 [source-ledger.json](source-ledger.json)。

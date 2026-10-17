@@ -32,7 +32,9 @@ describe("workspace bootstrap contract", () => {
     const ready = render(snapshot);
     expect(ready).toContain("onecrew_lite 已连接");
     expect(ready).toContain("请在工作台");
-    expect(ready).not.toMatch(/<(button|input|select|textarea)\b/);
+    expect(ready).toContain("打开管理端");
+    expect(ready).toContain("打开资料库");
+    expect(ready).not.toMatch(/<(input|select|textarea)\b/);
     expect(render({ ...snapshot, library_url: null, library_error: "workspace_library_not_packaged" })).toContain("动态表格未连接");
   });
   it("accepts verified local entries without a business result or authority", () => {

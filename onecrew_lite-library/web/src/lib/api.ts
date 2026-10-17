@@ -67,16 +67,21 @@ const customFetch: typeof fetch = async (input, init) => {
     headers,
     ...(unifiedRuntimeMode ? { credentials: 'same-origin', cache: 'no-store' } : {}),
   });
-  if (unifiedRuntimeMode && [401, 403, 409].includes(response.status)) {
-    clearUnifiedSession();
-    window.dispatchEvent(new Event('onecrew:access-changed'));
-  }
   if (businessRequest) assertCurrentBusinessScope(generation, accountId);
   if (!response.ok) {
     const body = await response
       .clone()
       .json()
       .catch(() => undefined);
+    const error = body && typeof body === 'object' && 'error' in body ? body.error : undefined;
+    const code = typeof error === 'string' ? error : error && typeof error === 'object' && 'code' in error ? error.code : undefined;
+    if (unifiedRuntimeMode && (
+      response.status === 401 && (code === 'local.invalid_session' || code === 'local.unauthorized' || code === undefined)
+      || response.status === 409 && code === 'access.account_changed'
+    )) {
+      clearUnifiedSession();
+      window.dispatchEvent(new Event('onecrew:access-changed'));
+    }
     if (businessRequest) assertCurrentBusinessScope(generation, accountId);
     signalAccessState(response.status, body);
     if (body && typeof body === 'object' && 'error' in body) {

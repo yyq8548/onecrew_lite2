@@ -131,7 +131,7 @@ it("start preflight refreshes stale Bilibili login and isolates failed platforms
  saveOpenCliAuthObservation("credential-1", {...observation, platform: "bilibili", method: "full", checked_at: 1});
  vi.mocked(invoke).mockResolvedValueOnce([]).mockResolvedValueOnce({...observation, platform: "bilibili", status: "logged_in", method: "full", checked_at: Math.floor(Date.now()/1000)})
    .mockRejectedValueOnce(new Error("private-provider-detail"));
- const excluded = await preflightOpenCliSearch("credential-1", "profile-1", [{platform:"bilibili",browser_required:true},{platform:"instagram",browser_required:true},{platform:"youtube",browser_required:true}]);
+ const excluded = await preflightOpenCliSearch("credential-1", "profile-1", [{platform:"bilibili",browser_required:true},{platform:"instagram",browser_required:true},{platform:"google",browser_required:true}]);
  expect(excluded).toEqual(["instagram"]);
  expect(vi.mocked(invoke).mock.calls.map(call=>call[1])).toEqual([{profile:"profile-1"},{profile:"profile-1",platform:"bilibili"},{profile:"profile-1",platform:"instagram"}]);
  expect(loadOpenCliAuthObservations("credential-1", "profile-1").instagram.status).toBe("error");

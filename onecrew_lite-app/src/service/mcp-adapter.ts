@@ -29,6 +29,8 @@ const bootstrap = [
 ];
 const sessionReply = z.strictObject({ session_id: z.string(), surface: mcpSurface, account_id: z.string(), auth_epoch: z.string() });
 const workspaceReply = z.strictObject({ url: z.url(), instance_id: z.uuid() });
+const workspaceOpenInput = z.strictObject({ destination: z.enum(["workbench", "library"]) });
+const workspaceOpenTool = { name: "onecrew_workspace_open", description: "Issue a fresh one-use URL when the user opens the workbench or Library. Never reuse a displayed address.", inputSchema: { type: "object" as const, additionalProperties: false, required: ["destination"], properties: { destination: { type: "string", enum: ["workbench", "library"] } } }, _meta: { ui: { visibility: ["app"] } } };
 const workspaceCardTool = { name: "onecrew_workspace_card_request", description: "Claim a server-authored display notification for an existing status view. Grants no business authority.", inputSchema: { type: "object" as const, additionalProperties: false, required: ["view_id"], properties: { view_id: { type: "string", format: "uuid" }, manual: { type: "boolean" }, baseline_campaign_id: { type: ["string", "null"], format: "uuid" } } }, _meta: { ui: { visibility: ["app"] } } };
 
 // stdio 只转发给持有实例锁的服务；账号、数据库、确认权威和发送队列均由该服务持有。
@@ -38,7 +40,7 @@ export async function createMcpAdapter(directory: string, surface: McpSurface = 
   const selected = registry.tools.find(value => value.surface.toLowerCase() === surface);
   if (!selected) throw new Error("mcp_surface_manifest_missing");
   const ui = { ui: { resourceUri: resources.uri, visibility: ["model", "app"] }, "openai/outputTemplate": resources.uri };
-  const tools = [...bootstrap.map(tool => tool.name === "onecrew_web" ? { ...tool, _meta: ui } : tool), workspaceCardTool, ...selected.tools.map(raw => {
+  const tools = [...bootstrap.map(tool => tool.name === "onecrew_web" ? { ...tool, _meta: ui } : tool), workspaceOpenTool, workspaceCardTool, ...selected.tools.map(raw => {
     const tool = ToolSchema.parse(raw);
     return { ...tool, ...(tool.outputSchema ? { outputSchema: nativeMcpOutputSchema(tool.outputSchema) } : {}), ...(tool.name === "onecrew_result_present" ? { _meta: ui } : {}) };
   })];
@@ -100,6 +102,13 @@ export async function createMcpAdapter(directory: string, surface: McpSurface = 
     const input = decodeMcpInput(request.params.arguments ?? {}), name = request.params.name;
     if (!tools.some(tool => tool.name === name)) throw new Error("mcp_tool_not_registered");
     const runtime = await readVerifiedRuntime(directory);
+    if (name === "onecrew_workspace_open") {
+      const { destination } = workspaceOpenInput.parse(input);
+      const path = destination === "library" ? "/library" : "/";
+      const endpoint = destination === "library" ? "/_local/library/workspace" : "/_local/workspace";
+      const url = ownedWorkspace(runtime, await control(runtime, "POST", endpoint, extra.signal), path);
+      return encodeMcpResult({ url, instance_id: runtime.instance_id });
+    }
     if (name === "onecrew_workspace_card_request") {
       const request = workspaceCardRequest.parse(input);
       return encodeMcpResult(await control(runtime, "POST", "/_local/mcp/workspace/request", extra.signal, request));

@@ -63,6 +63,18 @@ test("real unified SEA cold and warm launches serve both UIs, native SQLite/PGli
       const result = await mcp.callTool({ name: "onecrew_status", arguments: {} });
       const text = (result.content as { text: string }[])[0]!.text;
       assert.equal((parseApplicationJson(text) as { instance_id: string }).instance_id, runtime.instance_id);
+      for (const destination of ["workbench", "library"]) {
+        const opened = await mcp.callTool({ name: "onecrew_workspace_open", arguments: { destination } });
+        assert.equal(opened.isError, undefined);
+        const data = opened.structuredContent as { url: string; instance_id: string };
+        assert.equal(data.instance_id, runtime.instance_id);
+        const url = new URL(data.url);
+        assert.equal(url.pathname, destination === "library" ? "/library" : "/");
+        const exchanged = await fetch(`${url.origin}/api/local/session`, { method: "POST", headers: { origin: url.origin, "content-type": "application/json" }, body: JSON.stringify({ ticket: new URLSearchParams(url.hash.slice(1)).get("onecrew_ticket") }) });
+        assert.equal(exchanged.status, 200);
+        const cookie = exchanged.headers.get("set-cookie")!.split(";")[0]!;
+        assert.equal((await fetch(`${url.origin}/api/session`, { headers: { cookie } })).status, 200);
+      }
     } finally { await mcp.close(); await transport.close(); }
     assert.equal((await invoke("stop")).state, "stopped"); running = false;
     const restartAt = performance.now(), next = await invoke("start"), warmRestartCliReadyMilliseconds = performance.now() - restartAt; running = true;

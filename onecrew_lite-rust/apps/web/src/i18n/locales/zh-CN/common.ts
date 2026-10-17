@@ -53,7 +53,7 @@ const common = {
   },
   runtimeUnavailable: {
     title: "本地 onecrew_lite 服务不可用",
-    description: "本地 onecrew_lite 服务不可用，请运行 onecrew web 打开新的已授权页面。",
+    description: "请在 OneCrew 状态卡点击“打开管理端”，或请 Codex 使用 OneCrew 重新打开已授权页面。",
   },
   sidebar: {
     title: "侧边栏",

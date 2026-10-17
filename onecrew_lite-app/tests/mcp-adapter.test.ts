@@ -16,7 +16,8 @@ test("SDK adapter uses the real unified service for logged-out status and local 
   await mkdir(scratch, { recursive: true });
   const root = await mkdtemp(join(scratch, "service-"));
   const directory = await createPrivateDirectory(join(root, "private"));
-  const runtime = await startLocalRuntime(directory, unifiedResources({ vaultPath: join(directory, "vault.sqlite"), masterKeyPath: join(directory, "master.key"), webAssetsDirectory: fileURLToPath(new URL("../../onecrew_lite-rust/apps/web/dist", import.meta.url)), libraryWebAssetsDirectory: fileURLToPath(new URL("../../onecrew_lite-library/web/dist", import.meta.url)) }));
+  const resourceOptions = { vaultPath: join(directory, "vault.sqlite"), masterKeyPath: join(directory, "master.key"), webAssetsDirectory: fileURLToPath(new URL("../../onecrew_lite-rust/apps/web/dist", import.meta.url)), libraryWebAssetsDirectory: fileURLToPath(new URL("../../onecrew_lite-library/web/dist", import.meta.url)) };
+  let runtime = await startLocalRuntime(directory, unifiedResources(resourceOptions));
   const adapter = await createMcpAdapter(directory), client = new Client({ name: "native-acceptance", version: "1" });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   try {
@@ -35,7 +36,8 @@ test("SDK adapter uses the real unified service for logged-out status and local 
     assert.notEqual(retiredContent.text, currentContent.text);
     await assert.rejects(client.readResource({ uri: "file:///private" }));
     const manifest = (await client.listTools()).tools;
-    assert.deepEqual(manifest.map(tool => tool.name), ["onecrew_status", "onecrew_login", "onecrew_login_cancel", "onecrew_logout", "onecrew_web", "onecrew_workspace_card_request", "onecrew_connection_list", "onecrew_result_present", "onecrew_result_state", "onecrew_tool_execute", "onecrew_tool_get", "onecrew_tool_search"]);
+    assert.deepEqual(manifest.map(tool => tool.name), ["onecrew_status", "onecrew_login", "onecrew_login_cancel", "onecrew_logout", "onecrew_web", "onecrew_workspace_open", "onecrew_workspace_card_request", "onecrew_connection_list", "onecrew_result_present", "onecrew_result_state", "onecrew_tool_execute", "onecrew_tool_get", "onecrew_tool_search"]);
+    assert.deepEqual(manifest.find(tool => tool.name === "onecrew_workspace_open")?._meta?.ui, { visibility: ["app"] });
     assert.deepEqual(manifest.find(tool => tool.name === "onecrew_result_state")?._meta?.ui, { visibility: ["app"] });
     assert.equal((manifest.find(tool => tool.name === "onecrew_result_present")?._meta?.ui as { resourceUri: string }).resourceUri, resource.uri);
     await assert.rejects(client.callTool({ name: "onecrew_tool_search", arguments: { query: "list creators" } }));
@@ -57,6 +59,24 @@ test("SDK adapter uses the real unified service for logged-out status and local 
     assert.equal(card.workspace_activity, null);
     const viewId = workspace._meta?.viewUUID;
     assert.equal(typeof viewId, "string");
+    const openedUrls = new Set<string>();
+    for (const destination of ["workbench", "library", "workbench"]) {
+      const opened = await client.callTool({ name: "onecrew_workspace_open", arguments: { destination } });
+      assert.equal(opened.isError, undefined);
+      const url = new URL((opened.structuredContent as { url: string }).url);
+      assert.equal(url.origin, runtime.descriptor.url);
+      assert.equal(url.pathname, destination === "library" ? "/library" : "/");
+      assert.equal(openedUrls.has(url.href), false, "每次点击必须取得新的授权入口");
+      openedUrls.add(url.href);
+      const ticket = new URLSearchParams(url.hash.slice(1)).get("onecrew_ticket");
+      const exchange = () => fetch(`${url.origin}/api/local/session`, { method: "POST", headers: { origin: url.origin, "content-type": "application/json" }, body: JSON.stringify({ ticket }) });
+      const exchanged = await exchange();
+      assert.equal(exchanged.status, 200);
+      const cookie = exchanged.headers.get("set-cookie")!.split(";")[0]!;
+      assert.equal((await fetch(`${url.origin}/api/session`, { headers: { cookie } })).status, 200);
+      assert.equal((await exchange()).status, 401, "票据保持一次性");
+    }
+    await assert.rejects(client.callTool({ name: "onecrew_workspace_open", arguments: { destination: "https://example.com" } }));
     const notification = await client.callTool({ name: "onecrew_workspace_card_request", arguments: { view_id: viewId } });
     assert.deepEqual(JSON.parse((notification.content as { text: string }[])[0]!.text), { kind: "none" });
     assert.equal((await fetch(`${runtime.descriptor.url}/_local/mcp/workspace/register`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ view_id: viewId }) })).status, 401);
@@ -69,6 +89,15 @@ test("SDK adapter uses the real unified service for logged-out status and local 
       const actual = await processClient.callTool({ name: "onecrew_status", arguments: {} });
       assert.equal(JSON.parse((actual.content as { text: string }[])[0]!.text).instance_id, runtime.descriptor.instance_id);
     } finally { await processClient.close(); await processTransport.close(); }
+    const previousInstance = runtime.descriptor.instance_id;
+    await runtime.close();
+    runtime = await startLocalRuntime(directory, unifiedResources(resourceOptions));
+    assert.notEqual(runtime.descriptor.instance_id, previousInstance);
+    const reopened = await client.callTool({ name: "onecrew_workspace_open", arguments: { destination: "workbench" } });
+    assert.equal((reopened.structuredContent as { instance_id: string }).instance_id, runtime.descriptor.instance_id, "旧状态卡必须向重启后的实际实例申请新入口");
+    const reopenedUrl = new URL((reopened.structuredContent as { url: string }).url);
+    const exchanged = await fetch(`${reopenedUrl.origin}/api/local/session`, { method: "POST", headers: { origin: reopenedUrl.origin, "content-type": "application/json" }, body: JSON.stringify({ ticket: new URLSearchParams(reopenedUrl.hash.slice(1)).get("onecrew_ticket") }) });
+    assert.equal(exchanged.status, 200);
   } finally {
     await client.close();
     await adapter.close();

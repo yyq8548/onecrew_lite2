@@ -16,12 +16,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { PairingGateController } from "@/components/pairing-gate-controller";
 import { inspectLocalData, failureMessage, type DataStartupStatus } from "@/lib/local-data";
-import { connectLocalRuntime, isRuntimeAvailable, subscribeRuntimeAvailability } from "@/lib/local-runtime";
+import { connectLocalRuntime, isRuntimeAvailable, runtimeConnectionState, subscribeRuntimeAvailability } from "@/lib/local-runtime";
 import { CanvasPortalProvider } from "@/lib/canvas-portal";
 import { RuntimeChangeBridge } from "@/lib/runtime-change-bridge";
-
-const LAUNCH_COMMAND = "onecrew web --no-browser";
-
 
 type AppMetaTranslationKey =
   | `views.${View}.title`
@@ -38,6 +35,23 @@ const META: Record<View, { titleKey: AppMetaTranslationKey; subtitleKey: AppMeta
 
 export default function App() {
   const ready = useSyncExternalStore(subscribeRuntimeAvailability, isRuntimeAvailable);
+  useEffect(() => {
+    const refresh = () => { void connectLocalRuntime(true).then(() => {}, () => {}); };
+    const visible = () => { if (document.visibilityState !== "hidden") refresh(); };
+    const timer = setInterval(() => {
+      const state = runtimeConnectionState();
+      if (state !== "session_required" && state !== "account_changed") visible();
+    }, 30_000);
+    window.addEventListener("focus", visible);
+    window.addEventListener("hashchange", refresh);
+    document.addEventListener("visibilitychange", visible);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener("focus", visible);
+      window.removeEventListener("hashchange", refresh);
+      document.removeEventListener("visibilitychange", visible);
+    };
+  }, []);
   if (!ready) return <DisconnectedCard />;
   return (
     <LocalDataGate>
@@ -48,15 +62,13 @@ export default function App() {
   );
 }
 
-/** This browser holds no local session, so the launch command is the way
- * forward: `/api/session` answers from the session cookie alone and retrying
- * the handshake without one repeats the same rejection. Retrying still helps
- * after the user opened a launch link elsewhere in this browser, so it stays
- * as the secondary action. */
 export function DisconnectedCard() {
   const { t } = useTranslation("shell");
   const { t: tCommon } = useTranslation("common");
   const [copied, setCopied] = useState<"idle" | "done" | "unavailable">("idle");
+  const state = useSyncExternalStore(subscribeRuntimeAvailability, runtimeConnectionState, runtimeConnectionState);
+  const [retrying, setRetrying] = useState(false);
+  const openRequest = t("service.openRequest");
   const copy = useCallback(() => {
     const clipboard = navigator.clipboard;
     if (!clipboard) {
@@ -64,17 +76,18 @@ export function DisconnectedCard() {
       return;
     }
     void clipboard
-      .writeText(LAUNCH_COMMAND)
+      .writeText(openRequest)
       .then(() => setCopied("done"))
       .catch(() => setCopied("unavailable"));
-  }, []);
+  }, [openRequest]);
   return (
     <main className="grid min-h-svh place-items-center bg-background p-6">
       <Card className="w-full max-w-md">
         <CardHeader>{t("service.disconnectedTitle")}</CardHeader>
         <CardContent className="space-y-3">
-          <p className="text-sm text-muted-foreground">{t("service.disconnectedDescription")}</p>
-          <code className="block rounded bg-muted p-3 text-sm">{LAUNCH_COMMAND}</code>
+          <p className="text-sm text-muted-foreground">{t(state === "session_required" || state === "account_changed" ? "service.sessionRequiredDescription" : "service.disconnectedDescription")}</p>
+          <p className="text-sm text-muted-foreground">{t("service.openWorkspaceHelp")}</p>
+          <p className="block rounded bg-muted p-3 text-sm">{openRequest}</p>
           {copied !== "idle" && (
             <p className="text-sm text-muted-foreground" role="status">
               {copied === "done" ? t("service.copied") : tCommon("errors.clipboardUnavailable")}
@@ -83,7 +96,10 @@ export function DisconnectedCard() {
         </CardContent>
         <CardFooter className="gap-2">
           <Button onClick={copy}>{t("service.copyCommand")}</Button>
-          <Button variant="outline" onClick={() => { void connectLocalRuntime().catch(() => undefined); }}>
+          <Button variant="outline" disabled={retrying} onClick={() => {
+            setRetrying(true);
+            void connectLocalRuntime(true).then(() => setRetrying(false), () => setRetrying(false));
+          }}>
             {t("service.retry")}
           </Button>
         </CardFooter>
@@ -162,6 +178,7 @@ function LocalDataGate({ children }: { children: ReactNode }) {
 
 function WorkspaceApp() {
   const { t } = useTranslation("shell");
+  const connection = useSyncExternalStore(subscribeRuntimeAvailability, runtimeConnectionState);
   const [view, setView] = useState<View>("free");
   const [searchOpened, setSearchOpened] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -220,8 +237,8 @@ function WorkspaceApp() {
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2 text-[11px] text-muted-foreground">
-            <span className="size-1.5 rounded-full bg-[var(--tone-success-solid)]" />
-            <span>{t("service.connected")}</span>
+            <span className={`size-1.5 rounded-full ${connection === "connected" ? "bg-[var(--tone-success-solid)]" : "bg-amber-500"}`} />
+            <span role="status">{t(connection === "connected" ? "service.connected" : "service.reconnecting")}</span>
           </div>
         </header>
         <div

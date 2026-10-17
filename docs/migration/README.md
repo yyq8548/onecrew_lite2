@@ -8,6 +8,8 @@
 
 ## 阅读顺序
 
+最新连接修复、candidate-22、验证结果及宿主重载边界见 [管理端与资料库连接修复](22-connection-stability.md)。平台搜索结论保持 12 个成功、Instagram 补证待核实。
+
 1. [Lite 全模块分析](01-lite-codebase-analysis.md)：现有全部35个Rust模块、Library、网页、插件、数据和发行边界。
 2. [Pro 架构分析](02-pro-reference-analysis.md)：统一服务与SEA的实际机制、可借鉴内容及功能差异。
 3. [详细迁移计划](03-detailed-migration-plan.md)：M00–M17任务、依赖、产出、完成条件和发布门槛。

@@ -121,7 +121,8 @@ export async function listenLocalServer(options: LocalServerOptions) {
   if (options.browserSessions) app.post("/api/local/session", async context => {
     if (context.req.header("content-type")?.split(";")[0]?.trim() !== "application/json") return context.json({ error: { code: "request.json_required" } }, 415);
     const { ticket } = z.object({ ticket: z.string() }).strict().parse(await context.req.json());
-    const session = options.bootstrapSessions?.acceptsTicket(ticket) ? options.bootstrapSessions.exchange(ticket) : options.browserSessions!.exchange(ticket, getCookie(context, browserCookieName(origin)));
+    const existingCookie = getCookie(context, browserCookieName(origin));
+    const session = options.bootstrapSessions?.acceptsTicket(ticket) ? options.bootstrapSessions.exchange(ticket, existingCookie) : options.browserSessions!.exchange(ticket, existingCookie);
     setCookie(context, browserCookieName(origin), session.cookie, { httpOnly: true, sameSite: "Strict", path: "/", maxAge: 8 * 60 * 60 });
     return context.json("scope" in session ? { csrf: session.csrf, scope: session.scope } : { csrf: session.csrf, accountId: session.accountId, epoch: session.epoch });
   });
@@ -137,6 +138,7 @@ export async function listenLocalServer(options: LocalServerOptions) {
       return context.json({ ok: true, result: { csrf: promoted.csrf, accountId: promoted.accountId, epoch: promoted.epoch, version: productVersion, transport: "local_http", protocol_version: 2 } });
     }
     const session = options.browserSessions!.readSession(cookie);
+    setCookie(context, browserCookieName(origin), cookie!, { httpOnly: true, sameSite: "Strict", path: "/", maxAge: 8 * 60 * 60 });
     return context.json({ ok: true, result: { ...session, version: productVersion, transport: "local_http", protocol_version: 2 } });
   });
   app.get("/_local/status", context => context.json({

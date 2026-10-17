@@ -71,6 +71,7 @@ export class BrowserSessions {
   readSession(cookie: string | undefined) {
     const context = this.authorize(cookie, undefined, false);
     const session = this.#sessions.get(digest(cookie!))!;
+    session.expires = performance.now() + 8 * 60 * 60_000;
     return Object.freeze({ csrf: session.csrf, accountId: context.principal.user.id, epoch: context.epoch });
   }
   clear(): void { this.#tickets.clear(); this.#sessions.clear(); }

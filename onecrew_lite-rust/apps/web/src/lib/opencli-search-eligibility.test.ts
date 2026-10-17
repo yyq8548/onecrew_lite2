@@ -8,7 +8,7 @@ const observation = (platform: string, status: OpenCliAuthObservation["status"],
 
 describe("search eligibility", () => {
   it("skips unchecked login/conditional sources but keeps public sources", () => {
-    expect(excludedSearchPlatforms({}, "chosen", capabilities, 100)).toEqual(["instagram", "linkedin-salesnav", "nowcoder"]);
+    expect(excludedSearchPlatforms({}, "chosen", capabilities, 100)).toEqual(["instagram", "linkedin-salesnav", "nowcoder", "youtube"]);
   });
   it("requires the selected profile's verified login without entitlement issues", () => {
     for (const status of ["not_logged_in", "unknown", "error", "session_detected"] as const)
