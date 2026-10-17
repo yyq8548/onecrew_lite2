@@ -17,7 +17,9 @@ export function validateDiscoveryContentResult(claim: DiscoveryContentClaim, raw
   if (claim.platform === "pinterest") return validateDiscoveryPinterestContent(claim.author_id, claim.source_url, native);
   if (claim.platform === "instagram") {
     if (!/^https:\/\/www\.instagram\.com\/[a-z0-9_.]{1,30}\/$/u.test(claim.source_url) || !/^[1-9][0-9]{0,24}$/u.test(claim.author_id)) throw new Error("discovery_content_result_invalid");
-    return z.strictObject({ post_id: text.regex(/^[1-9][0-9]{0,24}$/u), author_id: z.literal(claim.author_id), source_url: text.regex(/^https:\/\/www\.instagram\.com\/(?:p|reel)\/[A-Za-z0-9_-]{1,32}\/$/u), text: text.refine(value => Buffer.byteLength(value) <= 8000 && !value.includes("\0")), text_truncated: z.boolean() }).parse(native);
+    const post = z.strictObject({ post_id: text.regex(/^[A-Za-z0-9_-]{1,32}$/u), author_id: z.literal(claim.author_id), source_url: text.regex(/^https:\/\/www\.instagram\.com\/(?:p|reel)\/[A-Za-z0-9_-]{1,32}\/$/u), text: text.refine(value => Buffer.byteLength(value) <= 8000 && !value.includes("\0")), text_truncated: z.boolean() }).parse(native);
+    if (!/^[1-9][0-9]{0,24}$/u.test(post.post_id) && new URL(post.source_url).pathname.split("/")[2] !== post.post_id) throw new Error("discovery_content_result_invalid");
+    return post;
   }
   if (claim.platform === "twitter") {
     const post = discoveryPostIdForSource(claim.author_id, claim.source_url);

@@ -5,7 +5,7 @@ const text = z.string().refine(value => value.isWellFormed());
 const savedInstagramProfile = z.strictObject({
   adapter_version: z.literal("1.0.0"), id: text.regex(/^[1-9][0-9]{0,24}$/u), username: text.regex(/^[a-z0-9_.]{1,30}$/u),
   display_name: text.refine(value => [...value].length <= 200 && !/\p{Cc}/u.test(value)), biography: text.refine(value => [...value].length <= 2000 && !value.includes("\0")),
-  follower_count: z.number().int().nonnegative().safe().nullable(), private_account: z.boolean().nullable(), verified: z.boolean().nullable(), profile_url: text,
+  follower_count: z.number().int().nonnegative().safe().nullable(), follower_text: text.max(80).optional(), private_account: z.boolean().nullable(), verified: z.boolean().nullable(), profile_url: text,
   evidence_source: z.enum(["native_profile_response", "public_profile_dom_search_bound"]),
   public_email: text.refine(value => Buffer.byteLength(value) <= 320 && value.includes("@") && !/\p{Cc}/u.test(value)).nullable().optional(),
   contact_links: z.array(text.refine(source => {

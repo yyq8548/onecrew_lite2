@@ -27,6 +27,15 @@ export function parseDiscoverySubscribers(raw: string): SubscriberEstimate | nul
   return { nominal, lower: nominal < margin ? 0n : nominal - margin, upper: nominal + margin > MAX ? MAX : nominal + margin };
 }
 export function discoverySubscriberDisplay(raw: string): string | null { const value = parseDiscoverySubscribers(raw); return value === null ? null : `${value.lower === value.upper ? "" : "~"}${value.nominal}`; }
+export function parseDiscoveryInstagramFollowers(raw: string): (SubscriberEstimate & { display: string }) | null {
+  const display = raw.trim();
+  if (!/^[0-9][0-9,.]*\s*[KMB万亿千]?\s*(?:followers|位粉丝|粉丝)$/iu.test(display)) return null;
+  const estimate = parseDiscoverySubscribers(display);
+  return estimate === null || estimate.upper > BigInt(Number.MAX_SAFE_INTEGER) ? null : { ...estimate, display };
+}
+export function assessDiscoveryInstagram(criteria: unknown, evidence: unknown, author: string, rawCount: string | null): DiscoveryAssessment {
+  return assessDiscoveryWithCount(criteria, evidence, author, rawCount === null ? null : parseDiscoveryInstagramFollowers(rawCount), false);
+}
 export function parseDiscoveryDouyinFollowers(raw: string): (SubscriberEstimate & { display: string }) | null {
   const multiplier = raw.endsWith("万") ? 10000n : raw.endsWith("亿") ? 100000000n : raw.endsWith("千") ? 1000n : null; if (multiplier === null) return null;
   const number = raw.slice(0, -1), dot = number.indexOf("."), whole = dot < 0 ? number : number.slice(0, dot), fraction = dot < 0 ? "" : number.slice(dot + 1);

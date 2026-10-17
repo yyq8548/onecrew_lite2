@@ -70,10 +70,10 @@ export function bilibiliLanguagePlan(mid: string, source: string | null) {
 }
 export function instagramRecentOriginalsPlan(username: string, authorId: string) {
   if (!/^[a-z\d_.]{1,30}$/u.test(username) || !numeric(authorId, 25)) input();
-  const row = z.object({ post_id: text.refine(value => numeric(value, 25)), author_id: z.literal(authorId), source_url: text.regex(/^https:\/\/www\.instagram\.com\/(?:p|reel)\/[A-Za-z\d_-]{1,32}\/$/u), text: text.refine(value => Buffer.byteLength(value) <= 8000 && !value.includes("\0")), text_truncated: z.boolean() }).strict();
+  const row = z.object({ post_id: text.regex(/^[A-Za-z\d_-]{1,32}$/u), author_id: z.literal(authorId), source_url: text.regex(/^https:\/\/www\.instagram\.com\/(?:p|reel)\/[A-Za-z\d_-]{1,32}\/$/u), text: text.refine(value => Buffer.byteLength(value) <= 8000 && !value.includes("\0")), text_truncated: z.boolean() }).strict();
   return { site: "onecrew-instagram-profile", name: "recent", args: ["-f", "json", "--", username, authorId], addons: ["onecrew-browser-search"], maximumBytes: 30000, decode(value: unknown) {
     const parsed = z.array(row).max(3).safeParse(value);
-    if (!parsed.success || new Set(parsed.data.map(item => item.post_id)).size !== parsed.data.length || new Set(parsed.data.map(item => item.source_url)).size !== parsed.data.length) invalid();
+    if (!parsed.success || parsed.data.some(item => !numeric(item.post_id, 25) && new URL(item.source_url).pathname.split("/")[2] !== item.post_id) || new Set(parsed.data.map(item => item.post_id)).size !== parsed.data.length || new Set(parsed.data.map(item => item.source_url)).size !== parsed.data.length) invalid();
     return parsed.data;
   } } satisfies ReviewedOpenCliRead<unknown>;
 }

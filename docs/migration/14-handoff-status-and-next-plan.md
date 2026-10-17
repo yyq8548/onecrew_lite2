@@ -1,12 +1,12 @@
 # 新版交接、验证结果和下一步计划
 
-更新日期：2026-10-16。交付仓库为 `yyq8548/onecrew_lite2`，分支 `codex/typescript-unified-gmail`。本文件说明当前开发候选，不代表已经完成客户发布。用户已恢复开发，当前在独立的 `onecrew_lite2` 工作目录继续 Mac ARM 验收，详见 [Mac ARM 本机记录](15-mac-arm-verification.md)。
+更新日期：2026-10-17。交付仓库为 `yyq8548/onecrew_lite2`，分支 `codex/typescript-unified-gmail`。本文件说明当前开发候选，不代表已经完成客户发布。用户已恢复开发，当前在独立的 `onecrew_lite2` 工作目录继续 Mac ARM 验收，详见 [Mac ARM 本机记录](15-mac-arm-verification.md)。
 
 ## 目标与固定范围
 
-最新连接开发进度见 [管理端与资料库连接修复](22-connection-stability.md)：本机已切换 candidate-22 并安装配套插件，完成真实 HTTP、SDK、SEA 和网页回归；宿主重启后真实 MCP 已连接新版实例，两页及原专用浏览器身份均已恢复。Windows 本机验收仍待完成。
+最新本机版本为 candidate-24，已安装配套插件并恢复原专用浏览器身份，实际服务、HTTP 和 SEA 验收通过。当前网页控制工具的宿主授权不可用，两页重新打开已排队，尚未独立确认新版页面可见状态。详见 [Instagram 程序验收](27-instagram-visible-program.md)；既有连接修复见 [管理端与资料库连接修复](22-connection-stability.md)。Windows 本机验收仍待完成。
 
-当前进度保存：Mac ARM candidate-17 已包含会话 Cookie/CSRF 同账号复用、一次启动票据消费、专用浏览器重启说明及 OpenCLI 身份检查与恢复检查点。YouTube、TikTok、X、Reddit、Bilibili、Douyin、Weibo、Google、Yahoo、LinkedIn、Facebook、Pinterest 共 12 个平台已取得可作资格判断的证据，包含明确不符合条件的样本。Instagram 搜索可返回账号，粉丝量和原创正文仍待核实，最新重试返回 HTTP 429，已停止。成功平台不重复外部验收。详见 [搜索优化进度](20-platform-search-optimization.md)和[四平台评分证据](21-four-platform-scoring-evidence.md)。本次 GitHub 同步保存源码、测试和文档，不包含账号数据、浏览器配置及本地构建，也不执行客户发布。
+当前进度保存：Mac ARM candidate-24 已包含现有连接修复及 Instagram 正常网页读取。原有 12 平台已取得资格判断证据；Instagram 也已通过程序实际读取粉丝、简介、公开邮箱和原创正文，约数粉丝以范围参与初评和复评，语言判断直接复用正文。详见 [Instagram 程序验收](27-instagram-visible-program.md)。成功平台不重复外部验收。本次 GitHub 同步保存源码、测试和文档，不包含账号数据、浏览器配置及本地构建，也不执行客户发布。
 
 将原 Lite 主业务服务迁入 TypeScript/Node.js，与现有 Library、工作台和 MCP 卡片组成统一 SEA 程序，保留历史数据及明确的账号归属。源码基线为 `efc3c6eb69507b9809bb30279d9af26156d075e3`，本轮上游改动固定为 `8d931ab08448bcded456c210ebc29ad9709a68a5`；来源清单见 [source-ledger.json](source-ledger.json)。
 
@@ -33,7 +33,7 @@
 
 ## 本轮完成的改动
 
-1. Instagram 原生 GraphQL 搜索可返回账号，主页补证仍待核实；Pinterest 使用 `search-pins` 读取原创内容入口，LinkedIn 从作者 Activity 区域读取粉丝，Facebook 保留近似粉丝区间并标记截断正文。YouTube 区分实际读取失败，保留原生作者与内容证据；其余注册平台使用现有受控只读入口。
+1. Instagram 使用关键词搜索发现账号，通过正常网页读取四项评分资料；Pinterest 使用 `search-pins` 读取原创内容入口，LinkedIn 从作者 Activity 区域读取粉丝，Facebook 保留近似粉丝区间并标记截断正文。YouTube 区分实际读取失败，保留原生作者与内容证据；其余注册平台使用现有受控只读入口。
 2. 查询指导、独立查询审核和扩词审核；计划调整绑定源计划及修订版本，继承未明确修改的人数、预算、平台、语言、粉丝条件。精确资料可以复用，旧资格不能直接复用。
 3. 额外条件按索引逐项保存、引用核验和审计。证据不足保持 pending，明确不符为 rejected，评分不能覆盖硬条件；公开邮箱是软偏好，缺少邮箱不自动淘汰。
 4. 评分核对原生作者是否真正创作相关内容；联系人补证有明确边界。恢复绑定实际 stop code 和时间，不绕过登录及风控停止，不增加批准预算。
@@ -138,7 +138,7 @@ $env:ONECREW_CREATOR_ORACLE = Join-Path $env:ONECREW_SCHEMA_ORACLE_DIRECTORY 'cr
 | 顺序 | 工作 | 完成条件 |
 | --- | --- | --- |
 | 1 | 完成状态卡视觉与联合验收 | 正式 Codex 卡片可直接检查；状态、工作台、当前表格同一账号和计划，断线、过期及恢复状态真实显示 |
-| 2 | Instagram 评分补证 | 其余 12 平台已有资格判断证据，不重复验收；Instagram 最新 HTTP 429 已停止，待平台允许正常读取后，在既有授权与预算内补齐粉丝量和原创正文，保留真实结果及限制 |
+| 2 | Instagram 网页读取 | 四项资料程序路径已验收并加入 candidate-24；私密账号跳过，未知资料保持未知；其他成功平台不重复验收 |
 | 3 | Mac ARM 与 Intel 原生验收 | 两种真实环境分别完成原生依赖、Chrome、权限、SEA、安装、插件、Library、重启及升级；保留各自哈希和日志 |
 | 4 | 完成发布依赖与来源核实 | 补齐当前 13 项许可全文，核实 Windows r3 原包来源、公司当前 Access 源码和发行合同；已补齐的三项见 [许可全文证据](16-license-evidence.md)，不得伪造授权文本或部署旧快照 |
 | 5 | 冻结三平台客户安装候选 | 主程序、插件、Library 的来源、哈希、目标平台和接口一致；执行安装、中文路径、权限、并发、升级、数据恢复和必要失败用例 |

@@ -364,6 +364,12 @@ const ADDONS: &[Addon] = &[
                 ),
             ),
             (
+                "instagram-visible.mjs",
+                include_bytes!(
+                    "../../../integrations/opencli/onecrew-browser-search/instagram-visible.mjs"
+                ),
+            ),
+            (
                 "instagram-profile.mjs",
                 include_bytes!(
                     "../../../integrations/opencli/onecrew-browser-search/instagram-profile.mjs"

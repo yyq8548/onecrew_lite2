@@ -71,8 +71,8 @@ export class DiscoveryLanguageExecutor {
       return { author_id: claim.author_id, source_url: source, text: text.parse(native.text), comments: comments.map(comment => ({ source_url: `${source}#comment-${comment.id}`, text: comment.text })) };
     }
     if (claim.platform === "instagram") {
-      const saved = bodyText(claim, material), evidence = await this.reader.instagramCommentLanguageEvidence(browser, claim.author_handle, source);
-      return { author_id: claim.author_id, source_url: source, text: saved.text, comments: evidence.comments };
+      const saved = bodyText(claim, material);
+      return { author_id: claim.author_id, source_url: source, text: saved.text, comments: [] };
     }
     if (claim.platform === "weibo") {
       const saved = bodyText(claim, material), comments = await this.reader.weiboOriginalComments(browser, text.parse(saved.native.post_id));

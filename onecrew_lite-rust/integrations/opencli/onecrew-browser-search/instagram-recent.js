@@ -4,7 +4,7 @@ import {readInstagramRecent} from './instagram-recent.mjs';
 import {withOwnedSearchPage} from './owned-page.mjs';
 cli({site:'onecrew-instagram-profile',name:'recent',access:'read',browser:true,
   domain:'www.instagram.com',strategy:Strategy.COOKIE,navigateBefore:false,
-  description:'Read up to three original posts bound to an observed Instagram native account',
+  description:'Read one visible original caption bound to an observed Instagram account; no engagement or comments',
   args:[{name:'username',positional:true,required:true},{name:'author_id',positional:true,required:true}],
   columns:['source_url'],func:async(page,args)=>{
     try{return await readInstagramRecent(page,args,withOwnedSearchPage);}

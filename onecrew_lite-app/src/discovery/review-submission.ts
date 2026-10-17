@@ -6,7 +6,7 @@ import { discoveryJsonValue, discoveryMaterialDigest } from "./library-material.
 import { applyInitialDiscoveryMatch, discoveryReviewFinding, INITIAL_MATCH_POLICY, INITIAL_MATCH_REVIEWER, type DiscoveryReviewFinding } from "./initial-match.ts";
 import { applyDiscoveryReviewFindings } from "./review-findings.ts";
 import { buildDiscoveryReviewMaterial, type DiscoveryReviewBasis } from "./review-material.ts";
-import { assessDiscoveryDouyin, assessDiscoveryFacebook, assessDiscoveryProfile, assessDiscoveryYoutube, assessedDiscoveryEvidence } from "./qualification.ts";
+import { assessDiscoveryDouyin, assessDiscoveryFacebook, assessDiscoveryInstagram, assessDiscoveryProfile, assessDiscoveryYoutube, assessedDiscoveryEvidence } from "./qualification.ts";
 
 const text = z.string().refine(value => value.isWellFormed());
 const bounded = (maximum: number) => text.refine(value => !!value.trim() && Buffer.byteLength(value) <= maximum);
@@ -36,6 +36,7 @@ export function prepareDiscoveryReview(account: string, raw: unknown, basis: Dis
   let assessment;
   if (material.hit.platform === "douyin" && material.native_follower_estimate) assessment = assessDiscoveryDouyin(material.criteria, evidence, material.native_author_id, material.native_follower_estimate.display);
   else if (material.hit.platform === "facebook" && material.native_follower_estimate) assessment = assessDiscoveryFacebook(material.criteria, evidence, material.native_author_id, material.native_follower_estimate.display);
+  else if (material.hit.platform === "instagram" && material.native_follower_estimate) assessment = assessDiscoveryInstagram(material.criteria, evidence, material.native_author_id, material.native_follower_estimate.display);
   else if (["reddit", "facebook", "pinterest", "linkedin", "instagram", "weibo"].includes(material.hit.platform)) assessment = assessDiscoveryProfile(material.criteria, evidence, material.native_author_id, material.native_followers ?? null);
   else if (["twitter", "tiktok", "bilibili"].includes(material.hit.platform)) { if (material.native_followers === undefined) throw new Error("review_native_followers_unavailable"); assessment = assessDiscoveryProfile(material.criteria, evidence, material.native_author_id, material.native_followers); }
   else assessment = assessDiscoveryYoutube(material.criteria, evidence, material.native_author_id);

@@ -1,3 +1,5 @@
+import {observeInstagramVisibleProfile} from './instagram-visible.mjs';
+
 export function instagramProfileTarget(username) {
   if (typeof username !== 'string' || !/^[A-Za-z0-9_.]{1,30}$/.test(username)) throw new Error('ONECREW_PROFILE_INPUT');
   return username.toLowerCase();
@@ -167,7 +169,7 @@ export async function readInstagramWebProfile(page,args,ownPage) {
   if (!/^[1-9][0-9]{0,24}$/.test(args.author_id || '')) throw new Error('ONECREW_PROFILE_INPUT');
   return ownPage(page,async owned=>{
     await owned.goto(`https://www.instagram.com/${username}/`,{settleMs:3000});
-    const raw=await owned.evaluate(`(${observeInstagramProfile.toString()})(${JSON.stringify(username)},${JSON.stringify(args.author_id)})`);
+    const raw=await owned.evaluate(`(${observeInstagramVisibleProfile.toString()})(${JSON.stringify(username)},${JSON.stringify(args.author_id)})`);
     const data=raw && 'session' in Object(raw) && 'data' in Object(raw)?raw.data:raw;
     if (!data?.profile) throw new Error('ONECREW_PROFILE_'+(data?.stop || 'read').toUpperCase());
     return data.profile;
