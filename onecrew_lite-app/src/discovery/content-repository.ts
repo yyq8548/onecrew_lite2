@@ -38,6 +38,9 @@ export class DiscoveryContentRepository {
       LEFT JOIN discovery_content_reads content ON content.search_hit_id=h.id
       WHERE c.id=?1 AND c.phase='active' AND(c.max_calls IS NULL OR c.used_calls<c.max_calls) AND h.platform=?2 AND h.id NOT IN(SELECT value FROM json_each(?3)) AND p.status='completed' AND p.expected_revision=c.current_revision
       AND(h.platform!='instagram' OR COALESCE(json_extract(p.native_profile_json,'$.private_account'),0)!=1)
+      AND NOT EXISTS(SELECT 1 FROM discovery_candidates settled WHERE settled.discovery_campaign_id=c.id AND settled.criteria_revision=c.current_revision
+        AND settled.source_profile_ref=h.profile_ref AND settled.platform=h.platform AND settled.verdict IN ('qualified','rejected')
+        AND (settled.platform_account_id=a.author_id OR settled.platform_account_id=(SELECT account_id FROM discovery_profile_identity_matches WHERE search_hit_id=h.id)))
       AND(h.platform!='twitter' OR(p.search_hit_id=h.id AND EXISTS(SELECT 1 FROM discovery_profile_identity_matches m JOIN discovery_identity_reads i ON i.search_hit_id=m.identity_search_hit_id WHERE m.search_hit_id=h.id AND i.status='completed' AND i.account_id=m.account_id AND i.expected_revision=c.current_revision AND i.profile_ref=h.profile_ref AND i.discovery_campaign_id=c.id AND i.author_handle=a.author_id AND i.source_url=h.source_url AND i.call_number<p.call_number)))
       AND h.id=(SELECT h2.id FROM discovery_search_hits h2 JOIN discovery_search_authors a2 ON a2.search_hit_id=h2.id WHERE h2.discovery_campaign_id=h.discovery_campaign_id AND h2.platform=h.platform AND h2.profile_ref=h.profile_ref AND a2.author_id=a.author_id ORDER BY h2.captured_at,COALESCE((SELECT position FROM discovery_search_positions WHERE search_hit_id=h2.id),9223372036854775807),h2.id LIMIT 1)
       AND NOT EXISTS(SELECT 1 FROM discovery_platform_runs busy WHERE busy.discovery_campaign_id=c.id AND busy.status='searching')

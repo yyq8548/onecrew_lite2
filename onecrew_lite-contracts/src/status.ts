@@ -36,6 +36,7 @@ const activity = z.object({
   campaign_id: text, brief: text, stage: z.enum(["ready", "searching", "verifying", "pausing", "paused", "finished", "budget_exhausted", "needs_evidence", "error"]), stale: z.boolean(),
   attempted: creatorU64, login_required: creatorU64, read_errors: creatorU64, restricted: creatorU64, total: creatorU64,
   max: u32.nullable(), pending: u32, qualified: u32, target: u32, used: u32,
+  pending_breakdown: z.object({ awaiting_score: u32, needs_content: u32, needs_identity: u32, read_blocked: u32, insufficient_after_read: u32, needs_requirement: u32 }).strict().optional(),
   current_read_stops: creatorU64.nullish(), deferred_scores: u32.nullish(), failure_code: optionalText.optional(), failure_phase: optionalText.optional(), library_sync_error: optionalText.optional(), library_sync_pending: z.boolean().nullish(), library_synced_at: creatorU64.nullish(), updated_at: creatorU64.nullish(), stop: stop.nullish(),
   read_operation_stops: z.array(z.object({ code: text, operation: text, platform: text, profile_ref: text }).passthrough()).nullish(),
 }).passthrough();

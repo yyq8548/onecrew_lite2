@@ -7,6 +7,7 @@ import { discoveryLibraryBasis, discoverySearchHit, type DiscoveryLibraryBasis }
 import { discoverySubscriberDisplay } from "./qualification.ts";
 import { findDiscoveryReviewBasis } from "./review-basis.ts";
 import { loadDiscoveryRecommendationContacts } from "./contact-repository.ts";
+import { pendingReviewDetails } from "./pending-review.ts";
 
 const SOURCE_ROWS = readFileSync(runtimeAssetPath("discovery/library-source.sql", new URL("./library-source.sql", import.meta.url)), "utf8");
 const scopeSchema = z.array(z.strictObject({ platform: z.string(), profile_ref: z.string(), keywords: z.array(z.string()) }));
@@ -27,10 +28,10 @@ function youtubeFollowers(database: DatabaseSync, campaign: string, revision: nu
     JOIN discovery_search_hits h ON h.id=b.search_hit_id JOIN discovery_video_completions done ON done.search_hit_id=h.id
     WHERE b.discovery_campaign_id=?1 AND b.criteria_revision=?2 AND b.candidate_id=?3 AND b.native_author_id=?4
       AND h.discovery_campaign_id=b.discovery_campaign_id`).all(campaign, revision, candidate, author).some(row => youtubeVideo(z.string().parse(row.source_url)) === video);
-  return bound && typeof evidence.subscribers_raw === "string" ? discoverySubscriberDisplay(evidence.subscribers_raw) : null;
+  return bound && typeof evidence.subscribers_raw === "string" ? discoverySubscriberDisplay(evidence.subscribers_raw)?.replace(/^~/u, "") ?? null : null;
 }
 
-export function loadDiscoveryLibraryBasis(database: DatabaseSync, campaign: string, revision: number): DiscoveryLibraryBasis {
+export function loadDiscoveryLibraryBasis(database: DatabaseSync, campaign: string, revision: number, includePendingDetails = true): DiscoveryLibraryBasis {
   if (!database.isTransaction) throw new Error("library_basis_requires_snapshot");
   if (!campaign || Buffer.byteLength(campaign) > 128 || !Number.isInteger(revision) || revision <= 0 || revision > 2147483647) throw new Error("library_source_input_invalid");
   const head = database.prepare(`SELECT r.criteria_json,r.scope_json,r.approved_at FROM discovery_campaigns c
@@ -43,6 +44,7 @@ export function loadDiscoveryLibraryBasis(database: DatabaseSync, campaign: stri
     if (!scope) throw new Error("query_round_scope_corrupt"); scope.keywords.push(...addition.keywords);
   }
   const scopesJson = stringifyApplicationJson(scopes), rows: DiscoveryLibraryBasis["rows"] = [], contactCache = new Map<string, ReturnType<typeof loadDiscoveryRecommendationContacts>>();
+  const pendingCache = new Map<string, string[]>();
   let bytes = Buffer.byteLength(criteria) + Buffer.byteLength(scopesJson);
   for (const row of database.prepare(SOURCE_ROWS).all(campaign, revision)) {
     const hit = discoverySearchHit.parse({ id: row.id, campaign_id: campaign, platform: row.platform, profile_ref: row.profile_ref, search_keyword: row.search_keyword, source_url: row.source_url, title: row.title, author_label: row.author_label, captured_at: row.captured_at, author_id: row.author_id, author_url: row.author_url, author_observed_at: row.author_observed_at });
@@ -54,11 +56,12 @@ export function loadDiscoveryLibraryBasis(database: DatabaseSync, campaign: stri
       else {
         const material = findDiscoveryReviewBasis(database, campaign, revision, hit.id, true);
         if (material !== null && (material.candidate_id !== id || material.native_author_id !== author)) throw new Error("library_source_author_mismatch");
-        followers = material === null ? null : material.native_followers !== null ? String(material.native_followers) : material.native_follower_estimate !== null ? `~${material.native_follower_estimate.display}` : null;
+        followers = material === null ? null : material.native_followers !== null ? String(material.native_followers) : material.native_follower_estimate !== null ? String(material.native_follower_estimate.nominal) : null;
       }
       const key = `${id}\0${author}`; let contacts = contactCache.get(key);
       if (!contacts) { contacts = loadDiscoveryRecommendationContacts(database, campaign, revision, id, author, hit.id); contactCache.set(key, contacts); }
-      candidate = { id, native_platform: native !== hit.platform ? native : null, native_author_id: author, followers, verdict: z.string().parse(row.verdict), evidence_json: evidenceJson, identity_receipt: z.string().parse(row.identity_receipt), manual_approved_at: z.union([z.number().int().safe(), z.bigint()]).nullable().parse(row.manual_approved_at), contacts };
+      if (!pendingCache.has(id)) pendingCache.set(id, includePendingDetails && row.verdict === "pending" ? pendingReviewDetails(database, campaign, revision, id) : []);
+      candidate = { id, native_platform: native !== hit.platform ? native : null, native_author_id: author, followers, verdict: z.string().parse(row.verdict), evidence_json: evidenceJson, identity_receipt: z.string().parse(row.identity_receipt), manual_approved_at: z.union([z.number().int().safe(), z.bigint()]).nullable().parse(row.manual_approved_at), contacts, pending_details: pendingCache.get(id)! };
     }
     bytes += [hit.id, hit.campaign_id, hit.platform, hit.profile_ref, hit.source_url, hit.title, hit.author_label, hit.search_keyword, hit.author_id ?? "", hit.author_url ?? ""].reduce((sum, value) => sum + Buffer.byteLength(value), 0);
     if (candidate) { bytes += [candidate.id, candidate.native_platform ?? "", candidate.native_author_id, candidate.verdict, candidate.evidence_json, candidate.identity_receipt].reduce((sum, value) => sum + Buffer.byteLength(value), 0); if (candidate.contacts.length) bytes += Buffer.byteLength(stringifyApplicationJson(candidate.contacts)); }

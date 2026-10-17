@@ -45,7 +45,7 @@ SEA 测试在隔离的子进程环境中设置 Mac 用户目录，并预建 `Lib
 
 ## 本机构建候选
 
-当前构建及运行候选目录为 `.scratch/mac-arm-candidate-06/`，产品版本为 `0.7.1`，目标为 `darwin-arm64`。上一候选 `.scratch/mac-arm-candidate-05/` 保留用于恢复；搜索提示及真实升级验收见 [Rust 搜索行为同步验收](18-rust-search-alignment.md)。
+本记录对应的历史构建目录为 `.scratch/mac-arm-candidate-06/`，产品版本为 `0.7.1`，目标为 `darwin-arm64`。最新运行与验收范围见[当前交接](14-handoff-status-and-next-plan.md)。
 
 - 程序 SHA-256：`25ebe537d4cb25c0b38c1f4e392b5f9690bb3e5bc53e76265500c77030b821fa`。
 - payload SHA-256：`cdae0072962407e8b1bf296fbd69b566d6d10d228ab8e32d43cda7775ab4c18c`。

@@ -30,8 +30,8 @@ describe("workspace bootstrap contract", () => {
   it("shows the stage and exceptions without customer controls", () => {
     const render = (initial: WorkspaceStatus) => renderToStaticMarkup(<WorkspaceStatusCard appClient={{} as App} initial={initial} />);
     const ready = render(snapshot);
-    expect(ready).toContain("onecrew_lite 已连接");
-    expect(ready).toContain("请在工作台");
+    expect(ready).toContain("onecrew_lite 本地服务已连接");
+    expect(ready).toContain("请同时打开工作台和动态表格");
     expect(ready).toContain("打开管理端");
     expect(ready).toContain("打开资料库");
     expect(ready).not.toMatch(/<(input|select|textarea)\b/);

@@ -4,7 +4,7 @@ import type { ReviewedOpenCliRead } from "./read-plan.ts";
 
 export type NativeOpenCliCommentSource = { readonly kind: "bilibili_video" | "zhihu_answer" | "weibo_post" | "reddit_post" | "tiktok_video" | "instagram_post" | "facebook_post" | "facebook_reel"; readonly source: string };
 export function nativeCommentsPlan(target: NativeOpenCliCommentSource, limit: number) {
-  if (!Number.isInteger(limit) || limit < 1 || limit > 20 || !target.source.isWellFormed()) throw new OpenCliError("opencli_invalid_input");
+  if (!Number.isInteger(limit) || limit < (target.kind === "tiktok_video" ? 0 : 1) || limit > 20 || !target.source.isWellFormed()) throw new OpenCliError("opencli_invalid_input");
   let site: string;
   let name = "comments";
   const source = target.source;

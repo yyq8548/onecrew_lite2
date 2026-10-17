@@ -10,7 +10,7 @@ SELECT EXISTS(
  WHERE d.id=?1 AND h.id=?2 AND h.platform IN ('twitter','youtube','bilibili','tiktok','reddit','facebook','instagram','weibo','bluesky','zhihu','hackernews','linkedin','douyin','google','yahoo') AND c.verdict='pending'
    AND c.criteria_revision=d.current_revision AND d.phase='active' AND v.approved_at IS NOT NULL
    AND NOT EXISTS(SELECT 1 FROM discovery_platform_runs busy WHERE busy.discovery_campaign_id=d.id AND busy.status='searching')
-   AND json_extract(v.criteria_json,'$.language') IS NOT NULL
+   AND (json_extract(v.criteria_json,'$.language') IS NOT NULL OR h.platform='tiktok')
    AND json_extract(c.evidence_json,'$.reviewed_match.outcome')='insufficient'
    AND (
      (h.platform IN ('google','yahoo') AND c.platform IN ('youtube','twitter','douyin') AND c.source_platform=h.platform
@@ -80,7 +80,10 @@ SELECT EXISTS(
          AND json_extract(review.material_json,'$.native_content.native_content')=json(original.native_content_json))
    )
    AND (d.max_calls IS NULL OR d.used_calls + 1 <= d.max_calls)
-   AND EXISTS(SELECT 1 FROM json_each(review.findings_json) f WHERE json_extract(f.value,'$.criterion')='content_language' AND json_extract(f.value,'$.outcome')='insufficient')
+   AND EXISTS(SELECT 1 FROM json_each(review.findings_json) f WHERE
+     (json_extract(f.value,'$.criterion')='content_language' AND json_extract(v.criteria_json,'$.language') IS NOT NULL
+       OR h.platform='tiktok' AND json_extract(f.value,'$.criterion')='match_fit')
+     AND json_extract(f.value,'$.outcome')='insufficient')
    AND coalesce(json_array_length(review.material_json,'$.language_samples'),0) = (SELECT COUNT(*) FROM discovery_language_samples s WHERE s.candidate_id=c.id AND s.criteria_revision=d.current_revision AND s.status='completed')
    AND (SELECT COUNT(*) FROM discovery_language_samples s WHERE s.candidate_id=c.id AND s.criteria_revision=d.current_revision)<1
    AND (h.platform NOT IN ('instagram','weibo','bluesky','zhihu','hackernews') OR NOT EXISTS(SELECT 1 FROM discovery_language_samples s WHERE s.candidate_id=c.id AND s.criteria_revision=d.current_revision))

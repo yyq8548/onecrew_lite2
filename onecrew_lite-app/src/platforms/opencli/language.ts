@@ -29,13 +29,14 @@ export function tiktokRecentLanguagePlan(username: string, authorId: string) {
     });
   } } satisfies ReviewedOpenCliRead<unknown>;
 }
-export function tiktokLanguagePlan(username: string, authorId: string, source: string) {
+export function tiktokLanguagePlan(username: string, authorId: string, source: string, includeComments = true) {
   tiktokTarget(username, authorId);
   const prefix = `https://www.tiktok.com/@${username}/video/`;
   if (!source.startsWith(prefix) || !numeric(source.slice(prefix.length), 25)) input();
-  const plan = nativeCommentsPlan({ kind: "tiktok_video", source }, 5);
+  const plan = nativeCommentsPlan({ kind: "tiktok_video", source }, includeComments ? 5 : 0);
   return { ...plan, decode(value: unknown) {
     const items = rows(value, 21, 1);
+    if (!includeComments && items.length !== 1) invalid();
     const post = items[0]!;
     if (post.type !== "POST" || post.source_url !== source || post.native_author_id !== authorId || post.author !== username) invalid();
     const body = excerpt(post.text, 8000);
@@ -68,12 +69,16 @@ export function bilibiliLanguagePlan(mid: string, source: string | null) {
     });
   } } satisfies ReviewedOpenCliRead<unknown>;
 }
-export function instagramRecentOriginalsPlan(username: string, authorId: string) {
+export function instagramRecentOriginalsPlan(username: string, authorId: string, query = "", sourceUrl?: string) {
   if (!/^[a-z\d_.]{1,30}$/u.test(username) || !numeric(authorId, 25)) input();
+  if (Buffer.byteLength(query) > 2000 || /[\p{Cc}&&[^\n\r\t]]/v.test(query)) input();
+  if (sourceUrl && !new RegExp(`^https://www\\.instagram\\.com/${username.replaceAll(".", "\\.")}/(?:p|reel)/[A-Za-z\\d_-]{1,32}/$`, "u").test(sourceUrl)) input();
   const row = z.object({ post_id: text.regex(/^[A-Za-z\d_-]{1,32}$/u), author_id: z.literal(authorId), source_url: text.regex(/^https:\/\/www\.instagram\.com\/(?:p|reel)\/[A-Za-z\d_-]{1,32}\/$/u), text: text.refine(value => Buffer.byteLength(value) <= 8000 && !value.includes("\0")), text_truncated: z.boolean() }).strict();
-  return { site: "onecrew-instagram-profile", name: "recent", args: ["-f", "json", "--", username, authorId], addons: ["onecrew-browser-search"], maximumBytes: 30000, decode(value: unknown) {
+  return { site: "onecrew-instagram-profile", name: "recent", args: ["-f", "json", "--", username, authorId, ...(query || sourceUrl ? [query] : []), ...(sourceUrl ? [sourceUrl] : [])], addons: ["onecrew-browser-search"], maximumBytes: 30000, decode(value: unknown) {
     const parsed = z.array(row).max(3).safeParse(value);
     if (!parsed.success || parsed.data.some(item => !numeric(item.post_id, 25) && new URL(item.source_url).pathname.split("/")[2] !== item.post_id) || new Set(parsed.data.map(item => item.post_id)).size !== parsed.data.length || new Set(parsed.data.map(item => item.source_url)).size !== parsed.data.length) invalid();
+    if (!parsed.success) throw new OpenCliError("opencli_invalid_output");
+    if (sourceUrl && (parsed.data.length !== 1 || new URL(sourceUrl).pathname.split("/").slice(-3).join("/") !== new URL(parsed.data[0]!.source_url).pathname.slice(1))) invalid();
     return parsed.data;
   } } satisfies ReviewedOpenCliRead<unknown>;
 }

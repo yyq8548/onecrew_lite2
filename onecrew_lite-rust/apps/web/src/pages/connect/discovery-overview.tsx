@@ -9,11 +9,15 @@ import type { DiscoveryCampaign, DiscoveryCandidateCounts, syncDiscoveryLibrary 
 import type { WorkspaceStage } from "@/lib/discovery-workspace";
 import type { discoveryLibraryFailureKey } from "@/lib/discovery-library-error";
 
-export function DiscoveryOverview({ campaign, counts, stage, running, busy, profileChanged, syncing, library, syncFailed, syncPending = false, syncErrorKey, syncedAt, failurePhase, failureCode, onSync, onStart, onPause, onAnother, onExpanded, canExpand, onIssues, onFailure }: {
+const scoreReasons = ["initial_match_citation_not_saved", "initial_match_rationale_too_large", "initial_match_level_invalid", "initial_match_criterion_invalid", "initial_match_outcome_invalid", "initial_match_rationale_empty", "initial_match_auxiliary_field_invalid", "initial_match_citation_count_invalid"] as const;
+type ExclusionReason = "unchecked" | "signedOut" | "permission" | "failed" | "unverified" | "expired";
+
+export function DiscoveryOverview({ campaign, counts, stage, running, busy, profileChanged, syncing, library, syncFailed, syncPending = false, syncErrorKey, syncedAt, failurePhase, failureCode, deferredHits = [], excludedSources = [], onSync, onStart, onPause, onAnother, onExpanded, canExpand, onIssues, onFailure }: {
   campaign: DiscoveryCampaign; counts: DiscoveryCandidateCounts | undefined; stage: WorkspaceStage;
   running: boolean; busy: boolean; profileChanged: boolean; syncing: boolean;
   library: Awaited<ReturnType<typeof syncDiscoveryLibrary>> | null; syncFailed: boolean;
   syncPending?: boolean; syncErrorKey?: ReturnType<typeof discoveryLibraryFailureKey>; syncedAt?: number | bigint | null; failurePhase?: string; failureCode?: string;
+  deferredHits?: readonly { reason: string }[]; excludedSources?: readonly { name: string; reason: ExclusionReason }[];
   onSync: () => void; onStart: () => void; onPause: () => void; onAnother: () => void; onExpanded: () => void; canExpand: boolean; onIssues: () => void; onFailure?: () => void;
 }) {
   const { t, i18n } = useTranslation("shell");
@@ -49,6 +53,13 @@ export function DiscoveryOverview({ campaign, counts, stage, running, busy, prof
           <div key={label} className="min-w-0 space-y-1"><dt className="text-sm text-muted-foreground">{label}</dt><dd className="text-xl font-semibold tabular-nums">{value}</dd></div>)}
       </dl>
       <p className="text-sm leading-relaxed text-muted-foreground">{t("opencliPilot.dedupNote")}</p>
+      {deferredHits.length > 0 && <details className="text-sm text-warning"><summary>{t("opencliPilot.deferredScores", { count: deferredHits.length })}</summary>
+        <ul>{[...new Set(deferredHits.map(hit => hit.reason))].map(reason => {
+          const known = scoreReasons.find(code => code === reason);
+          return <li key={reason}>{known ? t(`opencliPilot.scoreReasons.${known}`) : t("opencliPilot.scoreValidationFailed")} · {deferredHits.filter(hit => hit.reason === reason).length}<span className="ml-2 font-mono text-xs">{reason}</span></li>;
+        })}</ul>
+      </details>}
+      {excludedSources.length > 0 && <div className="text-sm text-muted-foreground"><p>{t("opencliPilot.excludedSources")}</p><ul>{excludedSources.map(source => <li key={source.name}>{source.name}：{t(`opencliPilot.exclusionReasons.${source.reason}`)}</li>)}</ul></div>}
       {stage === "needs_evidence" && <p role="status" className="text-sm leading-relaxed">{t(campaign.platform_runs.every(run => run.status === "completed") ? "opencliPilot.evidenceStopHelp" : "opencliPilot.evidenceBlockedHelp")}</p>}
     </div>
     {stage === "error" && !profileChanged && <div role="alert" className="space-y-2 rounded-md bg-warning/10 px-4 py-3 text-sm">
@@ -61,6 +72,7 @@ export function DiscoveryOverview({ campaign, counts, stage, running, busy, prof
       <Button variant="outline" onClick={onIssues}>{t("opencliPilot.handleIssues")}</Button>
     </div>}
     <div className="space-y-2">
+      <p className="text-xs text-muted-foreground">{t("opencliPilot.syncPolicy")}</p>
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
         {library ? <Button asChild className="h-11 text-base"><a href={library.web_url} target="_blank" rel="noreferrer">{t("opencliPilot.openLibraryTable")}<ExternalLink className="size-4" aria-hidden /></a></Button>
           : <p className="self-center text-sm text-muted-foreground">{t("opencliPilot.tableNotCreated")}</p>}

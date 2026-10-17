@@ -8,6 +8,7 @@ import { validateSavedDiscoveryInstagramProfile } from "./contact-profile-contra
 import { validateDiscoveryPinterestProfile, validateDiscoveryPinterestContent } from "./pinterest-material.ts";
 import { loadDiscoveryWebSourceReceipt } from "./web-receipt.ts";
 import { validateDiscoveryRetainedContent, validateDiscoveryRetainedProfile } from "./native-material.ts";
+import { validateDiscoveryContentResult } from "./content-result.ts";
 import { parseDiscoveryDouyinFollowers, parseDiscoveryFacebookFollowers, parseDiscoveryInstagramFollowers } from "./qualification.ts";
 
 const scopesSchema = z.array(z.strictObject({ platform: z.string(), profile_ref: z.string(), keywords: z.array(z.string()) }));
@@ -132,6 +133,7 @@ export function loadDiscoveryReviewBasis(database: DatabaseSync, campaign: strin
     if (native.profile_url !== profile.claim.author_url) throw new Error("review_native_profile_binding_unavailable");
     if (platform === "instagram" && native.private_account === true) throw new Error("review_source_unavailable");
     basis.native_followers = typeof native.follower_count === "number" ? native.follower_count : null;
+    if (platform === "instagram" && basis.native_followers === null && typeof native.follower_text === "string") basis.native_follower_estimate = parseDiscoveryInstagramFollowers(native.follower_text);
     basis.native_profile = { web_text: bounded(native.web_text, 4000), profile_url: profile.claim.author_url, observed_at: profile.captured_at, bio: bounded(native[platform === "instagram" ? "biography" : "bio"], 8000), self_declared_location: null };
     if (database.prepare("SELECT EXISTS(SELECT 1 FROM discovery_content_reads WHERE discovery_campaign_id=?1 AND search_hit_id=?2) AS present").get(campaign, hit)?.present === 1) {
       const content = loadDiscoveryContentReceipt(database, campaign, hit);
@@ -140,8 +142,7 @@ export function loadDiscoveryReviewBasis(database: DatabaseSync, campaign: strin
         if (content.claim.expected_revision !== revision || content.claim.platform !== platform || content.claim.profile_ref !== basis.hit.profile_ref || content.claim.author_id !== basis.native_author_id || content.claim.source_url !== profile.claim.source_url || content.claim.call_number <= profile.claim.call_number || platform === "pinterest" && value.profile_url !== profile.claim.author_url) throw new Error("review_native_content_binding_unavailable");
         if (platform === "pinterest") validateDiscoveryPinterestContent(basis.native_author_id, content.claim.source_url, value);
         else {
-          z.strictObject({ post_id: z.string().regex(/^[1-9][0-9]{0,24}$/u), author_id: z.literal(basis.native_author_id), source_url: z.string().regex(/^https:\/\/www\.instagram\.com\/(?:p|reel)\/[A-Za-z0-9_-]{1,32}\/$/u), text: z.string().refine(text => Buffer.byteLength(text) <= 8000 && !text.includes("\0")), text_truncated: z.boolean() }).parse(value);
-          if (!/^https:\/\/www\.instagram\.com\/[a-z0-9_.]{1,30}\/$/u.test(content.claim.source_url)) throw new Error("review_native_content_binding_unavailable");
+          validateDiscoveryContentResult(content.claim, value, null);
         }
         if (Buffer.byteLength(stringifyApplicationJson(value)) > (platform === "pinterest" ? 24000 : 16000)) throw new Error("review_native_content_binding_unavailable"); basis.native_content = content;
       }
@@ -173,7 +174,6 @@ export function loadDiscoveryReviewBasis(database: DatabaseSync, campaign: strin
     basis.native_followers = typeof native.follower_count === "number" || typeof native.follower_count === "bigint" ? native.follower_count : null;
     if (platform === "douyin" && typeof native.follower_text === "string") basis.native_follower_estimate = parseDiscoveryDouyinFollowers(native.follower_text);
     if (platform === "facebook" && basis.native_followers === null && typeof native.follower_text === "string") basis.native_follower_estimate = parseDiscoveryFacebookFollowers(native.follower_text);
-    if (platform === "instagram" && basis.native_followers === null && typeof native.follower_text === "string") basis.native_follower_estimate = parseDiscoveryInstagramFollowers(native.follower_text);
     basis.native_profile = { web_text: null, profile_url: authorUrl, observed_at: profile.captured_at, bio: bounded(native[["weibo", "linkedin", "douyin", "zhihu", "pixiv"].includes(platform) ? "bio" : "biography"], ["bluesky", "linkedin", "douyin", "zhihu", "hackernews", "pixiv"].includes(platform) ? 8000 : 2000), self_declared_location: null };
     basis.hit.author_id = platform === "linkedin" ? basis.native_author_id : profile.claim.author_id; basis.hit.author_url = authorUrl; basis.native_content = content;
   }

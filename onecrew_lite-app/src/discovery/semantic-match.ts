@@ -13,10 +13,12 @@ import type { DiscoveryRepositoryResolver, OwnedDiscoveryRepository } from "./se
 import type { SemanticStructuredClient } from "./semantic-client.ts";
 import { structuredSemanticSchema } from "./semantic-planner.ts";
 import { DiscoveryScoreGate } from "./score-gate.ts";
+import { discoveryExecutionFailureCode, discoveryFindingFailureCodes } from "./execution-failure.ts";
 export { DISCOVERY_SCORE_CONCURRENCY } from "./score-gate.ts";
 
-export const discoveryMatchProposal = z.strictObject({ finding: discoveryReviewFinding.extend({ rationale: z.string().min(1).max(4000), citations: discoveryReviewFinding.shape.citations.max(8) }), language_only_pending: z.boolean(), requirement_findings: z.array(discoveryReviewFinding).max(32).default([]) });
-const RUBRIC_SHA256 = "694f0cfbee3ebe89df2cdb44b93aca6bce31076048a6eec83651ee265c9a6a67";
+const conciseFinding = discoveryReviewFinding.extend({ rationale: z.string().min(1).max(1000), citations: discoveryReviewFinding.shape.citations.max(8) });
+export const discoveryMatchProposal = z.strictObject({ finding: conciseFinding, language_only_pending: z.boolean(), requirement_findings: z.array(conciseFinding).max(32).default([]) });
+const RUBRIC_SHA256 = "4490c5a30b0c9fb5859b91ea8ac452237c74c5ad3b0876677e18f4f192751729";
 const object = (value: unknown): Record<string, unknown> => value !== null && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
 const u64 = (value: unknown): bigint | null => typeof value === "bigint" && value >= 0n && value <= 18446744073709551615n ? value : typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? BigInt(value) : null;
 export async function loadOriginalDiscoveryMatchRubric(path: string): Promise<string> {
@@ -36,7 +38,6 @@ function observedSource(material: DiscoveryReviewMaterial): string | null {
 export function discoveryMatchPromptMaterial(material: DiscoveryReviewMaterial, count: number | bigint | null) {
   const value = object(parseApplicationJson(Buffer.from(stringifyApplicationJson(material))));
   delete value.material_hash; delete value.candidate_evidence_hash;
-  if (material.hit.platform !== "instagram") delete value.native_profile;
   value.observed_followers = count;
   // 原serde_json的可变language_samples索引会为旧格式材料插入null；该值参与幂等键。
   if (!Object.hasOwn(value, "language_samples")) value.language_samples = null;
@@ -46,6 +47,19 @@ export function discoveryMatchPromptMaterial(material: DiscoveryReviewMaterial, 
   if (Array.isArray(value.language_samples)) for (const raw of value.language_samples) { const sample = object(raw); if (Array.isArray(sample.comments)) sample.comments = sample.source_url === matched ? sample.comments.slice(0, 5) : []; }
   value.matched_language_source_url = observedSource(material) ?? material.hit.source_url;
   return value;
+}
+export function discoveryNeedsInstagramContent(material: DiscoveryReviewMaterial, count: number | bigint | null): boolean {
+  if (material.hit.platform !== "instagram" || material.native_content || material.video_description || material.transcript) return false;
+  if (object(material.native_profile).private_account === true) return false;
+  const criteria = object(material.criteria), minimum = u64(criteria.min_subscribers) ?? u64(criteria.min_followers);
+  if (minimum !== null && minimum > 0n) {
+    const observed = u64(count), estimate = material.native_follower_estimate;
+    if (estimate ? BigInt(estimate.lower) < minimum : observed === null || observed < minimum) return false;
+  }
+  const bio = material.native_profile?.bio?.normalize("NFKC").toLowerCase() ?? "";
+  const terms = material.hit.search_keyword.normalize("NFKC").toLowerCase().match(/[\p{L}\p{N}]{3,}/gu) ?? [];
+  const topic = terms.filter(term => !["blogger", "creator", "influencer", "account", "official"].includes(term));
+  return !topic.some(term => bio.includes(term)) || typeof criteria.language === "string" && !!criteria.language.trim();
 }
 export function buildDiscoveryMatchPrompt(objective: string, material: DiscoveryReviewMaterial, rawValue: unknown, rubric: string): string {
   if (createHash("sha256").update(rubric).digest("hex") !== RUBRIC_SHA256) throw new Error("discovery_match_rubric_changed");
@@ -61,15 +75,26 @@ export function buildDiscoveryMatchPrompt(objective: string, material: Discovery
   else { selected += "No content-language condition is approved. Return language_only_pending=false. Do not request language evidence or comments.\n"; if (Array.isArray(value.language_samples)) for (const sample of value.language_samples) delete object(sample).comments; }
   if ((material.native_platform ?? material.hit.platform) === "instagram") selected += rubric.slice(instagramStart);
   for (const key of ["approved_scopes", "approved_at", "campaign_id", "criteria_revision", "candidate_id", "format_version"]) delete value[key];
+  // 评分只传证据和来源，调度信息仍完整保存在原始材料中。
+  for (const read of [value.transcript, value.native_content, ...(Array.isArray(value.public_pages) ? value.public_pages : [])]) {
+    const entry = object(read);
+    for (const key of ["search_hit_id", "candidate_id", "profile_ref", "call_number", "captured_at", "updated_at"]) delete entry[key];
+    const claim = object(entry.claim);
+    for (const key of ["campaign_id", "expected_revision", "search_hit_id", "profile_ref", "call_number"]) delete claim[key];
+    // 已筛选的language_samples保留同一正文及评论，避免重复传输。
+    if (entry.language_sample !== undefined && Array.isArray(value.language_samples) && value.language_samples.some(sample => stringifyApplicationJson(sample) === stringifyApplicationJson(entry.language_sample))) delete entry.language_sample;
+  }
+  selected += "\nEvidence budget: assess the saved profile, matched content and available recent content together. Use the smallest sufficient set of exact citations. If the approved conditions are supported, score immediately; do not request more posts, engagement or comments for corroboration alone. When insufficient, name only the missing approved conditions so collection can target that gap.\n";
+  selected += "Keep each rationale under 1000 characters and 4000 UTF-8 bytes. Copy citations exactly from saved fields; never add ellipses, reformat or translate quotations.\n";
   return `${selected}\nUNTRUSTED_SAVED_DATA:\n${stringifyApplicationJson(discoveryJsonValue({ objective, material: value }))}`;
 }
 export function discoveryMatchEvidenceKey(material: DiscoveryReviewMaterial, count: number | bigint | null, rubric: string, reassess: boolean): string {
   const value = discoveryMatchPromptMaterial(material, count);
-  return `initial-v1-${createHash("sha256").update(`${rubric}:${stringifyApplicationJson(discoveryJsonValue(value))}:${reassess ? material.material_hash : "automatic"}`).digest("hex")}`;
+  return `initial-v2-${createHash("sha256").update(`${rubric}:${stringifyApplicationJson(discoveryJsonValue(value))}:${reassess ? material.material_hash : "automatic"}`).digest("hex")}`;
 }
 export interface PreparedSemanticDiscoveryMatch { readonly evidenceKey: string }
 export type DiscoveryMatchPreparation = { state: "skipped" } | { state: "cached"; receipt: DiscoveryReviewReceipt } | { state: "model"; prepared: PreparedSemanticDiscoveryMatch };
-interface MatchPayload { context: AccountContext; owned: OwnedDiscoveryRepository; input: { campaign_id: string; expected_revision: number; search_hit_id: string }; material: DiscoveryReviewMaterial; prompt: string }
+interface MatchPayload { context: AccountContext; owned: OwnedDiscoveryRepository; input: { campaign_id: string; expected_revision: number; search_hit_id: string }; material: DiscoveryReviewMaterial; prompt: string; observationKey: string }
 
 export class DiscoverySemanticMatcher {
   readonly #accounts: AccountContextService; readonly #repositories: DiscoveryRepositoryResolver; readonly #client: SemanticStructuredClient; readonly #rubric: string;
@@ -106,24 +131,34 @@ export class DiscoverySemanticMatcher {
       this.#assert(context, owned);
       return { state: "cached", receipt: await this.#commit(context, owned, { ...input, material_hash: material.material_hash, request_id: key, reviewer: { kind: "agent", label: INITIAL_MATCH_REVIEWER }, findings: [{ criterion: "match_fit", outcome: "supported", match_level: "low", rationale, citations: [], tool: null, country_code: null }] }) };
     }
+    if (!reassess && discoveryNeedsInstagramContent(material, count)) return { state: "skipped" };
     const prepared = Object.freeze({ evidenceKey: key });
-    this.#prepared.set(prepared, { context, owned, input, material, prompt: buildDiscoveryMatchPrompt(campaign.brief, material, discoveryMatchPromptMaterial(material, count), this.#rubric) });
+    this.#prepared.set(prepared, { context, owned, input, material, observationKey: discoveryMatchEvidenceKey(material, count, this.#rubric, false), prompt: buildDiscoveryMatchPrompt(campaign.brief, material, discoveryMatchPromptMaterial(material, count), this.#rubric) });
     return { state: "model", prepared };
   }
-  async evaluate(context: AccountContext, prepared: PreparedSemanticDiscoveryMatch): Promise<DiscoveryReviewReceipt> {
+  async evaluate(context: AccountContext, prepared: PreparedSemanticDiscoveryMatch): Promise<DiscoveryReviewReceipt | null> {
     const payload = this.#prepared.get(prepared); if (!payload || payload.context !== context) throw new Error("initial_match_preparation_not_owned");
     this.#assert(context, payload.owned);
     this.#prepared.delete(prepared);
     const author = stringifyApplicationJson([context.principal.user.id, payload.input.campaign_id, payload.input.expected_revision, payload.material.native_platform ?? payload.material.hit.platform, payload.material.native_author_id]);
     const permit = this.#gate.acquire(author);
     try {
-      const proposal = await this.#client.structured({ prompt: payload.prompt, schema: structuredSemanticSchema(discoveryMatchProposal), decode: discoveryMatchProposal, planning: false, signal: context.signal, assertCurrent: async () => { this.#assert(context, payload.owned); } });
+      let correction = "";
+      for (let attempt = 0; attempt < 2; attempt++) {
+      const proposal = await this.#client.structured({ prompt: payload.prompt + correction, schema: structuredSemanticSchema(discoveryMatchProposal), decode: discoveryMatchProposal, planning: false, signal: context.signal, assertCurrent: async () => { this.#assert(context, payload.owned); } });
       this.#assert(context, payload.owned);
+      const current = payload.owned.repository.prepareInitialMatchMaterial(payload.input.campaign_id, payload.input.expected_revision, payload.input.search_hit_id);
+      if (discoveryMatchEvidenceKey(current.material, current.count, this.#rubric, false) !== payload.observationKey) return null;
       const findings = [proposal.finding];
       if (proposal.language_only_pending && proposal.finding.outcome === "insufficient") findings.push({ ...proposal.finding, criterion: "content_language", outcome: "insufficient", match_level: null, tool: null, country_code: null });
       findings.push(...proposal.requirement_findings);
-      const receipt = await this.#commit(context, payload.owned, { ...payload.input, material_hash: payload.material.material_hash, request_id: prepared.evidenceKey, reviewer: { kind: "agent", label: INITIAL_MATCH_REVIEWER }, findings });
-      return receipt;
+      const result = await this.#commit(context, payload.owned, { ...payload.input, material_hash: current.material.material_hash, request_id: prepared.evidenceKey, reviewer: { kind: "agent", label: INITIAL_MATCH_REVIEWER }, findings }).then(receipt => ({ ok: true as const, receipt }), error => ({ ok: false as const, error: error as unknown }));
+      if (result.ok) return result.receipt;
+      const code = discoveryExecutionFailureCode(result.error);
+      if (attempt !== 0 || !discoveryFindingFailureCodes.some(failure => failure === code)) throw result.error;
+      correction = `\nCORRECTION_REQUIRED: The previous proposal failed validation: ${code}. Return one corrected proposal using only the saved evidence. match_fit must use supported with a match_level or insufficient with null match_level. tool and country_code must be null. Use at most 8 exact saved quotations; keep each rationale within 1000 characters and 4000 UTF-8 bytes. Previous proposal: ${stringifyApplicationJson(proposal)}`;
+      }
+      throw new Error("initial_match_correction_exhausted");
     } finally { permit.release(); }
   }
 }

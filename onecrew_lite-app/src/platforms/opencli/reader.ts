@@ -249,10 +249,10 @@ export class OpenCliReader {
   facebookNativeOriginal(binding: VerifiedOpenCliBrowserBinding, authorId: string, base: string, source: string) { return this.#native(binding, facebookNativeOriginalPlan(authorId, base, source)); }
   bilibiliVideoEvidence(binding: VerifiedOpenCliBrowserBinding, sourceUrl: string, authorId: string) { return this.#native(binding, bilibiliVideoPagePlan(sourceUrl, authorId)); }
   tiktokRecentLanguageUrls(binding: VerifiedOpenCliBrowserBinding, username: string, authorId: string) { return this.#native(binding, tiktokRecentLanguagePlan(username, authorId)); }
-  tiktokLanguageSample(binding: VerifiedOpenCliBrowserBinding, username: string, authorId: string, source: string) { return this.#native(binding, tiktokLanguagePlan(username, authorId, source)); }
+  tiktokLanguageSample(binding: VerifiedOpenCliBrowserBinding, username: string, authorId: string, source: string, includeComments = true) { return this.#native(binding, tiktokLanguagePlan(username, authorId, source, includeComments)); }
   bilibiliLanguageSample(binding: VerifiedOpenCliBrowserBinding, mid: string, source: string) { return this.#native(binding, bilibiliLanguagePlan(mid, source)); }
   bilibiliRecentLanguageUrls(binding: VerifiedOpenCliBrowserBinding, mid: string) { return this.#native(binding, bilibiliLanguagePlan(mid, null)); }
-  instagramRecentOriginalPosts(binding: VerifiedOpenCliBrowserBinding, username: string, authorId: string) { return this.#native(binding, instagramRecentOriginalsPlan(username, authorId)); }
+  instagramRecentOriginalPosts(binding: VerifiedOpenCliBrowserBinding, username: string, authorId: string, query = "", sourceUrl?: string) { return this.#native(binding, instagramRecentOriginalsPlan(username, authorId, query, sourceUrl)); }
   instagramCommentLanguageEvidence(binding: VerifiedOpenCliBrowserBinding, username: string, source: string) { return this.#native(binding, instagramCommentLanguagePlan(username, source)); }
   async readPublicWeb(binding: VerifiedOpenCliBrowserBinding, source: VerifiedOpenCliPublicSource) {
     const url = source.url;

@@ -8,7 +8,7 @@ const observation = (platform: string, status: OpenCliAuthObservation["status"],
 
 describe("search eligibility", () => {
   it("skips unchecked login/conditional sources but keeps public sources", () => {
-    expect(excludedSearchPlatforms({}, "chosen", capabilities, 100)).toEqual(["instagram", "linkedin-salesnav", "nowcoder", "youtube"]);
+    expect(excludedSearchPlatforms({}, "chosen", capabilities, 100)).toEqual(["instagram", "linkedin-salesnav", "nowcoder"]);
   });
   it("requires the selected profile's verified login without entitlement issues", () => {
     for (const status of ["not_logged_in", "unknown", "error", "session_detected"] as const)
@@ -16,6 +16,13 @@ describe("search eligibility", () => {
     expect(excludedSearchPlatforms({ instagram: observation("instagram", "logged_in", "other") }, "chosen", capabilities, 100)).toContain("instagram");
     expect(excludedSearchPlatforms({ instagram: observation("instagram", "logged_in") }, "chosen", capabilities, 100)).not.toContain("instagram");
     expect(excludedSearchPlatforms({ "linkedin-salesnav": observation("linkedin-salesnav", "logged_in", "chosen", "entitlement_unverified") }, "chosen", capabilities, 100)).toContain("linkedin-salesnav");
+  });
+  it("keeps YouTube public search available for missing, failed, signed-out and expired login observations", () => {
+    const cap = [{ platform: "youtube", browser_required: true }];
+    expect(excludedSearchPlatforms({}, "chosen", cap, 100)).toEqual([]);
+    for (const status of ["not_logged_in", "unknown", "error", "session_detected", "logged_in"] as const) {
+      expect(excludedSearchPlatforms({ youtube: observation("youtube", status) }, "chosen", cap, 2000)).toEqual([]);
+    }
   });
 });
 

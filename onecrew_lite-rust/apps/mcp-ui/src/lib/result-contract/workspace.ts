@@ -7,6 +7,7 @@ export type WorkspaceActivity = {
   updated_at?: number;
   library_sync_pending?: boolean;
   deferred_scores?: number;
+  pending_breakdown?: { awaiting_score: number; needs_content: number; needs_identity: number; read_blocked: number; insufficient_after_read: number; needs_requirement: number };
   failure_code?: string;
   library_sync_error?: string;
   library_synced_at?: number;
@@ -18,7 +19,7 @@ export function parseWorkspaceActivity(value: unknown): WorkspaceActivity | null
   if (value === null) return null;
   if (typeof value !== "object" || !value || Array.isArray(value)) throw new Error("invalid workspace activity");
   const data = value as Record<string, unknown>;
-  if (Object.keys(data).filter(key => !["stop", "updated_at", "library_sync_pending", "deferred_scores", "failure_phase", "failure_code", "library_sync_error", "library_synced_at", "current_read_stops", "read_operation_stops"].includes(key)).sort().join() !== "attempted,brief,campaign_id,login_required,max,pending,qualified,read_errors,restricted,stage,stale,target,total,used"
+  if (Object.keys(data).filter(key => !["stop", "updated_at", "library_sync_pending", "deferred_scores", "pending_breakdown", "failure_phase", "failure_code", "library_sync_error", "library_synced_at", "current_read_stops", "read_operation_stops"].includes(key)).sort().join() !== "attempted,brief,campaign_id,login_required,max,pending,qualified,read_errors,restricted,stage,stale,target,total,used"
     || typeof data.campaign_id !== "string" || !data.campaign_id || typeof data.brief !== "string"
     || !workspaceStages.includes(data.stage as WorkspaceActivity["stage"]) || typeof data.stale !== "boolean") throw new Error("invalid workspace activity");
   for (const key of ["qualified", "pending", "target", "attempted", "total", "used", "login_required", "read_errors", "restricted"]) {
@@ -34,6 +35,12 @@ export function parseWorkspaceActivity(value: unknown): WorkspaceActivity | null
   if ("updated_at" in data && (typeof data.updated_at !== "number" || !Number.isSafeInteger(data.updated_at) || data.updated_at <= 0)) throw new Error("invalid workspace timestamp");
   if ("library_sync_pending" in data && typeof data.library_sync_pending !== "boolean") throw new Error("invalid library sync status");
   if ("deferred_scores" in data && (typeof data.deferred_scores !== "number" || !Number.isSafeInteger(data.deferred_scores) || data.deferred_scores < 0)) throw new Error("invalid deferred score count");
+  if (data.pending_breakdown !== undefined) {
+    const counts = data.pending_breakdown;
+    if (!counts || typeof counts !== "object" || Array.isArray(counts)
+      || Object.keys(counts).sort().join() !== "awaiting_score,insufficient_after_read,needs_content,needs_identity,needs_requirement,read_blocked"
+      || Object.values(counts).some(value => typeof value !== "number" || !Number.isSafeInteger(value) || value < 0)) throw new Error("invalid pending review counts");
+  }
   if ("failure_phase" in data && !["read", "score", "admission", "readback", "execution"].includes(data.failure_phase as string)) throw new Error("invalid execution phase");
   for (const key of ["failure_code", "library_sync_error"]) {
     if (key in data && (typeof data[key] !== "string" || !/^[a-z][a-z_]{0,95}$/.test(data[key] as string))) throw new Error("invalid diagnostic code");

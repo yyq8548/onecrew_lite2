@@ -692,6 +692,12 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
           syncPending={currentExecution?.sync_pending ?? false} syncedAt={currentExecution?.synced_at ?? null}
           syncErrorKey={currentExecution?.sync_error ? discoveryLibraryFailureKey(new Error(currentExecution.sync_error)) : syncFailure?.campaignId === current.id ? syncFailure.key : undefined}
           failurePhase={currentExecution?.failure_phase ?? undefined} failureCode={currentExecution?.failure_code ?? undefined}
+          deferredHits={currentExecution?.deferred_hits ?? []}
+          excludedSources={(currentExecution?.excluded_platforms ?? []).filter(platform => current.scopes.some(scope => scope.platform === platform)).map(platform => {
+            const observation = loadOpenCliAuthObservations(credentialId, profileRef)[platform];
+            const reason = !observation ? "unchecked" : observation.issue === "entitlement_unverified" ? "permission" : observation.status === "not_logged_in" ? "signedOut" : observation.status === "error" || observation.issue ? "failed" : observation.method !== "full" || observation.status !== "logged_in" ? "unverified" : "expired";
+            return { name: platformDisplayName(platform), reason };
+          })}
           onFailure={() => { setPlatformsOpen(true); requestAnimationFrame(() => platformDetails.current?.scrollIntoView({ block: "center", behavior: "smooth" })); }}
           onSync={() => librarySync.mutate(current.id)} onStart={() => { void startAutomatic(); }}
           onPause={() => { startGeneration.current += 1; pauseExecution.mutate(current.id); }} onAnother={startAnother} onExpanded={startExpanded}

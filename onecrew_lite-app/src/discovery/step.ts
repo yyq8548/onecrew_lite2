@@ -26,7 +26,7 @@ export function planDiscoveryStep(repository: DiscoveryStepSource, campaignId: s
   if (campaign.max_calls !== null && campaign.used_calls >= campaign.max_calls) return { kind: "budget_exhausted" };
   if (!blocked.includes("youtube")) { const transcript = repository.nextTranscriptHit(campaignId); if (transcript) return { kind: "read_transcript", profile_ref: transcript.profile_ref, search_hit_id: transcript.id }; }
   const page = repository.nextPublicPage(campaignId, blocked); if (page) return { kind: "read_public_page", profile_ref: page.profile_ref, candidate_id: page.candidate_id, requested_url: page.requested_url };
-  for (const platform of ["youtube", "twitter", "bilibili", "reddit", "tiktok", "weibo", "bluesky", "zhihu", "hackernews", "pinterest", "pixiv", "linkedin", "douyin"]) {
+  for (const platform of ["youtube", "twitter", "bilibili", "reddit", "tiktok", "instagram", "weibo", "bluesky", "zhihu", "hackernews", "pinterest", "pixiv", "linkedin", "douyin"]) {
     if (!blocked.includes(platform)) { const hit = repository.nextContentHit(campaignId, platform); if (hit) return { kind: "read_content", search_hit_id: hit }; }
   }
   const author = repository.nextSourceAuthor(campaignId, blocked); if (author) return { kind: "read_source_author", search_hit_id: author };

@@ -37,7 +37,14 @@ export class DiscoveryContentExecutor {
         } else value = native.adapter_version === "2.0.0" ? await this.reader.facebookNativeOriginal(browser, claim.author_id, z.string().parse(native.observed_profile_url), claim.source_url) : await this.reader.facebookReelContent(browser, claim.author_id, claim.source_url);
       } else if (claim.platform === "instagram") {
         const username = /^https:\/\/www\.instagram\.com\/([^/]+)\/$/u.exec(claim.source_url)?.[1]; if (!username) throw new OpenCliError("opencli_invalid_input");
-        const posts = await this.reader.instagramRecentOriginalPosts(browser, username, claim.author_id);
+        const query = campaign.scopes.find(scope => scope.platform === "instagram")?.keywords.join(" ") ?? "";
+        const saved = owned.repository.getProfile(claim.campaign_id, claim.search_hit_id);
+        if (saved.status !== "completed" || saved.stop_code !== null || saved.claim.platform !== "instagram" || saved.claim.expected_revision !== claim.expected_revision || saved.claim.profile_ref !== claim.profile_ref || saved.claim.author_id !== claim.author_id || saved.claim.call_number >= claim.call_number) throw new OpenCliError("opencli_invalid_output");
+        const previews = z.array(z.object({ url: z.string(), preview: z.string() })).max(6).parse(saved.native_profile?.visible_posts ?? []);
+        const terms = [...new Set(query.normalize("NFKC").toLowerCase().match(/[\p{L}\p{N}]{3,}/gu) ?? [])].filter(term => !["blogger", "creator", "influencer", "account", "official"].includes(term));
+        const score = (post: typeof previews[number]) => terms.filter(term => post.preview.normalize("NFKC").toLowerCase().includes(term)).length;
+        const selected = previews.reduce<typeof previews[number] | undefined>((best, post) => !best || score(post) > score(best) ? post : best, undefined);
+        const posts = await this.reader.instagramRecentOriginalPosts(browser, username, claim.author_id, query, selected?.url);
         value = posts?.[0]; if (value === undefined) throw new OpenCliError("opencli_invalid_output");
       } else if (claim.platform === "twitter") {
         const post = /\/status\/([1-9][0-9]{0,19})\/?$/u.exec(claim.source_url)?.[1]; if (!post) throw new OpenCliError("opencli_invalid_input");

@@ -156,7 +156,7 @@
     "editSourceDetails": "查看和编辑来源明细",
     "verdict": {
       "qualified": "推荐候选人",
-      "pending": "尚未评分",
+      "pending": "待核实",
       "rejected": "未进入推荐名单",
       "unverified": "尚未核实"
     },

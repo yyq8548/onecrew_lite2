@@ -1,6 +1,6 @@
 # 新电脑环境与接手流程
 
-当前源码已包含 TypeScript 统一程序。先阅读 [当前状态、完整验证和下一步计划](14-handoff-status-and-next-plan.md)，不要从原始迁移基线重新实施。源码交付后按用户要求暂停；后续实现需用户明确恢复。
+当前源码已包含 TypeScript 统一程序。先阅读 [当前交接与构建](14-handoff-status-and-next-plan.md)，从当前提交继续，按用户本次授权执行开发和验收。
 
 ## 获取源码
 
@@ -29,7 +29,7 @@ git merge-base --is-ancestor efc3c6eb69507b9809bb30279d9af26156d075e3 HEAD
 | Codex | 实际官方 CLI、宿主和独立授权的账号 |
 | Mac | ARM 与 Intel 各需真实原生环境；尚未验收 |
 
-依次执行 [当前构建与测试命令](14-handoff-status-and-next-plan.md#新电脑构建与验证)。主程序、MCP UI、工作台和 Library 必须同一来源配套构建，Library 使用 `VITE_ONECREW_UNIFIED=1`。每次构建写入新的忽略目录，不覆盖已有验收产物。
+依次执行 [当前构建与测试命令](14-handoff-status-and-next-plan.md#新电脑构建)。主程序、MCP UI、工作台和 Library 必须同一来源配套构建，Library 使用 `VITE_ONECREW_UNIFIED=1`。每次构建写入新的忽略目录，不覆盖已有验收产物。
 
 ## 本机验收
 

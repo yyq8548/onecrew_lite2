@@ -36,5 +36,5 @@ test("初次评分必需粉丝失败优先，未知计数不能产生非low已�
   assert.throws(() => applyInitialDiscoveryMatch(material, [finding], {}, "review"), /required_count_unknown/);
   material.native_follower_estimate = { display: "0.8万", nominal: 8000, lower: 7500, upper: 8500 };
   assert.throws(() => applyInitialDiscoveryMatch(material, [finding], {}, "review"), /required_count_unknown/);
-  assert.throws(() => applyInitialDiscoveryMatch(material, [{ ...finding, citations: [{ kind: "native_content", quote: "invented" }] }], {}, "review"), /finding_invalid/);
+  assert.throws(() => applyInitialDiscoveryMatch(material, [{ ...finding, citations: [{ kind: "native_content", quote: "invented" }] }], {}, "review"), /initial_match_citation_not_saved/);
 });

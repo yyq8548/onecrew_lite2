@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { stringifyApplicationJson } from "../contracts/application-json.ts";
+import { instagramVisiblePosts, instagramVisiblePostsMatchUsername } from "../platforms/opencli/instagram-visible-contract.ts";
 
 const text = z.string().refine(value => value.isWellFormed());
 const savedInstagramProfile = z.strictObject({
@@ -10,9 +11,10 @@ const savedInstagramProfile = z.strictObject({
   public_email: text.refine(value => Buffer.byteLength(value) <= 320 && value.includes("@") && !/\p{Cc}/u.test(value)).nullable().optional(),
   contact_links: z.array(text.refine(source => {
     const url = URL.parse(source); return Buffer.byteLength(source) <= 2048 && !/\p{Cc}/u.test(source) && url !== null && ["http:", "https:"].includes(url.protocol) && !!url.hostname && !url.username && !url.password;
-  })).max(10).optional(), web_text: z.unknown().optional(),
+  })).max(10).optional(), web_text: z.unknown().optional(), visible_posts: instagramVisiblePosts.optional(),
 }).superRefine((value, context) => {
   if (value.profile_url !== `https://www.instagram.com/${value.username}/`) context.addIssue({ code: "custom", message: "Saved Instagram profile URL does not match username" });
+  if (!instagramVisiblePostsMatchUsername(value.visible_posts, value.username)) context.addIssue({ code: "custom", message: "Saved Instagram post URL does not match username" });
   if (value.evidence_source === "public_profile_dom_search_bound") {
     if (typeof value.web_text !== "string" || [...value.web_text].length > 4000 || value.web_text.includes("\0")) context.addIssue({ code: "custom", message: "Saved Instagram web evidence is invalid" });
   } else if (value.private_account === null || value.verified === null) context.addIssue({ code: "custom", message: "Native Instagram visibility flags are required" });

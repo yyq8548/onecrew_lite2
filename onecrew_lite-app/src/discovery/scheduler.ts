@@ -23,7 +23,7 @@ interface SchedulerConfiguration {
   metrics(context: AccountContext): Promise<FileDiscoveryExecutionMetrics>;
   onStarted?(context: AccountContext, campaign: string): void;
 }
-type ScoreOutcome = { ok: true; saved: boolean } | { ok: false; error: unknown };
+type ScoreOutcome = { ok: true; saved: boolean; refresh?: boolean } | { ok: false; error: unknown };
 interface ScoreJob { hit: string; deferred: string[]; prepared: PreparedSemanticDiscoveryMatch; state: "queued" | "running" | "settled"; task?: Promise<ScoreOutcome>; outcome?: ScoreOutcome; preparedAt: number }
 const terminal = (kind: string): { stage: DiscoveryExecutionStage; reason: string } => kind === "target_reached" ? { stage: "finished", reason: kind } : kind === "budget_exhausted" ? { stage: "budget_exhausted", reason: kind } : ["needs_evidence", "search_exhausted"].includes(kind) ? { stage: "needs_evidence", reason: kind } : { stage: "paused", reason: "busy" };
 async function queueWork<T>(work: () => Promise<T>): Promise<T> { return work().then(value => value, error => { throw new Error("score_queue_unavailable", { cause: error }); }); }
@@ -56,21 +56,35 @@ export class DiscoveryScheduler {
     const configuration = this.#configuration, { context, input } = owner, owned = await configuration.repositories.resolve(context); owned.assertOwned();
     const directory = await resolveDiscoveryScoreDirectory(configuration.directories, context), queue = new SavedDiscoveryScores(directory, input.campaign_id, input.expected_revision), metrics = await configuration.metrics(context);
     const restored = await queueWork(() => queue.load()), jobs: ScoreJob[] = [], attempted = new Set<string>(), lane = new DiscoveryProjectionLane(), failures: unknown[] = [];
-    let readAhead = 0, used = owned.repository.getPlan(input.campaign_id).used_calls, requested = owned.repository.recommendationRevision(input.campaign_id), finalStage: DiscoveryExecutionStage = "paused", finalReason = "execution_interrupted", fatal = false;
+    const restoredHits = new Set(restored.map(item => item.hit));
+    for (const hit of owned.repository.pendingScoreHits(input.campaign_id, input.expected_revision, [...input.excluded_platforms, ...RETIRED_CREATOR_SOURCES])) {
+      if (!restoredHits.has(hit)) { restored.push({ hit, deferred_platforms: [] }); restoredHits.add(hit); }
+    }
+    const recommended = new Set(owned.repository.recommendedCandidateIds(input.campaign_id));
+    let recommendationVersion = 0;
+    let readAhead = 0, used = owned.repository.getPlan(input.campaign_id).used_calls, finalStage: DiscoveryExecutionStage = "paused", finalReason = "execution_interrupted", fatal = false;
     const elapsed = (start: number) => Math.floor(performance.now() - start), started = performance.now(); metrics.enqueue(input.campaign_id, "pipeline.started", 0);
     const sync = async () => {
       const began = performance.now();
+      const version = recommendationVersion;
+      owner.change(status => { status.sync_pending = true; });
       const result = await configuration.library.publish(context, input.campaign_id, input.expected_revision).then(value => ({ ok: true as const, value }), error => ({ ok: false as const, error: error as unknown }));
       owner.change(status => {
-        if (result.ok) { status.library = result.value; status.sync_error = null; status.sync_pending = false; status.synced_at = Date.now(); }
+        if (result.ok) { status.library = result.value; status.sync_error = null; status.sync_pending = version !== recommendationVersion; status.synced_at = Date.now(); }
         else { status.sync_error = discoveryExecutionFailureCode(result.error); status.sync_pending = true; }
       });
       metrics.enqueue(input.campaign_id, "sync", elapsed(began));
       if (!result.ok && !discoveryExecutionFailureCode(result.error).startsWith("library_")) throw result.error;
     };
     const publishChanged = () => {
-      owned.assertOwned(); const current = owned.repository.recommendationRevision(input.campaign_id);
-      if (current !== requested) { requested = current; metrics.enqueue(input.campaign_id, "recommendation.changed", 0); lane.request(sync); }
+      owned.assertOwned(); const current = owned.repository.recommendedCandidateIds(input.campaign_id);
+      const added = current.filter(id => !recommended.has(id));
+      if (added.length) {
+        for (const id of added) recommended.add(id);
+        recommendationVersion++;
+        owner.change(status => { status.sync_pending = true; });
+        metrics.enqueue(input.campaign_id, "recommendation.changed", 0); lane.request(sync);
+      }
     };
     const recordScore = (hit: string, outcome: ScoreOutcome): boolean => {
       const code = outcome.ok ? null : discoveryExecutionFailureCode(outcome.error), proceed = code === null || discoveryScoreDeferred(code);
@@ -89,9 +103,9 @@ export class DiscoveryScheduler {
         if (active >= DISCOVERY_SCORE_CONCURRENCY || owner.signal.aborted) break;
         if (job.state !== "queued") continue; active++; job.state = "running";
         job.task = (async (): Promise<ScoreOutcome> => {
-          await queueWork(() => queue.remove(job.hit));
           const matcher = await configuration.matcher(context), receipt = await matcher.evaluate(context, job.prepared);
-          return { ok: true, saved: receipt !== null };
+          if (receipt !== null) await queueWork(() => queue.remove(job.hit));
+          return { ok: true, saved: receipt !== null, refresh: receipt === null };
         })().then(value => value, error => ({ ok: false as const, error: error as unknown })).then(outcome => { metrics.enqueue(input.campaign_id, "score", elapsed(job.preparedAt)); job.outcome = outcome; job.state = "settled"; return outcome; });
       }
     };
@@ -103,7 +117,9 @@ export class DiscoveryScheduler {
         const began = performance.now(); await Promise.race(active.map(item => item.task!)); metrics.enqueue(input.campaign_id, "pipeline.score_wait", elapsed(began)); job = jobs.find(item => item.state === "settled");
       }
       if (!job || !job.outcome) throw new Error("discovery_score_completion_missing");
-      jobs.splice(jobs.indexOf(job), 1); const proceed = recordScore(job.hit, job.outcome); if (proceed) launch(); return proceed;
+      jobs.splice(jobs.indexOf(job), 1);
+      if (job.outcome.ok && job.outcome.refresh && !restored.some(item => item.hit === job.hit)) restored.push({ hit: job.hit, deferred_platforms: job.deferred });
+      const proceed = recordScore(job.hit, job.outcome); if (proceed) launch(); return proceed;
     };
     const enqueue = async (hit: string, deferred: string[]): Promise<boolean> => {
       if (jobs.some(job => job.hit === hit)) return true;
@@ -135,11 +151,11 @@ export class DiscoveryScheduler {
         recordDiscoveryReadTiming(metrics, input.campaign_id, result, elapsed(began));
         const failure = discoveryAdvanceFailure(result);
         if (failure !== null) metrics.enqueueFailure(input.campaign_id, { recorded_at: Date.now(), ...discoveryReadFailureLocation(result), call_number: result.campaign.used_calls, code: discoveryExecutionFailureCode(failure) });
-        owner.change(status => { status.used = result.campaign.used_calls; status.sync_pending = true; });
+        owner.change(status => { status.used = result.campaign.used_calls; });
         const hadScores = jobs.length > 0; if (hadScores && advancing) readAhead++;
         let hit = discoveryScoreHit(result); if (result.public_page && owned.repository.candidateIsQualified(input.campaign_id, result.public_page.candidate_id)) hit = null;
         if (hit !== null && !owner.signal.aborted) { const previous = jobs.length; if (!await enqueue(hit, discoveryScoringPlatforms(result))) break; if (previous === 1 && jobs.length === 2) readAhead = 0; }
-        if (result.public_page) publishChanged();
+        publishChanged();
         if (!advancing && hadScores) { if (!await finishOne()) break; readAhead = 0; continue; }
         if (!advancing) {
           if (["search_exhausted", "needs_evidence"].includes(result.step.kind) && result.campaign.criteria.automatic_query_expansion === true) {

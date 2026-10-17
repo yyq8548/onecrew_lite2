@@ -1,33 +1,18 @@
-# 另一台电脑接手：onecrew_lite 迁移
+# 开发与交接文档
 
-本分支已经包含 TypeScript/Node.js 统一程序实现。请先读 [当前交接、验证和下一步计划](14-handoff-status-and-next-plan.md)。当前保留范围见 [产品范围](08-current-scope.md)，接口见 [统一 HTTP 合同](10-unified-http-contract.md)，精确候选和实证见 [Windows 验证记录](11-windows-verification.md)、[Mac ARM 验证记录](15-mac-arm-verification.md)及 [Rust 搜索行为同步验收](18-rust-search-alignment.md)。用户已于 2026-10-16 恢复开发，继续未完成的开发和验收。
+当前仓库：`yyq8548/onecrew_lite2`，默认开发分支：`codex/typescript-unified-gmail`。产品0.7.1保持开发候选状态。
 
-**当前仓库：`yyq8548/onecrew_lite2`；分支：`codex/typescript-unified-gmail`。来源基线为 `efc3c6eb69507b9809bb30279d9af26156d075e3`，本轮批准迁入的上游为 `8d931ab08448bcded456c210ebc29ad9709a68a5`。不得用其他 main 替换该基线。**
+## 当前入口
 
-当前 Mac ARM candidate-17 已包含会话连接恢复及平台搜索修复，12 个平台已取得可作资格判断的证据；Instagram 搜索可返回账号，补证仍缺粉丝量和原创正文，最新重试返回 HTTP 429，已停止。具体结果见 [全平台搜索优化与复验](20-platform-search-optimization.md)和[四平台评分证据](21-four-platform-scoring-evidence.md)；首次搜索和平台登录要求见 [全平台搜索验收](19-platform-search-acceptance.md)。这些结果属于本地开发验收，尚未客户发布。
+- [当前交接与构建](14-handoff-status-and-next-plan.md)：环境、配套构建、测试与未完成验收。
+- [搜索、评分与连接现状](current-platforms.md)：Instagram 读取方式、评分、同步与连接恢复。
+- [产品范围](08-current-scope.md)和[统一 HTTP 合同](10-unified-http-contract.md)。
+- [客户安装约束](13-customer-installation-paths.md)、[Windows 验证](11-windows-verification.md)、[Mac ARM 验证](15-mac-arm-verification.md)和[许可证据](16-license-evidence.md)。平台验证记录只代表当时版本。
 
-## 阅读顺序
+## 架构与来源
 
-最新连接修复见 [管理端与资料库连接修复](22-connection-stability.md)，当前本机 candidate-23 的入口调整见 [隐藏线索](23-hidden-leads.md)。12 个平台已通过原有读取路径验收；Instagram 已通过 [Computer Use 网页读取验收](25-instagram-computer-use.md)，后续模型辅助操作使用该方式。Instagram 资料 API 仍返回 429，应用内自动读取尚未因此通过验收。
+- [Lite 分析](01-lite-codebase-analysis.md)、[Pro 参考](02-pro-reference-analysis.md)和[迁移计划](03-detailed-migration-plan.md)保留设计来源，当前行为以源码及现状说明为准。
+- [验收矩阵](04-acceptance-and-release.md)和[新电脑接手](05-new-computer-handoff.md)用于准备独立环境。
+- [来源清单](source-ledger.json)、[发布基线](07-published-baseline.md)及[上游同步](12-upstream-sync-20261016.md)保留来源证据，旧记录不表示生产当前状态。
 
-1. [Lite 全模块分析](01-lite-codebase-analysis.md)：现有全部35个Rust模块、Library、网页、插件、数据和发行边界。
-2. [Pro 架构分析](02-pro-reference-analysis.md)：统一服务与SEA的实际机制、可借鉴内容及功能差异。
-3. [详细迁移计划](03-detailed-migration-plan.md)：M00–M17任务、依赖、产出、完成条件和发布门槛。
-4. [验收矩阵](04-acceptance-and-release.md)：数据、账号、搜索、平台、邮件、MCP、安装、官网和回退逐项用例。
-5. [接手环境与操作流程](05-new-computer-handoff.md)：克隆、基线核对、构建入口和首轮开发顺序。
-6. [可直接交给新电脑 Codex 的提示词](06-agent-handoff-prompt.md)。
-7. [机器可读来源记录](source-ledger.json)与[已发布版本记录](07-published-baseline.md)。
-
-## 关键事实
-
-- 基线来自公司main `26eefcab4dab3b836937c2922ec33789c6c10975`，与Mac r4构建源码 `8cedccf2a29433728e9c81f052c9d485df39a1ad` 文件内容相同。
-- 基线有5546个Git跟踪文件，包含所有已知客户端源码、依赖锁文件、供应商代码、测试和构建脚本。运行依赖、安装包、账号、数据库和凭据不提交GitHub。
-- 原交接记录中的 Windows 0.7.1 r3 声明源码 `aef10db...` 尚未核实，不能声称本分支可重建该原包；新版 Windows 候选有独立哈希和实际验收记录。
-- Library本来就是TypeScript/Node SEA，迁移会复用它。统一程序不要求同时合并SQLite与PGlite格式。
-- Pro业务实现不复制到个人GitHub；文档提供固定来源与设计分析。
-- 内附 `onecrew_lite-access/` 是旧快照。部署网站必须先取得公司当前Access源码，不能从旧快照直接部署。
-- 原发布版本快照见 `07-published-baseline.md`；它不表示线上当前状态。本仓库的开发候选不会自动部署或升级客户电脑。
-
-## 接手完成条件
-
-新电脑克隆正确分支，核对实际提交，按 `14-handoff-status-and-next-plan.md` 构建并进行本机验收。原 `verify-handoff.mjs` 仅用于未修改的原始基线。从当前未完成项继续，记录失败与跳过，不把未来目标标为已经实现。
+源码不包含凭据、运行数据库、Chrome 身份、依赖缓存和安装包。`onecrew_lite-access/` 为旧快照。跨电脑交接同时携带[合并与部署流程](../release/合并与部署流程.md)。

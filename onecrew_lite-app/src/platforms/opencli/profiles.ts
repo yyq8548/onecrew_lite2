@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { OpenCliError } from "./errors.ts";
 import type { ReviewedOpenCliRead } from "./read-plan.ts";
+import { instagramVisiblePosts, instagramVisiblePostsMatchUsername } from "./instagram-visible-contract.ts";
 
 const text = z.string().refine(value => value.isWellFormed());
 const count = z.number().int().nonnegative().safe();
@@ -30,7 +31,7 @@ export function instagramProfilePlan(inputUsername: string, authorId: string) {
   });
   const schema = z.object({ adapter_version: z.literal("1.0.0"), id: z.literal(authorId), username: z.literal(username), display_name: text.refine(value => [...value].length <= 200 && !value.includes("\0")), biography: text.refine(value => [...value].length <= 2000 && !value.includes("\0")), public_email: text.refine(value => Buffer.byteLength(value) <= 320 && !/\p{Cc}/u.test(value) && value.includes("@")).nullable().optional(), contact_links: z.array(link).max(10).default([]), follower_count: count.nullable().default(null), follower_text: text.max(80).optional(), private_account: z.boolean().nullable().default(null), verified: z.boolean().nullable().default(null), web_text: text.refine(value => [...value].length <= 4000 && !value.includes("\0")), profile_url: z.literal(`https://www.instagram.com/${username}/`), evidence_source: z.literal("public_profile_dom_search_bound") }).strict();
   return { site: "onecrew-instagram-profile", name: "read", args: ["-f", "json", "--", username, authorId], addons: ["onecrew-browser-search"], maximumBytes: 16000, decode(value: unknown) {
-    const { public_email, contact_links, ...result } = one(schema, value);
+    const { public_email, contact_links, ...result } = one(schema.extend({ visible_posts: instagramVisiblePosts.optional() }).refine(row => instagramVisiblePostsMatchUsername(row.visible_posts, username)), value);
     return { ...result, ...(public_email == null ? {} : { public_email }), ...(contact_links.length ? { contact_links } : {}) };
   } } satisfies ReviewedOpenCliRead<unknown>;
 }

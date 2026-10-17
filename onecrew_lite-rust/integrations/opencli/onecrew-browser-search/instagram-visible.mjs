@@ -52,9 +52,9 @@ export async function observeInstagramVisiblePosts(username) {
     const url = new URL(a.href);
     const match = /^\/([^/]+)\/(p|reel)\/([A-Za-z0-9_-]{1,32})\/$/.exec(url.pathname);
     if (url.origin !== location.origin || !match || match[1].toLowerCase() !== username) continue;
-    if (a.querySelector('[aria-label*="Pinned"],[aria-label*="置顶"]')) continue;
-    if (!posts.some(p => p.code === match[3])) posts.push({code:match[3],url:url.href,kind:match[2]});
-    if (posts.length === 1) break;
+    const preview = Array.from([a.innerText, a.getAttribute('aria-label'), ...[...a.querySelectorAll('img[alt]')].map(img => img.alt)].filter(Boolean).join('\n')).slice(0,500).join('');
+    if (!posts.some(p => p.code === match[3])) posts.push({code:match[3],url:url.href,kind:match[2],preview});
+    if (posts.length === 6) break;
   }
   return {posts};
 }

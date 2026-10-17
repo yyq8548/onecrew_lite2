@@ -42,6 +42,9 @@ export function WorkspaceStatusView({ phase, activity, error, libraryError, loca
           <div><dt className="text-muted-foreground">{zh ? "已尝试来源" : "Sources attempted"}</dt><dd>{number(activity.attempted)}/{number(activity.total)}</dd></div>
           <div><dt className="text-muted-foreground">{zh ? "读取次数" : "Reads"}</dt><dd>{number(activity.used)}</dd></div>
         </dl>
+        {activity.pending_breakdown && <CardDescription>{zh
+          ? `等待评分 ${activity.pending_breakdown.awaiting_score} · 待补正文 ${activity.pending_breakdown.needs_content} · 身份待核实 ${activity.pending_breakdown.needs_identity} · 读取受阻 ${activity.pending_breakdown.read_blocked} · 补读后证据不足 ${activity.pending_breakdown.insufficient_after_read} · 联系信息待核实 ${activity.pending_breakdown.needs_requirement}`
+          : `Awaiting score ${activity.pending_breakdown.awaiting_score} · Needs content ${activity.pending_breakdown.needs_content} · Needs identity ${activity.pending_breakdown.needs_identity} · Read blocked ${activity.pending_breakdown.read_blocked} · Insufficient after read ${activity.pending_breakdown.insufficient_after_read} · Needs contact ${activity.pending_breakdown.needs_requirement}`}</CardDescription>}
         {(activity.login_required + activity.read_errors + activity.restricted > 0) && <p className="text-sm text-muted-foreground">{zh
           ? `需登录 ${activity.login_required} · 累计读取失败 ${activity.read_errors} · 平台限制 ${activity.restricted}`
           : `Sign-in needed ${activity.login_required} · Failed read attempts ${activity.read_errors} · Restricted ${activity.restricted}`}</p>}

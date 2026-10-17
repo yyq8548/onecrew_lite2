@@ -1,5 +1,11 @@
 import {observeInstagramVisibleProfile,observeInstagramVisiblePosts,observeInstagramVisibleCaption} from './instagram-visible.mjs';
 
+export function selectInstagramVisiblePost(posts, query = '') {
+  const terms = [...new Set(query.normalize('NFKC').toLowerCase().match(/[\p{L}\p{N}]{3,}/gu) || [])].filter(term => !['blogger','creator','influencer','account','official'].includes(term));
+  const score = post => terms.reduce((sum, term) => sum + (post.preview?.normalize('NFKC').toLowerCase().includes(term) ? 1 : 0), 0);
+  return posts.reduce((best, post) => !best || score(post) > score(best) ? post : best, null);
+}
+
 export function instagramRecentTarget(username, authorId) {
   if (typeof username !== 'string' || !/^[a-z0-9_.]{1,30}$/.test(username)
     || typeof authorId !== 'string' || !/^[1-9][0-9]{0,24}$/.test(authorId)) throw new Error('ONECREW_INSTAGRAM_RECENT_INPUT');
@@ -68,6 +74,12 @@ export async function readInstagramRecent(page,args,ownPage) {
   instagramRecentTarget(args.username,args.author_id);
   return ownPage(page,async owned => {
     const unwrap = raw => raw && 'session' in Object(raw) && 'data' in Object(raw) ? raw.data : raw;
+    let post;
+    if (args.source_url) {
+      const match = /^https:\/\/www\.instagram\.com\/([^/]+)\/(p|reel)\/([A-Za-z0-9_-]{1,32})\/$/.exec(args.source_url);
+      if (!match || match[1] !== args.username) throw new Error('ONECREW_INSTAGRAM_RECENT_INPUT');
+      post = {url:args.source_url,kind:match[2],code:match[3]};
+    } else {
     await owned.goto(`https://www.instagram.com/${args.username}/`);
     const profile = unwrap(await owned.evaluate(`(${observeInstagramVisibleProfile.toString()})(${JSON.stringify(args.username)},${JSON.stringify(args.author_id)})`));
     if (profile?.stop) throw new Error('ONECREW_INSTAGRAM_RECENT_' + profile.stop.toUpperCase());
@@ -80,7 +92,8 @@ export async function readInstagramRecent(page,args,ownPage) {
       if (poll < 23) await owned.sleep(0.25);
     }
     if (!Array.isArray(observed?.posts) || !observed.posts.length) throw new Error('ONECREW_INSTAGRAM_RECENT_POST_LINK_TIMEOUT');
-    const post = observed.posts[0];
+    post = selectInstagramVisiblePost(observed.posts, args.query || '');
+    }
     await owned.goto(post.url);
     const caption = unwrap(await owned.evaluate(`(${observeInstagramVisibleCaption.toString()})(${JSON.stringify(args.username)},${JSON.stringify(post.code)})`));
     if (caption?.stop) throw new Error('ONECREW_INSTAGRAM_RECENT_' + caption.stop.toUpperCase());

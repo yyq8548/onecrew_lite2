@@ -25,7 +25,7 @@ function serialized<T>(body: () => Promise<T>): Promise<T> {
   writing = operation.then(() => undefined, () => undefined); return operation;
 }
 
-// 只保存未启动评分的hit和延后来源，不保存材料、凭据或已开始模型请求。
+// 保存尚未取得评分回执的来源及延后平台；恢复时依据证据键复用已提交回执。
 export class SavedDiscoveryScores {
   readonly #owned: OwnedDiscoveryQueueDirectory; readonly #directory: string; readonly #path: string;
   constructor(owned: OwnedDiscoveryQueueDirectory, campaign: string, revision: number) {

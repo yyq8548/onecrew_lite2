@@ -46,7 +46,14 @@ export function applyInitialDiscoveryMatch(material: DiscoveryReviewMaterial, ra
   const criteria = object(material.criteria), evidence = object(rawEvidence), language = criteria.language, secondary = findings[1];
   if (secondary && (finding.outcome !== "insufficient" || secondary.criterion !== "content_language" || secondary.outcome !== "insufficient" || secondary.match_level != null || secondary.tool != null || secondary.country_code != null || !secondary.rationale.trim() || Buffer.byteLength(secondary.rationale) > 4000 || secondary.citations.length > 8 || !(typeof language === "string" && language.trim()) || !secondary.citations.every(citation => containsDiscoveryCitation(material, citation)))) throw new Error("initial_match_language_request_invalid");
   const supported = finding.outcome === "supported";
-  if (finding.criterion !== "match_fit" || finding.outcome === "contradicted" || supported !== (finding.match_level != null) || !finding.rationale.trim() || Buffer.byteLength(finding.rationale) > 4000 || finding.tool != null || finding.country_code != null || finding.citations.length > 8 || !finding.citations.every(citation => containsDiscoveryCitation(material, citation))) throw new Error("initial_match_finding_invalid");
+  if (finding.criterion !== "match_fit") throw new Error("initial_match_criterion_invalid");
+  if (finding.outcome === "contradicted") throw new Error("initial_match_outcome_invalid");
+  if (supported !== (finding.match_level != null)) throw new Error("initial_match_level_invalid");
+  if (!finding.rationale.trim()) throw new Error("initial_match_rationale_empty");
+  if (Buffer.byteLength(finding.rationale) > 4000) throw new Error("initial_match_rationale_too_large");
+  if (finding.tool != null || finding.country_code != null) throw new Error("initial_match_auxiliary_field_invalid");
+  if (finding.citations.length > 8) throw new Error("initial_match_citation_count_invalid");
+  if (!finding.citations.every(citation => containsDiscoveryCitation(material, citation))) throw new Error("initial_match_citation_not_saved");
   const rawMinimum = u64(criteria.min_subscribers) ?? u64(criteria.min_followers), minimum = rawMinimum !== null && rawMinimum > 0n ? rawMinimum : null;
   const count = u64(material.native_followers) ?? u64(object(evidence.assessment).subscribers_normalized), estimate = material.native_follower_estimate;
   const below = minimum !== null && (estimate ? BigInt(estimate.upper) < minimum : count !== null && count < minimum);

@@ -4,12 +4,12 @@ import { openCliPlatformIsGreen, orderOpenCliPlatforms } from "./opencli-platfor
 
 describe("reviewed search login requirements", () => {
   it("does not equate Chrome or cookies with account login", () => {
-    for (const platform of ["google", "yahoo"]) {
+    for (const platform of ["google", "yahoo", "youtube"]) {
       expect(openCliSearchAccess(platform, true)).toBe("public_browser");
       expect(openCliSearchNeedsLoginCheck(platform, true)).toBe(false);
     }
     expect(openCliSearchAccess("twitter", true)).toBe("login_required");
-    for (const platform of ["youtube", "pinterest", "pinterest-pins", "pinterest-boards"]) {
+    for (const platform of ["pinterest", "pinterest-pins", "pinterest-boards"]) {
       expect(openCliSearchAccess(platform, true)).toBe("login_required");
       expect(openCliSearchNeedsLoginCheck(platform, true)).toBe(true);
     }
@@ -24,7 +24,7 @@ describe("reviewed search login requirements", () => {
     expect(orderOpenCliPlatforms([make("google"), make("substack", false), make("twitter")]).map(row => row.platform))
       .toEqual(["twitter", "google", "substack"]);
     expect(openCliPlatformIsGreen(make("youtube"), null, undefined, false)).toBe(false);
-    expect(openCliPlatformIsGreen(make("youtube"), "selected", undefined, false)).toBe(false);
+    expect(openCliPlatformIsGreen(make("youtube"), "selected", undefined, false)).toBe(true);
     expect(openCliPlatformIsGreen(make("google"), "selected", undefined, false)).toBe(true);
     expect(openCliPlatformIsGreen({ ...make("youtube"), registered: false }, "selected", undefined, false)).toBe(false);
   });

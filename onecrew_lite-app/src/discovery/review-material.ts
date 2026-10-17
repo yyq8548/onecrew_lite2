@@ -66,7 +66,13 @@ export function containsDiscoveryCitation(material: DiscoveryReviewMaterial, cit
   if (citation.kind === "description") value = material.video_description;
   if (citation.kind === "search_caption" && material.hit.platform === "tiktok") value = material.hit.title;
   if (citation.kind === "transcript" && material.transcript?.status === "completed" && material.transcript.stop_code === null) value = material.transcript.segments[citation.segment_index]?.text;
-  if (citation.kind === "native_profile" && material.native_profile?.profile_url === citation.profile_url && material.hit.author_id === material.native_author_id && material.hit.author_url === citation.profile_url) value = material.native_profile.bio?.includes(quote) ? material.native_profile.bio : material.native_profile.web_text;
+  if (citation.kind === "native_profile" && material.native_profile?.profile_url === citation.profile_url) {
+    const identity = object(object(material.native_content?.native_content).identity);
+    const bound = material.hit.author_id === material.native_author_id && material.hit.author_url === citation.profile_url
+      || material.hit.platform === "twitter" && material.native_content?.status === "completed" && material.native_content.stop_code === null
+        && identity.account_id === material.native_author_id && identity.profile_url === citation.profile_url;
+    if (bound) value = material.native_profile.bio?.includes(quote) ? material.native_profile.bio : material.native_profile.web_text;
+  }
   if (citation.kind === "native_content" && material.native_content?.status === "completed" && material.native_content.stop_code === null) { const text = object(material.native_content.native_content)[material.hit.platform === "bilibili" ? "description" : "text"]; value = typeof text === "string" ? text : null; }
   if (citation.kind === "public_page") value = material.public_pages.find(page => page.requested_url === citation.requested_url && page.status === "completed" && page.stop_code === null)?.markdown_excerpt;
   return typeof value === "string" && value.includes(quote);

@@ -4,6 +4,7 @@ import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
 import { test } from "node:test";
+import { z } from "zod";
 import { parseApplicationJson, stringifyApplicationJson } from "../src/contracts/application-json.ts";
 import { identityPairInput, identitySubmitInput, identityRevokeInput, identityReviewReceipt } from "../src/discovery/identity-contracts.ts";
 import { DiscoveryIdentityRepository } from "../src/discovery/identity-repository.ts";
@@ -90,13 +91,17 @@ test("直接及传递身份冲突必须先撤销，未知关系不制造边", ()
   validateIdentityAddition([["a", "b", "different_authors"]], "same_author", ["a", "c"]);
 });
 
-test("四份原Rust账本的完整来源、资格、分组和snapshot hash逐项一致", { skip: !directory }, async () => {
+test("四份原Rust账本保留来源、资格与分组，完整数字粉丝显示使用新快照哈希", { skip: !directory }, async () => {
   const source = oracle(), pair = identityPairInput.parse(source.pair);
+  const hashes: Record<string, string> = { "baseline.sqlite": "c20ae0e5205393f9430e062ddf18b4dc5933216d5e8aaf523d3d36f0979168d8", "merged.sqlite": "5755f0adff002974a6c6a4a4cba1c8acae24f3edd4b9ceed7c5ad3056bcad2ab", "stale.sqlite": "8b4c54b1d12209b2bdc91e1d80f8bae1971d587dc01748b709b2d9a2ace33400", "revoked.sqlite": "3e16972a6b365ee20e048ece07743fcf92e5acd7fb3851daf6301ffb0c9e8ec0" };
   for (const [name, expected] of [["baseline.sqlite", source.before], ["merged.sqlite", source.merged], ["stale.sqlite", source.stale], ["revoked.sqlite", source.revoked]] as const) {
     const db = await database(name);
     try {
       const actual = new DiscoveryIdentityRepository(db).groups({ campaign_id: pair.campaign_id, expected_revision: pair.expected_revision });
-      assert.deepEqual(parseApplicationJson(stringifyApplicationJson(actual)), expected);
+      const converted = z.object({ groups: z.array(z.object({ members: z.array(z.object({ sources: z.array(z.object({ followers: z.string().optional() }).passthrough()) }).passthrough()) }).passthrough()) }).passthrough().parse(structuredClone(expected));
+      for (const group of converted.groups) for (const member of group.members) for (const row of member.sources) if (row.followers !== undefined) row.followers = row.followers.replace(/^~/u, "");
+      converted.snapshot_hash = hashes[name];
+      assert.deepEqual(parseApplicationJson(stringifyApplicationJson(actual)), converted);
     } finally { db.close(); }
   }
 });

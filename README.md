@@ -6,7 +6,7 @@
 
 ## 当前状态与接手
 
-Instagram 已接入专用浏览器的正常网页读取，只采集粉丝量、简介、公开邮箱和一篇原创正文；程序路径的真实验收见 [Instagram 网页读取](docs/migration/27-instagram-visible-program.md)。
+Instagram 已接入专用浏览器的可见 DOM 读取，采集粉丝量、简介、公开邮箱和一篇相关帖子正文；读取方式、评分和连接边界见 [搜索、评分与连接现状](docs/migration/current-platforms.md)。
 
 新版仓库：`https://github.com/yyq8548/onecrew_lite2`。开发分支为 `codex/typescript-unified-gmail`。先读 [当前交接、验证和下一步计划](docs/migration/14-handoff-status-and-next-plan.md)，再按需查看 [完整迁移计划](docs/migration/03-detailed-migration-plan.md)、[Windows 验证记录](docs/migration/11-windows-verification.md)和[客户安装约束](docs/migration/13-customer-installation-paths.md)。
 

@@ -54,7 +54,7 @@ export class DiscoveryCandidateRepository {
       const public_page_errors = z.number().int().nonnegative().parse(this.#db.prepare(`SELECT COUNT(*) AS count FROM discovery_public_page_reads r JOIN discovery_candidates c ON c.id=r.candidate_id WHERE c.discovery_campaign_id=? AND c.criteria_revision=? AND r.status='failed' AND NOT EXISTS(SELECT 1 FROM json_each(?) e WHERE e.value=c.platform)`).get(campaign, head.current_revision, exclusions)!.count);
       if (head.policy === "score_and_contact_v1") {
         if (head.phase !== "active") return { public_page_errors, qualified: 0, pending: 0, rejected: 0 };
-        const groups = buildIdentityGroups(loadIdentityPublicationBasis(this.#db, campaign, head.current_revision)).groups;
+        const groups = buildIdentityGroups(loadIdentityPublicationBasis(this.#db, campaign, head.current_revision, false)).groups;
         const members = groups.flatMap(group => group.members).filter(member => !excluded.includes(member.platform));
         return { public_page_errors, qualified: groups.filter(group => group.members.some(member => member.verdict === "qualified" && !excluded.includes(member.platform))).length, pending: members.filter(member => member.verdict === "pending").length, rejected: members.filter(member => member.verdict === "rejected").length };
       }

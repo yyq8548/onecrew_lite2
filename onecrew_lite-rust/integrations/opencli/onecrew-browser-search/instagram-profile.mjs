@@ -1,4 +1,4 @@
-import {observeInstagramVisibleProfile} from './instagram-visible.mjs';
+import {observeInstagramVisibleProfile,observeInstagramVisiblePosts} from './instagram-visible.mjs';
 
 export function instagramProfileTarget(username) {
   if (typeof username !== 'string' || !/^[A-Za-z0-9_.]{1,30}$/.test(username)) throw new Error('ONECREW_PROFILE_INPUT');
@@ -172,6 +172,13 @@ export async function readInstagramWebProfile(page,args,ownPage) {
     const raw=await owned.evaluate(`(${observeInstagramVisibleProfile.toString()})(${JSON.stringify(username)},${JSON.stringify(args.author_id)})`);
     const data=raw && 'session' in Object(raw) && 'data' in Object(raw)?raw.data:raw;
     if (!data?.profile) throw new Error('ONECREW_PROFILE_'+(data?.stop || 'read').toUpperCase());
+    if (data.profile.private_account !== true) {
+      const observed = await owned.evaluate(`(${observeInstagramVisiblePosts.toString()})(${JSON.stringify(username)})`);
+      const posts = observed && 'session' in Object(observed) && 'data' in Object(observed) ? observed.data : observed;
+      if (posts?.stop) throw new Error('ONECREW_PROFILE_'+posts.stop.toUpperCase());
+      if (!Array.isArray(posts?.posts)) throw new Error('ONECREW_INSTAGRAM_PROFILE_INVALID');
+      data.profile.visible_posts = posts.posts;
+    }
     return data.profile;
   });
 }

@@ -53,7 +53,7 @@ const rowSchema = z
     candidate_id: id.nullable(),
     native_author_id: id.nullable(),
     verdict: z.enum(['unverified', 'pending', 'qualified', 'rejected']),
-    reasons: z.array(z.string().min(1).max(2000)).max(50),
+    reasons: z.array(z.string().min(1).max(2000)).max(54),
     evidence_version: z.string().regex(/^[0-9a-f]{64}$/),
     // Older producers have no contacts. Default only this additive wire field.
     contacts: z.array(discoveryContactSchema).max(100).default([]),

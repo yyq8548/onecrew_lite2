@@ -22,6 +22,7 @@ import { DiscoveryVideoRepository, type DiscoveryVideoClaim } from "./video-repo
 import { getDiscoverySavedContent, getDiscoverySavedPublicPage, getDiscoverySavedTranscript, getDiscoverySavedIdentity } from "./saved-read-repository.ts";
 import { DiscoveryTranscriptRepository, type DiscoveryTranscriptClaim } from "./transcript-repository.ts";
 import { DiscoveryContentRepository } from "./content-repository.ts";
+import { pendingReview, pendingReviewLabels, type PendingReviewState } from "./pending-review.ts";
 import type { DiscoveryContentClaim } from "./content-result.ts";
 import { DiscoveryPublicPageRepository, type DiscoveryPublicPageClaim, type FinishDiscoveryPublicPageInput } from "./public-page-repository.ts";
 import type { DiscoveryPublicPageInput } from "./contact-native.ts";
@@ -50,11 +51,9 @@ export class DiscoveryRepository {
   readStops(campaign: string) { return [...loadDiscoveryReadStops(this.#db, campaign, "profile"), ...loadDiscoveryReadStops(this.#db, campaign, "content")]; }
   remainingSlots(campaign: string, excluded: readonly string[] = []) { return Math.max(0, this.getPlan(campaign).target_count - this.countCandidates(campaign, excluded).qualified); }
   candidateIsQualified(campaign: string, candidate: string): boolean { return this.#db.prepare("SELECT EXISTS(SELECT 1 FROM discovery_candidates c JOIN discovery_campaigns d ON d.id=c.discovery_campaign_id WHERE c.id=?1 AND d.id=?2 AND c.criteria_revision=d.current_revision AND c.verdict='qualified') qualified").get(candidate, campaign)!.qualified === 1; }
-  recommendationRevision(campaign: string): string {
-    const rows = this.#db.prepare(`SELECT c.id,json_array(c.display_name,c.profile_url,c.platform,c.evidence_json) AS material,o.kind,o.normalized_value,o.source_url
-      FROM discovery_candidates c JOIN discovery_campaigns d ON d.id=c.discovery_campaign_id JOIN discovery_contact_observations o ON o.candidate_id=c.id AND o.criteria_revision=c.criteria_revision
-      WHERE d.id=?1 AND c.criteria_revision=d.current_revision AND c.verdict='qualified' ORDER BY c.id,o.kind,o.normalized_value,o.source_url`).all(campaign);
-    return stringifyApplicationJson(rows.map(row => [z.string().parse(row.id), z.string().parse(row.material), z.string().parse(row.kind), z.string().parse(row.normalized_value), z.string().parse(row.source_url)]));
+  recommendedCandidateIds(campaign: string): string[] {
+    return this.#db.prepare(`SELECT c.id FROM discovery_candidates c JOIN discovery_campaigns d ON d.id=c.discovery_campaign_id
+      WHERE d.id=?1 AND c.criteria_revision=d.current_revision AND c.verdict='qualified' ORDER BY c.id`).all(campaign).map(row => z.string().parse(row.id));
   }
   nextFacebookIdentity(campaign: string, excluded: readonly string[] = []) { return new DiscoveryFacebookIdentityRepository(this.#db).next(campaign, excluded); }
   claimFacebookIdentity(campaign: string, revision: number, hit: string) { return new DiscoveryFacebookIdentityRepository(this.#db).claim(campaign, revision, hit); }
@@ -173,6 +172,24 @@ export class DiscoveryRepository {
   }
   listCandidates(input: DiscoveryCandidatePageInput) { return new DiscoveryCandidateRepository(this.#db).list(input); }
   countCandidates(campaign: string, excludedPlatforms: readonly string[] = []) { return new DiscoveryCandidateRepository(this.#db).count(campaign, excludedPlatforms); }
+  pendingScoreHits(campaign: string, revision: number, excludedPlatforms: readonly string[]) {
+    return this.#db.prepare(`SELECT DISTINCT h.id FROM discovery_candidates c
+      JOIN discovery_campaigns d ON d.id=c.discovery_campaign_id AND d.current_revision=c.criteria_revision
+      JOIN discovery_search_hits h ON h.discovery_campaign_id=d.id AND h.source_url=json_extract(c.evidence_json,'$.source_urls[0]') AND h.profile_ref=c.source_profile_ref
+      WHERE d.id=?1 AND d.current_revision=?2 AND d.phase='active' AND c.verdict='pending'
+        AND NOT EXISTS(SELECT 1 FROM json_each(?3) e WHERE e.value=h.platform OR e.value=c.platform)
+      ORDER BY h.id`).all(campaign, revision, stringifyApplicationJson(excludedPlatforms)).map(row => z.string().parse(row.id));
+  }
+  pendingReviewCounts(campaign: string, revision: number): Record<PendingReviewState, number> {
+    return this.#transaction(() => {
+      const counts = Object.fromEntries(Object.keys(pendingReviewLabels).map(state => [state, 0])) as Record<PendingReviewState, number>;
+      for (const row of this.#db.prepare("SELECT id FROM discovery_candidates WHERE discovery_campaign_id=?1 AND criteria_revision=?2 AND verdict='pending'").all(campaign, revision)) {
+        const value = pendingReview(this.#db, campaign, revision, z.string().parse(row.id));
+        if (value) counts[value.state]++;
+      }
+      return counts;
+    }, true);
+  }
   prepareLibraryPublication(campaign: string, revision: number) { return new DiscoveryIdentityPublicationRepository(this.#db).preparePublication(campaign, revision); }
   readLibraryMaterial(campaign: string, revision: number) { return new DiscoveryIdentityPublicationRepository(this.#db).readMaterial(campaign, revision); }
   getLibraryTableName(campaign: string): { name: string; previous_auto_name: string } {

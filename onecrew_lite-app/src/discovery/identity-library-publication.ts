@@ -10,10 +10,10 @@ import { buildIdentityGroups, type IdentityGroupsBasis } from "./identity-groups
 import { loadIdentityGroupsBasis } from "./identity-groups-basis.ts";
 import { identityTransaction } from "./identity-repository.ts";
 
-export function loadIdentityPublicationBasis(database: DatabaseSync, campaign: string, revision: number): IdentityGroupsBasis {
+export function loadIdentityPublicationBasis(database: DatabaseSync, campaign: string, revision: number, includePendingDetails = true): IdentityGroupsBasis {
   identityGroupsInput.parse({ campaign_id: campaign, expected_revision: revision });
   if (!database.isTransaction) throw new Error("library_publication_requires_snapshot");
-  return loadIdentityGroupsBasis(database, loadDiscoveryLibraryBasis(database, campaign, revision));
+  return loadIdentityGroupsBasis(database, loadDiscoveryLibraryBasis(database, campaign, revision, includePendingDetails));
 }
 export function buildIdentityLibraryMaterial(basis: IdentityGroupsBasis) { return { sources: buildDiscoveryLibrarySnapshot(basis.library), identity: buildIdentityGroups(basis) }; }
 export class DiscoveryIdentityPublicationRepository {

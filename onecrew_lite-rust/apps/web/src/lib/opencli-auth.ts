@@ -108,9 +108,9 @@ export function isFreshOpenCliAuthObservation(observation: OpenCliAuthObservatio
 export function excludedSearchPlatforms(observations: Record<string, OpenCliAuthObservation>, profile: string,
   capabilities: readonly { platform: string; browser_required: boolean }[], nowSeconds = Math.floor(Date.now() / 1000)): string[] {
   return capabilities.filter(({ platform, browser_required }) => {
+    if (!openCliSearchNeedsLoginCheck(platform, browser_required)) return false;
     const observation = observations[platform];
     if (observation?.profile_ref === profile && observation.status === "not_logged_in") return true;
-    if (!openCliSearchNeedsLoginCheck(platform, browser_required)) return false;
     return observation?.platform !== platform || !isFreshOpenCliAuthObservation(observation, profile, nowSeconds);
   }).map(item => item.platform);
 }

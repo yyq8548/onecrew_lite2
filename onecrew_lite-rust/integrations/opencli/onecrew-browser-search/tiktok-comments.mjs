@@ -50,6 +50,7 @@ export async function readTikTokCommentPage(username, videoId, limit, projectPos
     check();
     const first = document.querySelector('article');
     if (first?.querySelector(`a[href="/@${username}"]`)) {
+      if (limit === 0) return [post];
       const candidate = first.querySelector('[data-e2e="comment-icon"]');
       if (candidate?.getClientRects().length) { trigger = candidate; break; }
     }
@@ -79,7 +80,7 @@ export async function readTikTokComments(page, args, ownPage) {
   const source = args.id;
   const match = typeof source === 'string' && /^https:\/\/www\.tiktok\.com\/@([A-Za-z0-9_.]{1,24})\/video\/([1-9][0-9]{0,24})$/.exec(source);
   const limit = args.limit ?? 20;
-  if (!match || !Number.isInteger(limit) || limit < 1 || limit > 20) throw new Error('ONECREW_COMMENTS_INPUT');
+  if (!match || !Number.isInteger(limit) || limit < 0 || limit > 20) throw new Error('ONECREW_COMMENTS_INPUT');
   return ownPage(page, async owned => {
     await owned.goto(source, {settleMs: 3000});
     const result = await owned.evaluate(`(${readTikTokCommentPage.toString()})(${JSON.stringify(match[1])}, ${JSON.stringify(match[2])}, ${limit}, ${projectTikTokPost.toString()}, ${projectTikTokComments.toString()}, ${restoreOriginalLanguage.toString()})`);

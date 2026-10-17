@@ -5,12 +5,13 @@ import type { Table } from './model';
 import { SemanticCell } from './SemanticCell';
 import { watchCreatorUpdates } from './creator-updates';
 import { subscribeCreatorRefresh } from './creator-refresh';
-import { sortByFollowers } from './follower-sort';
+import { followerDigits, sortByFollowers } from './follower-sort';
 import {
   filterCreators,
   groupedCreators,
   readCreatorView,
   type CreatorMaterial,
+  type VerdictFilter,
 } from './creator-view';
 
 /** One owner snapshot binds reviewed groups, qualification and notes in the same transaction. */
@@ -31,6 +32,7 @@ export function CreatorMainView({
   const [error, setError] = useState('');
   const [reload, setReload] = useState(0);
   const [sort, setSort] = useState('followers-desc');
+  const [filter, setFilter] = useState<VerdictFilter>('qualified');
   useEffect(
     () =>
       subscribeCreatorRefresh(
@@ -71,16 +73,25 @@ export function CreatorMainView({
   const visibleCreators = useMemo(
     // The Creator owner enforces the new contact gate. Historical approvals retain their policy.
     () => {
-      const rows = filterCreators(grouped.creators, 'qualified');
+      const rows = filterCreators(grouped.creators, filter);
       return sort === 'match' ? rows : sortByFollowers(rows, sort === 'followers-asc');
     },
-    [grouped, sort],
+    [grouped, sort, filter],
   );
   const ready =
     !error && material?.state === 'current' && material.projection?.table_id === tableId;
   return (
     <div className="creator-view">
       <div className="creator-view-heading">
+        <label>
+          {i18n.language.startsWith('zh') ? '核实状态 ' : 'Verification '}
+          <select value={filter} onChange={event => setFilter(event.target.value as VerdictFilter)}>
+            {(['qualified', 'pending', 'rejected', 'all'] as const).map(value => <option key={value} value={value}>
+              {value === 'all' ? (i18n.language.startsWith('zh') ? '全部' : 'All') : t(`detail.verdict.${value}`, value)}
+              {value !== 'all' && ` (${grouped.creators.filter(creator => creator.verdict === value).length})`}
+            </option>)}
+          </select>
+        </label>
         <label>
           {i18n.language.startsWith('zh') ? '排序 ' : 'Sort '}
           <select value={sort} onChange={event => setSort(event.target.value)}>
@@ -158,11 +169,14 @@ export function CreatorMainView({
                     </td>
                     <td><ul>{creator.accounts.map(account => <li key={JSON.stringify([account.platform, account.nativeId])}>
                       {creator.accounts.length > 1 && `${account.platform === 'twitter' ? 'X' : account.platform} · `}
-                      {account.followers === null ? t('detail.followersUnknown') : account.followers.startsWith('~')
-                        ? t('detail.followersApproximate', { value: account.followers.slice(1) })
-                        : new Intl.NumberFormat(i18n.language).format(Number(account.followers))}
+                      {followerDigits(account.followers) ?? t('detail.followersUnknown')}
                     </li>)}</ul></td>
-                    <td>{t(`detail.verdict.${creator.verdict}`, creator.verdict)}</td>
+                    <td>
+                      {t(`detail.verdict.${creator.verdict}`, creator.verdict)}
+                      {creator.verdict === 'pending' && <ul>{creator.reasons
+                        .filter(reason => /^(核实状态|证据缺口|下一步|最后核实时间)：/.test(reason))
+                        .map(reason => <li key={reason}>{reason}</li>)}</ul>}
+                    </td>
                     <td>
                       {creator.rating ? (
                         <SemanticCell

@@ -203,7 +203,7 @@ export function OpenCliPlatformCapabilities({ capabilities, profileRef = null, c
               </p>
               {item.registered && (access === "extra_entitlement" || access === "conditional") && <p className="text-xs text-muted-foreground">{t(`opencli.searchAccess.${access}`)}</p>}
               {needsLoginCheck && observation && <p className="text-xs text-muted-foreground">{t("opencli.authCheckedAt", { date: formatDate(observation.checked_at, i18n.language) })}</p>}
-              {observation?.issue && <p className="text-xs text-muted-foreground">{t(`opencli.authIssue.${observation.issue}`)}</p>}
+              {needsLoginCheck && observation?.issue && <p className="text-xs text-muted-foreground">{t(`opencli.authIssue.${observation.issue}`)}</p>}
             </div>
             <div className="col-start-2 flex flex-wrap items-center gap-2 lg:col-start-3 lg:justify-end">
               {platformWebsite(item.platform) && (item.browser_required

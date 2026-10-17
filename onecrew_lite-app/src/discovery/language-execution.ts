@@ -42,7 +42,7 @@ export class DiscoveryLanguageExecutor {
       if (claim.profile_ref !== browser.profile || claim.platform !== source.platform) throw new OpenCliError("opencli_invalid_output");
       if (claim.ordinal !== 1 || claim.previous_urls.length > 0) return { sample: null, stop: "language_sources_exhausted" };
       const material = owned.repository.languageContext(claim);
-      const value = object(await this.#read(browser, claim, material));
+      const value = object(await this.#read(browser, claim, material, typeof campaign.criteria.language === "string" && campaign.criteria.language.trim().length > 0));
       const sample = discoveryLanguageSample.safeParse({ ...value, comments: z.array(z.unknown()).parse(value.comments).slice(0, 5) });
       if (!sample.success || !validDiscoveryLanguageSample(sample.data, claim)) throw new OpenCliError("opencli_invalid_output");
       return { sample: sample.data, stop: null };
@@ -53,7 +53,7 @@ export class DiscoveryLanguageExecutor {
     owned.repository.finishLanguage(claim, value.sample, value.stop);
     return { claim: { campaign_id: claim.campaign_id, expected_revision: claim.revision, search_hit_id: claim.search_hit_id, platform: claim.platform, profile_ref: claim.profile_ref, author_id: claim.author_id, source_url: value.sample?.source_url ?? claim.root_url, call_number: claim.call_number }, status: value.sample === null ? "failed" : "completed", native_content: null, language_sample: value.sample, stop_code: value.stop, captured_at: Math.floor(Date.now() / 1000) };
   }
-  async #read(browser: VerifiedOpenCliBrowserBinding, claim: DiscoveryLanguageClaim, material: Material): Promise<unknown> {
+  async #read(browser: VerifiedOpenCliBrowserBinding, claim: DiscoveryLanguageClaim, material: Material, includeComments: boolean): Promise<unknown> {
     const source = claim.root_url, id = source.split("/").at(-1)!;
     if (claim.platform === "douyin") {
       const saved = bodyText(claim, material), joint = material.joint;
@@ -80,7 +80,7 @@ export class DiscoveryLanguageExecutor {
     }
     if (claim.platform === "facebook") return this.reader.facebookLanguageSample(browser, claim.author_id, source);
     if (claim.platform === "reddit") return this.reader.redditLanguageSample(browser, claim.author_handle, claim.author_id, source);
-    if (claim.platform === "tiktok") return this.reader.tiktokLanguageSample(browser, claim.author_handle, claim.author_id, source);
+    if (claim.platform === "tiktok") return this.reader.tiktokLanguageSample(browser, claim.author_handle, claim.author_id, source, includeComments);
     if (claim.platform === "bilibili") return this.reader.bilibiliLanguageSample(browser, claim.author_id, source);
     if (claim.platform === "google" || claim.platform === "yahoo") {
       const web = material.web;
