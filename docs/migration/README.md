@@ -8,7 +8,7 @@
 
 ## 阅读顺序
 
-最新连接修复、candidate-22、验证结果及宿主重载边界见 [管理端与资料库连接修复](22-connection-stability.md)。平台搜索结论保持 12 个成功、Instagram 补证待核实。
+最新连接修复见 [管理端与资料库连接修复](22-connection-stability.md)，当前本机 candidate-23 的入口调整见 [隐藏线索](23-hidden-leads.md)。12 个平台已通过原有读取路径验收；Instagram 已通过 [Computer Use 网页读取验收](25-instagram-computer-use.md)，后续模型辅助操作使用该方式。Instagram 资料 API 仍返回 429，应用内自动读取尚未因此通过验收。
 
 1. [Lite 全模块分析](01-lite-codebase-analysis.md)：现有全部35个Rust模块、Library、网页、插件、数据和发行边界。
 2. [Pro 架构分析](02-pro-reference-analysis.md)：统一服务与SEA的实际机制、可借鉴内容及功能差异。
