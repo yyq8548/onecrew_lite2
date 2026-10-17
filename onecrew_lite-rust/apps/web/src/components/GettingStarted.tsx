@@ -5,7 +5,6 @@ import {
   Check,
   RotateCcw,
   Rocket,
-  Users,
   X,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -34,11 +33,6 @@ const STEPS: TutorialStep[] = [
     id: "account",
     view: "accounts",
     icon: AtSign,
-  },
-  {
-    id: "lead",
-    view: "leads",
-    icon: Users,
   },
   {
     id: "mcp",

@@ -49,12 +49,6 @@ const NAV_SECTIONS: { labelKey: SidebarTranslationKey; items: NavItem[] }[] = [
     { id: "free-search", labelKey: "navigation.freeSearch", glyph: NAV_GLYPHS.leads },
   ] },
   {
-    labelKey: "sections.discover",
-    items: [
-      { id: "leads", labelKey: "navigation.leads", glyph: NAV_GLYPHS.leads },
-    ],
-  },
-  {
     labelKey: "sections.communicate",
     items: [
       { id: "mail", labelKey: "navigation.mail", glyph: NAV_GLYPHS.mail },
