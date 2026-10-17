@@ -8,6 +8,7 @@ import { requestWorkspaceCard } from "@mcp-ui/lib/result-client/workspace-card-r
 import { openWorkspace } from "@mcp-ui/lib/result-client/workspace-open";
 import { WorkspaceStatusView } from "./workspace-status-view";
 import { readWorkspaceHistory, writeWorkspaceHistory, validWorkspaceViewId } from "./workspace-history";
+import type { LocalServiceStatus } from "@onecrew/runtime-contracts/status";
 
 export type WorkspaceStatus = {
   kind: "workspace"; url: string; library_url: string | null; library_error: string | null;
@@ -67,12 +68,18 @@ export function WorkspaceStatusCard({ appClient, initial }: { appClient: App; in
   const openingRef = useRef(false);
   const [opening, setOpening] = useState(false);
   const [openFailed, setOpenFailed] = useState(false);
-  const open = async (destination: "workbench" | "library") => {
+  const open = async (destination: "workbench" | "library" | "both") => {
     if (openingRef.current) return;
     openingRef.current = true;
     setOpening(true);
     setOpenFailed(false);
-    await openWorkspace(appClient, destination).then(
+    const operation = async () => {
+      if (destination === "both") {
+        await openWorkspace(appClient, "workbench");
+        await openWorkspace(appClient, "library");
+      } else await openWorkspace(appClient, destination);
+    };
+    await operation().then(
       () => { openingRef.current = false; setOpening(false); },
       () => { openingRef.current = false; setOpening(false); setOpenFailed(true); },
     );
@@ -93,6 +100,8 @@ export function WorkspaceStatusCard({ appClient, initial }: { appClient: App; in
   const [error, setError] = useState(initial.workspace_activity_error);
   const [locale, setLocale] = useState(initial.locale);
   const [updatedAt, setUpdatedAt] = useState<number | null>(null);
+  const [connections, setConnections] = useState<LocalServiceStatus["workspace_connections"]>();
+  const [account, setAccount] = useState<string | null>(null);
   useEffect(() => {
     try {
       if (initial.viewId) writeWorkspaceHistory(window.sessionStorage, initial.viewId, history);
@@ -110,6 +119,7 @@ export function WorkspaceStatusCard({ appClient, initial }: { appClient: App; in
         const status = await readWorkspaceActivity(appClient);
         if (!stopped) {
           setPhase(status.phase); setError(status.error); setLocale(status.locale);
+          setConnections(status.connections); setAccount(status.account);
           if (!status.error) {
             setActivity(status.activity);
             setHistory(previous => mergeWorkspaceHistory(previous,
@@ -124,7 +134,7 @@ export function WorkspaceStatusCard({ appClient, initial }: { appClient: App; in
             }
           }
         }
-      } catch { if (!stopped) setPhase("disconnected"); }
+      } catch { if (!stopped) { setPhase("disconnected"); setConnections(undefined); setAccount(null); } }
       finally { busy = false; }
     };
     void refresh();
@@ -139,8 +149,14 @@ export function WorkspaceStatusCard({ appClient, initial }: { appClient: App; in
   }, [appClient, initial.viewId]);
   return <div className="space-y-4">
     <div className="flex flex-wrap gap-2">
+      {initial.library_url && <Button disabled={opening} onClick={() => { void open("both"); }}>{locale === "zh-CN" ? "同时打开工作台和动态表格" : "Open workbench and results table"}</Button>}
       <Button disabled={opening} onClick={() => { void open("workbench"); }}>{locale === "zh-CN" ? "打开管理端" : "Open workbench"}</Button>
       {initial.library_url && <Button disabled={opening} onClick={() => { void open("library"); }}>{locale === "zh-CN" ? "打开资料库" : "Open Library"}</Button>}
+    </div>
+    <div role="status" className="space-y-1 text-sm">
+      <p>{locale === "zh-CN" ? "云端账号：" : "Cloud account: "}{account ?? (locale === "zh-CN" ? "待核实" : "Unverified")}</p>
+      <p>{locale === "zh-CN" ? "专用浏览器：" : "Dedicated browser: "}{connections?.browser === "ready" ? (locale === "zh-CN" ? "原属身份已连接" : "Owned identity connected") : (locale === "zh-CN" ? "未连接或待核实，请在工作台恢复" : "Disconnected or unverified; recover in the workbench")}</p>
+      <p>{locale === "zh-CN" ? "动态表格：" : "Results table: "}{connections?.library === "ready" ? (locale === "zh-CN" ? "当前账号数据可读取" : "Current account data readable") : (locale === "zh-CN" ? "未连接或待核实" : "Disconnected or unverified")}</p>
     </div>
     {openFailed && <p role="alert">{locale === "zh-CN" ? "打开失败。请确认本地服务已启动后再次点击；每次点击都会申请新的授权入口。" : "Could not open. Check that the local service is running, then click again to request a fresh authorized link."}</p>}
     {history.map(item => <WorkspaceStatusView key={item.campaign_id} phase={item.campaign_id === activity?.campaign_id ? phase : "ready"}

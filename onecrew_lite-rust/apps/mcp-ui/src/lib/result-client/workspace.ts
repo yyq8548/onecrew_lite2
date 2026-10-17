@@ -1,5 +1,6 @@
 import type { App } from "@modelcontextprotocol/ext-apps";
 import { parseWorkspaceActivity } from "@mcp-ui/lib/result-contract/workspace";
+import { localServiceStatus } from "@onecrew/runtime-contracts/status";
 export async function readWorkspaceActivity(app: App) {
   const reply = await app.callServerTool({ name: "onecrew_status", arguments: {} });
   const data = reply.structuredContent;
@@ -15,5 +16,9 @@ export async function readWorkspaceActivity(app: App) {
     seen.add(activity.campaign_id);
     return activity;
   });
-  return { phase: data.startup.phase as string, locale: data.locale as "zh-CN" | "en-US", history, activity: parseWorkspaceActivity(data.workspace_activity), error: data.workspace_activity_error as string | null };
+  const connections = localServiceStatus.shape.workspace_connections.parse(data.workspace_connections);
+  const access = data.access;
+  const account = access && typeof access === "object" && "state" in access && access.state === "signed_in" && "user" in access
+    && access.user && typeof access.user === "object" && "email" in access.user && typeof access.user.email === "string" ? access.user.email : null;
+  return { phase: data.startup.phase as string, locale: data.locale as "zh-CN" | "en-US", history, activity: parseWorkspaceActivity(data.workspace_activity), error: data.workspace_activity_error as string | null, connections, account };
 }

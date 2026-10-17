@@ -81,6 +81,21 @@ export function unifiedResources(options: UnifiedResourcesOptions): RuntimeBoots
         return { library_version: libraryVersion, library_state: "ready", opencli_version: status.version, opencli_state: status.issue ?? "ready" };
       }
       let mcpCoordinator: Awaited<ReturnType<typeof createMcpCoordinator>>;
+      let connectionsFlight: { context: AccountContext; started: number; promise: Promise<{ browser: "ready" | "not_connected" | "unavailable"; library: "ready" | "unavailable"; checked_at: number }> } | undefined;
+      async function workspaceConnections() {
+        const context = identities.contexts.current();
+        if (connectionsFlight?.context === context && performance.now() - connectionsFlight.started < 10_000) return connectionsFlight.promise;
+        const promise = (async () => {
+          const [browser, library] = await Promise.all([
+            business.workspaceBrowserReady(context).then(value => value ? "ready" as const : "not_connected" as const, () => "unavailable" as const),
+            tables.service.listTables({ user: context.principal.user, tenantId: context.principal.tenantId, baseId: context.principal.baseId }, { page: 1, size: 1 }).then(() => libraryWebAssets ? "ready" as const : "unavailable" as const, () => "unavailable" as const),
+          ]);
+          identities.contexts.assertCurrent(context);
+          return { browser, library, checked_at: Math.floor(Date.now() / 1000) };
+        })();
+        connectionsFlight = { context, started: performance.now(), promise };
+        return promise;
+      }
       async function workspaceActivity() {
         const context = identities.contexts.currentIfActive();
         if (!context) return { workspace_activity: null, workspace_history: [], workspace_activity_error: null };
@@ -88,7 +103,7 @@ export function unifiedResources(options: UnifiedResourcesOptions): RuntimeBoots
         identities.contexts.assertCurrent(context);
         return { workspace_activity: activity, workspace_history: business.discoveryServices.runtime.workspaceHistory(context), workspace_activity_error: null };
       }
-      const shell = new ServiceShell({ lease, access: accessLifecycle, sessions: business.mcpSessions, buildIdentity, directory: () => mcpCoordinator.directory(), componentEvidence, activity: workspaceActivity, dataStatus: () => inspectUnifiedData({ lease, generationRoot, vaultPath, originSource: profile.originSource, candidate: options.candidateGenerationRoot !== undefined, ...(active ? { activation: active } : {}) }), ...(codex ? { pluginStatus: (refresh: boolean) => codex.status(refresh) } : {}) });
+      const shell = new ServiceShell({ lease, access: accessLifecycle, sessions: business.mcpSessions, buildIdentity, directory: () => mcpCoordinator.directory(), componentEvidence, workspaceConnections, activity: workspaceActivity, dataStatus: () => inspectUnifiedData({ lease, generationRoot, vaultPath, originSource: profile.originSource, candidate: options.candidateGenerationRoot !== undefined, ...(active ? { activation: active } : {}) }), ...(codex ? { pluginStatus: (refresh: boolean) => codex.status(refresh) } : {}) });
       registerServiceShellOperations(business.operations, shell);
       mcpCoordinator = await createMcpCoordinator({ registry: business.operations, sessions: business.mcpSessions, results: business.results, authorize: business.authorizeMcp, connections: business.mcpConnections, requireCompleteCatalogue: true });
       const bootstrapSessions = new BootstrapSessions();

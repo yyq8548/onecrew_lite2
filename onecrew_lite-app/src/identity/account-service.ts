@@ -93,6 +93,7 @@ export class UnifiedAccountService implements VerifiedMailIdentityProvider {
       candidate = local.credential;
       if (generation !== this.#generation) throw new AccountChangedError();
       if (this.#credential && this.#credential.fingerprint !== candidate.fingerprint) this.#discardCurrent();
+      const continuingContext = this.#context && this.#credential?.fingerprint === candidate.fingerprint ? this.#context : undefined;
       if (this.#context && this.#credential?.fingerprint === candidate.fingerprint && performance.now() - this.#verifiedAt < 30_000) {
         this.contexts.assertCurrent(this.#context);
         return this.#context;
@@ -118,10 +119,17 @@ export class UnifiedAccountService implements VerifiedMailIdentityProvider {
       } finally {
         if (latest.state === "active") latest.credential.dispose();
       }
-      if (this.#context && this.#credential?.fingerprint === candidate.fingerprint &&
+      if (this.#context && this.#context === continuingContext &&
           this.#context.principal.user.id === user.id && this.#context.principal.user.email === user.email &&
-          this.#context.principal.tenantId === tenant.tenantId && this.#context.principal.baseId === tenant.baseId) {
+          this.#context.principal.tenantId === tenant.tenantId && this.#context.principal.baseId === tenant.baseId &&
+          this.#context.principal.deviceId === candidate.metadata.access_device_id) {
         this.contexts.assertCurrent(this.#context);
+        // 同一凭据经过在线核实并更新 last_seen_at 后，保留已授权页面与专用浏览器的身份周期。
+        if (this.#credential?.fingerprint !== candidate.fingerprint) {
+          this.#credential?.dispose();
+          this.#credential = candidate;
+          retained = true;
+        }
       } else {
         this.#credential?.dispose();
         this.#credential = candidate;

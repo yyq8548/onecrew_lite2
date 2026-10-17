@@ -58,8 +58,8 @@ export function LoginPage({ navigate, returnTo = '/library' }: LoginPageProps) {
       <main className="login-page">
         <div className="login-card">
           <BrandLogo className="login-logo" />
-          <h1>{t('account.loginTitle')}</h1>
-          <p>{t('account.unifiedSignIn')}</p>
+          <h1>{t(unavailable ? 'account.connectionTitle' : 'account.loginTitle')}</h1>
+          <p>{t(unavailable ? 'account.connectionUnavailable' : 'account.unifiedSignIn')}</p>
           <Button onClick={() => void refresh()}>{t('account.retry')}</Button>
         </div>
       </main>

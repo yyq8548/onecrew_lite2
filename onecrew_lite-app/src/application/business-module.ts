@@ -206,6 +206,12 @@ export function createBusinessModule(lease: InstanceLease, identities: UnifiedAc
     results,
     managedBrowsers,
     openCliStatus: openCliOperations.status,
+    async workspaceBrowserReady(context: AccountContext) {
+      const status = await openCliOperations.status(context);
+      const owned = await browserBindings.listOwned(context);
+      identities.contexts.assertCurrent(context);
+      return status.issue === null && owned.some(binding => status.profiles.some(profile => profile.context_id === binding.context_id));
+    },
     connectionInventory,
     async mcpConnections(session: string, toolkits: readonly string[]) {
       const selected = mcpSessions.authorize(session), inventory = await connectionInventory(selected.account);

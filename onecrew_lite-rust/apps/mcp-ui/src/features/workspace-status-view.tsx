@@ -17,7 +17,7 @@ export function WorkspaceStatusView({ phase, activity, error, libraryError, loca
     : libraryError && activity?.library_sync_pending !== false ? (zh ? "动态表格未连接" : "Results table unavailable")
     : activity?.stale ? (zh ? "工作台状态待更新" : "Workbench status needs refresh")
     : activity?.stage === "error" && activity.failure_phase === "score" ? (zh ? "评分中断" : "Scoring interrupted")
-    : activity ? stages[activity.stage] : (zh ? "onecrew_lite 已连接" : "onecrew_lite connected");
+    : activity ? stages[activity.stage] : (zh ? "onecrew_lite 本地服务已连接" : "onecrew_lite local service connected");
   const number = (value: number) => new Intl.NumberFormat(locale).format(value);
   const reasons = zh ? {
     user_paused: "你已暂停搜索", search_page_left: "离开搜索页后暂停", page_closed: "搜索页关闭或刷新后暂停",
@@ -57,7 +57,7 @@ export function WorkspaceStatusView({ phase, activity, error, libraryError, loca
         {activity.failure_phase && <CardDescription>{zh ? "异常阶段：" : "Failure phase: "}{(zh ? { read: "平台读取", score: "评分", admission: "账号检查", readback: "进度回读", execution: "后台执行" } : { read: "Platform read", score: "Scoring", admission: "Account check", readback: "Progress readback", execution: "Background execution" })[activity.failure_phase]}</CardDescription>}
         {activity.failure_code && <CardDescription>{activity.failure_code}</CardDescription>}
       </>}
-      {!activity && <CardDescription>{zh ? "请在工作台创建搜索计划。" : "Create a search plan in the workbench."}</CardDescription>}
+      {!activity && <CardDescription>{zh ? "请同时打开工作台和动态表格，核实账号与浏览器连接后创建搜索计划。" : "Open the workbench and results table together, then verify the account and browser connection before creating a search plan."}</CardDescription>}
       {(activity?.updated_at ?? updatedAt) && <CardDescription>{zh ? "上次更新：" : "Last updated: "}{new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit", second: "2-digit" }).format(activity?.updated_at ?? updatedAt!)}</CardDescription>}
       {interrupted && <CardDescription>{zh ? "界面同步中断，任务是否运行请在工作台确认。" : "Display sync interrupted. Check execution in the workbench."}</CardDescription>}
     </CardHeader>

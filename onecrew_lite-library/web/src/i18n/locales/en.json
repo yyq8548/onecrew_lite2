@@ -16,6 +16,8 @@
     "login": "Sign in",
     "loginTitle": "Sign in to onecrew_lite",
     "unifiedSignIn": "Sign in to onecrew_lite, then reopen Library.",
+    "connectionTitle": "Results table connection needs recovery",
+    "connectionUnavailable": "The local session or cloud connection could not be verified. Checking again. After a service restart, reopen both the workbench and results table from the OneCrew status card.",
     "loginDescription": "Sign in to access your tables and connections.",
     "loginSuccess": "Sign in successful",
     "returningToApp": "Returning you to your app…",

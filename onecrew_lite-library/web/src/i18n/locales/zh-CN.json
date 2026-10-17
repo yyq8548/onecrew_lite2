@@ -16,6 +16,8 @@
     "login": "登录",
     "loginTitle": "登录 onecrew_lite",
     "unifiedSignIn": "请先在 onecrew_lite 完成登录，再重新打开资料库。",
+    "connectionTitle": "动态表格连接待恢复",
+    "connectionUnavailable": "暂时无法核实本地会话或云端连接，正在重新检查。若服务已经重启，请从 OneCrew 状态卡同时重新打开工作台和动态表格。",
     "loginDescription": "登录后访问你的表格和连接。",
     "loginSuccess": "登录成功",
     "returningToApp": "即将返回应用…",

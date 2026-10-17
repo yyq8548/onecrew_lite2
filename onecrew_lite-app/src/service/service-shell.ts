@@ -20,6 +20,7 @@ export interface ServiceShellOptions {
   dataStatus?: () => Promise<DataStartupStatus>;
   activity?: () => Promise<Pick<LocalServiceStatus, "workspace_activity" | "workspace_history" | "workspace_activity_error">>;
   componentEvidence?: () => Promise<{ library_version: string | null; library_state: string; opencli_version: string | null; opencli_state: string }>;
+  workspaceConnections?: () => Promise<NonNullable<LocalServiceStatus["workspace_connections"]>>;
 }
 export { bootstrapShellCommands };
 
@@ -69,6 +70,13 @@ export class ServiceShell {
     this.#options.lease.assertOwned();
     return componentsReport.parse({ version: this.version, built_at: getPackagedRuntime()?.manifest.builtAt ?? 0, binary_sha256: this.#options.buildIdentity.executable_sha256, checked_at: Math.floor(Date.now() / 1000), plugin_version: plugin.installed_version, plugin_state: plugin.state === "installed" && plugin.enabled === true && plugin.diagnostic_code === null ? "ready" : "needs_attention", library_version: evidence?.library_version ?? null, library_state: evidence?.library_state ?? "unavailable", opencli_version: evidence?.opencli_version ?? null, opencli_state: evidence?.opencli_state ?? "unavailable" });
   }
+  async workspaceConnections() {
+    this.#options.lease.assertOwned();
+    const access = await this.#options.access.status();
+    const value = access.state === "signed_in" && this.#options.workspaceConnections ? await this.#options.workspaceConnections() : { browser: "account_required", library: "account_required", checked_at: Math.floor(Date.now() / 1000) };
+    this.#options.lease.assertOwned();
+    return localServiceStatus.shape.workspace_connections.unwrap().parse(value);
+  }
   async logout() { this.#options.lease.assertOwned(); await this.#options.access.logout(); return this.#options.access.status(); }
   directory() { this.#options.lease.assertOwned(); return this.#options.directory(); }
   async executeBootstrap(name: string, raw: unknown): Promise<unknown> {
@@ -104,5 +112,6 @@ export function registerServiceShellOperations(registry: OperationRegistry, shel
   for (const name of ["creator_sync_pairing_status", "creator_sync_pairing_begin", "creator_sync_pairing_reopen", "creator_sync_pairing_cancel"] as const) registry.register(name, empty, async input => shell.executeBootstrap(name, input));
 }
 export function configureServiceShellRoutes(app: Hono, shell: ServiceShell): void {
+  app.get("/_local/workspace/connections", async context => context.json(await shell.workspaceConnections()));
   app.get("/_local/service/status", async context => context.body(stringifyApplicationJson(await shell.status()), 200, { "Content-Type": "application/json; charset=UTF-8" }));
 }

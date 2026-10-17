@@ -93,7 +93,8 @@ export async function createMcpAdapter(directory: string, surface: McpSurface = 
     const [access, service, shell] = await Promise.all([control(runtime, "GET", "/_local/access/status", signal).then(value => accessStatus.parse(value)), control(runtime, "GET", "/_local/status", signal).then(value => localStatus.parse(value)), control(runtime, "GET", "/_local/service/status", signal).then(value => localServiceStatus.parse(value))]);
     if (service.instance_id !== runtime.instance_id) throw new Error("mcp_status_owner_mismatch");
     if (shell.pid !== runtime.pid || service.resource_identity && shell.binary_sha256 !== service.resource_identity.executable_sha256) throw new Error("mcp_status_component_mismatch");
-    return { ...shell, service: "onecrew_lite", instance_id: runtime.instance_id, access, resource_identity: service.resource_identity, production_ready: service.production_ready };
+    const connections = localServiceStatus.shape.workspace_connections.unwrap().parse(await control(runtime, "GET", "/_local/workspace/connections", signal));
+    return { ...shell, workspace_connections: connections, service: "onecrew_lite", instance_id: runtime.instance_id, access, resource_identity: service.resource_identity, production_ready: service.production_ready };
   }
   server.setRequestHandler(ListResourcesRequestSchema, async () => resources.list());
   server.setRequestHandler(ReadResourceRequestSchema, async request => resources.read(request.params.uri));

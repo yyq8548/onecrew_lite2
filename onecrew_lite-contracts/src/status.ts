@@ -40,6 +40,7 @@ const activity = z.object({
   read_operation_stops: z.array(z.object({ code: text, operation: text, platform: text, profile_ref: text }).passthrough()).nullish(),
 }).passthrough();
 export const localServiceStatus = z.object({
+  workspace_connections: z.object({ browser: z.enum(["ready", "not_connected", "unavailable", "account_required"]), library: z.enum(["ready", "unavailable", "account_required"]), checked_at: creatorU64 }).strict().optional(),
   binary_sha256: text, version: text, transport: text, running: z.boolean(), locale: z.enum(["en-US", "zh-CN"]), pid: u32, mcp_clients: u32,
   cli_update: z.object({ checked_at: creatorU64.nullable(), current_version: text, diagnostic_code: z.enum(["check_failed", "timed_out", "workspace_update_required"]).nullable(), latest_version: optionalText, source: z.enum(["fresh_check", "memory_cache"]).nullable(), state: z.enum(["not_checked", "available", "current", "unavailable"]) }).strict(),
   data: preflight.nullable(), login: loginProjection.nullable(), login_error: optionalText,

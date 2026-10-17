@@ -27,7 +27,7 @@ function AuthedApp() {
   const { status } = useAccess();
   useEffect(() => {
     if (!status) return;
-    if (status.state !== 'signed_in' && route.kind !== 'login' && route.kind !== 'auth-complete') {
+    if (status.state !== 'signed_in' && status.state !== 'unavailable' && route.kind !== 'login' && route.kind !== 'auth-complete') {
       const returnTo =
         route.kind === 'connections'
           ? '/connections'
