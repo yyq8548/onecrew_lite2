@@ -4,14 +4,14 @@ TypeScript 本地程序：生成搜索计划，读取创作者资料和内容，
 
 ## Windows installer
 
-当前安装包：**OneCrew Lite 0.7.1 · Windows x64 · R8.2**。
+当前安装包：**OneCrew Lite 0.7.1 · Windows x64 · R8.3**。
 
-- [下载 Windows 安装包 ZIP](https://github.com/yyq8548/onecrew_lite2/releases/download/windows-installer-r8.2/OneCrew-Lite-0.7.1-Windows-x64-R8.2.zip)
+- [下载 Windows 安装包 ZIP](https://github.com/yyq8548/onecrew_lite2/releases/download/windows-installer-r8.3/OneCrew-Lite-0.7.1-Windows-x64-R8.3.zip)
 - [仓库中的 windows installer 文件夹](windows%20installer/)
-- [发布校验记录](windows%20installer/OneCrew-Lite-0.7.1-Windows-x64-R8.2.zip.release.json)
-- [SHA-256 文件](windows%20installer/OneCrew-Lite-0.7.1-Windows-x64-R8.2.zip.sha256)
-- [通用 Codex 安装提示词](windows%20installer/OneCrew-Lite-0.7.1-Windows-x64-R8.2-CODEX-PROMPT.zh-CN.md)
-- [GitHub Release：windows installer](https://github.com/yyq8548/onecrew_lite2/releases/tag/windows-installer-r8.2)
+- [发布校验记录](windows%20installer/OneCrew-Lite-0.7.1-Windows-x64-R8.3.zip.release.json)
+- [SHA-256 文件](windows%20installer/OneCrew-Lite-0.7.1-Windows-x64-R8.3.zip.sha256)
+- [通用 Codex 安装提示词](windows%20installer/OneCrew-Lite-0.7.1-Windows-x64-R8.3-CODEX-PROMPT.zh-CN.md)
+- [GitHub Release：windows installer](https://github.com/yyq8548/onecrew_lite2/releases/tag/windows-installer-r8.3)
 
 完整解压 ZIP，按包内 INSTALL-CODEX.md 先校验再分步安装。自动识别首次安装和升级，保留已有账号、主密钥、表格、端口和浏览器授权。
 
