@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -8,10 +7,13 @@ import JSZip from "jszip";
 import { MANAGED_NODE_VERSION, NODE_DISTRIBUTIONS, repairManagedOpenCli, verifyNodeArchiveChecksum } from "../src/platforms/opencli/managed-install.ts";
 import { extractNodeZip } from "../src/platforms/opencli/node-archive.ts";
 
-test("托管安装保留原固定Node版本及三平台SHA256，未授权不执行安装", async () => {
-  const original = readFileSync(new URL("../../onecrew_lite-rust/crates/opencli/src/managed_installation.rs", import.meta.url), "utf8");
+test("托管安装固定Node版本及三平台SHA256，未授权不执行安装", async () => {
   assert.equal(MANAGED_NODE_VERSION, "24.21.0");
-  for (const distribution of Object.values(NODE_DISTRIBUTIONS)) assert.equal(original.includes(distribution.sha256), true);
+  assert.deepEqual(Object.fromEntries(Object.entries(NODE_DISTRIBUTIONS).map(([platform, value]) => [platform, value.sha256])), {
+    "win-x64": "158f7685b44de51f6c0df1d153526cbcd3e1bc739a8dfc607721cef75de9e541",
+    "darwin-x64": "1462cb3b3046b815cf8ea436d3da450ec1a9f11dac7e5a46b0ada5305d7e8097",
+    "darwin-arm64": "bed7eea5325e1108f32ce5228ddd6a5f0f08a499ee42aa7442aea583702f6057",
+  });
   assert.throws(() => verifyNodeArchiveChecksum(Buffer.from("not a Node distribution"), "win-x64"), /checksum_failed/);
   await assert.rejects(repairManagedOpenCli(false), /approval_required/);
 });

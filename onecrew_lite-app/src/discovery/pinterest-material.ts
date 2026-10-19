@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { nativeContentObservations } from "../platforms/opencli/observations.ts";
 import { publicLink as validDiscoverySavedLink } from "./historical-native-material.ts";
 
 const text = z.string().refine(value => value.isWellFormed());
@@ -10,7 +11,7 @@ export function validateDiscoveryPinterestProfile(author: string, authorUrl: str
   return value;
 }
 export function validateDiscoveryPinterestContent(author: string, requested: string, raw: unknown): Record<string, unknown> {
-  const value = z.strictObject({ pin_id: id, author_id: z.literal(id.parse(author)), author_username: username, profile_url: text, source_url: text, text: text.refine(value => !!value.trim() && Buffer.byteLength(value) <= 16000 && !value.includes("\0")), text_truncated: z.literal(true) }).parse(raw);
+  const value = z.strictObject({ pin_id: id, author_id: z.literal(id.parse(author)), author_username: username, profile_url: text, source_url: text, text: text.refine(value => !!value.trim() && Buffer.byteLength(value) <= 16000 && !value.includes("\0")), text_truncated: z.boolean(), observations: nativeContentObservations.optional() }).parse(raw);
   if (value.profile_url !== `https://www.pinterest.com/${value.author_username}/` || value.source_url !== `https://www.pinterest.com/pin/${value.pin_id}/` || requested !== value.profile_url && requested !== value.source_url) throw new Error("review_native_content_binding_unavailable");
   return value;
 }

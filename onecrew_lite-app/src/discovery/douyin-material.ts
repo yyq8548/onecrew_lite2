@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { nativeContentObservations } from "../platforms/opencli/observations.ts";
 import { publicLink } from "./historical-native-material.ts";
 const text = (maximum: number) => z.string().refine(value => value.isWellFormed() && Buffer.byteLength(value) <= maximum && !value.includes("\0"));
 const author = z.string().regex(/^MS4wLjABAAAA[A-Za-z0-9_-]{8,88}$/u), label = text(512).refine(value => !!value.trim() && !/\p{Cc}/u.test(value));
@@ -13,6 +14,6 @@ export function validateSavedDiscoveryDouyinProfile(raw: unknown) {
 export function validateSavedDiscoveryDouyinContent(expectedAuthor: string, source: string, raw: unknown) {
   const post = /^https:\/\/www\.douyin\.com\/video\/([1-9][0-9]{0,19})$/u.exec(source)?.[1];
   if (!post) throw new Error("discovery_douyin_content_invalid"); author.parse(expectedAuthor);
-  const content = z.strictObject({ post_id: z.literal(post), author_id: z.literal(expectedAuthor), author_label: label, profile_url: z.literal(`https://www.douyin.com/user/${expectedAuthor}`), source_url: z.literal(source), text: text(12000).refine(value => !!value.trim()), text_truncated: z.boolean(), evidence_source: z.literal("visible_native_video_caption") }).parse(raw);
+  const content = z.strictObject({ post_id: z.literal(post), author_id: z.literal(expectedAuthor), author_label: label, profile_url: z.literal(`https://www.douyin.com/user/${expectedAuthor}`), source_url: z.literal(source), text: text(12000).refine(value => !!value.trim()), text_truncated: z.boolean(), evidence_source: z.literal("visible_native_video_caption"), observations: nativeContentObservations.optional() }).parse(raw);
   return content;
 }

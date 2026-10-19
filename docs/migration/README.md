@@ -1,18 +1,17 @@
 # 开发与交接文档
 
-当前仓库：`yyq8548/onecrew_lite2`，默认开发分支：`codex/typescript-unified-gmail`。产品0.7.1保持开发候选状态。
+当前仓库为 `yyq8548/onecrew_lite2`，默认分支为 `codex/typescript-unified-gmail`。产品 0.7.1，Windows 当前构建 candidate-87 / R8.1。
 
-## 当前入口
+- [当前交接与下一步](14-handoff-status-and-next-plan.md)：当前实现、已验证内容和未完成验收。
+- [迁移计划](03-detailed-migration-plan.md)、[验收要求](04-acceptance-and-release.md)和[产品范围](08-current-scope.md)。
+- [统一 HTTP 合同](10-unified-http-contract.md)与[客户安装约束](13-customer-installation-paths.md)。
+- [独立开发与配套验收](../../development/README.md)。
+- [搜索、评分与连接行为](current-platforms.md)。
+- [R8.1 同步、表格及安装验证](28-sync-and-table-loading-windows.md)。
+- [当前源码交付与清理检查](29-current-source-delivery.md)。
+- [许可全文证据与缺口](16-license-evidence.md)。
+- [来源记录](source-ledger.json)仅用于来源追溯，不是构建依赖或当前线上发布证明。
 
-- [当前交接与构建](14-handoff-status-and-next-plan.md)：环境、配套构建、测试与未完成验收。
-- [搜索、评分与连接现状](current-platforms.md)：Instagram 读取方式、评分、同步与连接恢复。
-- [产品范围](08-current-scope.md)和[统一 HTTP 合同](10-unified-http-contract.md)。
-- [客户安装约束](13-customer-installation-paths.md)、[Windows 验证](11-windows-verification.md)、[Mac ARM 验证](15-mac-arm-verification.md)和[许可证据](16-license-evidence.md)。平台验证记录只代表当时版本。
+历史实现、旧内测安装入口和过期交接记录已从当前源码移除。当前必要的测试、数据库兼容样本与第三方许可证继续保留。账号数据、密钥、Chrome 身份、依赖缓存和安装包不进入 Git。
 
-## 架构与来源
-
-- [Lite 分析](01-lite-codebase-analysis.md)、[Pro 参考](02-pro-reference-analysis.md)和[迁移计划](03-detailed-migration-plan.md)保留设计来源，当前行为以源码及现状说明为准。
-- [验收矩阵](04-acceptance-and-release.md)和[新电脑接手](05-new-computer-handoff.md)用于准备独立环境。
-- [来源清单](source-ledger.json)、[发布基线](07-published-baseline.md)及[上游同步](12-upstream-sync-20261016.md)保留来源证据，旧记录不表示生产当前状态。
-
-源码不包含凭据、运行数据库、Chrome 身份、依赖缓存和安装包。`onecrew_lite-access/` 为旧快照。跨电脑交接同时携带[合并与部署流程](../release/合并与部署流程.md)。
+涉及共享服务或生产发布时，继续遵守[合并与部署流程](../release/合并与部署流程.md)。本次源码推送不包含生产部署或下载切换。

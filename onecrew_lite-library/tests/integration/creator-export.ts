@@ -99,13 +99,13 @@ for (const [value, expected] of [['4029', '4029'], ['~12400', '约 12400'], ['~1
 assert.equal(exported.A2.l?.Target, member.profile_url);
 assert.equal(exported.D2.c?.[0].t, '已通过');
 for (const source of [
-  { ...material.sources[0], contacts: [] },
   { ...material.sources[0], verdict: 'rejected' },
   { ...material.sources[0], verdict: 'pending' },
 ])
   assert.equal(read({ ...material, sources: [source] }).length, 1);
 assert.throws(() => read({ ...material, state: 'missing', projection: null }));
-console.log('creator export: five columns, contact gate and owner snapshot passed');
+assert.equal(read({ ...material, sources: [{ ...material.sources[0], contacts: [] }] }).length, 2);
+console.log('creator export: five columns, owner qualification and snapshot passed');
 
 const channel = 'UCabcdefghijklmnopqrstuv';
 const homepage = `https://www.youtube.com/channel/${channel}`;
@@ -162,12 +162,12 @@ assert.deepEqual(events[2].values.score, {level:'medium',reason:'已通过'});
 assert.equal(events[2].values.name.url, member.profile_url);
 assert.equal(events[2].values.contacts, `微信：cherrymiaojiang（备注来历）\n${social.normalized_value}`);
 assert.equal(recommendationCapture(table, withContacts([wechat, social]), metadata).bytes.equals(capture.bytes), true);
-const emptyCapture = recommendationCapture(table, withContacts([]), metadata);
-assert.equal(emptyCapture.record_count, 0);
-assert.equal(emptyCapture.bytes.toString().trim().split('\n').length, 2);
+const contactlessCapture = recommendationCapture(table, withContacts([]), metadata);
+assert.equal(contactlessCapture.record_count, 1);
+assert.equal(contactlessCapture.bytes.toString().trim().split('\n').length, 3);
 if (process.env.ONECREW_UPLOAD_CONTRACT_MODULE) {
   const {captureEventSchema} = await import(process.env.ONECREW_UPLOAD_CONTRACT_MODULE);
-  for (const event of [...events, ...emptyCapture.bytes.toString().trim().split('\n').map(line => JSON.parse(line))]) captureEventSchema.parse(event);
+  for (const event of [...events, ...contactlessCapture.bytes.toString().trim().split('\n').map(line => JSON.parse(line))]) captureEventSchema.parse(event);
   const {beginUploadSchema, completeUploadSchema} = await import(process.env.ONECREW_UPLOAD_CONTRACT_MODULE.replace('capture.ts','uploads.ts'));
   const header = events[0];
   const input = {version_id:header.version_id,consent_id:header.consent_id,local_source_id:metadata.source_instance_id,table_id:header.table_id,table_name:header.table_name,capture_seq:'1',capture_kind:'full_sample',capture_started_at:header.capture_started_at,previous_version_id:null,scopes:['dynamic_table_records','dynamic_table_schema'],format:header.format,format_version:1};

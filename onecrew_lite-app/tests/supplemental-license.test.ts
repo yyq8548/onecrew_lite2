@@ -15,6 +15,8 @@ test("verified supplemental licenses use real pinned dependency texts and preser
   const sources = [
     join(dependency("isarray@1.0.0"), "isarray"),
     join(dependency("saxes@5.0.1"), "saxes"),
+    join(dependency("boolbase@1.0.0"), "boolbase"),
+    join(dependency("buffers@0.1.1"), "buffers"),
   ];
   const binding = process.platform === "darwin" ? `darwin-${process.arch}` : process.platform === "win32" && process.arch === "x64" ? "win32-x64-msvc" : null;
   if (binding) sources.push(join(dependency(`@wreq-js+binding-${binding}@3.2.0`), "@wreq-js", `binding-${binding}`));
@@ -27,6 +29,7 @@ test("verified supplemental licenses use real pinned dependency texts and preser
     assert.match(bytes.toString("utf8"), /Permission (?:to use|is hereby granted)/u);
   }
   assert.equal(await supplementalLicense(join(root, "onecrew_lite-app")), null);
+  assert.equal((await supplementalLicense(join(dependency("buffers@0.1.1"), "buffers")))?.license, "MIT");
 });
 
 test("the real candidate archive retains verified license bytes and rejects changed provenance", { skip: !process.env.ONECREW_SEA_CANDIDATE_EXECUTABLE }, async () => {
@@ -37,8 +40,8 @@ test("the real candidate archive retains verified license bytes and rejects chan
   assert.equal(payloadDigest(bytes), archive.sha256);
   const zip = await JSZip.loadAsync(bytes);
   const supplemental = manifest.components.filter(component => component.licenseProvenance);
-  assert.equal(supplemental.length, 3);
-  assert.equal(manifest.components.filter(component => component.licenseEvidence === "declared_only").length, 13);
+  assert.equal(supplemental.length, 5);
+  assert.equal(manifest.components.filter(component => component.licenseEvidence === "declared_only").length, 11);
   for (const component of supplemental) {
     assert.equal(component.licenseEvidence, "full_text");
     for (const evidence of component.licenseProvenance!) {

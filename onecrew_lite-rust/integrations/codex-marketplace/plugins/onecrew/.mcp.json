@@ -1,9 +1,0 @@
-{
-  "mcpServers": {
-    "onecrew_lite": {
-      "command": "./bin/onecrew_lite",
-      "cwd": ".",
-      "args": ["mcp", "--stdio"]
-    }
-  }
-}

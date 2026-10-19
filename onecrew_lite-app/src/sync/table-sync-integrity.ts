@@ -14,7 +14,7 @@ const nonempty = z.string().refine(value => !!value.trim());
 const headerSchema = z.object({ kind: z.literal("header"), format: z.literal("onecrew.dynamic_table_capture"), format_version: z.literal(1), capture_kind: z.literal("full_sample"), version_id: z.uuid(), source_instance_id: z.uuid(), consent_id: z.uuid(), table_id: z.string().refine(value => Buffer.byteLength(value) > 0 && Buffer.byteLength(value) <= 128) }).passthrough();
 const schemaSchema = z.object({ kind: z.literal("schema"), schema_id: z.string().min(1), fields: z.array(z.object({ id: z.string(), semantic_type: z.string() }).passthrough()).length(5) }).passthrough();
 const rowSchema = z.object({ kind: z.literal("row.upsert"), row_id: z.string(), schema_id: z.string(), order: creatorU64,
-  values: z.object({ name: z.object({ name: nonempty, identity: z.object({ platform_id: z.string().min(1) }).passthrough() }).passthrough(), category: z.unknown(), platform: z.unknown(), score: z.object({ level: z.enum(["excellent", "good", "medium"]), reason: nonempty }).passthrough(), contacts: nonempty }).strict(),
+  values: z.object({ name: z.object({ name: nonempty, identity: z.object({ platform_id: z.string().min(1) }).passthrough() }).passthrough(), category: z.unknown(), platform: z.unknown(), score: z.object({ level: z.enum(["excellent", "good", "medium"]), reason: nonempty }).passthrough(), contacts: z.string() }).strict(),
 }).passthrough();
 
 // 采用成熟 JSONL 解析器；原始整数通过 Node reviver 的 source 保留完整精度。

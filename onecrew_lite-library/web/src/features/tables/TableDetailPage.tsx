@@ -197,6 +197,7 @@ export function TableDetailPage({
     void loadTable();
   }, [loadTable]);
   useEffect(() => {
+    if (!table || (isDiscoveryTable(table) && view !== 'sources')) return;
     document
       .querySelector<HTMLElement>('[data-slot="data-grid"] [data-slot="scroll-area-viewport"]')
       ?.scrollTo({ top: 0, left: 0, behavior: 'auto' });
@@ -204,13 +205,12 @@ export function TableDetailPage({
     return () => {
       requestIdRef.current += 1;
     };
-  }, [loadRows]);
+  }, [loadRows, table, view]);
   useEffect(() => {
     if (!table || !isDiscoveryTable(table) || view !== 'sources'
         || editingCell || structuredEdit || busy) return;
     // Source rows carry the same publication as the creator view. Without this
     // subscription a completed identity read remains visibly "unverified".
-    void loadRows(true);
     return subscribeCreatorRefresh(
       (signal, changed) => watchCreatorUpdates(tableId, signal, changed),
       () => { void loadRows(true); },

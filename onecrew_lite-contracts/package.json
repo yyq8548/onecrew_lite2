@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./browser-session-lock": "./src/browser-session-lock.ts",
     "./browser-connection": "./src/browser-connection.ts",
     "./bootstrap": "./src/bootstrap.ts",
     "./json": "./src/json.ts",

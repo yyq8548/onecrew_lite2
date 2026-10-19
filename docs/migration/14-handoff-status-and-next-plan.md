@@ -1,79 +1,49 @@
-# 当前交接与构建
+# 当前 TypeScript 独立版本交接
 
-更新日期：2026-10-17。仓库 `yyq8548/onecrew_lite2`，默认开发分支 `codex/typescript-unified-gmail`。产品0.7.1为开发候选，最新 Mac ARM 本地候选37。最新行为见[搜索、评分与连接现状](current-platforms.md)。
+更新日期：2026-10-19。产品版本 0.7.1，Windows 当前配套构建 candidate-87 / R8.1。源码、平台适配器、网页、状态卡、契约和测试材料由本仓库独立维护，不引用旧工程。
 
-## 范围与来源
+## 当前产品边界
 
-当前主程序为 TypeScript/Node.js，包含本地服务、工作台、Library 与 Codex 插件。`onecrew_lite-rust/` 保留来源实现、工作台、只读适配器和真实行为对照，Rust 业务不是新版启动入口。`onecrew_lite-access/` 为旧快照。
+- 保留平台搜索、原生作者和内容读取、证据评分、推荐、Creator、动态表格及后台表格同步。
+- 基础条件满足、评分材料充分的作者正常进入推荐；不因用户未要求的评论、字幕或互动数据缺失重复读取。公开邮箱为软偏好。
+- 对外发送只保留邮件页 Gmail 批量发送，MCP 不提供发送。保留草稿冻结、确认、去重、暂停、取消和未知结果保护。
+- 使用用户日常 Chrome 的官方 OpenCLI 扩展及明确授权的身份，不创建独立浏览器。工作台和 Library 使用 Codex 内置浏览器并复用标签页。
+- 首次安装自动选择当前用户默认目录；升级发现并保留原账号、数据库、主密钥、端口和浏览器授权。多目录时要求用户选择。
+- 同步只由新增推荐、暂停、结束或用户点击触发；只读页面和重启不重发已完成表格，未完成任务仍可恢复。
 
-保留公开搜索、证据、评分、预算、暂停恢复、Creator、导入导出、历史及动态表格。对外发送仅保留邮件页 GmailBulk，MCP 不发送邮件。公开转载、整理及实际相关标签可作为主题证据，原创要求仅按用户明确条件执行。
+## 当前配套构建
 
-来源基线 `efc3c6eb69507b9809bb30279d9af26156d075e3`，批准迁入的上游 `8d931ab08448bcded456c210ebc29ad9709a68a5`；详见[source-ledger.json](source-ledger.json)。克隆后以实际 Git 提交为准，旧候选二进制哈希不能代替新构建证据。
-
-## 新电脑构建
-
-固定 Node.js **26.7.0**、pnpm **10.32.1** 与根锁文件。Windows 原生依赖需要 Visual Studio C++ Build Tools 和 SDK。Rust 仅在重新生成来源对照或构建旧程序时需要，按项目工具链配置准备。
-
-```powershell
-git clone --branch codex/typescript-unified-gmail https://github.com/yyq8548/onecrew_lite2.git
-cd onecrew_lite2
-pnpm install --frozen-lockfile
-pnpm build:tables
-pnpm --dir onecrew_lite-rust/apps/mcp-ui check
-pnpm --dir onecrew_lite-rust/apps/mcp-ui build
-pnpm --dir onecrew_lite-rust/apps/web build
-$env:VITE_ONECREW_UNIFIED='1'
-pnpm --dir onecrew_lite-library build:web
-pnpm typecheck
-```
-
-Windows 独立候选的输出目录必须尚不存在：
-
-```powershell
-New-Item -ItemType Directory -Force .artifacts | Out-Null
-$nodePath = (Get-Command node).Source
-node onecrew_lite-app/src/packaging/build-candidate.ts --output .artifacts/windows-candidate --product-version 0.7.1 --target win32-x64 --node $nodePath --web-assets onecrew_lite-rust/apps/web/dist --library-web-assets onecrew_lite-library/web/dist
-```
-
-Mac 使用对应架构 Node，将目标改为 `darwin-arm64` 或 `darwin-x64`，输出到新的独立目录。主程序、工作台、MCP UI 和 Library 必须配套构建。不得复制开发电脑的账号、密钥、Chrome 身份和绝对路径作为默认配置。
-
-## 测试入口
-
-```powershell
-node --test --test-concurrency=2 onecrew_lite-app/tests/*.test.ts
-pnpm --dir onecrew_lite-rust/apps/web test
-$adapterTests = Get-ChildItem onecrew_lite-rust/integrations/opencli -Recurse -File -Filter '*.test.mjs' | ForEach-Object FullName
-node --test @adapterTests
-```
-
-真实原生验收按测试合同提供以下材料，缺少材料产生的跳过不得算通过：
-
-| 环境变量 | 要求 |
+| 项目 | 实际值 |
 | --- | --- |
-| `ONECREW_SEA_CANDIDATE_EXECUTABLE` | 本机刚构建并核对哈希的真实 SEA |
-| `ONECREW_PREVIOUS_SEA_EXECUTABLE` | 真实旧版本，用于明确替换和拒绝混用验证 |
-| `ONECREW_CREATOR_ORACLE` | 原 Rust schema90 对照数据库的隔离副本 |
-| `ONECREW_LEGACY_CLI_TEST_EXECUTABLE` | 原 Windows CLI，仅控制测试自己的任务 |
-| `ONECREW_OPENCLI_TEST_INSTALLATION=1` | 检查实际 OpenCLI 1.8.8 安装 |
+| 主程序 SHA-256 | `1238fa16671a7bf44c374fae9b8b55743ab6238aa84fe4c274cd01a885b2cb64` |
+| 资源 SHA-256 | `7cc9326c84d3fb25e46db6b939bcaa197b08cfc12b4933b1a74c7ce25ad36b24` |
+| Codex 配套插件 | `0.7.1+codex.78ced4ec8c28f6648b63e5c42c4f34b9f7071e50926c27e35e2129d9e2af366c` |
+| Windows ZIP | `OneCrew-Lite-0.7.1-Windows-x64-R8.1.zip` |
+| ZIP 字节数 | `57225238` |
+| ZIP SHA-256 | `17247f67f044976c13d088af22e790f255c48d70d58c0a48335010793e3638a5` |
+| 发布状态 | `productionReady: false` |
 
-重新生成 Rust 对照时使用未占用目录：
+这些哈希标识已验证的既有产物；后续从新提交重新构建时必须重新生成并验证清单，不能复用旧哈希。成品 ZIP 和本机运行数据不提交源码仓库。
 
-```powershell
-New-Item -ItemType Directory .scratch/schema-oracle | Out-Null
-$env:ONECREW_SCHEMA_ORACLE_DIRECTORY = (Resolve-Path .scratch/schema-oracle).Path
-cargo test --manifest-path onecrew_lite-rust/Cargo.toml -p onecrew-creator-runtime export_schema90_node_compatibility_fixture -- --nocapture
-$env:ONECREW_CREATOR_ORACLE = Join-Path $env:ONECREW_SCHEMA_ORACLE_DIRECTORY 'creator-schema90-oracle.sqlite'
-```
+## 已验证范围
 
-## 当前验证与未完成事项
+- 本次源码交付的主程序全量回归：573 项中 564 项通过、0 项失败、9 项按环境条件跳过。工作台 816 项、状态卡 406 项、适配器 102 项、契约生成 6 项及 10 个表格投影集成程序通过；类型、契约、独立性、冻结锁文件和文档链接检查通过。详情见 [源码交付检查](29-current-source-delivery.md)。
+- R8：17 项相关主程序检查、816 项网页测试、类型检查和表格投影集成检查通过；最终原生程序的官方 Codex 安装、MCP 升级回读、插件升级及程序升级共 4 项通过。
+- 重启后的本机插件通过官方 fresh 核验，实际 live MCP 主程序哈希匹配，账号登录及浏览器、Library 连接正常。
+- 工作台和动态表格回读同一已结束计划：15/15 推荐、0 待核实、25 次读取。表格显示 15 位推荐及评分，老吴正常在推荐中；没有继续或重新搜索。
+- 20 次真实页面和表格请求全部成功，最长 208 毫秒；服务实例保持一致。22 张已同步表格的队列在重启和只读检查前后未变化。表格重载至实际记录可见耗时 1.674 秒。
+- R8.1 实际 ZIP 的 525 个文件逐一校验，指南、candidate.json、清单与通用提示词一致。直接执行包内指南，首次安装、同构建复用和运行中的真实 R3 升级通过；主密钥和端口保留，插件 fresh 核验通过。
+- R7：11 个平台的实际账号资料、内容和评分材料保留检查通过；Google 实际结果及 Yahoo 空结果分别核验。老吴真实模型评分为 good 并进入推荐。有限样本不能代表总体准确率，R8 没有重跑全平台搜索。
+- Gmail 已有一次经用户明确授权的自发测试，发件、收件及正文回读通过，没有重复发送。本次源码交付没有发送邮件。
 
-- Mac ARM 候选37完成配套构建、严格签名、相关测试与真实 Instagram 读取和保存；工作台、专用浏览器及当前动态表格已恢复连接。服务重启使旧页面会话失效，需要新授权链接。
-- Windows 历史验证见[Windows 记录](11-windows-verification.md)；当前提交须重新构建并完成 Windows 本机验收。Mac Intel 也需要独立原生验收。
-- Gmail 已读取实际发件人并验证空收件人门禁，尚未进行真实发送及送达验收。发送测试需另有具体收件人和内容授权。
-- 仍需完成客户安装、升级、宿主状态卡联合验收、许可全文、正式签名、公证和发布来源核实。构建保持 `productionReady: false`。
+详细范围和原始证据位置见 [R8.1 Windows 记录](28-sync-and-table-loading-windows.md)与 [RELEASE-STATUS.md](../../development/windows-customer-package/RELEASE-STATUS.md)。
 
-## 交付与清理
+## 下一步与完成条件
 
-同步源码、测试、锁文件、构建脚本及必要文档。账号数据、浏览器配置、本地日志、依赖和安装包不进入 Git。测试目录中的真实 fixture 按各自来源保留。
+1. 继续完成宿主状态卡实际界面与按钮验收。已安装 MCP 的状态卡资源、哈希及按钮协议通过；宿主尚未提供可读取的卡片标签页，不能将资源验证写成按钮操作已通过。
+2. 在客户电脑复测计划生成耗时和授权会话恢复；保留独立质量复核。此前本机模型及连接测量只代表相应场景，不承诺固定耗时。
+3. 继续长期运行、睡眠恢复、断线恢复及账号切换验证，保留同一数据归属；短时连接稳定不替代这些检查。
+4. 分别完成 Mac ARM 和 Mac Intel 原生安装及运行验收，当前两项保持未完成。
+5. 补齐 11 项许可全文或权利方授权材料。完成发布门槛之前保持 productionReady=false，源码提交不等于生产发布。
 
-保留当前、上一版和仍被运行或验收引用的构建；只清理确认不用的产物。跨电脑交接同时携带[合并与部署流程](../release/合并与部署流程.md)，按[客户安装约束](13-customer-installation-paths.md)核对归属。GitHub 推送不会自动合并公司主分支、发布客户端或切换生产下载。
+继续开发前读取当前文件状态；未经用户明确要求，不开始新的搜索、不发送邮件、不切换生产下载、不部署共享 Access 服务。

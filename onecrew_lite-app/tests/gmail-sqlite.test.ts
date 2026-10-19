@@ -19,15 +19,6 @@ function connect(path: string): DatabaseSync {
   return db;
 }
 
-// 直接执行 Rust 文件里的原始 SQL。这里只截取已知常量边界，SQL 由 SQLite 解析。
-function originalSql(source: string, start: string, end: string): string {
-  const begin = source.indexOf(start);
-  assert.notEqual(begin, -1);
-  const finish = source.indexOf(end, begin + start.length);
-  assert.notEqual(finish, -1);
-  return source.slice(begin + start.length, finish);
-}
-
 function fixture(): { db: DatabaseSync; path: string; repository: GmailBulkRepository } {
   const root = new URL("../../", import.meta.url);
   const scratch = new URL(".scratch/gmail-repository/", root);
@@ -35,11 +26,7 @@ function fixture(): { db: DatabaseSync; path: string; repository: GmailBulkRepos
   const directory = mkdtempSync(resolve(fileURLToPath(scratch), "case-"));
   const path = resolve(directory, "creator.sqlite3");
   const db = connect(path);
-  const current = readFileSync(new URL("onecrew_lite-rust/crates/creator-runtime/src/repository/sqlite/schema/current.rs", root), "utf8");
-  const bulk = readFileSync(new URL("onecrew_lite-rust/crates/creator-runtime/src/repository/sqlite/schema/migrations/v86_to_v87.rs", root), "utf8");
-  const mailboxSql = "CREATE TABLE mailbox_refs (" + originalSql(current, "CREATE TABLE mailbox_refs (", ");") + ");";
-  db.exec(mailboxSql);
-  db.exec(originalSql(bulk, 'const SQL: &str = "', '";'));
+  for (const name of ["creator-schema90.sql", "creator-indexes90.sql", "creator-triggers90.sql"]) db.exec(readFileSync(new URL(`../src/storage/${name}`, import.meta.url), "utf8"));
   db.exec("PRAGMA user_version=90; PRAGMA journal_mode=WAL");
   db.prepare("INSERT INTO mailbox_refs VALUES (?,'gmail','Gmail',?,NULL,?,1,NULL,0,0)").run(mailbox.id, mailbox.email_address, JSON.stringify(mailbox.capabilities));
   return { db, path, repository: new GmailBulkRepository(db) };
@@ -178,7 +165,14 @@ if (!isMainThread) {
       const saved = repository.list().find(batch => batch.id === cancelled.id)!;
       assert.equal(saved.state, "cancelled");
       assert.equal(saved.items[0]?.state, "cancelled");
-      // 子schema没有 Creator/Discovery 表，必须明确失败，不返回虚构收件人。
+      assert.deepEqual(repository.recipients(), []);
+    } finally { db.close(); }
+  });
+
+  test("缺少 Creator 表时明确失败，不构造收件人", () => {
+    const { db, repository } = fixture();
+    try {
+      db.exec("DROP TABLE creators");
       assert.throws(() => repository.recipients(), /no such table/);
     } finally { db.close(); }
   });

@@ -16,7 +16,7 @@ test("SDK adapter uses the real unified service for logged-out status and local 
   await mkdir(scratch, { recursive: true });
   const root = await mkdtemp(join(scratch, "service-"));
   const directory = await createPrivateDirectory(join(root, "private"));
-  const resourceOptions = { vaultPath: join(directory, "vault.sqlite"), masterKeyPath: join(directory, "master.key"), webAssetsDirectory: fileURLToPath(new URL("../../onecrew_lite-rust/apps/web/dist", import.meta.url)), libraryWebAssetsDirectory: fileURLToPath(new URL("../../onecrew_lite-library/web/dist", import.meta.url)) };
+  const resourceOptions = { vaultPath: join(directory, "vault.sqlite"), masterKeyPath: join(directory, "master.key"), webAssetsDirectory: fileURLToPath(new URL("../../onecrew_lite-web/dist", import.meta.url)), libraryWebAssetsDirectory: fileURLToPath(new URL("../../onecrew_lite-library/web/dist", import.meta.url)) };
   let runtime = await startLocalRuntime(directory, unifiedResources(resourceOptions));
   const adapter = await createMcpAdapter(directory), client = new Client({ name: "native-acceptance", version: "1" });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();

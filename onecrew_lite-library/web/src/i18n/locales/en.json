@@ -225,8 +225,8 @@
     "checking": "Checking",
     "online": "Connected",
     "offline": "Waiting for extension",
-    "serviceOffline": "Local service is offline",
-    "serviceHint": "Start the local onecrew_lite service and the extension will reconnect automatically.",
+    "serviceOffline": "Extension connection status is unavailable",
+    "serviceHint": "Check the browser connection in the workbench. If this page session expired, reopen Library from OneCrew.",
     "hint": "The extension connects to the local service automatically; no pairing is required."
   }
 }

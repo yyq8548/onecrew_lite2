@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { nativeContentObservations } from "./observations.ts";
 import { OpenCliError } from "./errors.ts";
 import { publicWebUrl } from "./public-url.ts";
 import type { ReviewedOpenCliRead } from "./read-plan.ts";
@@ -21,7 +22,7 @@ export function douyinProfilePlan(author: string) {
 }
 export function douyinContentPlan(video: string, author?: string) {
   input(videoValid(video) && (author === undefined || authorValid(author)));
-  const schema = z.strictObject({ post_id: z.literal(video), author_id: text.refine(value => authorValid(value) && (author === undefined || value === author)), author_label: label, profile_url: text, source_url: z.literal(`https://www.douyin.com/video/${video}`), text: bounded(12000).refine(value => !!value.trim()), text_truncated: z.boolean(), evidence_source: z.literal("visible_native_video_caption") }).refine(row => row.profile_url === `https://www.douyin.com/user/${row.author_id}`);
+  const schema = z.strictObject({ post_id: z.literal(video), author_id: text.refine(value => authorValid(value) && (author === undefined || value === author)), author_label: label, profile_url: text, source_url: z.literal(`https://www.douyin.com/video/${video}`), text: bounded(12000).refine(value => !!value.trim()), text_truncated: z.boolean(), evidence_source: z.literal("visible_native_video_caption"), observations: nativeContentObservations.optional() }).refine(row => row.profile_url === `https://www.douyin.com/user/${row.author_id}`);
   return { site: "onecrew-douyin-reader", name: "content", args: ["-f", "json", "--", video, ...(author === undefined ? [] : [author])], addons: ["onecrew-browser-search"], maximumBytes: 16000, decode: (value: unknown) => one(schema, value) } satisfies ReviewedOpenCliRead<unknown>;
 }
 export function douyinCommentsPlan(video: string, author: string) {

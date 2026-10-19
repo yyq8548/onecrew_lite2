@@ -6,7 +6,7 @@ import { OperationRegistry } from "../src/application/operation-registry.ts";
 import { AccountContextService } from "../src/identity/account-context.ts";
 import { BrowserSessions } from "../src/service/browser-sessions.ts";
 import { listenLocalServer } from "../src/service/http.ts";
-import * as browserRuntime from "../../onecrew_lite-rust/apps/web/src/lib/local-runtime.ts";
+import * as browserRuntime from "../../onecrew_lite-web/src/lib/local-runtime.ts";
 
 test("browser transport keeps a valid session after a forbidden request and recovers after a real server interruption without replay", async () => {
   const accounts = new AccountContextService();

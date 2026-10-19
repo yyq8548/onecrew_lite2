@@ -24,7 +24,11 @@ test("actual Library capture JSONL preserves all rows and rejects changed schema
   await assert.rejects(validateTableSyncArchive(archive.replace('"semantic_type":"people"', '"semantic_type":"string"'), 1n), /capture_invalid/);
   await assert.rejects(validateTableSyncArchive(archive.replace('"platform_id":"123"', '"platform_id":""'), 1n));
   await assert.rejects(validateTableSyncArchive(archive.replace("\n", "\n\n"), 1n), /capture_invalid/);
-  const empty = recommendationCapture(table, { ...material, sources: [{ ...material.sources[0]!, contacts: [] }] }, metadata);
+  const contactless = recommendationCapture(table, { ...material, sources: [{ ...material.sources[0]!, contacts: [] }] }, metadata);
+  assert.equal((await validateTableSyncArchive(contactless.bytes.toString(), 1n)).count, 1n);
+  await assert.rejects(validateTableSyncArchive(contactless.bytes.toString().replace('"contacts":""', '"contacts":null'), 1n));
+  await assert.rejects(validateTableSyncArchive(contactless.bytes.toString().replace(',"contacts":""', ''), 1n));
+  const empty = recommendationCapture(table, { ...material, sources: [{ ...material.sources[0]!, verdict: "rejected" }] }, metadata);
   assert.equal((await validateTableSyncArchive(empty.bytes.toString(), 0n)).count, 0n);
 });
 

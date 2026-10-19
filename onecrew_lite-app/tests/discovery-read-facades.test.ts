@@ -14,7 +14,7 @@ test("原Rust真实project导出的八份完整指南及目录逐字段读取，
   assert.equal(workflowGuideInput.safeParse({ topic: "outreach" }).success, false); assert.equal(workflowGuideInput.safeParse({ topic: "find-one", send: true }).success, false);
 });
 test("原真实Linktree HTML保留三层来源，旧候选held合同逐字段兼容且非法来源零网络拒绝", () => {
-  const html = readFileSync(new URL("../../onecrew_lite-rust/crates/platform-runtime/src/toolkits/fixtures/linktree_bitcoinmx.html", import.meta.url), "utf8"), source = "https://linktr.ee/bitcoinmx", extraction = parseLinkHubExtraction(html, source, source);
+  const html = readFileSync(new URL("./fixtures/public-pages/linktree_bitcoinmx.html", import.meta.url), "utf8"), source = "https://linktr.ee/bitcoinmx", extraction = parseLinkHubExtraction(html, source, source);
   assert.deepEqual(parseHeldLinkHub(html, source, source), { source_url: extraction.source_url, links: extraction.links.map(({ url, text }) => ({ url, text })), emails: extraction.emails.map(({ value }) => ({ value })) });
   assert.ok(extraction.links.length > 0); assert.deepEqual(new Set([...extraction.links, ...extraction.emails].map(item => item.layer)), new Set(["anchor", "json_ld", "hydration"]));
   assert.throws(() => linkHubUrl("https://untrusted.example/owner?private=secret"), error => { assert.ok(error instanceof LinkHubReadError); assert.equal(error.code, "link_hub_host_unsupported"); assert.equal(error.message.includes("secret"), false); return true; });

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { nativeContentObservations } from "./observations.ts";
 import { OpenCliError } from "./errors.ts";
 import type { ReviewedOpenCliRead } from "./read-plan.ts";
 import { nativeCommentsPlan } from "./native-comments.ts";
@@ -49,7 +50,7 @@ export function tiktokLanguagePlan(username: string, authorId: string, source: s
       if (!seen.has(body)) { seen.add(body); comments.push({ source_url: source, text: body }); }
     }
     if (!body.trim() && !comments.length) invalid();
-    return { author_id: authorId, source_url: source, text: body, comments };
+    return { author_id: authorId, source_url: source, text: body, comments, ...(post.observations ? { observations: nativeContentObservations.parse(post.observations) } : {}) };
   } } satisfies ReviewedOpenCliRead<unknown>;
 }
 export function bilibiliLanguagePlan(mid: string, source: string | null) {
@@ -73,7 +74,7 @@ export function instagramRecentOriginalsPlan(username: string, authorId: string,
   if (!/^[a-z\d_.]{1,30}$/u.test(username) || !numeric(authorId, 25)) input();
   if (Buffer.byteLength(query) > 2000 || /[\p{Cc}&&[^\n\r\t]]/v.test(query)) input();
   if (sourceUrl && !new RegExp(`^https://www\\.instagram\\.com/${username.replaceAll(".", "\\.")}/(?:p|reel)/[A-Za-z\\d_-]{1,32}/$`, "u").test(sourceUrl)) input();
-  const row = z.object({ post_id: text.regex(/^[A-Za-z\d_-]{1,32}$/u), author_id: z.literal(authorId), source_url: text.regex(/^https:\/\/www\.instagram\.com\/(?:p|reel)\/[A-Za-z\d_-]{1,32}\/$/u), text: text.refine(value => Buffer.byteLength(value) <= 8000 && !value.includes("\0")), text_truncated: z.boolean() }).strict();
+  const row = z.object({ post_id: text.regex(/^[A-Za-z\d_-]{1,32}$/u), author_id: z.literal(authorId), source_url: text.regex(/^https:\/\/www\.instagram\.com\/(?:p|reel)\/[A-Za-z\d_-]{1,32}\/$/u), text: text.refine(value => Buffer.byteLength(value) <= 8000 && !value.includes("\0")), text_truncated: z.boolean(), observations: nativeContentObservations.optional() }).strict();
   return { site: "onecrew-instagram-profile", name: "recent", args: ["-f", "json", "--", username, authorId, ...(query || sourceUrl ? [query] : []), ...(sourceUrl ? [sourceUrl] : [])], addons: ["onecrew-browser-search"], maximumBytes: 30000, decode(value: unknown) {
     const parsed = z.array(row).max(3).safeParse(value);
     if (!parsed.success || parsed.data.some(item => !numeric(item.post_id, 25) && new URL(item.source_url).pathname.split("/")[2] !== item.post_id) || new Set(parsed.data.map(item => item.post_id)).size !== parsed.data.length || new Set(parsed.data.map(item => item.source_url)).size !== parsed.data.length) invalid();

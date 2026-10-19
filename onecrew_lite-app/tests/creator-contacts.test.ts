@@ -5,6 +5,8 @@ import { fileURLToPath } from "node:url";
 import { backup, DatabaseSync } from "node:sqlite";
 import { test } from "node:test";
 import { CreatorRepository } from "../src/creators/repository.ts";
+import { rm } from "node:fs/promises";
+import { extractCreatorHistory } from "./creator-history.ts";
 
 function database() { const db = new DatabaseSync(":memory:"); db.exec("PRAGMA foreign_keys=ON"); for (const file of ["creator-schema90.sql", "creator-indexes90.sql", "creator-triggers90.sql"]) db.exec(readFileSync(new URL(`../src/storage/${file}`, import.meta.url), "utf8")); db.exec("PRAGMA user_version=90"); return db; }
 function prepared(repository: CreatorRepository, creator: string, route: string) { const result = repository.contactDeletePrepare({ creator_id: creator, contact_route_id: route }); assert.equal(result.status, "confirmation_required"); if (result.status !== "confirmation_required") throw new Error("deletion was blocked"); return result; }
@@ -248,9 +250,9 @@ test("跨Creator观察与跨路由草稿保留共享历史，发送中草稿和�
   }
 });
 
-test("Rust current实际数据库副本支持联系路由预览确认与原SQL影响统计", { skip: !process.env.ONECREW_CREATOR_ORACLE }, async () => {
-  const directory = mkdtempSync(fileURLToPath(new URL("../../.scratch/creator-contacts-oracle-", import.meta.url))), path = join(directory, "creator.sqlite");
-  { using source = new DatabaseSync(process.env.ONECREW_CREATOR_ORACLE!, { readOnly: true }); await backup(source, path); }
+test("独立历史数据库副本支持联系路由预览确认与SQL影响统计", async () => {
+  const directory = await extractCreatorHistory([90]), path = join(directory, "creator.sqlite");
+  { using source = new DatabaseSync(join(directory, "creator-schema90-oracle.sqlite"), { readOnly: true }); await backup(source, path); }
   const db = new DatabaseSync(path);
   try {
     db.exec("PRAGMA foreign_keys=ON");
@@ -264,5 +266,5 @@ test("Rust current实际数据库副本支持联系路由预览确认与原SQL�
     assert.equal(repository.contactDeleteConfirm({ operation_id: plan.operation_id }).result.status, "deleted");
     assert.equal(repository.get(creator.creator_id).contact_routes.length, 0);
     assert.deepEqual(db.prepare("PRAGMA foreign_key_check").all(), []);
-  } finally { db.close(); }
+  } finally { db.close(); await rm(directory, { recursive: true }); }
 });

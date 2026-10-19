@@ -1,5 +1,6 @@
 /// <reference types="vite/client" />
-export const unifiedRuntimeMode = import.meta.env.VITE_ONECREW_UNIFIED === '1';
+import { withBrowserSessionLock } from '@onecrew/runtime-contracts/browser-session-lock';
+export const unifiedRuntimeMode = typeof window !== 'undefined' && import.meta.env.VITE_ONECREW_UNIFIED === '1';
 type UnifiedSession = Readonly<{ accountId: string; epoch: string; csrf: string }>;
 let current: UnifiedSession | null = null;
 let connecting: Promise<UnifiedSession> | null = null;
@@ -13,7 +14,7 @@ export async function connectUnifiedSession(): Promise<UnifiedSession> {
   if (!unifiedRuntimeMode) throw new Error('The unified runtime build is required');
   if (current) return current;
   if (connecting) return connecting;
-  const flight = (async () => {
+  const flight = withBrowserSessionLock(async () => {
     const url = new URL(window.location.href),
       fragment = new URLSearchParams(url.hash.slice(1));
     const tickets = fragment.getAll('onecrew_ticket');
@@ -63,7 +64,7 @@ export async function connectUnifiedSession(): Promise<UnifiedSession> {
     )
       throw new Error('Invalid unified session');
     return Object.freeze({ accountId: result.accountId, epoch: result.epoch, csrf: result.csrf });
-  })();
+  });
   connecting = flight;
   return flight.then(
     (session) => {

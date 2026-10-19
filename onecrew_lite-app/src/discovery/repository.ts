@@ -119,6 +119,7 @@ export class DiscoveryRepository {
   interruptPostAuthor(claim: DiscoveryPostAuthorClaim) { return new DiscoveryPostAuthorRepository(this.#db).interrupt(claim); }
   nextLanguage(campaign: string, platform: string, held: readonly string[] = []) { return new DiscoveryLanguageRepository(this.#db).next(campaign, platform, held); }
   languageSource(campaign: string, hit: string) { return new DiscoveryLanguageRepository(this.#db).source(campaign, hit); }
+  languageEligible(campaign: string, hit: string) { return new DiscoveryLanguageRepository(this.#db).eligible(campaign, hit); }
   languageContext(claim: DiscoveryLanguageClaim) { return new DiscoveryLanguageRepository(this.#db).readContext(claim); }
   claimLanguage(campaign: string, revision: number, hit: string) { return new DiscoveryLanguageRepository(this.#db).claim(campaign, revision, hit); }
   finishLanguage(claim: DiscoveryLanguageClaim, sample: DiscoveryLanguageSample | null, stop: string | null) { return new DiscoveryLanguageRepository(this.#db).finish(claim, sample, stop); }

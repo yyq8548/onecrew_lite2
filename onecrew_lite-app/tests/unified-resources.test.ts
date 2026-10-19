@@ -19,7 +19,7 @@ test("unified service starts and closes real embedded PGlite behind the same aut
   const directory = await createPrivateDirectory(join(root, "private"));
   let runtime: Awaited<ReturnType<typeof startLocalRuntime>> | undefined;
   try {
-    runtime = await startLocalRuntime(directory, unifiedResources({ vaultPath: join(directory, "vault.sqlite"), masterKeyPath: join(directory, "master.key"), webAssetsDirectory: fileURLToPath(new URL("../../onecrew_lite-rust/apps/web/dist", import.meta.url)), libraryWebAssetsDirectory: fileURLToPath(new URL("../../onecrew_lite-library/web/dist", import.meta.url)) }));
+    runtime = await startLocalRuntime(directory, unifiedResources({ vaultPath: join(directory, "vault.sqlite"), masterKeyPath: join(directory, "master.key"), webAssetsDirectory: fileURLToPath(new URL("../../onecrew_lite-web/dist", import.meta.url)), libraryWebAssetsDirectory: fileURLToPath(new URL("../../onecrew_lite-library/web/dist", import.meta.url)) }));
     const status = await fetch(`${runtime.descriptor.url}/_local/status`, { headers: { authorization: `Bearer ${runtime.descriptor.control_token}` } });
     assert.equal(status.status, 200);
     const body = await status.json();

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { nativeContentObservations } from "./observations.ts";
 import { OpenCliError } from "./errors.ts";
 import { nativeCommentsPlan } from "./native-comments.ts";
 import type { ReviewedOpenCliRead } from "./read-plan.ts";
@@ -51,6 +52,6 @@ export function redditPostPlan(authorId: string, source: string) {
     if (!post || typeof post.author !== "string" || typeof post.text_truncated !== "boolean") return invalid();
     target(post.author, authorId);
     const sample = project([post], post.author, authorId, source);
-    return { post_id: id, author_id: authorId, source_url: source, text: sample.text, text_truncated: post.text_truncated || Buffer.byteLength(post.text as string) > 8000 };
+    return { post_id: id, author_id: authorId, source_url: source, text: sample.text, text_truncated: post.text_truncated || Buffer.byteLength(post.text as string) > 8000, ...(post.observations ? { observations: nativeContentObservations.parse(post.observations) } : {}) };
   } };
 }

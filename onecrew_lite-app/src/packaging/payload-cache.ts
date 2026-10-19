@@ -11,7 +11,7 @@ const digest = (value: Uint8Array) => createHash("sha256").update(value).digest(
 
 export class PayloadPermissions {
   readonly #script: Uint8Array;
-  constructor(script: Uint8Array) { this.#script = script; }
+  constructor(script: Uint8Array) { this.#script = Buffer.from(new TextDecoder("utf-8", { fatal: true }).decode(script)); }
   async #windows(operation: "Create" | "CreateTree" | "Verify" | "VerifyTree", directory: string, directories?: readonly string[]): Promise<void> {
     if (!process.env.SystemRoot) throw new Error("package.windows_system_root_missing");
     // 引导脚本取自已核验的内嵌资源；路径只作为环境参数传入。

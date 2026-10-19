@@ -13,12 +13,12 @@ import { OpenCliAddons, OPENCLI_ADDON_FILES } from "../src/platforms/opencli/add
 import { OpenCliReader } from "../src/platforms/opencli/reader.ts";
 import { resolveOpenCliInstallation } from "../src/platforms/opencli/installation.ts";
 
-const bundled = fileURLToPath(new URL("../../onecrew_lite-rust/integrations/opencli/", import.meta.url));
+const bundled = fileURLToPath(new URL("../../onecrew_lite-opencli/", import.meta.url));
 
 test("当前13来源使用审核后的只读入口，YouTube绑定独立页面，Pinterest搜索账号", async () => {
-  const fixture = z.object({ sources: z.array(z.object({ platform: z.string(), command: z.string(), browser_required: z.literal(true), registered: z.literal(true) })) }).parse(JSON.parse(await readFile(new URL("../../onecrew_lite-rust/crates/platform-runtime/src/discovery_draft/fixtures/registered-sources-2026-10-11.json", import.meta.url), "utf8")));
+  const fixture = z.object({ sources: z.array(z.object({ platform: z.string(), command: z.string(), browser_required: z.literal(true), registered: z.literal(true) })) }).parse(JSON.parse(await readFile(new URL("./fixtures/registered-sources.json", import.meta.url), "utf8")));
   const sources = Object.entries(CREATOR_SEARCH_SOURCES).filter(([, source]) => source.discovery).map(([platform, source]) => ({ platform, command: `${source.site}/${source.name}`, browser_required: true, registered: true }));
-  const expected = fixture.sources.map(source => source.platform === "pinterest" ? { ...source, command: "onecrew-pinterest-reader/search-pins" } : source.platform === "youtube" ? { ...source, command: "onecrew-search-youtube/search" } : source);
+  const expected = fixture.sources.map(source => source.platform === "pinterest" ? { ...source, command: "onecrew-pinterest-reader/search-pins" } : source.platform === "youtube" ? { ...source, command: "onecrew-search-youtube/search" } : source.platform === "yahoo" ? { ...source, command: "onecrew-search-yahoo/search" } : source);
   assert.deepEqual(sources, expected);
   for (const source of RETIRED_CREATOR_SOURCES) assert.throws(() => creatorSearchSource(source), { code: "opencli_read_command_unavailable" });
   assert.throws(() => creatorSearchArguments("profile", "__proto__", "query", 1));
@@ -49,6 +49,9 @@ test("原搜索结果合同保留原生ID和来源，拒绝错属、重复卡片
   assert.throws(() => decodeCreatorSearch("twitter", [{ id: "123", author: "one", text: "original", url: "https://x.com/other/status/123" }], 3));
   assert.throws(() => decodeCreatorSearch("google", [{ title: "ad", url: "https://www.google.com/url?target=x" }], 3));
   assert.throws(() => decodeCreatorSearch("yahoo", [{ title: "private", url: "https://127.0.0.1/" }], 3));
+  assert.equal(decodeCreatorSearch("google", [{ title: "The Software Creators", url: "http://www.youtube.com/@TheSoftwareCreators" }], 1)[0]!.source_url, "https://www.youtube.com/@TheSoftwareCreators");
+  assert.throws(() => decodeCreatorSearch("google", [{ title: "unreviewed transport", url: "http://example.org/" }], 1));
+  assert.throws(() => decodeCreatorSearch("google", [{ title: "credential", url: "http://name@www.youtube.com/@TheSoftwareCreators" }], 1));
   const twitter = { id: "123", author: "@Owner", text: "original", url: "https://x.com/Owner/status/123" };
   assert.deepEqual(decodeCreatorSearch("twitter", [twitter, twitter], 3), [{ source_url: twitter.url, title: "original", author_label: "@Owner", author_id: "owner", author_url: "https://x.com/owner" }]);
 });

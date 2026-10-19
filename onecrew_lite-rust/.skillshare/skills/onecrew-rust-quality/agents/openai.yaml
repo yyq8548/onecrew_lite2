@@ -1,7 +1,0 @@
-interface:
-  display_name: "OneCrew Rust Quality"
-  short_description: "Scoped Rust safety and quality policy"
-  default_prompt: "Use $onecrew-rust-quality to classify and improve a Rust error, unsafe, lint, API, rustdoc, or Cargo-workspace quality issue without changing unrelated behavior."
-policy:
-  allow_implicit_invocation: true
-

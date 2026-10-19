@@ -1,14 +1,12 @@
 import assert from "node:assert/strict";
-import { execFile } from "node:child_process";
 import { createCipheriv, randomBytes } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { mkdtemp, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
-import { homedir } from "node:os";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import test, { after, before } from "node:test";
 import { fileURLToPath } from "node:url";
-import { promisify } from "node:util";
+import { extractCreatorHistory } from "./creator-history.ts";
 import { prepareSqliteRecovery } from "../src/migration/sqlite-recovery.ts";
 import { prepareSqliteStaging } from "../src/migration/sqlite-staging.ts";
 import { fingerprintSqlite } from "../src/migration/sqlite-fingerprint.ts";
@@ -19,12 +17,7 @@ import { readVaultMasterKey, readVaultSecret } from "../src/storage/vault-reader
 
 let oracle: string;
 before(async () => {
-  oracle = await mkdtemp(fileURLToPath(new URL("../../.scratch/sqlite-staging-oracle-", import.meta.url)));
-  const cargo = process.env.CARGO ?? join(homedir(), ".cargo", "bin", process.platform === "win32" ? "cargo.exe" : "cargo");
-  await promisify(execFile)(cargo, ["test", "--locked", "-p", "onecrew-creator-runtime", "export_schema90_node_compatibility_fixture", "--", "--nocapture"], {
-    cwd: fileURLToPath(new URL("../../onecrew_lite-rust", import.meta.url)), timeout: 600_000, maxBuffer: 1024 * 1024, windowsHide: true,
-    env: { ...process.env, CARGO_INCREMENTAL: "0", ONECREW_SCHEMA_ORACLE_DIRECTORY: oracle },
-  });
+  oracle = await extractCreatorHistory();
 });
 after(async () => { if (oracle) await rm(oracle, { recursive: true }); });
 

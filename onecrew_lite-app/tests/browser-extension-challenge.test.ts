@@ -6,7 +6,7 @@ import { once } from "node:events";
 import { ManagedExtensionChallenge, prepareManagedExtensionChallenge } from "../src/platforms/browser/extension-challenge.ts";
 
 test("managed browser challenge requires the actual local asset and retains an immutable one-use nonce", async () => {
-  const asset = await readFile(new URL("../../onecrew_lite-rust/apps/web/public/browser-binding.html", import.meta.url));
+  const asset = await readFile(new URL("../../onecrew_lite-web/public/browser-binding.html", import.meta.url));
   let changed = false;
   const server = createServer((request, response) => {
     assert.equal(request.url, "/browser-binding.html");

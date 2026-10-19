@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { nativeContentObservations } from "../platforms/opencli/observations.ts";
 import { stringifyApplicationJson } from "../contracts/application-json.ts";
 import { facebookSourceValid } from "../platforms/opencli/facebook-profile.ts";
 import { weiboProfilePlan } from "../platforms/opencli/weibo.ts";
@@ -38,8 +39,9 @@ export function validateDiscoveryRetainedProfile(platform: string, author: strin
 }
 
 export function validateDiscoveryRetainedContent(platform: string, author: string, source: string, raw: unknown): Record<string, unknown> {
-  const native = object.parse(raw);
-  if (Buffer.byteLength(stringifyApplicationJson(native)) > (platform === "hackernews" ? 40000 : ["linkedin", "zhihu", "pixiv"].includes(platform) ? 24000 : 16000)) throw new Error("review_native_content_binding_unavailable");
+  const observed = object.parse(raw), observations = observed.observations === undefined ? undefined : nativeContentObservations.parse(observed.observations);
+  const native = { ...observed }; delete native.observations;
+  if (Buffer.byteLength(stringifyApplicationJson(observed)) > (platform === "hackernews" ? 40000 : ["linkedin", "zhihu", "pixiv"].includes(platform) ? 24000 : 16000)) throw new Error("review_native_content_binding_unavailable");
   if (["zhihu", "hackernews", "pixiv"].includes(platform)) return validateHistoricalDiscoveryContent(platform, author, source, native);
   if (platform === "linkedin") linkedinContentPlan(author, z.string().parse(native.account_id)).decode([native]);
   else if (platform === "douyin") validateSavedDiscoveryDouyinContent(author, source, native);
@@ -51,7 +53,7 @@ export function validateDiscoveryRetainedContent(platform: string, author: strin
   } else if (platform === "weibo") {
     const match = /^https:\/\/weibo\.com\/([1-9][0-9]{0,19})\/([A-Za-z0-9]{1,20})$/u.exec(source);
     if (!match || match[1] !== author) throw new Error("review_native_content_binding_unavailable");
-    z.strictObject({ post_id: z.string().regex(/^[1-9][0-9]{0,19}$/u), author_id: z.literal(author), author: z.string().refine(value => !!value.trim() && [...value].length <= 200 && !/\p{Cc}/u.test(value)), source_url: z.literal(source), text: z.string().refine(value => Buffer.byteLength(value) <= 16000 && !value.includes("\0")), text_truncated: z.boolean(), text_completeness_known: z.boolean(), is_repost: z.literal(false) }).parse(native);
+    z.strictObject({ post_id: z.string().regex(/^[1-9][0-9]{0,19}$/u), author_id: z.literal(author), author: z.string().refine(value => !!value.trim() && [...value].length <= 200 && !/\p{Cc}/u.test(value)), source_url: z.literal(source), text: z.string().refine(value => Buffer.byteLength(value) <= 16000 && !value.includes("\0")), text_truncated: z.boolean(), text_completeness_known: z.boolean(), is_repost: z.literal(false), observations: nativeContentObservations.optional() }).parse(native);
   } else throw new Error("review_platform_unsupported");
-  return native;
+  return { ...native, ...(observations ? { observations } : {}) };
 }

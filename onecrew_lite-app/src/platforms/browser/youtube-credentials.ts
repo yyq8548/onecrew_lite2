@@ -121,5 +121,5 @@ export class YoutubeCredentials {
     if (!completed.ok) throw new Error("YouTube deletion is incomplete; retry the same intent with the same idempotency_key", { cause: completed.error });
     return { credential_id: id, replayed: completed.output.replayed };
   }
-  async recover(context: AccountContext): Promise<void> { const pending = await this.#store.read(context, scope => pendingYoutubeCredentialDeletes(scope.creator)); for (const item of pending) await this.delete(context, { credential_id: item.account_ref_id, idempotency_key: item.key, confirmed: true }); }
+  async recover(context: AccountContext): Promise<void> { const pending = await this.#store.readCreator(context, pendingYoutubeCredentialDeletes); for (const item of pending) await this.delete(context, { credential_id: item.account_ref_id, idempotency_key: item.key, confirmed: true }); }
 }

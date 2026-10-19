@@ -4,7 +4,7 @@ import { join, resolve, toNamespacedPath } from "node:path";
 import { runtimeAssetPath } from "../packaging/runtime-context.ts";
 
 export const mcpAppMime = "text/html;profile=mcp-app";
-const defaultDirectory = runtimeAssetPath("mcp", new URL("../../../onecrew_lite-rust/crates/mcp-adapter/assets/apps/", import.meta.url));
+const defaultDirectory = runtimeAssetPath("mcp", new URL("../../../onecrew_lite-mcp-ui/dist/", import.meta.url));
 const samePath = (left: string, right: string) => process.platform === "win32" ? toNamespacedPath(resolve(left)).toLowerCase() === toNamespacedPath(resolve(right)).toLowerCase() : left === right;
 
 export async function loadMcpAppResources(directory = defaultDirectory) {

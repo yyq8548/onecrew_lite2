@@ -1,6 +1,0 @@
-interface:
-  display_name: "OneCrew Data Evolution"
-  short_description: "Safe forward-only local data evolution"
-  default_prompt: "Use $onecrew-local-data-evolution to design a recoverable adjacent upgrade for a persisted-format change."
-policy:
-  allow_implicit_invocation: true

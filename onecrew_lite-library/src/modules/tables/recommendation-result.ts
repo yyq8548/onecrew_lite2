@@ -38,7 +38,7 @@ export function recommendationRows(table: TableDto, material: DiscoveryCreatorVi
     if (!selected) return [];
     const contacts = preferredContacts([...new Map(qualified.flatMap(({source}) => source.contacts)
       .map(contact => [`${contact.kind}:${contact.normalized_value}`, contact])).values()]);
-    if (!contacts.length) return [];
+    // 联系方式是否必需由账号的审核结果决定；此处保留已经核实的作者。
     const { member, source, score } = selected;
     const category = categoryId ? source.row.values[categoryId] : null;
     return [{ id: group.group_id, values: {

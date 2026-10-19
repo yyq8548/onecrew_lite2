@@ -3,6 +3,7 @@ $ErrorActionPreference = 'Stop'
 $rootPath = [System.IO.Path]::GetFullPath($Root)
 $sid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User.Value
 $systemSid = 'S-1-5-18'
+$isAdministrator = @([Security.Principal.WindowsIdentity]::GetCurrent().Claims | Where-Object { $_.Value -eq 'S-1-5-32-544' -and $_.Type -in @([Security.Claims.ClaimTypes]::GroupSid, [Security.Claims.ClaimTypes]::DenyOnlySid) }).Count -gt 0
 $ancestor = New-Object System.IO.DirectoryInfo($rootPath)
 while ($null -ne $ancestor) {
   if (-not $ancestor.Exists -or ($ancestor.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) { throw 'Browser profile ancestor is missing or a reparse point' }
@@ -18,7 +19,8 @@ while ($pending.Count -gt 0) {
   elseif ($entry -is [System.IO.FileInfo]) { $acl = [System.IO.File]::GetAccessControl($entry.FullName) }
   else { throw 'Browser profile contains a special entry' }
   if ($entry.FullName -eq $rootPath -and -not $acl.AreAccessRulesProtected) { throw 'Browser profile root inherits permissions' }
-  if ($acl.GetOwner([System.Security.Principal.SecurityIdentifier]).Value -ne $sid) { throw 'Browser profile has another owner' }
+  $owner = $acl.GetOwner([System.Security.Principal.SecurityIdentifier]).Value
+  if ($owner -ne $sid -and -not ($isAdministrator -and $owner -eq 'S-1-5-32-544')) { throw 'Browser profile has another owner' }
   $rules = @($acl.GetAccessRules($true, $true, [System.Security.Principal.SecurityIdentifier]))
   if ($rules.Count -ne 2) { throw 'Browser profile requires exactly two access rules' }
   $seen = @{}

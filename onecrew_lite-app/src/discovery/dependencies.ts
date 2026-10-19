@@ -49,7 +49,7 @@ export function createDefaultDiscoveryDependencies(configuration: TrustedDiscove
       }
       const home = configuration.openCliHome ? await configuration.openCliHome(context) : homedir();
       configuration.accounts.assertCurrent(context);
-      const addons = new OpenCliAddons(runtimeAssetPath("opencli-addons", new URL("../../../onecrew_lite-rust/integrations/opencli", import.meta.url)), home);
+      const addons = new OpenCliAddons(runtimeAssetPath("opencli-addons", new URL("../../../onecrew_lite-opencli", import.meta.url)), home);
       const reader = await OpenCliReader.inspect(addons, undefined, context.signal);
       configuration.accounts.assertCurrent(context);
       return Object.freeze({ reader, browsers });

@@ -30,7 +30,10 @@ export class DiscoveryLanguageExecutor {
     this.accounts.assertCurrent(context);
     const owned = await this.repositories.resolve(context); owned.assertOwned(); this.accounts.assertCurrent(context);
     if (owned.owner.accountId !== context.principal.user.id || owned.owner.tenantId !== context.principal.tenantId || owned.owner.baseId !== context.principal.baseId) throw new Error("discovery_language_repository_owner_mismatch");
-    const campaign = owned.repository.getPlan(input.campaign_id), source = owned.repository.languageSource(input.campaign_id, input.search_hit_id);
+    const campaign = owned.repository.getPlan(input.campaign_id);
+    if (campaign.revision !== input.expected_revision || campaign.phase !== "active") throw new Error("discovery_language_approval_changed");
+    if (!owned.repository.languageEligible(input.campaign_id, input.search_hit_id)) return null;
+    const source = owned.repository.languageSource(input.campaign_id, input.search_hit_id);
     if ((RETIRED_CREATOR_SOURCES as readonly string[]).includes(source.platform)) throw new OpenCliError("opencli_read_command_unavailable");
     if (campaign.opencli_version !== "1.8.8" || this.reader.version !== campaign.opencli_version) throw new OpenCliError("opencli_version_changed");
     const browser = await this.browsers.resolve(context, source.profile_ref); await browser.assertCurrent();

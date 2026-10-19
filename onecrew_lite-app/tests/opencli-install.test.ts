@@ -9,7 +9,7 @@ import { discoveryExecutionFailureCode } from "../src/discovery/execution-failur
 test("原bundle真实安装到隔离home，冲突必须显式修复且未知文件完整保留", async () => {
   const scratch = fileURLToPath(new URL("../../.scratch/opencli-addon-tests/", import.meta.url));
   await mkdir(scratch, { recursive: true }); const home = await mkdtemp(join(scratch, "home-"));
-  const source = fileURLToPath(new URL("../../onecrew_lite-rust/integrations/opencli/", import.meta.url));
+  const source = fileURLToPath(new URL("../../onecrew_lite-opencli/", import.meta.url));
   const addons = new OpenCliAddons(source, home);
   await assert.rejects(addons.requireReady("onecrew-youtube"), error => {
     assert.equal(discoveryExecutionFailureCode(error), "opencli_command_unavailable");

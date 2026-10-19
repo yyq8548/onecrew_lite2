@@ -1,5 +1,5 @@
-import { createHash } from "node:crypto";
-import { lstat, readFile, realpath } from "node:fs/promises";
+import { createHash, randomUUID } from "node:crypto";
+import { lstat, open, readFile, realpath, rename } from "node:fs/promises";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { z } from "zod";
 import type { AccountContext, AccountContextService } from "../../identity/account-context.ts";
@@ -13,6 +13,7 @@ import { parseStoredJson } from "../../contracts/stored-json.ts";
 import { managedChromeProfilesDirectory } from "./profile-directory.ts";
 
 const ownerSchema = z.strictObject({ accountId: z.string().min(1), tenantId: z.string().min(1), baseId: z.string().min(1) });
+const existingBrowserGrantSchema = z.strictObject({ format: z.literal(1), owner: ownerSchema, deviceId: z.string().min(1), contextId: z.string().min(1) });
 const recordSchema = z.strictObject({ bindingId: z.uuid(), profileId: z.uuid(), contextId: z.string().min(1), deviceId: z.string().min(1), providerAccountId: z.string().min(1), vaultRevision: z.string().regex(/^[a-f\d]{64}$/u), profileDirectory: z.string().min(1), extensionProof: z.string().min(1) });
 const dedicatedRecordSchema = recordSchema.omit({ profileId: true, providerAccountId: true, vaultRevision: true });
 export const browserBindingManifestSchema = z.discriminatedUnion("format", [
@@ -54,6 +55,43 @@ export class AccountBrowserBindingResolver {
   readonly vault: PlatformVaultReader | undefined;
   readonly extensionProofs: TrustedExtensionContextProofVerifier | undefined;
   constructor(accounts: AccountContextService, identities: VerifiedMailIdentityProvider, directories: BrowserAccountDirectoryResolver, vault?: PlatformVaultReader, extensionProofs?: TrustedExtensionContextProofVerifier) { this.accounts = accounts; this.identities = identities; this.directories = directories; this.vault = vault; this.extensionProofs = extensionProofs; }
+  // 用户主动选择现有 Chrome 后授权当前账号使用；不声明该 Chrome 目录归应用所有。
+  async connectExisting(context: AccountContext, profile: string, verifyConnected: (binding: VerifiedOpenCliBrowserBinding) => Promise<void>): Promise<void> {
+    validateOpenCliProfile(profile); this.accounts.assertCurrent(context);
+    const account = await this.directories.accountDirectory(context);
+    const identity = await this.identities.snapshot(account.owner);
+    const assertCurrent = async () => { account.assertOwned(); this.accounts.assertCurrent(context); await this.identities.assertCurrent(identity); };
+    if (account.owner.accountId !== context.principal.user.id || account.owner.tenantId !== context.principal.tenantId || account.owner.baseId !== context.principal.baseId || identity.accessUserId !== account.owner.accountId || !sameOwner(identity.owner, account.owner)) throw new Error("Browser grant belongs to another account");
+    await assertCurrent();
+    await verifyConnected(Object.freeze({ profile, signal: context.signal, assertCurrent }));
+    const grant = existingBrowserGrantSchema.parse({ format: 1, owner: account.owner, deviceId: context.principal.deviceId, contextId: profile });
+    const path = this.existingGrantPath(account.directory, context, profile), temporary = `${path}.${randomUUID()}`;
+    await verifyPrivateDirectory(account.directory);
+    { await using file = await open(temporary, "wx", 0o600); await verifyPrivateFile(temporary); await file.writeFile(JSON.stringify(grant)); await file.sync(); }
+    await assertCurrent(); await rename(temporary, path); await assertCurrent();
+  }
+  private existingGrantPath(directory: string, context: AccountContext, profile: string): string {
+    const key = createHash("sha256").update(JSON.stringify([context.principal.deviceId, profile])).digest("hex");
+    return join(directory, `existing-browser-${key}.json`);
+  }
+  async resolveExisting(context: AccountContext, profile: string): Promise<VerifiedOpenCliBrowserBinding | null> {
+    validateOpenCliProfile(profile); this.accounts.assertCurrent(context);
+    const account = await this.directories.accountDirectory(context), path = this.existingGrantPath(account.directory, context, profile);
+    const exists = await lstat(path).then(() => true, error => { if (error.code === "ENOENT") return false; throw error; });
+    if (!exists) return null;
+    const identity = await this.identities.snapshot(account.owner);
+    const read = async () => {
+      account.assertOwned(); this.accounts.assertCurrent(context); await this.identities.assertCurrent(identity);
+      await verifyPrivateFile(path); const bytes = await readFile(path);
+      if (bytes.length > 8192) throw new Error("Browser grant is too large");
+      const grant = existingBrowserGrantSchema.parse(parseStoredJson(new TextDecoder("utf-8", { fatal: true }).decode(bytes), true));
+      const owner = { accountId: context.principal.user.id, tenantId: context.principal.tenantId, baseId: context.principal.baseId };
+      if (!sameOwner(grant.owner, owner) || !sameOwner(account.owner, owner) || !sameOwner(identity.owner, owner) || identity.accessUserId !== owner.accountId || grant.deviceId !== context.principal.deviceId || grant.contextId !== profile) throw new Error("Browser grant belongs to another account or device");
+      return bytes;
+    };
+    const initial = await read();
+    return Object.freeze({ profile, signal: context.signal, assertCurrent: async () => { if (!(await read()).equals(initial)) throw new OpenCliError("opencli_profile_unavailable"); } });
+  }
   async listOwned(context: AccountContext): Promise<Readonly<{ binding_id: string; context_id: string }>[]> {
     this.accounts.assertCurrent(context); const account = await this.directories.accountDirectory(context), path = join(account.directory, "browser-bindings.json");
     const exists = await lstat(path).then(() => true, error => { if (error.code === "ENOENT") return false; throw error; });
@@ -67,6 +105,8 @@ export class AccountBrowserBindingResolver {
   }
   async resolveProfileRef(context: AccountContext, profileRef: string): Promise<VerifiedOpenCliBrowserBinding> {
     this.accounts.assertCurrent(context); validateOpenCliProfile(profileRef);
+    const existing = await this.resolveExisting(context, profileRef);
+    if (existing) return existing;
     if (!this.extensionProofs) throw new OpenCliError("opencli_profile_unavailable");
     const account = await this.directories.accountDirectory(context), owner = { accountId: context.principal.user.id, tenantId: context.principal.tenantId, baseId: context.principal.baseId };
     if (!sameOwner(account.owner, owner)) throw new Error("Browser directory belongs to another account");

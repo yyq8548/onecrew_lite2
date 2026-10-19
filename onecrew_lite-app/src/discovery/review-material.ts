@@ -1,11 +1,12 @@
 import { z } from "zod";
+import { nativeContentObservations } from "../platforms/opencli/observations.ts";
 import { parseApplicationJson, stringifyApplicationJson } from "../contracts/application-json.ts";
 import { discoveryJsonValue, discoveryMaterialDigest, discoverySearchHit } from "./library-material.ts";
 const text = z.string().refine(value => value.isWellFormed());
 const signed = z.union([z.number().int().safe(), z.bigint().min(-9223372036854775808n).max(9223372036854775807n)]);
 const unsigned = z.union([z.number().int().nonnegative().safe(), z.bigint().min(0n).max(18446744073709551615n)]);
 const u32 = z.number().int().min(0).max(4294967295);
-export const discoveryLanguageSample = z.strictObject({ author_id: text, source_url: text, text, comments: z.array(z.strictObject({ source_url: text, text })) });
+export const discoveryLanguageSample = z.strictObject({ author_id: text, source_url: text, text, comments: z.array(z.strictObject({ source_url: text, text })), observations: nativeContentObservations.optional() });
 export const discoveryFollowerEstimate = z.object({ display: text, nominal: unsigned, lower: unsigned, upper: unsigned });
 export const discoveryNativeProfileObservation = z.object({ web_text: text.nullish(), profile_url: text, observed_at: signed, bio: text.nullish(), self_declared_location: text.nullish() });
 export const discoveryTranscriptSegment = z.object({ timestamp: text, speaker: text, text });
@@ -32,7 +33,8 @@ export function buildDiscoveryReviewMaterial(raw: unknown) {
     if (typeof native.text === "string" && /…\s*See more\s*$/u.test(native.text)) native.text_truncated = true;
   }
   const profile = basis.native_profile === null ? null : { ...(basis.native_profile.web_text != null ? { web_text: basis.native_profile.web_text } : {}), profile_url: basis.native_profile.profile_url, observed_at: basis.native_profile.observed_at, ...(basis.native_profile.bio != null ? { bio: basis.native_profile.bio } : {}), ...(basis.native_profile.self_declared_location != null ? { self_declared_location: basis.native_profile.self_declared_location } : {}) };
-  const material = { format_version: ["google", "yahoo", "twitter", "tiktok", "bilibili", "reddit", "facebook", "instagram", "weibo", "bluesky", "zhihu", "hackernews", "pinterest", "pixiv", "linkedin", "douyin"].includes(basis.hit.platform) ? 2 : 1, campaign_id: basis.campaign_id, criteria_revision: basis.revision, criteria: discoveryJsonValue(parse(basis.criteria_json)), approved_scopes: scopes, approved_at: basis.approved_at, hit: basis.hit, candidate_id: basis.candidate_id, native_author_id: basis.native_author_id, ...(nativePlatform !== null ? { native_platform: nativePlatform } : {}), ...(basis.native_followers !== null ? { native_followers: basis.native_followers } : {}), ...(basis.native_follower_estimate !== null ? { native_follower_estimate: basis.native_follower_estimate } : {}), ...(profile !== null ? { native_profile: profile } : {}), candidate_evidence_hash: discoveryMaterialDigest(evidence), video_description: description, transcript, ...(content !== null ? { native_content: content } : {}), ...(basis.language_samples.length ? { language_samples: basis.language_samples } : {}), public_pages: basis.pages, material_hash: "" };
+  const material = { format_version: ["google", "yahoo", "twitter", "tiktok", "bilibili", "reddit", "facebook", "instagram", "weibo", "bluesky", "zhihu", "hackernews", "pinterest", "pixiv", "linkedin", "douyin"].includes(basis.hit.platform) ? 2 : 1, campaign_id: basis.campaign_id, criteria_revision: basis.revision, criteria: discoveryJsonValue(parse(basis.criteria_json)), approved_scopes: scopes, approved_at: basis.approved_at, hit: basis.hit, candidate_id: basis.candidate_id, native_author_id: basis.native_author_id, ...(nativePlatform !== null ? { native_platform: nativePlatform } : {}), ...(basis.native_followers !== null ? { native_followers: basis.native_followers } : {}), ...(basis.native_follower_estimate !== null ? { native_follower_estimate: basis.native_follower_estimate } : {}), ...(profile !== null ? { native_profile: profile } : {}), candidate_evidence_hash: discoveryMaterialDigest(evidence), video_description: description, ...(basis.hit.platform === "youtube" && typeof evidenceObject.video_title === "string" ? { video_title: evidenceObject.video_title } : {}), ...(evidenceObject.video_observations ? { video_observations: nativeContentObservations.parse(evidenceObject.video_observations) } : {}), transcript, ...(content !== null ? { native_content: content } : {}), ...(basis.language_samples.length ? { language_samples: basis.language_samples } : {}), public_pages: basis.pages, material_hash: "" };
+  if (!Array.isArray(sources) || sources[0] !== basis.hit.source_url) delete material.video_title;
   const matched = matchedDiscoveryLanguageSource(material);
   const samples = basis.language_samples.filter(sample => sample.author_id === basis.native_author_id && sample.source_url === matched).slice(0, 1).map(sample => ({ ...sample, comments: sample.comments.slice(0, 5) }));
   if (samples.length) material.language_samples = samples; else delete material.language_samples;
@@ -62,6 +64,7 @@ export type DiscoveryReviewCitation = { kind: "description" | "search_caption" |
 export function containsDiscoveryCitation(material: DiscoveryReviewMaterial, citation: DiscoveryReviewCitation): boolean {
   const quote = citation.quote; if (!quote.trim() || Buffer.byteLength(quote) > 4000) return false;
   if (citation.kind === "native_content" && material.language_samples?.some(sample => sample.author_id === material.native_author_id && (sample.text.includes(quote) || sample.comments.some(comment => comment.text.includes(quote))))) return true;
+  if (citation.kind === "native_content" && material.hit.platform === "youtube" && material.video_title?.includes(quote)) return true;
   let value: string | null | undefined;
   if (citation.kind === "description") value = material.video_description;
   if (citation.kind === "search_caption" && material.hit.platform === "tiktok") value = material.hit.title;

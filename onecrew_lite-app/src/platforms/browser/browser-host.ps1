@@ -1,4 +1,4 @@
-param(
+﻿param(
   [Parameter(Mandatory=$true)][ValidateSet('Detect','Inspect','Close')][string]$Operation,
   [int]$ProcessId,
   [string]$Executable,
@@ -43,7 +43,7 @@ if (-not [System.String]::Equals($selected.MainModule.FileName, [System.IO.Path]
 $actualStart = $selected.StartTime.ToUniversalTime().Ticks.ToString([System.Globalization.CultureInfo]::InvariantCulture)
 if ($Operation -eq 'Inspect') { [Console]::Out.WriteLine($actualStart); exit 0 }
 if ($StartTimeTicks -notmatch '^[0-9]+$' -or $actualStart -ne $StartTimeTicks) { throw 'Owned browser process identity changed' }
-# 只向实际启动的浏览器 PID 所有窗口发送 WM_CLOSE，随后检查进程退出。
+# 等待实际启动的浏览器出现可见窗口，仅向该 PID 的可见窗口发送 WM_CLOSE。
 Add-Type -TypeDefinition @'
 using System;
 using System.Runtime.InteropServices;
@@ -52,21 +52,26 @@ public static class OneCrewOwnedBrowserClose {
   [DllImport("user32.dll", SetLastError=true)] public static extern bool EnumWindows(WindowCallback callback, IntPtr parameter);
   [DllImport("user32.dll", SetLastError=true)] public static extern uint GetWindowThreadProcessId(IntPtr window, out uint process);
   [DllImport("user32.dll", SetLastError=true)] public static extern bool PostMessage(IntPtr window, uint message, IntPtr first, IntPtr second);
+  [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr window);
+  private static readonly System.Collections.Generic.HashSet<IntPtr> Posted = new System.Collections.Generic.HashSet<IntPtr>();
   public static void Close(uint expected) {
-    bool matched=false; int queryError=0; int postError=0;
+    int queryError=0; int postError=0;
     WindowCallback callback=(window, parameter)=> {
       uint owner; if (GetWindowThreadProcessId(window, out owner)==0) { queryError=Marshal.GetLastWin32Error(); return true; }
-      if (owner==expected) { matched=true; if (!PostMessage(window, 0x0010, IntPtr.Zero, IntPtr.Zero)) postError=Marshal.GetLastWin32Error(); }
+      if (owner==expected && IsWindowVisible(window) && Posted.Add(window)) { if (!PostMessage(window, 0x0010, IntPtr.Zero, IntPtr.Zero)) postError=Marshal.GetLastWin32Error(); }
       return true;
     };
     if (!EnumWindows(callback, IntPtr.Zero)) throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error());
     if (queryError!=0) throw new System.ComponentModel.Win32Exception(queryError);
     if (postError!=0) throw new System.ComponentModel.Win32Exception(postError);
-    if (!matched) throw new InvalidOperationException("No window belongs to the owned browser process");
     GC.KeepAlive(callback);
   }
 }
 '@
-[OneCrewOwnedBrowserClose]::Close([uint32]$ProcessId)
-if (-not $selected.WaitForExit(15000)) { throw 'Owned browser graceful close timed out' }
+$closing = [System.Diagnostics.Stopwatch]::StartNew()
+while (-not $selected.HasExited -and $closing.ElapsedMilliseconds -lt 15000) {
+  [OneCrewOwnedBrowserClose]::Close([uint32]$ProcessId)
+  [void]$selected.WaitForExit([Math]::Min(100, [Math]::Max(0, 15000 - [int]$closing.ElapsedMilliseconds)))
+}
+if (-not $selected.HasExited) { throw 'Owned browser graceful close timed out' }
 [Console]::Out.WriteLine('owned-browser-closed')

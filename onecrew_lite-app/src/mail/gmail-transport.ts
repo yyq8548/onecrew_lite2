@@ -171,6 +171,14 @@ async function readSent(auth: VerifiedGmailAuthorization, id: string): Promise<R
   return readGmail(auth, `/${id}?format=raw`);
 }
 
+export async function readGmailBulkReceipt(auth: VerifiedGmailAuthorization, id: string, message: GmailBulkMessage, assertCurrent: () => Promise<void>, signal: AbortSignal): Promise<VerifiedGmailSendReceipt> {
+  gmailId.parse(id);
+  if (!authorizationValid(auth, message)) throw new Error("gmail_authorization_required");
+  const readback = await readGmail(auth, `/${id}?format=raw`, "messages", assertCurrent, signal);
+  if (!readback.ok) throw new Error(readback.code);
+  return verifyGmailBulkReadback(readback.value, id, message);
+}
+
 const gmailId = z.string().regex(/^[a-f\d]{1,128}$/iu);
 export function gmailReplyThreadId(value: unknown, sentId: string): string {
   gmailId.parse(sentId);

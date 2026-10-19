@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { nativeContentObservations } from "./observations.ts";
 import type { ReviewedOpenCliRead } from "./read-plan.ts";
 import { OpenCliError } from "./errors.ts";
 import { youtubeVideoId } from "./youtube.ts";
@@ -7,7 +8,7 @@ import { publicWebUrl } from "./public-url.ts";
 const text = (maximum: number) => z.string().refine(value => value.isWellFormed() && Buffer.byteLength(value) <= maximum && !value.includes("\0"));
 function row<T>(schema: z.ZodType<T>, value: unknown): T { const parsed = z.array(schema).length(1).safeParse(value); if (!parsed.success) throw new OpenCliError("opencli_invalid_output"); return parsed.data[0]!; }
 const link = z.object({ url: z.string(), label: text(2048), source: z.enum(["shortDescription", "description.runs", "attributedDescription.commandRuns"]) }).strict();
-const evidence = z.object({ adapterVersion: z.literal("1.0.0"), videoId: z.string(), channelId: z.string().regex(/^UC[A-Za-z\d_-]{22}$/u), sourceUrl: z.string(), title: text(2000).refine(value => !!value.trim()), author: text(800).refine(value => !!value.trim()), subscribers: text(200), description: text(16000).refine(value => !!value.trim()), descriptionSource: z.literal("ytInitialPlayerResponse.videoDetails.shortDescription"), displayDescription: text(16000), links: z.array(link).max(100), playabilityStatus: z.literal("OK") }).strict();
+const evidence = z.object({ adapterVersion: z.literal("1.0.0"), videoId: z.string(), channelId: z.string().regex(/^UC[A-Za-z\d_-]{22}$/u), sourceUrl: z.string(), title: text(2000).refine(value => !!value.trim()), author: text(800).refine(value => !!value.trim()), subscribers: text(200), description: text(16000), descriptionSource: z.literal("ytInitialPlayerResponse.videoDetails.shortDescription"), displayDescription: text(16000), links: z.array(link).max(100), playabilityStatus: z.literal("OK"), observations: nativeContentObservations.optional() }).strict();
 export function youtubeVideoEvidencePlan(video: string) {
   const id = youtubeVideoId(video);
   return { site: "onecrew-youtube", name: "video-evidence", args: ["-f", "json", "--", id], addons: ["onecrew-youtube"], maximumBytes: 512000, decode(value: unknown) {

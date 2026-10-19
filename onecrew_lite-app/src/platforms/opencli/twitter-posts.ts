@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { nativeContentObservations } from "./observations.ts";
 import { OpenCliError } from "./errors.ts";
 import type { ReviewedOpenCliRead } from "./read-plan.ts";
 
@@ -26,7 +27,7 @@ export function twitterPostIdentityPlan(handle: string, postId: string) {
     return row;
   } } satisfies ReviewedOpenCliRead<unknown>;
 }
-const content = z.strictObject({ adapter_version: z.literal("1.0.0"), identity, text, text_truncated: z.boolean(), text_source: z.enum(["note_tweet", "legacy_full_text"]), created_at: text, has_media: z.boolean(), quotes_another_post: z.boolean(), expanded_urls: z.array(text).max(20) });
+const content = z.strictObject({ adapter_version: z.literal("1.0.0"), identity, text, text_truncated: z.boolean(), text_source: z.enum(["note_tweet", "legacy_full_text"]), created_at: text, has_media: z.boolean(), quotes_another_post: z.boolean(), expanded_urls: z.array(text).max(20), observations: nativeContentObservations.optional() });
 function locator(value: string) {
   if (!value || Buffer.byteLength(value) > 2048 || /[\p{Cc}\s]/u.test(value)) return false;
   const parsed = URL.parse(value);

@@ -15,6 +15,21 @@ importers:
 
   .: {}
 
+  development/schema-codegen:
+    dependencies:
+      ajv:
+        specifier: 8.20.0
+        version: 8.20.0
+      esbuild:
+        specifier: 0.28.2
+        version: 0.28.2
+      json-schema-to-typescript:
+        specifier: 16.0.0
+        version: 16.0.0
+      typescript:
+        specifier: 5.8.3
+        version: 5.8.3
+
   onecrew_lite-app:
     dependencies:
       '@hono/node-server':
@@ -769,6 +784,9 @@ importers:
       '@onecrew/contracts':
         specifier: workspace:*
         version: link:../packages/contracts
+      '@onecrew/runtime-contracts':
+        specifier: workspace:*
+        version: link:../../onecrew_lite-contracts
       '@tanstack/react-table':
         specifier: ^9.2.4
         version: 9.2.4(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -828,7 +846,7 @@ importers:
         specifier: ^7.1.7
         version: 7.3.6(@types/node@26.6.2)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.15)(yaml@2.9.1)
 
-  onecrew_lite-rust/apps/mcp-ui:
+  onecrew_lite-mcp-ui:
     dependencies:
       '@modelcontextprotocol/ext-apps':
         specifier: 1.7.5
@@ -838,7 +856,7 @@ importers:
         version: 1.32.1(zod@4.6.5)
       '@onecrew/runtime-contracts':
         specifier: workspace:*
-        version: link:../../../onecrew_lite-contracts
+        version: link:../onecrew_lite-contracts
       '@radix-ui/react-checkbox':
         specifier: 1.3.11
         version: 1.3.11(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -913,11 +931,11 @@ importers:
         specifier: 3.2.7
         version: 3.2.7(@types/debug@4.1.13)(@types/node@24.13.3)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.15)(yaml@2.9.1)
 
-  onecrew_lite-rust/apps/web:
+  onecrew_lite-web:
     dependencies:
       '@onecrew/runtime-contracts':
         specifier: workspace:*
-        version: link:../../../onecrew_lite-contracts
+        version: link:../onecrew_lite-contracts
       '@radix-ui/react-checkbox':
         specifier: 1.3.11
         version: 1.3.11(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -1061,21 +1079,6 @@ importers:
       ds-store:
         specifier: 0.1.6
         version: 0.1.6
-
-  onecrew_lite-rust/development/schema-codegen:
-    dependencies:
-      ajv:
-        specifier: 8.20.0
-        version: 8.20.0
-      esbuild:
-        specifier: 0.28.2
-        version: 0.28.2
-      json-schema-to-typescript:
-        specifier: 16.0.0
-        version: 16.0.0
-      typescript:
-        specifier: 5.8.3
-        version: 5.8.3
 
 packages:
 

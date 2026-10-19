@@ -33,11 +33,13 @@ const required = (value: Map<string, string>, key: string) => value.get(key)?.tr
 export function youtubeChannelPlan(channel: string) {
   if (!channelValid(channel)) inputError();
   return { site: "youtube", name: "channel", args: ["--limit", "10", "-f", "json", "--", channel], addons: [], decode(value: unknown) {
-    const data = fields(value);
+    const rows = parsed(z.array(z.object({ field: text, value: text })).max(100), value);
+    const recent = rows.findIndex(row => row.field === "---" && row.value === "--- Recent Videos ---");
+    const data = fields(recent < 0 ? rows : rows.slice(0, recent));
     const channelId = required(data, "channelId");
     const url = required(data, "url");
     if (!channelValid(channelId) || !youtubeUrl(url)) outputError();
-    return { channel_id: channelId, name: required(data, "name"), handle: data.get("handle") ?? "", description: data.get("description") ?? "", subscribers_raw: data.get("subscribers") ?? "", url };
+    return { channel_id: channelId, name: required(data, "name"), handle: data.get("handle") ?? "", description: data.get("description") ?? "", subscribers_raw: data.get("subscribers") ?? "", url, recent_videos: recent < 0 ? [] : rows.slice(recent + 1).map(row => ({ title: row.field, summary: row.value })) };
   } } satisfies ReviewedOpenCliRead<unknown>;
 }
 export function youtubeVideoPlan(video: string) {

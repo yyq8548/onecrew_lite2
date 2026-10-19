@@ -16,7 +16,7 @@ test("Pinterest图钉原caption固定归属且明确保留部分文本标记", (
   const exact = pinterestContentPlan("123", "native_author", "456");
   assert.equal(exact.name, "content-pin");
   assert.equal(exact.decode([row]).text_truncated, true);
-  assert.throws(() => exact.decode([{ ...row, text_truncated: false }]));
+  assert.equal(exact.decode([{ ...row, text_truncated: false }]).text_truncated, false);
   assert.throws(() => pinterestContentPlan("123", "native_author", "789").decode([row]));
   assert.throws(() => exact.decode([{ ...row, session: "private" }]));
 });

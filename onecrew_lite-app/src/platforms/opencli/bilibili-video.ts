@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { nativeContentObservations } from "./observations.ts";
 import { OpenCliError } from "./errors.ts";
 import type { ReviewedOpenCliRead } from "./read-plan.ts";
 
@@ -23,9 +24,11 @@ export function bilibiliVideoPlan(sourceUrl: string, authorId?: string) {
     const boolean = (key: string) => { const value = get(key); return value === "true" ? true : value === "false" ? false : invalid(); };
     const requires_payment = boolean("requires_payment"); const pay_preview = boolean("pay_preview"); const payment = get("payment_type");
     if (!["", "vip", "ugc_pay", "upower"].includes(payment) || requires_payment !== Boolean(payment) || get("redirect_url") !== "") return invalid();
+    const metric = (key: string) => { const value = get(key); return /^\d+$/u.test(value) && Number.isSafeInteger(Number(value)) ? Number(value) : null; };
+    const observations = nativeContentObservations.parse({ published_at: get("publish_time") || null, view_count: metric("view"), like_count: metric("like"), comment_count: metric("reply"), share_count: metric("share"), save_count: metric("favorite") });
     const raw = get("description"); let description = ""; let bytes = 0;
     for (const character of raw) { const length = Buffer.byteLength(character); if (bytes + length > 8192) break; bytes += length; description += character; }
-    return { bvid, author_id: author[2]!, author: author[1]!, source_url: sourceUrl, title, description, description_truncated: bytes < Buffer.byteLength(raw), requires_payment, pay_preview, payment_status_known: true };
+    return { bvid, author_id: author[2]!, author: author[1]!, source_url: sourceUrl, title, description, description_truncated: bytes < Buffer.byteLength(raw), requires_payment, pay_preview, payment_status_known: true, observations };
   } } satisfies ReviewedOpenCliRead<unknown>;
 }
 

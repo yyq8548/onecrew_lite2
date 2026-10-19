@@ -1,4 +1,0 @@
-module JuiceboxSdkFfi {
-    header "juicebox-sdk-ffi.h"
-    link "juicebox_sdk_ffi"
-}

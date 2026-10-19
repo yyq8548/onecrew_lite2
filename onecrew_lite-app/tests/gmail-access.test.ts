@@ -69,13 +69,7 @@ test("真实原SQL邮箱映射：授权刷新、历史保留、scope撤销及冲
   const db = new DatabaseSync(path);
   try {
     db.exec("PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA user_version=90");
-    const source = readFileSync(new URL("onecrew_lite-rust/crates/creator-runtime/src/repository/sqlite/schema/current.rs", root), "utf8");
-    for (const table of ["mailbox_refs", "email_auth_connections", "mailbox_identity_mappings"]) {
-      const start = source.indexOf(`CREATE TABLE ${table} (`);
-      const end = source.indexOf(");", start);
-      assert.ok(start >= 0 && end > start);
-      db.exec(source.slice(start, end + 2));
-    }
+    for (const name of ["creator-schema90.sql", "creator-indexes90.sql", "creator-triggers90.sql"]) db.exec(readFileSync(new URL(`../src/storage/${name}`, import.meta.url), "utf8"));
     const repository = new GmailMailboxRepository(db);
     repository.reconcile(user, [conn]);
     const id = gmailMailboxId(user, conn.id);

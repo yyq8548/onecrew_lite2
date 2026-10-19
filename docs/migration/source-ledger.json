@@ -10,8 +10,19 @@
     "outbound_scope": "Mail page GmailBulk only",
     "mac_acceptance": "unfinished"
   },
-  "github_repository": "https://github.com/yyq8548/onecrew_lite.git",
-  "handoff_branch": "codex/typescript-migration-handoff",
+  "github_repository": "https://github.com/yyq8548/onecrew_lite2.git",
+  "upstream_repository": "https://github.com/yyq8548/onecrew_lite.git",
+  "handoff_branch": "codex/typescript-unified-gmail",
+  "current_implementation": {
+    "updated_at": "2026-10-19",
+    "language": "TypeScript",
+    "windows_candidate": "candidate-87",
+    "customer_package_revision": "R8.1",
+    "legacy_source_required": false,
+    "production_ready": false,
+    "mac_acceptance": "unfinished",
+    "provenance_scope": "The lite, access, pro_reference and published fields below record historical origins, not current build inputs or live deployment state."
+  },
   "lite": {
     "company_main": "26eefcab4dab3b836937c2922ec33789c6c10975",
     "mac_build_source": "8cedccf2a29433728e9c81f052c9d485df39a1ad",

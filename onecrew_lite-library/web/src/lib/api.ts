@@ -101,6 +101,18 @@ export const api = client.api.v1;
 
 export const request = parseResponse;
 
+export async function readBrowserConnection(signal: AbortSignal): Promise<{ connected: boolean }> {
+  if (!unifiedRuntimeMode) return request(api.browser.status.$get({}, { init: { signal } }));
+  const response = await customFetch('/api/commands/onecrew_opencli_setup_status', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}',
+    signal: AbortSignal.any([signal, AbortSignal.timeout(30_000)]),
+  });
+  if (!response.ok) throw new Error('Browser connection status unavailable');
+  const envelope = await response.json();
+  if (envelope?.ok !== true || typeof envelope.result?.daemon_running !== 'boolean' || typeof envelope.result?.extension_connected !== 'boolean') throw new Error('Invalid browser connection status');
+  return { connected: envelope.result.daemon_running && envelope.result.extension_connected };
+}
+
 export const downloadFile = async (response: Promise<Response>) => {
   const generation = businessAccountGeneration;
   const accountId = businessAccountId;

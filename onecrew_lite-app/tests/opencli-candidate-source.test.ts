@@ -21,11 +21,11 @@ test("原Grammers会话通过成熟mtcute会话编码保留home DC及256字节�
   key.fill(0); parsed.authKey.fill(0); converted.session.authKey.fill(0); for (const entry of converted.keys) entry.key.fill(0);
 });
 test("YouTube原HTML夹具由成熟HTML与JS AST解析，保留完整About与最近视频证据", () => {
-  const about = parseYoutubeAbout(readFileSync(new URL("../../onecrew_lite-rust/crates/youtube-client/tests/fixtures/creator-about.html", import.meta.url), "utf8"));
+  const about = parseYoutubeAbout(readFileSync(new URL("./fixtures/public-pages/creator-about.html", import.meta.url), "utf8"));
   assert.ok(about.links.includes("https://www.tiktok.com/@creator.name"));
   assert.ok(about.description.includes("business@example.com"));
   const id = "UC_x5XG1OV2P6uZZ5FSM9Ttw";
-  const playlist = JSON.parse(readFileSync(new URL("../../onecrew_lite-rust/crates/youtube-client/tests/fixtures/creator-playlist.json", import.meta.url), "utf8"));
+  const playlist = JSON.parse(readFileSync(new URL("./fixtures/public-pages/creator-playlist.json", import.meta.url), "utf8"));
   const payload = { items: [{ id, snippet: { title: "Channel title", description: "API description", customUrl: "@channel", country: "TR", thumbnails: { high: { url: "https://i.ytimg.com/channel.jpg" } } }, statistics: { subscriberCount: "125" } }] };
   const result = projectYoutubeProfile(payload, id, about, playlist);
   assert.equal(result.profile.follower_count, 125n); assert.equal(result.account.handle, "channel");
@@ -37,7 +37,7 @@ test("YouTube原HTML夹具由成熟HTML与JS AST解析，保留完整About与最
 });
 test("LinkHub原HTML夹具合并SSR与结构化数据，排除推荐卡和内部导航", () => {
   const source = "https://linktr.ee/bitcoinmx";
-  const html = readFileSync(new URL("../../onecrew_lite-rust/crates/platform-runtime/src/toolkits/fixtures/linktree_bitcoinmx.html", import.meta.url), "utf8");
+  const html = readFileSync(new URL("./fixtures/public-pages/linktree_bitcoinmx.html", import.meta.url), "utf8");
   const result = parseHeldLinkHub(html, source, source);
   assert.equal(result.source_url, source); assert.ok(result.links.some(link => link.url === "https://x.com/bitcoinmx"));
   const filtered = parseHeldLinkHub('<a href="/report">bad@example.com</a><div data-seo-modal-panel><a href="https://other.example">phantom@example.com</a></div><a href="mailto:Owner@Example.org">Email</a>', source, source);

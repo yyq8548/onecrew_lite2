@@ -44,7 +44,7 @@ export class OperatorDisconnect {
     return { operator_account_id: id, replayed: completion.result.replayed };
   }
   async recover(context: AccountContext): Promise<void> {
-    const pending = await this.#store.read(context, scope => new OperatorDisconnectRepository(scope.creator).pending());
+    const pending = await this.#store.readCreator(context, creator => new OperatorDisconnectRepository(creator).pending());
     for (const value of pending) await this.disconnect(context, { operator_account_id: value.account_ref_id, confirmed: true, idempotency_key: value.key });
   }
 }

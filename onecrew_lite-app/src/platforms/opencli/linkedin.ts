@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { nativeContentObservations } from "./observations.ts";
 import { OpenCliError } from "./errors.ts";
 import { publicWebUrl } from "./public-url.ts";
 import type { ReviewedOpenCliRead } from "./read-plan.ts";
@@ -23,7 +24,7 @@ export function linkedinProfilePlan(handle: string) {
 }
 export function linkedinContentPlan(handle: string, account: string) {
   target(handle, account);
-  const schema = z.strictObject({ account_id: z.literal(account), author_handle: z.literal(handle), profile_url: z.literal(`https://www.linkedin.com/in/${handle}/`), post_id: text.regex(numeric), source_url: text, text: bounded(16000).refine(value => !!value.trim()), text_truncated: z.literal(true), evidence_source: z.literal("visible_author_activity") }).refine(row => row.source_url === `https://www.linkedin.com/feed/update/urn:li:activity:${row.post_id}/`);
+  const schema = z.strictObject({ account_id: z.literal(account), author_handle: z.literal(handle), profile_url: z.literal(`https://www.linkedin.com/in/${handle}/`), post_id: text.regex(numeric), source_url: text, text: bounded(16000).refine(value => !!value.trim()), text_truncated: z.boolean(), observations: nativeContentObservations.optional(), evidence_source: z.literal("visible_author_activity") }).refine(row => row.source_url === `https://www.linkedin.com/feed/update/urn:li:activity:${row.post_id}/`);
   return { site: "onecrew-linkedin-reader", name: "content", args: ["-f", "json", "--", handle, account], addons: ["onecrew-browser-search"], foregroundBrowser: true, maximumBytes: 24000, decode: (value: unknown) => one(schema, value) } satisfies ReviewedOpenCliRead<unknown>;
 }
 export function linkedinContactPlan(handle: string, account: string) {

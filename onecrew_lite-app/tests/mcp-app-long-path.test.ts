@@ -10,7 +10,7 @@ test("actual MCP card assets load from Windows long canonical cache paths", { sk
   const directory = join(root, "a".repeat(70), "b".repeat(70), "c".repeat(70), "mcp");
   try {
     await mkdir(directory, { recursive: true });
-    const source = fileURLToPath(new URL("../../onecrew_lite-rust/crates/mcp-adapter/assets/apps/", import.meta.url));
+    const source = fileURLToPath(new URL("../../onecrew_lite-mcp-ui/dist/", import.meta.url));
     for (const name of ["operation-inspector.html", "retired-operation-inspector.html"]) await copyFile(join(source, name), join(directory, name));
     const regular = await loadMcpAppResources(directory);
     const canonical = await loadMcpAppResources(toNamespacedPath(directory));

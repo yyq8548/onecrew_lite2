@@ -1,11 +1,9 @@
 import assert from "node:assert/strict";
-import { execFile } from "node:child_process";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { join } from "node:path";
-import { homedir } from "node:os";
 import { DatabaseSync } from "node:sqlite";
 import test, { after, before } from "node:test";
-import { promisify } from "node:util";
+import { extractCreatorHistory } from "./creator-history.ts";
 import { fileURLToPath } from "node:url";
 import { backupLegacyDatabase } from "../src/storage/legacy-sqlite.ts";
 import { upgradeCreatorStagingCopy } from "../src/storage/creator-upgrade.ts";
@@ -15,12 +13,7 @@ import { migrateCreatorTaskOriginEdge } from "../src/storage/creator-task-origin
 
 let oracleDirectory: string;
 before(async () => {
-  oracleDirectory = await mkdtemp(fileURLToPath(new URL("../../.scratch/storage-creator-oracle-", import.meta.url)));
-  const cargo = process.env.CARGO ?? join(homedir(), ".cargo", "bin", process.platform === "win32" ? "cargo.exe" : "cargo");
-  await promisify(execFile)(cargo, ["test", "--locked", "-p", "onecrew-creator-runtime", "export_schema90_node_compatibility_fixture", "--", "--nocapture"], {
-    cwd: fileURLToPath(new URL("../../onecrew_lite-rust", import.meta.url)), windowsHide: true, timeout: 600_000, maxBuffer: 1024 * 1024,
-    env: { ...process.env, CARGO_INCREMENTAL: "0", ONECREW_SCHEMA_ORACLE_DIRECTORY: oracleDirectory },
-  });
+  oracleDirectory = await extractCreatorHistory();
 });
 after(async () => { if (oracleDirectory) await rm(oracleDirectory, { recursive: true }); });
 test("Legacy mailbox UUID accepts original Rust representations and arbitrary bits", () => {

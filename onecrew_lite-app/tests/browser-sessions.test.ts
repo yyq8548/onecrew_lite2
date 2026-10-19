@@ -40,7 +40,7 @@ test("real HTTP browser session consumes tickets and enforces CSRF, origin and a
   const registry = new OperationRegistry(accounts);
   registry.register("local.identity.read", z.object({}).strict(), async (_, context) => ({ account: context.principal.user.id }));
   const controlToken = randomBytes(32).toString("hex");
-  const server = await listenLocalServer({ port: 0, instanceId: randomUUID(), controlToken, operations: registry, browserSessions: sessions, webAssets: await WebAssets.load(fileURLToPath(new URL("../../onecrew_lite-rust/apps/web/dist", import.meta.url))), issueBrowserTicket: async () => sessions.issueTicket(accounts.current()) });
+  const server = await listenLocalServer({ port: 0, instanceId: randomUUID(), controlToken, operations: registry, browserSessions: sessions, webAssets: await WebAssets.load(fileURLToPath(new URL("../../onecrew_lite-web/dist", import.meta.url))), issueBrowserTicket: async () => sessions.issueTicket(accounts.current()) });
   const ticket = sessions.issueTicket(current);
   const exchange = (value: string, origin = server.origin) => fetch(`${server.origin}/api/local/session`, { method: "POST", headers: { origin, "content-type": "application/json" }, body: JSON.stringify({ ticket: value }) });
   try {

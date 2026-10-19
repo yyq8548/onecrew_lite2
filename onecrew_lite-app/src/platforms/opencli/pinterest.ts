@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { nativeContentObservations } from "./observations.ts";
 import { OpenCliError } from "./errors.ts";
 import { publicWebUrl } from "./public-url.ts";
 import type { ReviewedOpenCliRead } from "./read-plan.ts";
@@ -15,6 +16,6 @@ export function pinterestProfilePlan(authorId: string, username: string) {
 export function pinterestContentPlan(authorId: string, username: string, pinId?: string) {
   target(authorId, username);
   if (pinId !== undefined && !idValid(pinId)) throw new OpenCliError("opencli_invalid_input");
-  const schema = z.strictObject({ pin_id: text.refine(value => idValid(value) && (pinId === undefined || pinId === value)), author_id: z.literal(authorId), author_username: z.literal(username), profile_url: z.literal(`https://www.pinterest.com/${username}/`), source_url: text, text: text.refine(value => !!value.trim() && Buffer.byteLength(value) <= 16000 && !value.includes("\0")), text_truncated: z.literal(true) }).refine(row => row.source_url === `https://www.pinterest.com/pin/${row.pin_id}/`);
+  const schema = z.strictObject({ pin_id: text.refine(value => idValid(value) && (pinId === undefined || pinId === value)), author_id: z.literal(authorId), author_username: z.literal(username), profile_url: z.literal(`https://www.pinterest.com/${username}/`), source_url: text, text: text.refine(value => !!value.trim() && Buffer.byteLength(value) <= 16000 && !value.includes("\0")), text_truncated: z.boolean(), observations: nativeContentObservations.optional() }).refine(row => row.source_url === `https://www.pinterest.com/pin/${row.pin_id}/`);
   return { site: "onecrew-pinterest-reader", name: pinId === undefined ? "content" : "content-pin", args: ["-f", "json", username, authorId, ...(pinId === undefined ? [] : [pinId])], addons: ["onecrew-browser-search"], maximumBytes: 24000, decode: (value: unknown) => one(schema, value) } satisfies ReviewedOpenCliRead<unknown>;
 }

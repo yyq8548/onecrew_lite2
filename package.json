@@ -5,9 +5,14 @@
   "engines": { "node": "26.7.0" },
   "scripts": {
     "onecrew_lite": "pnpm --filter onecrew_lite-app cli",
-    "build:tables": "pnpm --filter onecrew_lite_tables build:teable && pnpm --filter onecrew_lite_tables build:server",
+    "build:tables": "pnpm --filter onecrew_lite_tables build:teable && pnpm --filter onecrew_lite_tables build:server && pnpm --filter onecrew_lite_tables build:web:unified",
+    "build:ui": "pnpm --filter onecrew-web build && pnpm --filter onecrew-mcp-ui build",
+    "build:candidate": "node onecrew_lite-app/src/packaging/build-candidate.ts",
+    "check:contracts": "pnpm --filter onecrew-web contracts:check && pnpm --filter onecrew-mcp-ui contracts:check",
+    "check:independence": "node development/check-independence.mts",
     "typecheck": "pnpm --filter onecrew_lite-app typecheck",
     "test:app": "pnpm --filter onecrew_lite-app test",
-    "test:tables": "pnpm --filter onecrew_lite_tables test:embedded"
+    "test:tables": "pnpm --filter onecrew_lite_tables test:embedded",
+    "test:opencli": "node --test onecrew_lite-opencli/*.test.mjs"
   }
 }

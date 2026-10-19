@@ -14,6 +14,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { resolveCodexExecutable } from "../src/client-adapters/codex-process.ts";
 import { parse as parseCookies } from "set-cookie-parser";
+import { readVerifiedRuntime } from "../src/service/runtime.ts";
 
 const execute = promisify(execFile);
 
@@ -68,7 +69,10 @@ test("packaged ClientAdapter and its installed MCP preserve the service data dir
     return parseApplicationJson(result.stdout) as Record<string, unknown>;
   }
   async function browserSession(binary: string) {
-    const workspace = await invoke(binary, "workspace"), url = new URL(String(workspace.url));
+    const runtime = await readVerifiedRuntime(dataDirectory);
+    const issued = await fetch(runtime.url + "/_local/workspace", { method: "POST", headers: { authorization: `Bearer ${runtime.control_token}` } });
+    assert.equal(issued.status, 200);
+    const url = new URL(String((await issued.json()).url));
     const ticket = new URLSearchParams(url.hash.slice(1)).get("onecrew_ticket");
     assert.ok(ticket);
     const exchange = await fetch(`${url.origin}/api/local/session`, { method: "POST", headers: { origin: url.origin, "content-type": "application/json" }, body: JSON.stringify({ ticket }) });

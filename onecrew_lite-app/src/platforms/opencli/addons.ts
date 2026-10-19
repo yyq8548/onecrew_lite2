@@ -4,7 +4,7 @@ import { dirname, isAbsolute, join, parse } from "node:path";
 import { OpenCliError } from "./errors.ts";
 const nativeLock = createRequire(import.meta.url)("fs-native-extensions") as { tryLock(fd: number): boolean };
 
-// 对应原 addons.rs 的 include_bytes 清单；测试文件从不作为可执行插件分发。
+// 只读适配器分发清单；测试文件不作为可执行插件分发。
 export const OPENCLI_ADDON_FILES = Object.freeze({
   "onecrew-youtube": ["language.mjs", "language.js", "evidence.mjs", "channel.mjs", "channel-contact.js", "video-evidence.js"],
   "onecrew-tiktok": ["search.mjs", "search.js"],

@@ -1,29 +1,26 @@
 import assert from "node:assert/strict";
-import { execFile, spawn } from "node:child_process";
+import { spawn } from "node:child_process";
 import { once } from "node:events";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { promisify } from "node:util";
 import test from "node:test";
 import { acquireInstanceLock } from "../src/service/instance-lock.ts";
 import { LegacyQuiescenceLease } from "../src/migration/legacy-quiescence.ts";
 import { createPrivateDirectory } from "../src/storage/private-backup.ts";
 
-test("migration native lease conflicts with actual original Rust fslock and drains every legacy Library lock", { timeout: 120_000 }, async () => {
+test("migration native lease conflicts with a real independent Node process and drains every Library lock", { timeout: 120_000 }, async () => {
   const rootPath = fileURLToPath(new URL("../../", import.meta.url)), scratch = join(rootPath, ".scratch", "legacy-quiescence-tests");
   await mkdir(scratch, { recursive: true });
-  const target = join(scratch, "native");
-  await promisify(execFile)(process.env.CARGO ?? "cargo", ["build", "--offline", "--manifest-path", fileURLToPath(new URL("./native/legacy-lock-oracle/Cargo.toml", import.meta.url)), "--target-dir", target], { cwd: rootPath, windowsHide: true, timeout: 120_000, maxBuffer: 64 * 1024, env: { ...process.env, CARGO_INCREMENTAL: "0" } });
   const root = await mkdtemp(join(scratch, "source-")), ownerDirectory = await createPrivateDirectory(join(root, "new-owner")), old = await createPrivateDirectory(join(root, "legacy")), library = await createPrivateDirectory(join(root, "library"));
   const owner = await acquireInstanceLock(ownerDirectory);
   const sources = { creator: join(old, "creator.sqlite"), vault: join(old, "vault.sqlite"), masterKey: join(old, "master.key"), libraryDirectory: library };
   for (const path of [sources.creator, sources.vault, sources.masterKey, join(old, ".onecrew_lite-service-owner.lock"), join(library, "server.lock"), join(library, "database.lock")]) await writeFile(path, "", { flag: "wx", mode: 0o600 });
-  const executable = join(target, "debug", `legacy-lock-oracle${process.platform === "win32" ? ".exe" : ""}`);
+  const childModule = fileURLToPath(new URL("./native/lock-owner.ts", import.meta.url));
   try {
     assert.throws(() => Reflect.construct(LegacyQuiescenceLease, [Symbol(), owner, sources, []]), /quiescence_untrusted/);
     for (const lockPath of [join(old, ".onecrew_lite-service-owner.lock"), join(library, "server.lock"), join(library, "database.lock")]) {
-      const child = spawn(executable, [lockPath], { windowsHide: true, stdio: ["pipe", "pipe", "pipe"] });
+      const child = spawn(process.execPath, [childModule, lockPath], { windowsHide: true, stdio: ["pipe", "pipe", "pipe"] });
       const exit = once(child, "exit");
       try {
         const [receipt] = await once(child.stdout, "data");

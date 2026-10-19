@@ -1,4 +1,4 @@
-param(
+﻿param(
     [Parameter(Mandatory=$true)][ValidateSet('Inspect','Disable','VerifyDisabled','VerifyProcess')][string]$Operation,
     [Parameter(Mandatory=$true)][string]$DataDirectory,
     [Parameter(Mandatory=$true)][string]$ServiceExecutable,

@@ -16,7 +16,7 @@ export const CREATOR_SEARCH_SOURCES: Readonly<Record<string, SearchSource>> = Ob
   douyin: { site: "onecrew-search-douyin", name: "search", maximum: 30, addon: "onecrew-browser-search", discovery: true },
   weibo: { site: "onecrew-search-weibo", name: "search", maximum: 50, addon: "onecrew-browser-search", discovery: true },
   google: { site: "onecrew-search-google", name: "search", maximum: 50, addon: "onecrew-browser-search", discovery: true },
-  yahoo: { site: "yahoo", name: "search", maximum: 7, addon: null, discovery: true },
+  yahoo: { site: "onecrew-search-yahoo", name: "search", maximum: 7, addon: "onecrew-browser-search", discovery: true },
   tieba: { site: "onecrew-search-tieba", name: "search", maximum: 20, addon: "onecrew-browser-search", discovery: false },
 });
 for (const source of Object.values(CREATOR_SEARCH_SOURCES)) Object.freeze(source);

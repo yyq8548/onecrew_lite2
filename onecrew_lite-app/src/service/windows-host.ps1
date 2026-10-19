@@ -4,6 +4,7 @@ $ErrorActionPreference = 'Stop'
 [Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)
 $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
 $accountSid = $identity.User.Value
+$isAdministrator = @($identity.Claims | Where-Object { $_.Value -eq 'S-1-5-32-544' -and $_.Type -in @([Security.Claims.ClaimTypes]::GroupSid, [Security.Claims.ClaimTypes]::DenyOnlySid) }).Count -gt 0
 $physicalDirectory = [IO.Path]::GetFullPath($Directory).TrimEnd('\')
 function Hash-Bytes([byte[]]$Bytes) {
     $algorithm = [Security.Cryptography.SHA256]::Create()
@@ -20,7 +21,8 @@ function Assert-Private([string]$Path) {
     $item = Get-Item -LiteralPath $Path
     if (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) { throw 'service.host_reparse_path' }
     $acl = $item.GetAccessControl()
-    if ($acl.GetOwner([Security.Principal.SecurityIdentifier]).Value -ne $accountSid) { throw 'service.host_owner_changed' }
+    $owner = $acl.GetOwner([Security.Principal.SecurityIdentifier]).Value
+    if ($owner -ne $accountSid -and -not ($isAdministrator -and $owner -eq 'S-1-5-32-544')) { throw 'service.host_owner_changed' }
     foreach ($entry in $acl.GetAccessRules($true,$true,[Security.Principal.SecurityIdentifier])) {
         if ($entry.AccessControlType -eq 'Allow' -and $entry.IdentityReference.Value -notin @($accountSid,'S-1-5-18','S-1-5-32-544')) { throw 'service.host_acl_invalid' }
     }

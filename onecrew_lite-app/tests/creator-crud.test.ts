@@ -6,6 +6,8 @@ import { backup, DatabaseSync } from "node:sqlite";
 import { test } from "node:test";
 import { CreatorRepository } from "../src/creators/repository.ts";
 import { normalizeContact } from "../src/creators/normalization.ts";
+import { rm } from "node:fs/promises";
+import { extractCreatorHistory } from "./creator-history.ts";
 
 function database() {
   const db = new DatabaseSync(":memory:");
@@ -194,19 +196,19 @@ test("删除保留历史邮件与审计，并原子清除Creator归属及派生�
   } finally { db.close(); }
 });
 
-test("直接打开Rust current构造器产生的真实数据库执行CRUD", { skip: !process.env.ONECREW_CREATOR_ORACLE }, async () => {
-  const directory = mkdtempSync(fileURLToPath(new URL("../../.scratch/creator-crud-oracle-", import.meta.url)));
+test("打开独立保存的真实历史数据库执行CRUD", async () => {
+  const directory = await extractCreatorHistory([90]);
   const path = join(directory, "creator.sqlite");
-  { using source = new DatabaseSync(process.env.ONECREW_CREATOR_ORACLE!, { readOnly: true }); await backup(source, path); }
+  { using source = new DatabaseSync(join(directory, "creator-schema90-oracle.sqlite"), { readOnly: true }); await backup(source, path); }
   const db = new DatabaseSync(path);
   try {
     db.exec("PRAGMA foreign_keys=ON");
     const repository = new CreatorRepository(db);
-    const created = repository.create({ display_name: "Rust schema readback", contact_routes: [{ channel: "email", value: "oracle@example.com" }] });
+    const created = repository.create({ display_name: "Schema readback", contact_routes: [{ channel: "email", value: "oracle@example.com" }] });
     assert.equal(repository.get(created.creator_id).contact_routes.length, 1);
     assert.equal(repository.update({ creator_id: created.creator_id, notes: "updated" }).creator.notes, "updated");
     assert.ok(repository.list({ query: "oracle@example.com" }).items.some(row => row.id === created.creator_id));
     assert.equal(repository.delete(created.creator_id).removed_contact_routes, 1);
     assert.deepEqual(db.prepare("PRAGMA foreign_key_check").all(), []);
-  } finally { db.close(); }
+  } finally { db.close(); await rm(directory, { recursive: true }); }
 });

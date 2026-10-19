@@ -67,6 +67,17 @@ export function createDiscoveryLibraryProjection(accounts: AccountContextService
   }
   return {
     readiness,
+    async get(context: AccountContext, campaign: string) {
+      const resolved = await databases.discoveryResolver().resolve(context);
+      resolved.assertOwned(); resolved.repository.getPlan(campaign);
+      const selected = await tenant(context);
+      const table = await libraryCall(() => tables.data.getDiscoveryCampaignTable(selected, campaign));
+      accounts.assertCurrent(context); resolved.assertOwned();
+      if (!table) return null;
+      const rows = await libraryCall(() => tables.data.queryRows(selected, table.id, 1, 1));
+      accounts.assertCurrent(context); resolved.assertOwned();
+      return { campaign_id: campaign, table_id: table.id, web_url: `${origin}/library/${encodeURIComponent(table.id)}`, total_hits: rows.total, inserted_rows: 0 };
+    },
     async publish(context: AccountContext, campaign: string, revision: number) {
       const selected = await tenant(context);
       const resolved = await databases.discoveryResolver().resolve(context);
@@ -119,7 +130,7 @@ export function createDiscoveryLibraryProjection(accounts: AccountContextService
             "Campaign ID": campaign, "Search hit ID": hit.id, "Platform": row.native_platform ?? hit.platform,
             "Author label": hit.author_label, "Followers": row.followers ?? null, "Author ID": hit.author_id,
             "Author URL": hit.author_url, "Content title": hit.title, "Source URL": hit.source_url,
-            "Search keyword": hit.search_keyword, "Status": "Unverified search lead", "Captured at (Unix s)": String(hit.captured_at),
+            "Search keyword": hit.search_keyword, "Status": row.verdict === "qualified" ? "Recommended candidate" : row.verdict === "rejected" ? "Does not meet requirements" : row.verdict === "pending" ? "Awaiting required evidence" : "Awaiting account read", "Captured at (Unix s)": String(hit.captured_at),
             "Match evaluation": row.verdict === "qualified" || row.verdict === "rejected" && row.match_rating?.level === "low" ? row.match_rating ?? null : null,
             "Content category": typeof plan.criteria.category === "string" ? plan.criteria.category : "",
           };

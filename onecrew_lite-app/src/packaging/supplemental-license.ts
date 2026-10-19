@@ -8,7 +8,7 @@ import { payloadDigest } from "./payload-manifest.ts";
 
 const metadataSchema = z.object({ name: z.string(), version: z.string() });
 const relatedMetadataSchema = metadataSchema.extend({ license: z.literal("MIT"), repository: z.object({ url: z.string() }), optionalDependencies: z.record(z.string(), z.string()).optional() });
-export interface SupplementalLicense { path: string; source: string; sha256: string }
+export interface SupplementalLicense { path: string; source: string; sha256: string; license?: string }
 
 async function verified(path: string, source: string, sha256: string): Promise<SupplementalLicense> {
   const info = await lstat(path);
@@ -24,6 +24,13 @@ export async function supplementalLicense(packageRoot: string): Promise<Suppleme
   }
   if (metadata.name === "saxes" && metadata.version === "5.0.1") {
     return verified(fileURLToPath(new URL("./licenses/saxes-5.0.1-LICENSE.txt", import.meta.url)), "https://raw.githubusercontent.com/lddubeau/saxes/6ef6a275b20f19cb67808daf0d8f64e06aaf5b0e/LICENSE", "0fac2374380621b22e6b50451057721a9c52935b02d16d106a9f04897f061d0e");
+  }
+  if (metadata.name === "boolbase" && metadata.version === "1.0.0") {
+    return verified(fileURLToPath(new URL("./licenses/boolbase-1.0.0-LICENSE.txt", import.meta.url)), "https://github.com/fb55/boolbase/blob/be0bcd8a4e917a0a5895e95b523fbbed05a64871/LICENSE", "cdf4d87ae0a6c160227263bf4e39a0a10e30e89ae7256e0f7ac7bde0836552c6");
+  }
+  if (metadata.name === "buffers" && metadata.version === "0.1.1") {
+    const evidence = await verified(fileURLToPath(new URL("./licenses/buffers-0.1.1-COPYRIGHT.txt", import.meta.url)), "https://sources.debian.org/copyright/license/node-buffers/0.1.1-2/", "4720b99767aebc9b64ac6c3efa8db76a5eef15de0e75e3671263880e00dba908");
+    return { ...evidence, license: "MIT" };
   }
   if (/^@wreq-js\/binding-(?:darwin-(?:arm64|x64)|win32-x64-msvc)$/u.test(metadata.name) && metadata.version === "3.2.0") {
     const parentPath = findPackageJSON("wreq-js", import.meta.url);

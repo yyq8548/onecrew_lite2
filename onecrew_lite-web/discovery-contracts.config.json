@@ -1,0 +1,5 @@
+{
+  "target": "web-discovery",
+  "manifest": "../onecrew_lite-contracts/schemas/web-discovery.json",
+  "output": "src/lib/generated/discovery-contracts"
+}

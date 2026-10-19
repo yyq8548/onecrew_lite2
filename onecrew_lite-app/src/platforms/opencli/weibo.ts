@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { nativeContentObservations } from "./observations.ts";
 import { OpenCliError } from "./errors.ts";
 import type { ReviewedOpenCliRead } from "./read-plan.ts";
 import { nativeCommentsPlan } from "./native-comments.ts";
@@ -42,6 +43,8 @@ export function weiboPostPlan(source: string) {
     const id = get("id"); const name = get("author"); const original = get("text");
     if (!numeric(id) || BigInt(id) > BigInt(Number.MAX_SAFE_INTEGER) || get("mblogid") !== post || get("url") !== source || !name.trim() || [...name].length > 200 || /\p{Cc}/u.test(name) || /[\p{Cc}&&[^\n\r\t]]/v.test(original)) return invalid();
     const characters = [...original];
-    return { post_id: id, author_id: authorId, author: name, source_url: source, text: characters.slice(0, 4000).join(""), text_truncated: characters.length > 4000, text_completeness_known: false, is_repost: fields.has("retweeted_from") || fields.has("retweeted_text") };
+    const count = (key: string) => { const value = fields.get(key); return value !== undefined && /^\d+$/u.test(value) && Number.isSafeInteger(Number(value)) ? Number(value) : null; };
+    const observations = nativeContentObservations.parse({ published_at: fields.get("created_at") || null, like_count: count("likes"), comment_count: count("comments"), share_count: count("reposts"), text_completeness: "unknown" });
+    return { post_id: id, author_id: authorId, author: name, source_url: source, text: characters.slice(0, 4000).join(""), text_truncated: characters.length > 4000, text_completeness_known: false, is_repost: fields.has("retweeted_from") || fields.has("retweeted_text"), observations };
   } } satisfies ReviewedOpenCliRead<unknown>;
 }

@@ -4,7 +4,7 @@ import { z } from "zod";
 import { validateCreatorSchema90 } from "../storage/creator-schema.ts";
 import { bulkIdempotencyKey, mailFingerprint } from "./gmail-bulk.ts";
 import type { BulkBatch, BulkItem } from "./gmail-bulk.ts";
-import { gmailMessageId } from "./gmail-mime.ts";
+import { gmailReceiptMessageIdMatches } from "./gmail-mime.ts";
 import type { GmailBulkMessage, VerifiedGmailSendReceipt } from "./gmail-mime.ts";
 
 const string = z.string().refine(value => value.isWellFormed());
@@ -15,7 +15,7 @@ export function stagedOriginalGmailReceipt(value: string): VerifiedGmailSendRece
   const message = commit.snapshot.messages[0]!;
   z.object({ creator_id: z.null(), contact_route_id: z.null() }).parse(commit.snapshot);
   z.object({ direction: z.literal("outbound"), origin: z.literal("confirmed_send"), html: z.null(), in_reply_to: z.null(), cc: z.array(z.never()), bcc: z.array(z.never()), received_for: z.array(z.never()), reply_to: z.array(z.never()), references: z.array(z.never()), attachments: z.array(z.never()), delivery_status: z.literal("sent") }).parse(message);
-  if (commit.snapshot.mailbox_ref_id !== commit.preparation.mailbox.id || commit.recipient !== commit.preparation.to || message.to[0] !== commit.recipient || message.provider_message_id !== commit.verified_provider_message_id || message.internet_message_id !== gmailMessageId(commit.preparation.mailbox.email_address, commit.idempotency_key)) throw new Error("gmail_staged_receipt_context_mismatch");
+  if (commit.snapshot.mailbox_ref_id !== commit.preparation.mailbox.id || commit.recipient !== commit.preparation.to || message.to[0] !== commit.recipient || message.provider_message_id !== commit.verified_provider_message_id || !gmailReceiptMessageIdMatches(message.internet_message_id, commit.preparation.mailbox.email_address, commit.idempotency_key)) throw new Error("gmail_staged_receipt_context_mismatch");
   return receiptSchema.parse({ providerMessageId: message.provider_message_id, internetMessageId: message.internet_message_id, from: message.from, to: message.to[0]!, subject: message.subject, body: message.text, occurredAt: message.occurred_at, headers: message.headers });
 }
 
@@ -27,7 +27,7 @@ export function stageOriginalGmailReceipt(db: DatabaseSync, batch: BulkBatch, it
   if (!row || !["remote_started", "remote_accepted"].includes(string.parse(row.state))) throw new Error("gmail_verified_receipt_has_no_original_claim");
   const recovery = z.object({ context: z.object({ preparation: z.unknown() }), provider_thread_key: string, mailbox: z.object({ email_address: string }), request_fingerprint: string, provider_message_id: string.optional() }).parse(JSON.parse(string.parse(row.result_json)));
   if (recovery.provider_message_id !== undefined && recovery.provider_message_id !== receipt.providerMessageId) throw new Error("gmail_original_receipt_provider_mismatch");
-  if (receipt.internetMessageId !== gmailMessageId(recovery.mailbox.email_address, key) || receipt.to !== item.recipient || receipt.subject !== batch.subject || receipt.body.replace(/\r\n/gu, "\n").replace(/\n$/u, "") !== batch.body.replace(/\r\n/gu, "\n").replace(/\n$/u, "") || recovery.request_fingerprint !== row.request_fingerprint) throw new Error("gmail_original_verified_receipt_mismatch");
+  if (!gmailReceiptMessageIdMatches(receipt.internetMessageId, recovery.mailbox.email_address, key) || receipt.to !== item.recipient || receipt.subject !== batch.subject || receipt.body.replace(/\r\n/gu, "\n").replace(/\n$/u, "") !== batch.body.replace(/\r\n/gu, "\n").replace(/\n$/u, "") || recovery.request_fingerprint !== row.request_fingerprint) throw new Error("gmail_original_verified_receipt_mismatch");
   const snapshot = { mailbox_ref_id: batch.mailbox_ref_id, creator_id: null, contact_route_id: null, provider_thread_key: recovery.provider_thread_key, subject: batch.subject, messages: [{ provider_message_id: receipt.providerMessageId, internet_message_id: receipt.internetMessageId, direction: "outbound", from: receipt.from, to: [receipt.to], cc: [], bcc: [], received_for: [], reply_to: [], in_reply_to: null, references: [], subject: receipt.subject, text: receipt.body, html: null, delivery_status: "sent", headers: receipt.headers, occurred_at: receipt.occurredAt, origin: "confirmed_send", attachments: [] }] };
   const commit = commitSchema.parse({ recipient: item.recipient, preparation: recovery.context.preparation, snapshot, verified_provider_message_id: receipt.providerMessageId, idempotency_key: key, request_fingerprint: recovery.request_fingerprint });
   if (db.prepare("UPDATE idempotency_records SET state='remote_verified',result_json=?,updated_at=? WHERE key=? AND state=? AND request_fingerprint=?").run(JSON.stringify(commit), Math.floor(Date.now() / 1000), key, string.parse(row.state), string.parse(row.request_fingerprint)).changes !== 1) throw new Error("gmail_verified_receipt_stage_mismatch");
@@ -80,7 +80,7 @@ export function settleOriginalGmailSend(db: DatabaseSync, batch: BulkBatch, item
     return true;
   }
   receipt = receipt ? receiptSchema.parse(receipt) : stagedReceipt;
-  if (!receipt || receipt.providerMessageId !== item.provider_message_id || receipt.internetMessageId !== gmailMessageId(recovery.mailbox.email_address, key) || receipt.to !== item.recipient || receipt.subject !== batch.subject || receipt.body.replace(/\r\n/gu, "\n").replace(/\n$/u, "") !== batch.body.replace(/\r\n/gu, "\n").replace(/\n$/u, "")) throw new Error("gmail_original_verified_receipt_mismatch");
+  if (!receipt || receipt.providerMessageId !== item.provider_message_id || !gmailReceiptMessageIdMatches(receipt.internetMessageId, recovery.mailbox.email_address, key) || receipt.to !== item.recipient || receipt.subject !== batch.subject || receipt.body.replace(/\r\n/gu, "\n").replace(/\n$/u, "") !== batch.body.replace(/\r\n/gu, "\n").replace(/\n$/u, "")) throw new Error("gmail_original_verified_receipt_mismatch");
   const existing = db.prepare("SELECT id,creator_id,contact_route_id,created_at,active_folder,archived_at,deleted_at FROM email_threads WHERE mailbox_ref_id=? AND provider_thread_key=?").get(batch.mailbox_ref_id, recovery.provider_thread_key);
   if (existing && (existing.creator_id !== null || existing.contact_route_id !== null)) throw new Error("manual email snapshot must not be bound to a Creator");
   const threadId = existing ? string.parse(existing.id) : randomUUID();

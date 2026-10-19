@@ -8,6 +8,23 @@ import test from "node:test";
 import { launchOwnedChrome } from "../src/platforms/browser/chrome-host.ts";
 import { createPrivateDirectory } from "../src/storage/private-backup.ts";
 
+test("actual Windows Chrome closes immediately after three isolated launches", { skip: process.platform !== "win32", timeout: 60_000 }, async () => {
+  const scratch = fileURLToPath(new URL("../../.scratch/", import.meta.url));
+  const root = await mkdtemp(join(scratch, "owned-chrome-immediate-"));
+  assert(root.startsWith(scratch) && root !== scratch);
+  try {
+    for (let index = 0; index < 3; index++) {
+      const profileDirectory = await createPrivateDirectory(join(root, String(index)));
+      const browser = await launchOwnedChrome({ profileDirectory, url: new URL("about:blank"), signal: new AbortController().signal });
+      try {
+        browser.assertRunning();
+        await browser.close();
+        assert.throws(() => browser.assertRunning(), /owned_process_not_running/);
+      } finally { await browser.close(); }
+    }
+  } finally { await rm(root, { recursive: true, maxRetries: 3, retryDelay: 100 }); }
+});
+
 test("actual Mac Chrome uses an isolated private profile and closes its owned process", { skip: process.platform !== "darwin", timeout: 60_000 }, async () => {
   const root = await mkdtemp(fileURLToPath(new URL("../../.scratch/owned-chrome-mac-", import.meta.url)));
   try {

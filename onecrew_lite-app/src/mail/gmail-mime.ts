@@ -32,6 +32,19 @@ export function gmailMessageId(from: string, idempotencyKey: string): string {
   return `<${createHash("sha256").update(`${from}\0${idempotencyKey}`).digest("hex")}@onecrew.local>`;
 }
 
+export function gmailReceiptMessageIdMatches(actual: string | undefined, from: string, key: string): actual is string {
+  // Gmail 可重写 MIME 编号；原发送回执的 provider ID 和冻结内容仍须分别核对。
+  return actual === gmailMessageId(from, key) || actual !== undefined && actual.startsWith("<") && actual.endsWith("@mail.gmail.com>");
+}
+
+export function messageForGmailBulkReceipt(batch: BulkBatch, item: BulkItem, from: string): GmailBulkMessage {
+  const stored = batch.items.find(candidate => candidate.id === item.id);
+  if (!stored || !["accepted", "unknown"].includes(stored.state) || !stored.provider_message_id ||
+    stored.provider_message_id !== item.provider_message_id || stored.recipient !== item.recipient || stored.fingerprint !== item.fingerprint ||
+    stored.source !== item.source || item.fingerprint !== mailFingerprint(from, item.recipient, batch.subject, batch.body)) throw new Error("gmail_bulk_receipt_claim_mismatch");
+  return messageSchema.parse({ from, to: item.recipient, subject: batch.subject, body: batch.body, idempotencyKey: bulkIdempotencyKey(item) });
+}
+
 export async function compileGmailBulkMessage(input: GmailBulkMessage): Promise<{ raw: string; bytes: Buffer; messageId: string }> {
   const message = messageSchema.parse(input);
   const messageId = gmailMessageId(message.from, message.idempotencyKey);
@@ -55,7 +68,7 @@ export async function verifyGmailBulkReadback(value: unknown, providerId: string
   if (bytes.toString("base64url") !== message.raw.replace(/=+$/u, "")) throw new GmailReadbackValidationError("gmail_mime_invalid");
   const parsed = await simpleParser(bytes, { skipHtmlToText: true, skipTextToHtml: true, skipImageLinks: true });
   const recipients = parsed.to === undefined ? [] : Array.isArray(parsed.to) ? parsed.to.flatMap(part => part.value) : parsed.to.value;
-  if (parsed.messageId !== gmailMessageId(expected.from, expected.idempotencyKey) ||
+  if (!gmailReceiptMessageIdMatches(parsed.messageId, expected.from, expected.idempotencyKey) ||
     parsed.from?.value.length !== 1 || parsed.from.value[0]?.address?.toLowerCase() !== expected.from.toLowerCase() ||
     recipients.length !== 1 || recipients[0]?.address?.toLowerCase() !== expected.to.toLowerCase() ||
     parsed.cc !== undefined || parsed.bcc !== undefined || parsed.attachments.length !== 0 ||

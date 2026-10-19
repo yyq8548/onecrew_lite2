@@ -16,7 +16,7 @@ export const prepareDiscoveryDraftInput = z.strictObject({
   refinement: z.strictObject({ campaign_id: text.min(1).max(128), expected_revision: z.number().int().positive().max(4294967295) }).nullish().transform(value => value ?? null),
 }).refine(value => !(value.read_budget && value.max_calls !== null) && new Set(value.scope_overrides.map(scope => scope.platform)).size === value.scope_overrides.length && Buffer.byteLength(value.brief) <= (value.refinement === null ? 4000 : 32000));
 const proposedCount = proposedDiscoveryConstraint(z.union([z.number().int().nonnegative().safe(), z.bigint().min(0n).max(18446744073709551615n)]));
-export const semanticDiscoveryDraft = z.strictObject({ table_subject: text.default(""), target_count: proposedCount, max_calls: proposedCount, contact_search_terms: z.array(text).default([]), intent: discoveryIntentProposal, scopes: z.array(z.strictObject({ platform: text, keywords: z.array(text) })) });
+export const semanticDiscoveryDraft = z.strictObject({ table_subject: text.default(""), target_count: proposedCount, max_calls: proposedCount, contact_search_terms: z.array(text).default([]), min_subscribers_exclusive: z.boolean().default(false), intent: discoveryIntentProposal, scopes: z.array(z.strictObject({ platform: text, keywords: z.array(text) })) });
 export interface RegisteredDiscoverySource { readonly platform: string; readonly registered: boolean; readonly allowed_values: readonly string[]; readonly command?: string }
 export class DiscoveryDraftError extends Error { readonly code: string; readonly excerpts: readonly string[]; constructor(code: string, excerpts: readonly string[] = []) { super(code); this.code = code; this.excerpts = excerpts; } }
 export function isEnglishDiscoveryLanguage(value: string): boolean { return ["英文", "英语", "english", "en", "en-us", "en-gb"].includes(value.trim().toLowerCase()); }
@@ -55,6 +55,10 @@ export function buildDiscoveryDraft(raw: unknown, rawPlan: unknown, sources: rea
   plan.intent.suggested_keywords = plan.intent.suggested_keywords.filter(value => { const key = value.trim().toLowerCase(); if (seenSuggested.has(key)) return false; seenSuggested.add(key); return true; });
   const issues = validateDiscoveryIntent(input.brief, plan.intent, registered.map(source => source.platform));
   if (issues.length) invalid("intent_invalid");
+  if (plan.min_subscribers_exclusive) {
+    if (plan.intent.min_subscribers.state !== "specified" || BigInt(plan.intent.min_subscribers.value) >= 1000000000n) invalid("intent_invalid");
+    if (plan.intent.min_subscribers.state === "specified") plan.intent.min_subscribers.value = BigInt(plan.intent.min_subscribers.value) + 1n;
+  }
   if (plan.scopes.length > registered.length) invalid("scope_invalid");
   const textValue = (value: DiscoveryIntentProposal["category"]) => value.state === "specified" ? value.value : "";
   const inheritedText = (key: "language" | "category") => plan.intent[key].state === "unspecified" && typeof previous?.criteria[key] === "string" ? previous.criteria[key] : textValue(plan.intent[key]);

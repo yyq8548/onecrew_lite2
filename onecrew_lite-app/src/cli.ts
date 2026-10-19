@@ -36,12 +36,21 @@ async function runningOwner(directory: string): Promise<RuntimeDescriptor | unde
 export async function runCli(args: string[]): Promise<void> {
   const { values, positionals } = parseArgs({ args, allowPositionals: true, strict: true,
     options: { "data-dir": { type: "string" }, vault: { type: "string" }, "master-key": { type: "string" }, "legacy-port": { type: "string" }, "web-assets": { type: "string" }, "library-web-assets": { type: "string" }, stdio: { type: "boolean" }, "codex-home": { type: "string" }, "codex-executable": { type: "string" }, "plugin-directory": { type: "string" }, refresh: { type: "boolean" } } });
-  if (positionals.length !== 1 || !["start", "serve", "status", "stop", "workspace", "mcp", ...codexClientCommands].includes(positionals[0]!)) throw new CliError("Usage: onecrew_lite <start|serve|status|stop|workspace|mcp|connect-codex|disconnect-codex|codex-status|codex-config|codex-package> --data-dir <private directory>");
+  if (positionals.length === 1 && positionals[0] === "installation-discover") {
+    for (const name of Object.keys(values)) if (!["data-dir", "codex-home"].includes(name)) throw new CliError("Installation discovery accepts only data-dir and codex-home");
+    const { discoverInstallation, InstallationDiscoveryError } = await import("./service/installation-discovery.ts");
+    output(await discoverInstallation(values["data-dir"], values["codex-home"]).catch(error => {
+      if (error instanceof InstallationDiscoveryError) throw new CliError(error.message, error.code);
+      throw error;
+    }));
+    return;
+  }
+  if (positionals.length !== 1 || !["start", "serve", "status", "stop", "workspace", "mcp", ...codexClientCommands].includes(positionals[0]!)) throw new CliError("Usage: onecrew_lite <installation-discover|start|serve|status|stop|workspace|mcp|connect-codex|disconnect-codex|codex-status|codex-config|codex-package> --data-dir <private directory>");
   if (!values["data-dir"]) throw new CliError("An explicit data directory is required");
   if (values["web-assets"] !== undefined && !values["web-assets"].trim()) throw new CliError("Web assets directory must not be empty");
   if (values["library-web-assets"] !== undefined && !values["library-web-assets"].trim()) throw new CliError("Library web assets directory must not be empty");
   const packaged = getPackagedRuntime();
-  const webAssetsDirectory = values["web-assets"] ? resolve(values["web-assets"]) : packaged ? runtimeAssetPath("web", new URL("../../onecrew_lite-rust/web/dist/", import.meta.url)) : undefined;
+  const webAssetsDirectory = values["web-assets"] ? resolve(values["web-assets"]) : packaged ? runtimeAssetPath("web", new URL("../../onecrew_lite-web/dist/", import.meta.url)) : undefined;
   const libraryWebAssetsDirectory = values["library-web-assets"] ? resolve(values["library-web-assets"]) : packaged ? runtimeAssetPath("library-web", new URL("../../onecrew_lite-library/web/dist/", import.meta.url)) : undefined;
   const portText = values["legacy-port"];
   if (portText !== undefined && (!/^\d{1,5}$/u.test(portText) || Number(portText) < 1 || Number(portText) > 65535)) throw new CliError("Legacy port must be an integer from 1 through 65535");

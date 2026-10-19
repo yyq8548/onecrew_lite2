@@ -71,7 +71,7 @@ export async function prepareManagedExtensionChallenge(origin: string, signal: A
   const base = new URL(origin);
   if (base.protocol !== "http:" || base.hostname !== "127.0.0.1" || !base.port || base.pathname !== "/" || base.username || base.password || base.search || base.hash) throw new Error("browser.local_origin_required");
   signal.throwIfAborted();
-  const expected = await readFile(runtimeAssetPath("browser/browser-binding.html", new URL("../../../../onecrew_lite-rust/apps/web/public/browser-binding.html", import.meta.url)));
+  const expected = await readFile(runtimeAssetPath("browser/browser-binding.html", new URL("../../../../onecrew_lite-web/public/browser-binding.html", import.meta.url)));
   const response = await fetch(new URL("browser-binding.html", base), { redirect: "error", signal: AbortSignal.any([signal, AbortSignal.timeout(5000)]) });
   if (!response.ok || !response.headers.get("content-type")?.startsWith("text/html")) throw new Error("browser.challenge_asset_unavailable");
   if (!response.body || expected.length > 64 * 1024) throw new Error("browser.challenge_asset_invalid");

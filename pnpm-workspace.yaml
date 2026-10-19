@@ -1,9 +1,9 @@
 packages:
   - onecrew_lite-contracts
   - onecrew_lite-app
-  - onecrew_lite-rust/apps/web
-  - onecrew_lite-rust/apps/mcp-ui
-  - onecrew_lite-rust/development/schema-codegen
+  - onecrew_lite-web
+  - onecrew_lite-mcp-ui
+  - development/schema-codegen
   - onecrew_lite-library
   - onecrew_lite-library/web
   - onecrew_lite-library/packages/contracts

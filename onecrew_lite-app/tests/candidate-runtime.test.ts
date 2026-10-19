@@ -27,7 +27,7 @@ test("candidate serves actual staged PGlite and assets at the profile origin wit
     const tableDirectory = await createPrivateDirectory(join(generation, "tables"));
     const tables = await createEmbeddedTables(tableDirectory, `http://127.0.0.1:${profile.port}`);
     await tables.close();
-    candidate = await startCandidateRuntime(lease, { generationRoot: generation, webAssetsDirectory: fileURLToPath(new URL("../../onecrew_lite-rust/apps/web/dist", import.meta.url)) });
+    candidate = await startCandidateRuntime(lease, { generationRoot: generation, webAssetsDirectory: fileURLToPath(new URL("../../onecrew_lite-web/dist", import.meta.url)) });
     assert.equal(candidate.origin, `http://127.0.0.1:${profile.port}`);
     const health = await candidate.health();
     assert.equal(health.resource_identity.candidate, true);

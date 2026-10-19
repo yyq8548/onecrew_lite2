@@ -1,5 +1,0 @@
-disabled_rules:
-  - todo
-excluded:
-  - .build
-  - demo/.build

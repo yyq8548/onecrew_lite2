@@ -1,6 +1,6 @@
 # onecrew_lite TypeScript 与统一程序迁移计划
 
-状态：TypeScript 统一程序已经实现，当前进行 Windows 最终验收与源码交付。更新日期：2026-10-16。当前产品构建版本为 0.7.1 开发候选，尚未发布；Mac ARM / Intel 验收未完成。逐项实证、发布门槛和恢复后的任务顺序以 [当前交接记录](14-handoff-status-and-next-plan.md) 为准。
+状态：TypeScript 独立统一程序已经实现，Windows 当前配套构建为 candidate-87 / R8.1。更新日期：2026-10-19。产品版本 0.7.1；Mac ARM / Intel、宿主状态卡实际按钮及许可全文缺口未完成，productionReady 保持 false。逐项实证、发布门槛和下一步以 [当前交接记录](14-handoff-status-and-next-plan.md) 为准。
 
 ## 1. 目标、交付物和停止边界
 
@@ -8,7 +8,7 @@
 
 最终交付物：完整新源码及锁文件、旧数据兼容/迁移器、Codex adapter、旧协议兼容层、Mac ARM/Mac Intel/Windows x64 安装候选、文件和构建来源清单、签名状态、原生验收记录、官网兼容改动、分批发布与回退文档。
 
-实现位于独立分支与隔离目录，当前证据见 [开发执行记录](09-implementation-status.md)。尚未完成本计划发布门槛前，不替换线上 0.7.1、不自动升级日常安装、不发送真实邮件、不迁移生产账号数据库。访问公司资源需要执行人的授权。当前没有 Mac 设备，Mac ARM 和 Mac Intel 验收保持未完成。
+实现位于独立 TypeScript 工作区，当前证据见 [Windows 配套验证](28-sync-and-table-loading-windows.md)。本机已按用户授权升级并保留原数据与登录；线上下载切换、生产部署和实际发送分别要求明确授权。访问公司资源需要执行人的授权。当前没有 Mac 设备，Mac ARM 和 Mac Intel 验收保持未完成。
 
 ## 2. 已确定的目标架构
 
@@ -35,7 +35,7 @@ flowchart TD
 
 业务模块接收已验证身份与取消信号；不得自己读另一份 active account。表格与业务库通过应用层命令、outbox 和幂等键协调，不能假设 SQLite 与 PGlite 有共同事务。关键状态先持久化，外部调用结果再明确提交。
 
-建议新增 `onecrew_lite-app/` 工作区，保留旧源码目录用于对照和升级验证。目录职责：
+当前由 `onecrew_lite-app/` 与同仓库的网页、状态卡、适配器、契约和 Library 实现下列模块职责。旧工程已移除；历史数据升级使用本仓库固定测试资源，不需要旧语言工程或编译器。以下为模块职责，不要求创建同名空目录：
 
 | 位置 | 职责 |
 | --- | --- |

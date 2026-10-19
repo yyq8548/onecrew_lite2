@@ -149,11 +149,15 @@ export class OpenCliReader {
   }
   async checkBrowserProfile(binding: VerifiedOpenCliBrowserBinding): Promise<void> {
     validateOpenCliProfile(binding.profile);
-    await this.#requireVersion(binding);
-    const status = parseOpenCliBridgeStatus((await this.#run(["daemon", "status"], OPENCLI_PROBE_TIMEOUT, binding)).stdout);
+    const [, bridge, inventory] = await Promise.all([
+      this.#requireVersion(binding),
+      this.#run(["daemon", "status"], OPENCLI_PROBE_TIMEOUT, binding),
+      this.#run(["profile", "list"], OPENCLI_PROBE_TIMEOUT, binding),
+    ]);
+    const status = parseOpenCliBridgeStatus(bridge.stdout);
     if (!status.daemon_running) throw new OpenCliError("opencli_daemon_unavailable");
     if (!status.extension_connected) throw new OpenCliError("opencli_extension_unavailable");
-    const profiles = parseConnectedOpenCliProfiles((await this.#run(["profile", "list"], OPENCLI_PROBE_TIMEOUT, binding)).stdout);
+    const profiles = parseConnectedOpenCliProfiles(inventory.stdout);
     if (!profiles.some(profile => profile.context_id === binding.profile)) throw new OpenCliError("opencli_profile_unavailable");
   }
   async creatorSearchCapabilities() {

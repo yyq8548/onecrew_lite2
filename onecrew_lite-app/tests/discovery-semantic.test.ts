@@ -16,7 +16,7 @@ test("原flat语义状态完整保留，矛盾null值明确失败，schema仅供
 });
 
 test("原完整查询指导资源通过固定hash，保留复合产品/全部来源/语言与原生查询语义", async () => {
-  const guidance = await loadOriginalDiscoveryQueryGuidance(fileURLToPath(new URL("../../onecrew_lite-rust/crates/platform-runtime/src/discovery_draft/search_query_guidance.txt", import.meta.url)));
+  const guidance = await loadOriginalDiscoveryQueryGuidance(fileURLToPath(new URL("../src/discovery/assets/search-query-guidance.txt", import.meta.url)));
   assert.equal(await loadBundledDiscoveryQueryGuidance(), guidance);
   assert.ok((await loadBundledDiscoveryMatchRubric()).includes("at least THREE distinct substantive original comments"));
   assert.ok(guidance.includes("苹果手机 means Apple iPhone")); assert.ok(guidance.includes("Query generation never authorizes reads"));

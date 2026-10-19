@@ -5,9 +5,9 @@ import type { GmailBulkAccountRepositoryResolver, GmailBulkRepositoryOwner } fro
 import type { GmailBulkRepository } from "./gmail-bulk-repository.ts";
 import { bulkIdempotencyKey } from "./gmail-bulk.ts";
 import type { BulkBatch, BulkItem } from "./gmail-bulk.ts";
-import { messageForGmailBulkClaim } from "./gmail-mime.ts";
+import { messageForGmailBulkClaim, messageForGmailBulkReceipt } from "./gmail-mime.ts";
 import type { VerifiedGmailSendReceipt } from "./gmail-mime.ts";
-import { GmailAcceptedProcessingError, sendGmailBulkMessage } from "./gmail-transport.ts";
+import { GmailAcceptedProcessingError, readGmailBulkReceipt, sendGmailBulkMessage } from "./gmail-transport.ts";
 import type { GmailAccessProvider, GmailBulkTransportResult } from "./gmail-transport.ts";
 
 export class GmailBulkWorkerNotReadyError extends Error {
@@ -47,6 +47,30 @@ export class GmailBulkWorker {
     this.#resolver = resolver;
     this.#access = access;
     this.#changed = onChanged;
+  }
+
+  async readback(context: AccountContext, batchId: string): Promise<void> {
+    if (!this.#resolver || !this.#access) throw new GmailBulkWorkerNotReadyError();
+    this.#accounts.assertCurrent(context);
+    const resolved = await this.#resolver.resolve(context);
+    this.#accounts.assertCurrent(context);
+    const owner = resolved.owner;
+    if (!sameOwner(owner, { accountId: context.principal.user.id, tenantId: context.principal.tenantId, baseId: context.principal.baseId })) throw new Error("Gmail readback repository owner mismatch");
+    const repository = resolved.repository, batch = repository.get(batchId);
+    const items = batch.items.filter(item => ["accepted", "unknown"].includes(item.state) && item.provider_message_id !== null);
+    if (!items.length) return;
+    const auth = await this.#access.authorize(owner, batch.mailbox_ref_id);
+    this.#accounts.assertCurrent(context);
+    if (!sameOwner(owner, auth.owner) || auth.mailboxRefId !== batch.mailbox_ref_id) throw new Error("Gmail readback authorization owner mismatch");
+    for (const item of items) {
+      const message = messageForGmailBulkReceipt(batch, item, auth.emailAddress);
+      const receipt = await readGmailBulkReceipt(auth, item.provider_message_id!, message, async () => this.#accounts.assertCurrent(context), context.signal);
+      this.#accounts.assertCurrent(context);
+      if (repository.get(batchId).items.find(current => current.id === item.id)?.state === "sent") continue;
+      repository.stageVerifiedReceipt(batchId, item, receipt);
+      repository.recoverVerifiedReceipts();
+    }
+    this.#changed?.(context, ["email_folders", "email_threads"]);
   }
 
   async tick(shutdown: AbortSignal): Promise<GmailBulkTickResult> {

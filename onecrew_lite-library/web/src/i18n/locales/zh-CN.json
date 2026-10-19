@@ -225,8 +225,8 @@
     "checking": "正在检查",
     "online": "已连接",
     "offline": "等待扩展连接",
-    "serviceOffline": "本地服务未启动",
-    "serviceHint": "启动本地 onecrew_lite 服务后，扩展会自动恢复连接。",
+    "serviceOffline": "暂时无法读取扩展连接状态",
+    "serviceHint": "请在工作台检查浏览器连接；如果页面授权已失效，请从 OneCrew 重新打开资料库。",
     "hint": "扩展启用后自动连接本机服务，无需手动配对。"
   }
 }

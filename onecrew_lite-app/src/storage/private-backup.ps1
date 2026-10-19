@@ -1,4 +1,4 @@
-param(
+﻿param(
   [Parameter(Mandatory=$true)][ValidateSet('Create','CreateTree','Verify','VerifyTree')][string]$Operation,
   [Parameter(Mandatory=$true)][string]$Directory,
   [string]$File,
@@ -10,6 +10,8 @@ Set-StrictMode -Version Latest
 $directoryPath = [System.IO.Path]::GetFullPath($Directory)
 $sid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User
 $systemSid = New-Object System.Security.Principal.SecurityIdentifier('S-1-5-18')
+$administratorOwner = 'S-1-5-32-544'
+$isAdministrator = @([System.Security.Principal.WindowsIdentity]::GetCurrent().Claims | Where-Object { $_.Value -eq $administratorOwner -and $_.Type -in @([System.Security.Claims.ClaimTypes]::GroupSid, [System.Security.Claims.ClaimTypes]::DenyOnlySid) }).Count -gt 0
 
 function Assert-NoReparse([string]$Path) {
   $item = New-Object System.IO.DirectoryInfo($Path)
@@ -27,7 +29,8 @@ function Assert-PrivateAcl([string]$Path, [bool]$Protected) {
   else { $acl = [System.IO.File]::GetAccessControl($Path) }
   if ($Protected -and -not $acl.AreAccessRulesProtected) { throw 'Backup directory DACL inherits permissions' }
   $owner = $acl.GetOwner([System.Security.Principal.SecurityIdentifier]).Value
-  if ($owner -ne $sid.Value) { throw 'Backup owner differs from the current user' }
+  # 提权令牌创建的文件默认归 Administrators；仍逐项检查当前用户和 SYSTEM 的精确 DACL。
+  if ($owner -ne $sid.Value -and -not ($isAdministrator -and $owner -eq $administratorOwner)) { throw 'Backup owner differs from the current user' }
   $rules = @($acl.GetAccessRules($true, $true, [System.Security.Principal.SecurityIdentifier]))
   if ($rules.Count -ne 2) { throw 'Backup DACL must contain exactly two rules' }
   $seen = @{}

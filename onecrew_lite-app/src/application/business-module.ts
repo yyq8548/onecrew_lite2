@@ -90,13 +90,23 @@ export function createBusinessModule(lease: InstanceLease, identities: UnifiedAc
   function assertAcceptingWork(): void {
     if (closing) throw Object.assign(new Error("Unified service is stopping"), { code: "runtime.stopping", status: 503 });
   }
+  let recovering: { context: AccountContext; promise: Promise<void> } | undefined;
   async function refreshAccount() {
     assertAcceptingWork();
     const context = await identities.refresh();
     assertAcceptingWork();
-    if (initializeNewAccounts) await databases.ensureNewAccount(context);
-    if (youtubeCredentials) await youtubeCredentials.recover(context);
-    if (operatorDisconnect) await operatorDisconnect.recover(context);
+    if (recovering?.context !== context) {
+      const promise = (async () => {
+        if (initializeNewAccounts) await databases.ensureNewAccount(context);
+        if (youtubeCredentials) await youtubeCredentials.recover(context);
+        if (operatorDisconnect) await operatorDisconnect.recover(context);
+      })();
+      const flight = { context, promise };
+      recovering = flight;
+      void promise.then(() => { if (recovering === flight) recovering = undefined; }, () => { if (recovering === flight) recovering = undefined; });
+    }
+    await recovering.promise;
+    identities.contexts.assertCurrent(context);
     assertAcceptingWork();
     return context;
   }
@@ -115,6 +125,8 @@ export function createBusinessModule(lease: InstanceLease, identities: UnifiedAc
   const discoveryDependencies = createDefaultDiscoveryDependencies({ accounts: identities.contexts, identities, directories: databases, browsers: { resolve: (context, profile) => browserBindings.resolveProfileRef(context, profile) }, openCliHome, ...(platformVault ? { vault: platformVault } : {}) });
   const sync = createTableSyncModule(identities, databases, operations, admission, createLibraryCaptureSource(identities.contexts, tables), () => supervisor.blocksBackendSync());
   const projection = createDiscoveryLibraryProjection(identities.contexts, databases, tables, origin);
+  operations.register("onecrew_discovery_library_get", z.strictObject({ campaignId: z.string().min(1) }),
+    ({ campaignId }, context) => projection.get(context, campaignId));
   const discoveryLibrary = {
     readiness: projection.readiness,
     async publish(...arguments_: Parameters<typeof projection.publish>) {
@@ -130,7 +142,7 @@ export function createBusinessModule(lease: InstanceLease, identities: UnifiedAc
     operations.register("list_youtube_api_keys", z.strictObject({}), async (_, context) => ownedPlatforms.youtubeCredentials(context));
   }
   operations.register("probe_proxy", z.strictObject({ proxy: proxyConfigSchema }), async (input, context) => { const result = await probeProxy(input.proxy, context.signal); identities.contexts.assertCurrent(context); return result; });
-  const openCliOperations = registerOpenCliOperations(operations, identities.contexts, browserBindings, { addons: async context => new OpenCliAddons(runtimeAssetPath("opencli-addons", new URL("../../../onecrew_lite-rust/integrations/opencli", import.meta.url)), await openCliHome(context)) });
+  const openCliOperations = registerOpenCliOperations(operations, identities.contexts, browserBindings, { addons: async context => new OpenCliAddons(runtimeAssetPath("opencli-addons", new URL("../../../onecrew_lite-opencli", import.meta.url)), await openCliHome(context)) });
   registerDiscoveryReadOperations(operations, identities.contexts, { setupReport: context => openCliOperations.status(context) });
   async function connectionInventory(context: AccountContext) {
     identities.contexts.assertCurrent(context);
@@ -160,6 +172,7 @@ export function createBusinessModule(lease: InstanceLease, identities: UnifiedAc
   registerDiscoveryIdentityOperations(operations, databases.identityResolver(), identities.contexts);
   registerGmailReplySyncOperation(operations, replies);
   const worker = new GmailBulkWorker(identities.contexts, bulk, access, (context, scopes) => changes.publish(context, scopes));
+  operations.register("onecrew_gmail_bulk_readback", z.object({ id: z.string().min(1) }).strict(), async ({ id }, context) => { await worker.readback(context, id); return null; });
   const shutdown = new AbortController();
   let pending: ReturnType<GmailBulkWorker["tick"]> | undefined;
   let draining: Promise<void> | undefined;
@@ -208,6 +221,11 @@ export function createBusinessModule(lease: InstanceLease, identities: UnifiedAc
     openCliStatus: openCliOperations.status,
     async workspaceBrowserReady(context: AccountContext) {
       const status = await openCliOperations.status(context);
+      if (status.issue !== null) return false;
+      for (const profile of status.profiles) {
+        const granted = await browserBindings.resolveExisting(context, profile.context_id);
+        if (granted) { await granted.assertCurrent(); return true; }
+      }
       const owned = await browserBindings.listOwned(context);
       identities.contexts.assertCurrent(context);
       return status.issue === null && owned.some(binding => status.profiles.some(profile => profile.context_id === binding.context_id));

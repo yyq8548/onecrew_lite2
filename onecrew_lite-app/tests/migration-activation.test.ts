@@ -96,7 +96,7 @@ test("real SQLite/PGlite activation candidates preserve sources and require genu
     await t.test("publication validates actual candidate health before proof and detects later file changes", async () => {
       await using quiescence = await LegacyQuiescenceLease.acquire(lease, { serviceDirectory: old, sources: input.sourcePaths });
       const prepared = await prepareActivationPublication(lease, { candidate, quiescence, signal,
-        webAssetsDirectory: fileURLToPath(new URL("../../onecrew_lite-rust/apps/web/dist", import.meta.url)) });
+        webAssetsDirectory: fileURLToPath(new URL("../../onecrew_lite-web/dist", import.meta.url)) });
       assert.equal(prepared.health.resource_identity.profile_port, originalPort);
       assert.equal(prepared.health.resource_identity.kind, "source_development");
       assert.equal(prepared.assertPrepared(lease, quiescence).candidate.id, candidate.id);

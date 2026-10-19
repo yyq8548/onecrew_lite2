@@ -36,6 +36,11 @@ export function registerOpenCliOperations(registry: OperationRegistry, accounts:
   registry.register("onecrew_opencli_profile_check", z.strictObject({ profile: z.string().min(1) }), async (input, context) => {
     const environment = await read(context), binding = await bindings.resolveProfileRef(context, input.profile); await environment.reader.checkBrowserProfile(binding); accounts.assertCurrent(context); return { profile: input.profile, preflight_passed: true as const };
   });
+  registry.register("onecrew_opencli_profile_connect", z.strictObject({ profile: z.string().min(1), approved: z.literal(true) }), async (input, context) => {
+    const environment = await read(context);
+    await bindings.connectExisting(context, input.profile, binding => environment.reader.checkBrowserProfile(binding));
+    accounts.assertCurrent(context); return { profile: input.profile, preflight_passed: true as const };
+  });
   registry.register("onecrew_opencli_addons_install", z.strictObject({ approved: z.literal(true), repair: z.boolean().optional() }), async (input, context) => {
     const environment = await read(context); const result = input.repair === true ? await environment.addons.repair(true) : await environment.addons.install(true); accounts.assertCurrent(context); return result;
   });

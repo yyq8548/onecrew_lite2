@@ -43,6 +43,10 @@ export async function buildCandidate(options: { output: string; productVersion: 
       await mkdir(destination, { recursive: true });
       for (const child of await readdir(source)) if (child !== "node_modules" && (basename(source) !== "prebuilds" || child === options.target)) await copyTree(join(source, child), join(destination, child));
     } else if (info.isFile()) {
+      if (source.endsWith(".ps1")) {
+        const script = await readFile(source);
+        if (script.some(byte => byte > 127) && !script.subarray(0, 3).equals(Buffer.from([0xef, 0xbb, 0xbf]))) throw new Error(`package.powershell_utf8_bom_required:${source}`);
+      }
       await mkdir(dirname(destination), { recursive: true }); await copyFile(source, destination);
     } else throw new Error(`package.input_not_regular:${source}`);
   }
@@ -71,7 +75,7 @@ export async function buildCandidate(options: { output: string; productVersion: 
     if (!licenseFiles.length) {
       await copyTree(join(packageRoot, "package.json"), join(stage, destination, "package.json")); licenseFiles.push(`${destination}/package.json`);
     }
-    const declaration = typeof metadata.license === "string" ? metadata.license : metadata.license || metadata.licenses ? JSON.stringify(metadata.license ?? metadata.licenses) : metadata.private === true ? "UNLICENSED" : licenseEvidence === "full_text" ? "SEE_LICENSE_FILES" : "UNKNOWN";
+    const declaration = supplemental?.license ?? (typeof metadata.license === "string" ? metadata.license : metadata.license || metadata.licenses ? JSON.stringify(metadata.license ?? metadata.licenses) : metadata.private === true ? "UNLICENSED" : licenseEvidence === "full_text" ? "SEE_LICENSE_FILES" : "UNKNOWN");
     components.push({ name: String(metadata.name), version: String(metadata.version), license: declaration, licenseFiles, licenseEvidence, ...(licenseProvenance ? { licenseProvenance } : {}) });
   }
   const packageRoots = new Set<string>();
@@ -127,12 +131,11 @@ export async function buildCandidate(options: { output: string; productVersion: 
   await copyTree(join(root, "onecrew_lite-app", "src", "service", "workflow-guides.json"), join(stage, "resources", "workflow-guides.json"));
   await copyTree(join(root, "onecrew_lite-app", "src", "service", "windows-host.ps1"), join(stage, "resources", "service", "windows-host.ps1"));
   await copyTree(join(root, "onecrew_lite-app", "src", "service", "windows-executable-path.ps1"), join(stage, "resources", "service", "windows-executable-path.ps1"));
-  await copyTree(join(root, "onecrew_lite-rust", "crates", "mcp-adapter", "assets", "apps"), join(stage, "resources", "mcp"));
-  for (const [id, names] of Object.entries(OPENCLI_ADDON_FILES)) for (const name of names) await copyTree(join(root, "onecrew_lite-rust", "integrations", "opencli", id, name), join(stage, "resources", "opencli-addons", id, name));
+  await copyTree(join(root, "onecrew_lite-mcp-ui", "dist"), join(stage, "resources", "mcp"));
+  for (const [id, names] of Object.entries(OPENCLI_ADDON_FILES)) for (const name of names) await copyTree(join(root, "onecrew_lite-opencli", id, name), join(stage, "resources", "opencli-addons", id, name));
   for (const name of await readdir(join(root, "onecrew_lite-app", "src", "platforms", "browser"))) if (name.endsWith(".ps1")) await copyTree(join(root, "onecrew_lite-app", "src", "platforms", "browser", name), join(stage, "resources", "browser", name));
-  await copyTree(join(root, "onecrew_lite-rust", "apps", "web", "public", "browser-binding.html"), join(stage, "resources", "browser", "browser-binding.html"));
+  await copyTree(join(root, "onecrew_lite-web", "public", "browser-binding.html"), join(stage, "resources", "browser", "browser-binding.html"));
   await copyTree(join(root, "onecrew_lite-app", "src", "client-adapters", "plugin-template"), join(stage, "resources", "client-plugin"));
-  await copyTree(join(root, "onecrew_lite-rust", "crates", "platform-runtime", "src", "discovery_draft", "search_query_guidance.txt"), join(stage, "resources", "discovery", "assets", "search-query-guidance.txt"));
   await copyTree(options.webAssets, join(stage, "resources", "web"));
   await copyTree(options.libraryWebAssets, join(stage, "resources", "library-web"));
   const frontendPackages = new Set<string>();
@@ -147,7 +150,7 @@ export async function buildCandidate(options: { output: string; productVersion: 
       await frontendLicenses(dependency);
     }
   }
-  await frontendLicenses(join(root, "onecrew_lite-rust", "apps", "web", "package.json"));
+  await frontendLicenses(join(root, "onecrew_lite-web", "package.json"));
   await frontendLicenses(join(root, "onecrew_lite-library", "web", "package.json"));
   await copyTree(join(root, "pnpm-lock.yaml"), join(stage, "build", "pnpm-lock.yaml"));
   const nodeLicense = options.target.startsWith("darwin-") ? join(dirname(options.nodePath), "..", "LICENSE") : join(dirname(options.nodePath), "LICENSE");

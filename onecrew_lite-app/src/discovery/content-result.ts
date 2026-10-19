@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { nativeContentObservations } from "../platforms/opencli/observations.ts";
 import { stringifyApplicationJson } from "../contracts/application-json.ts";
 import { twitterPostContentPlan } from "../platforms/opencli/twitter-posts.ts";
 import { validateDiscoveryRetainedContent } from "./native-material.ts";
@@ -17,7 +18,7 @@ export function validateDiscoveryContentResult(claim: DiscoveryContentClaim, raw
   if (claim.platform === "pinterest") return validateDiscoveryPinterestContent(claim.author_id, claim.source_url, native);
   if (claim.platform === "instagram") {
     if (!/^https:\/\/www\.instagram\.com\/[a-z0-9_.]{1,30}\/$/u.test(claim.source_url) || !/^[1-9][0-9]{0,24}$/u.test(claim.author_id)) throw new Error("discovery_content_result_invalid");
-    const post = z.strictObject({ post_id: text.regex(/^[A-Za-z0-9_-]{1,32}$/u), author_id: z.literal(claim.author_id), source_url: text.regex(/^https:\/\/www\.instagram\.com\/(?:p|reel)\/[A-Za-z0-9_-]{1,32}\/$/u), text: text.refine(value => Buffer.byteLength(value) <= 8000 && !value.includes("\0")), text_truncated: z.boolean() }).parse(native);
+    const post = z.strictObject({ post_id: text.regex(/^[A-Za-z0-9_-]{1,32}$/u), author_id: z.literal(claim.author_id), source_url: text.regex(/^https:\/\/www\.instagram\.com\/(?:p|reel)\/[A-Za-z0-9_-]{1,32}\/$/u), text: text.refine(value => Buffer.byteLength(value) <= 8000 && !value.includes("\0")), text_truncated: z.boolean(), observations: nativeContentObservations.optional() }).parse(native);
     if (!/^[1-9][0-9]{0,24}$/u.test(post.post_id) && new URL(post.source_url).pathname.split("/")[2] !== post.post_id) throw new Error("discovery_content_result_invalid");
     return post;
   }
@@ -28,7 +29,7 @@ export function validateDiscoveryContentResult(claim: DiscoveryContentClaim, raw
   }
   if (claim.platform === "bilibili") {
     const named = (maximum: number) => text.refine(value => !!value.trim() && [...value].length <= maximum && !/\p{Cc}/u.test(value));
-    const value = z.strictObject({ bvid: text, author_id: z.literal(claim.author_id), author: named(200), source_url: z.literal(claim.source_url), title: named(500), description: text.refine(value => Buffer.byteLength(value) <= 8192), description_truncated: z.boolean(), requires_payment: z.boolean(), pay_preview: z.boolean(), payment_status_known: z.boolean().optional() }).parse(native);
+    const value = z.strictObject({ bvid: text, author_id: z.literal(claim.author_id), author: named(200), source_url: z.literal(claim.source_url), title: named(500), description: text.refine(value => Buffer.byteLength(value) <= 8192), description_truncated: z.boolean(), requires_payment: z.boolean(), pay_preview: z.boolean(), payment_status_known: z.boolean().optional(), observations: nativeContentObservations.optional() }).parse(native);
     if (!claim.source_url.startsWith("https://www.bilibili.com/video/") || value.bvid !== claim.source_url.slice("https://www.bilibili.com/video/".length)) throw new Error("discovery_content_result_invalid");
     return value;
   }

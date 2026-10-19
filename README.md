@@ -1,62 +1,56 @@
 # OneCrew Lite · TypeScript 统一程序
 
-从一句话需求出发，寻找合适的创作者，整理资料，再通过 Gmail 联系。
+从一句话需求生成搜索计划，读取创作者资料和内容，结合证据评分，在动态表格整理推荐，再通过邮件页 Gmail 批量联系。
 
-**产品版本：0.7.1，当前为开发候选**。主程序、本地服务、工作台、Codex 插件和 Library 配套构建。Windows 实际验证与 Mac 未完成项分开记录，尚未达到客户正式发布条件。
+当前产品版本 **0.7.1**，Windows 配套构建 **candidate-87 / R8.1**。主程序、工作台、Codex 插件和 Library 配套构建。Mac ARM、Mac Intel、宿主状态卡实际按钮验收和 11 项许可全文缺口仍未完成，`productionReady: false`。
 
-## 当前状态与接手
+## 当前源码与文档
 
-Instagram 已接入专用浏览器的可见 DOM 读取，采集粉丝量、简介、公开邮箱和一篇相关帖子正文；读取方式、评分和连接边界见 [搜索、评分与连接现状](docs/migration/current-platforms.md)。
+仓库为 [yyq8548/onecrew_lite2](https://github.com/yyq8548/onecrew_lite2)，默认分支为 `codex/typescript-unified-gmail`。
 
-新版仓库：`https://github.com/yyq8548/onecrew_lite2`。开发分支为 `codex/typescript-unified-gmail`。先读 [当前交接、验证和下一步计划](docs/migration/14-handoff-status-and-next-plan.md)，再按需查看 [完整迁移计划](docs/migration/03-detailed-migration-plan.md)、[Windows 验证记录](docs/migration/11-windows-verification.md)和[客户安装约束](docs/migration/13-customer-installation-paths.md)。
-
-来源基线为 `efc3c6eb69507b9809bb30279d9af26156d075e3`；本轮批准迁入的 GitHub 改动固定为 `8d931ab08448bcded456c210ebc29ad9709a68a5`。保留已有 Windows、专用 Chrome、身份、权限和数据恢复修复。
-
-## 从需求到合作
-
-输入「帮我在 TikTok 找 10 位耳机测评博主，粉丝不少于 5000」，在工作台确认搜索计划后开始查找。
-
-- **理解需求**：提取商品、创作者类别、平台、人数与粉丝要求，生成对应搜索词；也可使用高级设置或手动输入。
-- **查找与筛选**：读取平台内容和作者资料，结合证据判断匹配程度，支持暂停、继续和调整计划。
-- **整理结果**：在动态表格查看主页、粉丝量、核实状态、匹配评分及公开联系方式，按粉丝量排序。
-- **邮件联系**：对外发送仅保留邮件页 Gmail 批量发送，需真实用户确认；集中查看 OneCrew 邮件历史和回复。MCP 不提供发送操作。
-- **工作台与对话**：在浏览器操作，也可通过 Codex 插件查看进度和调用工具。
-
-平台可读数据受登录状态、页面变化和公开范围影响。缺失信息保留为未知；搜索结果仍需结合证据判断。
-
-## 安装与使用
-
-当前候选的 Windows 程序使用明确的数据目录、当前用户私有权限和按需计划任务；服务程序按完整 SHA-256 保存，原安装文件移走后仍可运行。新安装由操作系统分配端口，后续启动和升级保留端口。中文、空格和超过 260 字符的安装路径已进行真实验证。
-
-打开工作台和 Library 默认复用 Codex 内置浏览器；搜索使用已验证的专用 Chrome 身份。先确认账号和平台连接，再确认搜索计划。缺少信息、登录失败、风控停止与有效零结果分别显示。
-
-Mac ARM 已完成本机配套构建及部分真实原生验收，详情见 [Mac ARM 验证记录](docs/migration/15-mac-arm-verification.md)。Mac ARM 完整客户安装、升级及宿主验收，以及 Mac Intel 原生验收仍未完成。当前候选保持 `productionReady: false`。
-
-## 完整源码
+- [当前交接与下一步](docs/migration/14-handoff-status-and-next-plan.md)
+- [迁移计划](docs/migration/03-detailed-migration-plan.md)与[产品范围](docs/migration/08-current-scope.md)
+- [R8.1 Windows 验证](docs/migration/28-sync-and-table-loading-windows.md)
+- [当前源码交付与检查](docs/migration/29-current-source-delivery.md)
+- [搜索、评分与连接行为](docs/migration/current-platforms.md)
+- [独立开发与配套验收](development/README.md)
 
 | 目录 | 内容 |
 | --- | --- |
-| [onecrew_lite-app](onecrew_lite-app/) | 当前 TypeScript CLI、本地服务、业务、存储、迁移、原生能力、安装与 SEA 打包 |
-| [onecrew_lite-contracts](onecrew_lite-contracts/) | 当前共享接口与校验合同 |
-| [onecrew_lite-rust/apps](onecrew_lite-rust/apps/) | 复用的 React 工作台和 MCP 卡片 |
-| [onecrew_lite-rust](onecrew_lite-rust/) | 来源实现、冻结历史合同、Rust 对照测试及只读适配器；不是新版业务运行入口 |
-| [onecrew_lite-library](onecrew_lite-library/) | 动态表格服务、结果同步、创作者视图与导出 |
-| [onecrew_lite-access](onecrew_lite-access/) | 账号授权与发行服务旧快照；当前生产来源见交接记录，勿直接部署 |
+| onecrew_lite-app | TypeScript CLI、本地服务、搜索、评分、Gmail、数据兼容、安装与 SEA 打包 |
+| onecrew_lite-web | 工作台、邮件页和日常 Chrome 身份授权 |
+| onecrew_lite-mcp-ui | Codex MCP 状态卡与操作卡 |
+| onecrew_lite-opencli | 只读平台适配器及测试 |
+| onecrew_lite-contracts | 共享类型、校验合同和自有 schema |
+| onecrew_lite-library | 动态表格服务、网页、同步、推荐视图及必要的 Teable 依赖 |
+| development | 契约生成、源码独立性检查和当前 Windows 客户安装资料 |
 
-仓库保留源码、测试、构建脚本、依赖锁文件和必要的技术说明。登录凭据、客户数据库、运行缓存和安装包不进入源码仓库。
+仓库只维护当前实现。构建和测试不引用旧工程；第三方原生扩展、许可证、数据库兼容样本和必要测试仍保留。账号凭据、客户数据、浏览器配置、依赖缓存和安装包不提交 Git。
 
-## 构建
+## 使用与安装
 
-固定使用 Node.js **26.7.0**、pnpm **10.32.1** 和根目录锁文件。Windows 原生依赖需要对应 C++ 构建工具；重新生成 Rust 对照材料时另需项目固定 Rust 工具链。具体命令、候选打包及完整验收环境见 [交接说明](docs/migration/14-handoff-status-and-next-plan.md)。
+搜索使用用户日常 Chrome 中的官方 OpenCLI 扩展，明确选择并授权浏览器身份，不创建独立浏览器。工作台和 Library 默认复用 Codex 内置浏览器。已有账号、数据库、主密钥、端口和浏览器授权在升级时保留。
+
+Windows 采用预构建 ZIP、外部大小与 SHA-256 校验、包内逐文件校验，再分步安装。唯一维护的安装入口位于 [windows-customer-package](development/windows-customer-package/)；[安装指南](development/windows-customer-package/INSTALL-CODEX.md)和[通用 Codex 提示词](development/windows-customer-package/CODEX-PROMPT.zh-CN.md)随包交付，首次安装与旧版升级自动识别。多数据目录时由用户选择，不猜测或清空。
+
+对外发送仅保留邮件页 Gmail 批量发送，需用户具体确认；MCP 不提供发送操作。后台表格同步继续保留授权、账号隔离和失败恢复。同步仅由新增推荐、暂停、结束或用户手动操作触发，普通读取和重启不重新发布已完成表格。
+
+## 构建与检查
+
+固定使用 Node.js **26.7.0**、pnpm **10.32.1** 和根目录锁文件。Windows 第三方原生依赖需要对应 C++ 构建工具。业务代码、网页、适配器、契约和测试均由当前项目独立管理。
 
 ```powershell
 pnpm install --frozen-lockfile
+pnpm check:independence
+pnpm build:tables
 pnpm typecheck
+pnpm check:contracts
+pnpm build:ui
 pnpm test:app
+pnpm test:opencli
+node docs/migration/verify-handoff.mjs
 ```
 
-原生和实际安装测试需要显式提供真实候选、旧版本、数据库对照及已安装组件。测试跳过不计为通过。工作台、MCP UI、Library 和主程序必须配套构建，不能只替换一个可执行文件。
+原生安装和真实平台检查需要明确提供测试环境与真实候选。测试跳过不计为通过；进程存在、端口在线或返回 URL 不能代替状态卡、工作台和动态表格验收。构建参数与完成条件见 development/README.md。
 
-## 项目状态
-
-本仓库目前保持私有，尚未对项目整体授予开源许可。第三方组件的许可证和声明保留在相应目录中。
+本仓库尚未对项目整体授予开源许可。第三方许可证与声明保留在所属目录中；源码推送不代表切换生产下载或云端部署。

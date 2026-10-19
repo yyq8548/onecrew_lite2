@@ -35,6 +35,10 @@ function generic(platform: string, input: unknown): CreatorSearchHit {
   const candidate = z.url().safeParse(source);
   if (!candidate.success || Buffer.byteLength(source) > 2048) invalid();
   const url = new URL(source);
+  if (["google", "yahoo"].includes(platform) && url.protocol === "http:" && !url.username && !url.password && !url.port
+    && ["youtube.com", "www.youtube.com", "x.com", "www.x.com", "twitter.com", "www.twitter.com", "douyin.com", "www.douyin.com"].includes(url.hostname)) {
+    url.protocol = "https:"; source = url.href;
+  }
   const hosts: Readonly<Record<string, readonly string[]>> = { youtube: ["youtube.com", "www.youtube.com"], twitter: ["x.com", "www.x.com", "twitter.com", "www.twitter.com"], instagram: ["instagram.com", "www.instagram.com"], facebook: ["facebook.com", "www.facebook.com", "m.facebook.com"], linkedin: ["linkedin.com", "www.linkedin.com"], reddit: ["reddit.com", "www.reddit.com"], douyin: ["douyin.com", "www.douyin.com"], weibo: ["weibo.com", "www.weibo.com", "s.weibo.com"], tieba: ["tieba.baidu.com"] };
   const host = url.hostname;
   const webHost = ["google", "yahoo"].includes(platform) && host.includes(".") && ![".localhost", ".local", ".internal", ".test"].some(suffix => host.endsWith(suffix)) && isIP(host.replace(/^\[|\]$/gu, "")) === 0;

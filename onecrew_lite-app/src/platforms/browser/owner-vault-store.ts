@@ -114,6 +114,18 @@ export class OwnerPlatformVaultStore {
       const check = new DatabaseSync(paths.vaultPath, { readOnly: true }); try { for (const record of records) { const query = check.prepare(`SELECT * FROM ${record.table} WHERE id=?`); query.setReadBigInts(true); if (JSON.stringify(query.get(record.id), (_, item) => typeof item === "bigint" ? `${item}n` : item) !== record.bytes) throw new Error("platform_store.source_changed"); } } finally { check.close(); }
     };
   }
+  // 恢复待办属于业务库；仅在实际执行恢复时读取和校验平台凭据。
+  async readCreator<T>(context: AccountContext, callback: (creator: DatabaseSync) => T): Promise<T> {
+    return this.#serialized(context, async () => {
+      this.#lease.assertOwned(); this.#accounts.assertCurrent(context);
+      const connection = await this.#directories.platformStore(context), directory = await this.#directories.accountDirectory(context);
+      await OwnerPlatformVaultStore.recoverStorage(directory.directory, connection.database);
+      connection.assertOwned(); directory.assertOwned(); this.#accounts.assertCurrent(context);
+      const value = synchronous(callback(connection.database));
+      connection.assertOwned(); directory.assertOwned(); this.#accounts.assertCurrent(context);
+      return value;
+    });
+  }
   async read<T>(context: AccountContext, callback: (scope: OwnerPlatformReadScope) => T): Promise<T> { return this.#serialized(context, async () => { const prepared = await this.#prepare(context), key = randomBytes(32), vault = new DatabaseSync(":memory:"); try { vault.exec(readStorageSql("vault-schema.sql") + ";PRAGMA user_version=4"); const check = await this.#copy(prepared.manifest, prepared.directory, vault, key); await prepared.assertCurrent(); check(); const value = synchronous(callback({ vault, key, creator: prepared.creator, manifest: prepared.manifest })); await prepared.assertCurrent(); return value; } finally { key.fill(0); vault.close(); } }); }
   async inspect<T>(context: AccountContext, callback: (scope: OwnerPlatformMetadataScope) => T): Promise<T> { return this.#serialized(context, async () => {
     const prepared = await this.#prepare(context), manifest = prepared.manifest, scope: OwnerPlatformMetadataScope = { creator: prepared.creator, manifest, profiles: [], services: [] };

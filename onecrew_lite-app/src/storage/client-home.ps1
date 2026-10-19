@@ -8,7 +8,9 @@ while ($null -ne $current) {
 }
 $acl = [IO.Directory]::GetAccessControl($item.FullName)
 $sid = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
-if ($acl.GetOwner([Security.Principal.SecurityIdentifier]).Value -ne $sid) { throw 'client_home_owner_invalid' }
+$isAdministrator = @([Security.Principal.WindowsIdentity]::GetCurrent().Claims | Where-Object { $_.Value -eq 'S-1-5-32-544' -and $_.Type -in @([Security.Claims.ClaimTypes]::GroupSid, [Security.Claims.ClaimTypes]::DenyOnlySid) }).Count -gt 0
+$owner = $acl.GetOwner([Security.Principal.SecurityIdentifier]).Value
+if ($owner -ne $sid -and -not ($isAdministrator -and $owner -eq 'S-1-5-32-544')) { throw 'client_home_owner_invalid' }
 $trusted = @($sid, 'S-1-5-18', 'S-1-5-32-544')
 $writes = [Security.AccessControl.FileSystemRights]::Write -bor [Security.AccessControl.FileSystemRights]::Delete -bor [Security.AccessControl.FileSystemRights]::DeleteSubdirectoriesAndFiles -bor [Security.AccessControl.FileSystemRights]::ChangePermissions -bor [Security.AccessControl.FileSystemRights]::TakeOwnership
 foreach ($rule in $acl.GetAccessRules($true, $true, [Security.Principal.SecurityIdentifier])) {

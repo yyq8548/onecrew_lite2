@@ -136,13 +136,18 @@ export class AccessInstallationVerifier {
     signal.throwIfAborted();
     if (credential.metadata.status !== "active") throw new AccessVerificationError("access.revoked", 401);
     if (JSON.stringify(credential.metadata).includes(credential.exposeBearer())) throw new AccessVerificationError("access.invalid_response");
-    const installation = installationSchema.safeParse(await this.#request(`/installations/${credential.metadata.installation_id}`, credential, signal));
+    const [installationResponse, probeResponse, profileResponse] = await Promise.all([
+      this.#request(`/installations/${credential.metadata.installation_id}`, credential, signal),
+      this.#request("/creator-sync/credential", credential, signal),
+      this.#request("/me", credential, signal),
+    ]);
+    const installation = installationSchema.safeParse(installationResponse);
     if (!installation.success) throw new AccessVerificationError("access.invalid_response");
     if (identityKeys.some(key => installation.data.installation[key] !== credential.metadata[key])) throw new AccessVerificationError("access.invalid_response");
     if (installation.data.installation.status !== "active") return this.#nonActive(credential, "revoked");
-    const probe = probeSchema.safeParse(await this.#request("/creator-sync/credential", credential, signal));
+    const probe = probeSchema.safeParse(probeResponse);
     if (!probe.success || identityKeys.some(key => probe.data[key] !== credential.metadata[key])) throw new AccessVerificationError("access.invalid_response");
-    const profile = z.object({ id: z.string().min(1), email: z.email() }).strict().safeParse(await this.#request("/me", credential, signal));
+    const profile = z.object({ id: z.string().min(1), email: z.email() }).strict().safeParse(profileResponse);
     if (!profile.success || profile.data.id !== credential.metadata.access_user_id) throw new AccessVerificationError("access.invalid_response");
     const bearer = credential.exposeBearer();
     if (profile.data.id.includes(bearer) || profile.data.email.includes(bearer)) throw new AccessVerificationError("access.invalid_response");

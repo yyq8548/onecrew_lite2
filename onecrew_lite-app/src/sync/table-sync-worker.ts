@@ -34,7 +34,6 @@ export class TableSyncWorker {
   readonly #gate: DiscoveryAdmissionGate;
   readonly #capture: TableSyncCaptureSource;
   readonly #blocksBackendSync: () => boolean;
-  readonly #startupReconciled = new Set<string>();
   #retryAfter = 0n;
   #closed = false;
   constructor(accounts: AccountContextService, store: TableSyncStore, client: TableSyncClient, gate: DiscoveryAdmissionGate, capture: TableSyncCaptureSource, blocksBackendSync: () => boolean) {
@@ -120,12 +119,7 @@ export class TableSyncWorker {
     using release = { [Symbol.dispose]: () => held.release() };
     if (this.#blocksBackendSync()) return;
     await this.#store.exclusive(context, async (state, checkpoint) => {
-      const user = context.principal.user.id, startupKey = JSON.stringify(owner(context));
-      if (!this.#startupReconciled.has(startupKey)) {
-        let changed = false;
-        for (const value of Object.values(state.tables)) if (value.enabled && ["synced", "up_to_date"].includes(value.status)) { value.status = "waiting"; value.next_check = 0n; changed = true; }
-        if (changed) await checkpoint(); this.#startupReconciled.add(startupKey);
-      }
+      const user = context.principal.user.id;
       if (!Object.values(state.tables).some(value => tableSyncQueued(value, now()))) return;
       const admission = await this.#capabilities(context).then(cap => ({ cap, consent: consent(cap) })).then(value => ({ ok: true as const, value }), error => ({ ok: false as const, error }));
       if (!admission.ok) {

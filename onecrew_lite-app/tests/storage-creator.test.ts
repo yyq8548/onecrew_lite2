@@ -1,13 +1,11 @@
 import assert from "node:assert/strict";
-import { execFile } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { join } from "node:path";
-import { homedir } from "node:os";
 import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
-import { promisify } from "node:util";
+import { extractCreatorHistory } from "./creator-history.ts";
 import { creatorSchemaSnapshot, initializeNewCreatorDatabase, normalizeCreatorSchemaSql, validateCreatorSchema90 } from "../src/storage/creator-schema.ts";
 import { inspectLegacyDatabase } from "../src/storage/legacy-sqlite.ts";
 import { createPrivateDirectory } from "../src/storage/private-backup.ts";
@@ -15,14 +13,9 @@ import { createPrivateDirectory } from "../src/storage/private-backup.ts";
 const schema = ["creator-schema90.sql", "creator-indexes90.sql", "creator-triggers90.sql"]
   .map((file) => readFileSync(new URL(`../src/storage/${file}`, import.meta.url), "utf8")).join("\n");
 
-test("new Creator SQLite matches the original Rust constructor across every schema object", async () => {
-  const directory = await mkdtemp(fileURLToPath(new URL("../../.scratch/storage-creator-", import.meta.url)));
+test("new Creator SQLite matches the frozen schema contract across every schema object", async () => {
+  const directory = await extractCreatorHistory();
   try {
-    const cargo = process.env.CARGO ?? join(homedir(), ".cargo", "bin", process.platform === "win32" ? "cargo.exe" : "cargo");
-    await promisify(execFile)(cargo, ["test", "--locked", "-p", "onecrew-creator-runtime", "export_schema90_node_compatibility_fixture", "--", "--nocapture"], {
-      cwd: fileURLToPath(new URL("../../onecrew_lite-rust", import.meta.url)), windowsHide: true, timeout: 600_000, maxBuffer: 1024 * 1024,
-      env: { ...process.env, CARGO_INCREMENTAL: "0", ONECREW_SCHEMA_ORACLE_DIRECTORY: directory },
-    });
     const privatePath = await createPrivateDirectory(join(directory, "private"));
     const path = join(privatePath, "creator.sqlite");
     await initializeNewCreatorDatabase(path);
