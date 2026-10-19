@@ -33,7 +33,7 @@ Library 的统一安装包网页使用 pnpm --filter onecrew_lite_tables build:w
 
 Windows 必须执行真实原生安装、升级、退出、数据保留、日常 Chrome 身份授权和页面验证。Mac ARM 与 Mac Intel 分别记录，未执行的项目保持未完成。候选产物保留 productionReady: false，直到全部发布条件通过。
 
-Windows 客户安装流程只维护 development/windows-customer-package：预构建 ZIP、外部大小与 SHA-256 校验、包内 SHA256SUMS.json 校验、自动发现首次安装或原目录、分步安装主程序与配套插件。安装命令和通用提示词分别保存在 INSTALL-CODEX.md 与 CODEX-PROMPT.zh-CN.md。R8.1 验证及包哈希见 docs/migration/28-sync-and-table-loading-windows.md；私有验收日志和成品包不提交源码仓库。
+Windows 客户安装流程只维护 development/windows-customer-package：预构建 ZIP、外部大小与 SHA-256 校验、包内 SHA256SUMS.json 校验、自动发现首次安装或原目录、分步安装主程序与配套插件。安装命令和通用提示词分别保存在 INSTALL-CODEX.md 与 CODEX-PROMPT.zh-CN.md。当前安装包和配套校验文件放在仓库根目录的 windows installer，并同步发布到 GitHub Releases；私有验收日志不提交仓库。
 
 对外发送只保留邮件页 Gmail 批量发送，发送前必须获得用户的具体确认。MCP 不提供发送操作。验证期间不发送邮件，不接受新的远端同步协议。
 

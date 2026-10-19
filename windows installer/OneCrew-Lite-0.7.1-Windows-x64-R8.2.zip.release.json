@@ -1,0 +1,97 @@
+{
+  "product": "onecrew_lite",
+  "version": "0.7.1",
+  "revision": "R8.2",
+  "target": "win32-x64",
+  "archive": "OneCrew-Lite-0.7.1-Windows-x64-R8.2.zip",
+  "bytes": 57224624,
+  "sha256": "2367eee52a95f216fd1b4f7a3bd7d3a2d81f3650e50f677fa8fd231318d26f9e",
+  "executableSha256": "041ac7c0ebab7770d24c437560ca2090f2fce532d2ab6a55298f305c88fafd7b",
+  "payloadSha256": "48df15f9f6725d6bc04496fa4a76c1e5092d8de3acf4d13d5a85461168713e03",
+  "source": {
+    "repository": "https://github.com/yyq8548/onecrew_lite2.git",
+    "commit": "8b00f70a1d0c7b0d94326a190757b5a6a62bc12d",
+    "gitTree": "fdd5c0c0b99aad7f505e139f6ccbc8823bb37b7f",
+    "clean": true,
+    "buildSourceTreeSha256": "eecfaaf4a902048abccef88a05a396b253b31d930750356a91075327e6cefed7",
+    "lockfileSha256": "e212335217aae1358a6ac6b64810b584f97a80d430f534e3335eaf8bf44e7349"
+  },
+  "verifiedFiles": 526,
+  "payloadFiles": 1093,
+  "installationGuide": "OneCrew-Lite/INSTALL-CODEX.md",
+  "productionReady": false,
+  "verifiedAt": "2026-10-19T12:32:59.756Z",
+  "packagingMethod": "R3 prebuilt ZIP with external size/SHA-256, full internal SHA256SUMS.json, stepwise native PowerShell install and automatic installation discovery",
+  "sourceRemoteMatched": true,
+  "checks": {
+    "frozenDependencies": true,
+    "independence": true,
+    "typecheck": true,
+    "contracts": true,
+    "libraryAndUiRebuilt": true,
+    "payloadFilesVerified": 1093,
+    "native": {
+      "tests": 6,
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0,
+      "evidence": {
+        "initial": "native.log",
+        "successfulInitialCases": 5,
+        "retry": "native-mcp-retry.log",
+        "successfulRetryCases": 1,
+        "note": "The installed-MCP check was rerun from a shorter exact-source checkout after Windows rejected the overlong isolated cache working directory. Source and executable remained unchanged."
+      }
+    },
+    "guide": [
+      {
+        "mode": "fresh",
+        "passed": true,
+        "ms": 66610,
+        "binaryMatched": true,
+        "dataDirectoryPreserved": true,
+        "keyPreserved": true,
+        "pluginFresh": true,
+        "sameBuildReused": true
+      },
+      {
+        "mode": "upgrade-from-R3",
+        "passed": true,
+        "ms": 50210,
+        "binaryMatched": true,
+        "dataDirectoryPreserved": true,
+        "keyPreserved": true,
+        "pluginFresh": true,
+        "portPreserved": true,
+        "runningR3Replaced": true
+      }
+    ],
+    "r3CmdLaunchersByteIdentical": true,
+    "internalFilesVerified": 526
+  },
+  "acceptance": {
+    "macArm": "not_completed",
+    "macIntel": "not_completed",
+    "customerHostCardJointUi": "not_completed",
+    "overlongCustomCodexCachePath": "not_completed",
+    "licenseTextMissing": [
+      "@hono/zod-validator@0.7.6",
+      "@onecrew/contracts@0.1.1",
+      "@onecrew/runtime-contracts@0.7.1",
+      "binary@0.3.0",
+      "chainsaw@0.1.0",
+      "kysely-pglite-dialect@1.3.1",
+      "onecrew-web@0.7.1",
+      "onecrew_lite-app@0.0.0",
+      "onecrew_lite_tables@0.1.4",
+      "react-remove-scroll-bar@2.3.8",
+      "snowball-stemmers@0.6.0"
+    ],
+    "productionReady": false
+  },
+  "scope": {
+    "currentLiveInstallationModified": false,
+    "searchExecuted": false,
+    "mailSent": false
+  }
+}

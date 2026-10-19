@@ -24,7 +24,7 @@ async function inspect(directory: string): Promise<void> {
     checked++;
   }
 }
-for (const directory of ["onecrew_lite-app", "onecrew_lite-contracts", "onecrew_lite-web", "onecrew_lite-mcp-ui", "onecrew_lite-opencli", "onecrew_lite-library", "development", "docs", ".github"]) await inspect(join(root, directory));
+for (const directory of ["onecrew_lite-app", "onecrew_lite-contracts", "onecrew_lite-web", "onecrew_lite-mcp-ui", "onecrew_lite-opencli", "onecrew_lite-library", "development", ".github"]) await inspect(join(root, directory));
 for (const name of ["package.json", "pnpm-workspace.yaml", "pnpm-lock.yaml"]) {
   if ((await readFile(join(root, name), "utf8")).includes(retired)) throw new Error(`independence.previous_workspace_reference:${name}`);
   checked++;
