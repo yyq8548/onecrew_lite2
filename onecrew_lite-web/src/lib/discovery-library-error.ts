@@ -2,6 +2,7 @@
 export function discoveryLibraryFailureKey(error: unknown) {
   const code = error instanceof Error ? error.message : error;
   switch (code) {
+    case "access.remote_unavailable": return "libraryAccessUnavailable";
     case "library_runtime_unavailable":
     case "library_request_unavailable":
     case "library_service_unavailable": return "libraryUnavailable";

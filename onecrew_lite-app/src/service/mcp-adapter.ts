@@ -25,7 +25,7 @@ const bootstrap = [
   { name: "onecrew_login", description: "Begin Access login. Open authorize_url and wait for the user to log in; never request passwords or callback secrets.", inputSchema: noArguments },
   { name: "onecrew_login_cancel", description: "Cancel the current Access authorization.", inputSchema: noArguments },
   { name: "onecrew_logout", description: "Revoke the local Access session.", inputSchema: noArguments },
-  { name: "onecrew_web", description: "Return one-use workbench and Library URLs and display their current read-only status card.", inputSchema: noArguments },
+  { name: "onecrew_web", description: "Return one-use workbench and Library URLs and mount their read-only status card. To show pages, open these URLs in Codex's in-app browser, show its right panel with visibility.set(true), select each target tab and read rendered content. Finish with the workbench selected and preserve the table tab. markDeliverable only preserves tabs; verify panel visibility and selected content before reporting displayed. Report missing tools, queued opens or read failures as incomplete.", inputSchema: noArguments },
 ];
 const sessionReply = z.strictObject({ session_id: z.string(), surface: mcpSurface, account_id: z.string(), auth_epoch: z.string() });
 const workspaceReply = z.strictObject({ url: z.url(), instance_id: z.uuid() });

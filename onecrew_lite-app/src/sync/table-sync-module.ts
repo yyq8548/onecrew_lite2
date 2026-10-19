@@ -16,20 +16,26 @@ export function createTableSyncModule(identities: UnifiedAccountService, databas
   let stopped = false;
   let pending: Promise<void> | undefined;
   let error: unknown;
+  let retryAt = 0;
   const wake = () => {
-    if (stopped || pending || !accounts.currentIfActive()) return;
-    const task = (async () => { const context = await identities.refresh(); await worker.tick(context); })();
+    const current = accounts.currentIfActive();
+    if (stopped || pending || !current || performance.now() < retryAt) return;
+    const task = (async () => {
+      if (!await worker.hasQueued(current) || stopped) return;
+      const context = await identities.refresh();
+      await worker.tick(context);
+    })();
     pending = task.then(() => { error = undefined; pending = undefined; }, failure => {
-      error = failure; pending = undefined;
+      error = failure; pending = undefined; retryAt = performance.now() + 300_000;
       console.error("Dynamic table synchronization stopped:", failure);
     });
   };
   operations.register("onecrew_table_sync_status", z.object({ campaignId: z.string() }).strict(), (input, context) => worker.status(context, input.campaignId));
   operations.register("onecrew_table_sync_configure", z.object({ input: z.object({ campaign_id: z.string(), enabled: z.boolean() }).strict() }).strict(), async ({ input }, context) => {
-    const result = await worker.configure(context, input.campaign_id, input.enabled); wake(); return result;
+    const result = await worker.configure(context, input.campaign_id, input.enabled); retryAt = 0; wake(); return result;
   });
   operations.register("onecrew_table_sync_consent", z.object({ input: z.object({ action: z.enum(["grant", "revoke"]), operation_id: z.uuid(), policy_fingerprint: z.string().nullable() }).strict() }).strict(), async ({ input }, context) => {
-    const result = await worker.changeConsent(context, input); wake(); return result;
+    const result = await worker.changeConsent(context, input); retryAt = 0; wake(); return result;
   });
   const timer = setInterval(wake, 30_000); timer.unref();
   return {

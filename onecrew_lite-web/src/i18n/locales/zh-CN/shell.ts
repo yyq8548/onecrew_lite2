@@ -345,6 +345,7 @@ const shell = {
     processEvidenceGroup: "搜索过程证据表（当前显示 {{count}} 条命中）",
     librarySynced: "已同步 {{total}} 条线索 · 本次新增 {{added}} 条",
     librarySyncFailed: "动态表格同步未完成。请检查本地表格服务的连接和当前账号，然后重试；搜索结果仍保存在 Campaign。",
+    libraryAccessUnavailable: "暂时无法连接 OneCrew 远端身份服务，本次操作未通过授权检查。登录和搜索结果已保留，请稍后重试。",
     libraryUnavailable: "无法连接 Library。请打开 Library，等待服务就绪后点击同步新结果；无需重新搜索，结果仍保存在 Campaign。",
     libraryAccountRequired: "Library 与 onecrew_lite 登录了不同账号。请在 Library 切换到同一个账号，再同步已有结果。搜索进度已保留。",
     libraryLoginRequired: "Library 尚未登录或登录已失效。请在 Library 完成同一账号的登录，再继续原任务或同步已有结果。",

@@ -348,6 +348,7 @@ const shell = {
     processEvidenceGroup: "Search process evidence ({{count}} hits shown)",
     librarySynced: "Synced {{total}} leads · {{added}} added this time",
     librarySyncFailed: "The dynamic table sync did not finish. Check the local table service connection and current account, then retry. The Campaign still holds the search results.",
+    libraryAccessUnavailable: "OneCrew's remote identity service is temporarily unreachable, so this operation could not be authorized. Your saved login and search results are retained. Retry later.",
     libraryUnavailable: "Cannot connect to Library. Open Library, wait until it is ready, then sync new results. Your results remain in the Campaign; no new search is needed.",
     libraryAccountRequired: "Library and onecrew_lite use different accounts. Switch Library to the same account, then sync existing results. Search progress is preserved.",
     libraryLoginRequired: "Library is signed out or its login has expired. Sign in to Library with the same account, then continue the existing task or sync its results.",

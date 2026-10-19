@@ -33,9 +33,12 @@ test("real empty Vault cannot enable remote sync; disabled local queue and missi
   // 读取真实仓储中的当前任务状态；没有运行任务时也不代替服务端 consent。
   const worker = new TableSyncWorker(identities.contexts, store, new TableSyncClient(identities), gate, capture, () => { const count = sqlite.prepare("SELECT count(*) AS count FROM discovery_campaigns WHERE phase='active'").get()?.count; if (typeof count !== "number") throw new Error("Invalid native campaign count"); return count > 0; });
   try {
+    assert.equal(await worker.hasQueued(context), false);
     await worker.registerResult(context, "campaign");
+    assert.equal(await worker.hasQueued(context), true);
     await worker.configure(context, "campaign", false);
     await worker.searchSettled(context, "campaign");
+    assert.equal(await worker.hasQueued(context), false);
     await worker.tick(context);
     await store.exclusive(context, async state => { const value = state.tables[tableSyncKey(context.principal.user.id, "campaign")]!; assert.equal(value.enabled, false); assert.equal(value.status, "disabled"); assert.equal(value.pending, null); });
     await assert.rejects(capture.capture(context, "campaign", { version_id: randomUUID(), source_instance_id: randomUUID(), consent_id: randomUUID(), capture_started_at: new Date().toISOString() }), /recommendation_table_missing/);

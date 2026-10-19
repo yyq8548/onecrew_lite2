@@ -141,7 +141,8 @@ export class UnifiedAccountService implements VerifiedMailIdentityProvider {
       proof.assertFresh();
       return this.#context;
     } catch (error) {
-      this.invalidate();
+      // 临时远端失败仍拒绝本次准入，但不撤销已验证的页面和运行中任务。
+      if (!(error instanceof AccessVerificationError && error.code === "access.remote_unavailable")) this.invalidate();
       if (error instanceof AccessNonActiveError) {
         if (!this.#credentialStore) throw new AccessVerificationError("access.credential_cleanup_unavailable");
         await this.#credentialStore.clear(error.sourceFingerprint);

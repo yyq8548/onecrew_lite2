@@ -113,6 +113,11 @@ export class TableSyncWorker {
     });
   }
   #disable(state: TableSyncState): void { for (const value of Object.values(state.tables)) { value.enabled = false; value.status = "consent_revoked"; } }
+  async hasQueued(context: AccountContext): Promise<boolean> {
+    this.#assert(context);
+    if (this.#blocksBackendSync()) return false;
+    return this.#store.exclusive(context, async state => Object.values(state.tables).some(value => tableSyncQueued(value, now())));
+  }
   async tick(context: AccountContext): Promise<void> {
     this.#assert(context);
     const held = await this.#gate.acquire(context, context.signal);

@@ -12,9 +12,13 @@ credentials and callback secrets inside the authorization owner.
 
 Call `onecrew_web` to mount the read-only status card and obtain workbench
 `url` and `library_url`. Open both verified URLs in Codex's in-app browser,
-reusing tabs. Respect explicit no-browser, no-card or text-only requests.
-A queued open request proves only that it was queued. Verify current content
-before reporting the workbench, card and matching Library table healthy.
+reusing tabs. Show the right browser panel with `visibility.set(true)`, select
+each destination tab and read its rendered content. Finish with the workbench
+tab selected and keep the matching results table tab; use Library when no plan
+exists. `markDeliverable()` preserves a tab but does not show the panel or select
+that tab. Report displayed only after checking panel visibility, the selected
+tab and rendered content. Report missing tools, queued requests and read failures
+as incomplete. Respect explicit no-browser, no-card or text-only requests.
 Report `library_error`, stale data and missing capabilities accurately.
 Use a server-returned table URL for the current Campaign; table identifiers
 and account readiness require current evidence.

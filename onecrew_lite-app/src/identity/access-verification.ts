@@ -57,10 +57,12 @@ export class VerifiedMigrationCredential {
 export class AccessVerificationError extends Error {
   readonly code: string;
   readonly status: number;
-  constructor(code: string, status = 503) {
+  readonly details: Readonly<{ endpoint: string; http_status?: number; elapsed_ms?: number; transport_code?: string }> | undefined;
+  constructor(code: string, status = 503, details?: AccessVerificationError["details"]) {
     super(code);
     this.code = code;
     this.status = status;
+    this.details = details;
   }
 }
 
@@ -84,11 +86,19 @@ export class AccessInstallationVerifier {
   constructor(onNonActive?: () => void) { this.#onNonActive = onNonActive; }
   async #response(path: string, credential: AccessInstallationCredential, signal: AbortSignal): Promise<{ status: number; value?: unknown }> {
     signal.throwIfAborted();
+    const started = performance.now(), endpoint = path.startsWith("/installations/") ? "/installations/{id}" : path;
+    const unavailable = (error: unknown) => {
+      const cause = error instanceof Error ? error.cause : undefined;
+      const code = cause && typeof cause === "object" && "code" in cause ? cause.code : undefined;
+      return new AccessVerificationError("access.remote_unavailable", 503, { endpoint, elapsed_ms: Math.round(performance.now() - started),
+        ...(typeof code === "string" && /^[A-Z][A-Z0-9_]{0,63}$/u.test(code) ? { transport_code: code } :
+          error instanceof Error && ["AbortError", "TimeoutError", "TypeError"].includes(error.name) ? { transport_code: error.name } : {}) });
+    };
     const response = await fetch(`https://api.onecrewai.io${path}`, {
       headers: { authorization: `Bearer ${credential.exposeBearer()}`, accept: "application/json", "cache-control": "no-store",
         ...(path === "/creator-sync/credential" ? { "X-OneCrew-Creator-Bundle-Version": "3" } : {}) },
       redirect: "manual", signal: AbortSignal.any([signal, AbortSignal.timeout(10_000)]),
-    }).then(value => value, () => { throw new AccessVerificationError("access.remote_unavailable"); });
+    }).then(value => value, error => { throw unavailable(error); });
     if (!response.ok) {
       await response.body?.cancel();
       return { status: response.status };
@@ -99,7 +109,7 @@ export class AccessInstallationVerifier {
     let size = 0;
     try {
       for (;;) {
-        const part = await reader.read().then(value => value, () => { throw new AccessVerificationError("access.remote_unavailable"); });
+        const part = await reader.read().then(value => value, error => { throw unavailable(error); });
         if (part.done) break;
         size += part.value.length;
         if (size > 64 * 1024) throw new AccessVerificationError("access.invalid_response");
@@ -129,7 +139,8 @@ export class AccessInstallationVerifier {
     if (response.status === 200) return response.value;
     const failure = classifyAccessHttpFailure(response.status, path.startsWith("/installations/"));
     if (failure === "non_active") return this.#nonActive(credential);
-    throw new AccessVerificationError(failure === "unavailable" ? "access.remote_unavailable" : "access.protocol_mismatch");
+    throw new AccessVerificationError(failure === "unavailable" ? "access.remote_unavailable" : "access.protocol_mismatch", 503,
+      { endpoint: path.startsWith("/installations/") ? "/installations/{id}" : path, http_status: response.status });
   }
 
   async #verify(credential: AccessInstallationCredential, signal: AbortSignal) {
