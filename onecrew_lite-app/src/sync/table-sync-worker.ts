@@ -35,6 +35,7 @@ export class TableSyncWorker {
   readonly #capture: TableSyncCaptureSource;
   readonly #blocksBackendSync: () => boolean;
   #retryAfter = 0n;
+  #attemptSignal: AbortSignal | undefined;
   #closed = false;
   constructor(accounts: AccountContextService, store: TableSyncStore, client: TableSyncClient, gate: DiscoveryAdmissionGate, capture: TableSyncCaptureSource, blocksBackendSync: () => boolean) {
     this.#accounts = accounts; this.#store = store; this.#client = client; this.#gate = gate; this.#capture = capture; this.#blocksBackendSync = blocksBackendSync;
@@ -43,7 +44,7 @@ export class TableSyncWorker {
   async #send(context: AccountContext, input: TableSyncRequest) {
     this.#assert(context);
     if (!["consent", "set_consent"].includes(input.operation) && now() < this.#retryAfter) throw new TableSyncError("table_sync_backoff");
-    const reply = await this.#client.send(owner(context), input, context.signal);
+    const reply = await this.#client.send(owner(context), input, this.#attemptSignal ? AbortSignal.any([context.signal, this.#attemptSignal]) : context.signal);
     this.#assert(context);
     if (reply.status === 429 || reply.status === 503) {
       const value = reply.retry_after && /^\d+$/u.test(reply.retry_after) ? creatorU64.safeParse(BigInt(reply.retry_after)) : null;
@@ -120,8 +121,10 @@ export class TableSyncWorker {
   }
   async tick(context: AccountContext): Promise<void> {
     this.#assert(context);
-    const held = await this.#gate.acquire(context, context.signal);
-    using release = { [Symbol.dispose]: () => held.release() };
+    const background = new AbortController();
+    const held = await this.#gate.acquire(context, context.signal, background);
+    this.#attemptSignal = background.signal;
+    using release = { [Symbol.dispose]: () => { this.#attemptSignal = undefined; held.release(); } };
     if (this.#blocksBackendSync()) return;
     await this.#store.exclusive(context, async (state, checkpoint) => {
       const user = context.principal.user.id;
