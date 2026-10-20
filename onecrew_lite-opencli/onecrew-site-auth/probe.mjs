@@ -218,7 +218,7 @@ export async function readSiteLogin(page, site) {
   urls.youtube = 'https://www.youtube.com/';
   if (!urls[site]) throw new Error('Unsupported authentication site');
   const target = await openProbePage(page, urls[site]);
-  const attempts = site === 'tiktok' ? 5 : 3;
+  const attempts = site === 'pinterest' ? 8 : site === 'tiktok' ? 5 : 3;
   for (let attempt = 0; attempt < attempts; attempt += 1) {
     // wait(n) can return as soon as the DOM is quiet, before account navigation
     // hydrates. Poll at fixed intervals so those early returns cannot exhaust it.
