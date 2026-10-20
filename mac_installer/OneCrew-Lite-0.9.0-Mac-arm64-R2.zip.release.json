@@ -1,0 +1,40 @@
+{
+  "product": "onecrew_lite",
+  "version": "0.9.0",
+  "revision": "R2",
+  "target": "darwin-arm64",
+  "sourceCommit": "12fa98ea460a3c33457647157f1245e61db1ce9c",
+  "sourceTreeSha256": "98eff4966186f68ce47498daf158481ae07988ba05cd4edb4399420b54e3851e",
+  "dependencyLockSha256": "e212335217aae1358a6ac6b64810b584f97a80d430f534e3335eaf8bf44e7349",
+  "archive": "OneCrew-Lite-0.9.0-Mac-arm64-R2.zip",
+  "bytes": 61726587,
+  "sha256": "ce6b9ef0d70f0cd1260fc888146ad38790d67007835be7f35574412d41eb89a3",
+  "executableSha256": "80222155b1d186b553a80d60e0006757b7f03daa4e84a3d6c1e6407e8ac55095",
+  "executableBytes": 215475120,
+  "payloadSha256": "2ae6b000e7f2b20ebc97884fff54c4df7160539da9a4d394f234977116c26a87",
+  "nodeVersion": "v26.7.0",
+  "installationGuide": "OneCrew-Lite/INSTALL-CODEX.md",
+  "verifiedFiles": 521,
+  "companionPlugin": {
+    "versionPrefix": "0.9.0+codex.",
+    "expectedVersion": "Generated and verified by this binary on the target computer; suffix binds its paths and data directory."
+  },
+  "signature": "ad-hoc",
+  "notarized": false,
+  "productionReady": false,
+  "licenseTextMissing": [
+    "@hono/zod-validator@0.7.6",
+    "@onecrew/contracts@0.9.0",
+    "@onecrew/runtime-contracts@0.9.0",
+    "binary@0.3.0",
+    "chainsaw@0.1.0",
+    "kysely-pglite-dialect@1.3.1",
+    "onecrew-library-web@0.9.0",
+    "onecrew-web@0.9.0",
+    "onecrew_lite-app@0.9.0",
+    "onecrew_lite_tables@0.9.0",
+    "react-remove-scroll-bar@2.3.8",
+    "snowball-stemmers@0.6.0"
+  ],
+  "scope": "GitHub development candidate; no Access or production download manifest changed; Windows installer retained."
+}
