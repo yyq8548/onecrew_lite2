@@ -32,7 +32,7 @@ import { facebookIdentityPlan, facebookProfilePlan, facebookContactPlan } from "
 import { facebookRecentPlan, facebookReelPlan, facebookLanguagePlan, facebookNativeOriginalPlan } from "./facebook-language.ts";
 import { creatorProfileSource } from "./profile-source.ts";
 import { instagramProfileIdentityPlan, tiktokProfileIdentityPlan } from "./profile-identity.ts";
-import { creatorAuthProbe, decodeCreatorAuthStatus } from "./auth-status.ts";
+import { creatorAuthArguments, creatorAuthProbe, decodeCreatorAuthStatus, decodeCreatorWhoami } from "./auth-status.ts";
 import type { OpenCliAuthObservation } from "./auth-status.ts";
 import { openCliLoginPage } from "./login-pages.ts";
 
@@ -90,15 +90,17 @@ export class OpenCliReader {
     if (probe.addon && await this.#addons.state("onecrew-site-auth") !== "ready") return observed("unknown", "skipped", "auth_addon_required");
     if (!this.#registry.hasBrowserRead(probe.site, "whoami")) return observed("unknown", "skipped", "auth_probe_unavailable");
     const method = probe.full ? "full" : "quick";
-    const args = ["--profile", binding.profile, "auth", "status", "--site", probe.site, "--concurrency", "1", "--timeout", probe.full ? "20" : "5", "-f", "json", ...(probe.full ? ["--full"] : [])];
+    const args = creatorAuthArguments(platform, binding.profile);
     const output = await this.#run(args, probe.full ? 30000 : OPENCLI_PROBE_TIMEOUT, binding, false, probe.foregroundBrowser === true).then(value => ({ value }), error => ({ error }));
     if ("error" in output) {
+      if (probe.foregroundBrowser && output.error instanceof OpenCliError && output.error.code === "opencli_auth_required") return observed("not_logged_in", method, null);
       if (output.error instanceof OpenCliError && output.error.code === "opencli_timeout") return observed("error", method, "auth_probe_timeout");
       if (output.error instanceof OpenCliError && output.error.code === "opencli_risk_control") return observed("error", method, "auth_probe_rate_limited");
       throw output.error;
     }
     if (probe.addon) await this.#addons.requireReady("onecrew-site-auth");
-    const result = decodeCreatorAuthStatus(await parseOpenCliJson(output.value.stdout), probe.site);
+    const value = await parseOpenCliJson(output.value.stdout);
+    const result = probe.foregroundBrowser ? decodeCreatorWhoami(value) : decodeCreatorAuthStatus(value, probe.site);
     if (result.method !== "skipped" && result.method !== method) throw new OpenCliError("opencli_invalid_output");
     return observed(result.status, result.method, result.issue);
   }
