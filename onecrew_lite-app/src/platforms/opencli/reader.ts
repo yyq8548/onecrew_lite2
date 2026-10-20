@@ -31,6 +31,7 @@ import { linkedinProfilePlan, linkedinContentPlan, linkedinContactPlan, linkedin
 import { facebookIdentityPlan, facebookProfilePlan, facebookContactPlan } from "./facebook-profile.ts";
 import { facebookRecentPlan, facebookReelPlan, facebookLanguagePlan, facebookNativeOriginalPlan } from "./facebook-language.ts";
 import { creatorProfileSource } from "./profile-source.ts";
+import { instagramProfileIdentityPlan, tiktokProfileIdentityPlan } from "./profile-identity.ts";
 import { creatorAuthProbe, decodeCreatorAuthStatus } from "./auth-status.ts";
 import type { OpenCliAuthObservation } from "./auth-status.ts";
 import { openCliLoginPage } from "./login-pages.ts";
@@ -120,6 +121,7 @@ export class OpenCliReader {
   async #run(args: readonly string[], deadlineMs: number, binding?: VerifiedOpenCliBrowserBinding, webDiagnostics = false, foregroundBrowser = false) {
     if (binding) { binding.signal.throwIfAborted(); await binding.assertCurrent(); await this.#requireContextRoute(binding.profile); binding.signal.throwIfAborted(); }
     const output = await runTrustedOpenCliProcess(this.#installation, args, { deadlineMs, webDiagnostics, foregroundBrowser, configurationDirectory: this.#addons.configurationDirectory, ...(binding ? { signal: binding.signal } : {}) }).then(value => ({ value }), error => ({ error }));
+    if ("error" in output && output.error instanceof OpenCliError && output.error.code === "opencli_cancel_pending") throw output.error;
     if (binding) { binding.signal.throwIfAborted(); await binding.assertCurrent(); await this.#requireContextRoute(binding.profile); binding.signal.throwIfAborted(); }
     if ("error" in output) throw output.error;
     return output.value;
@@ -171,7 +173,7 @@ export class OpenCliReader {
     if (!this.#registry.hasBrowserRead(source.site, source.name)) throw new OpenCliError("opencli_read_command_unavailable");
     if (source.addon) await this.#addons.requireReady(source.addon);
     await this.checkBrowserProfile(binding);
-    const output = await this.#run(args, OPENCLI_READ_TIMEOUT, binding).then(value => value, error => {
+    const output = await this.#run(args, OPENCLI_READ_TIMEOUT, binding, false, platform === "instagram").then(value => value, error => {
       if (error instanceof OpenCliError && error.code === "opencli_command_failed" && error.exitCode === 66 && !["bilibili", "tiktok"].includes(platform) && !ambiguousCreatorSearchEmpty(platform)) return null;
       throw error;
     });
@@ -208,9 +210,11 @@ export class OpenCliReader {
     await this.checkBrowserProfile(binding);
   }
   youtubeVideoEvidence(binding: VerifiedOpenCliBrowserBinding, video: string) { return this.#native(binding, youtubeVideoEvidencePlan(video)); }
-  youtubeChannelContact(binding: VerifiedOpenCliBrowserBinding, channel: string) { return this.#native(binding, youtubeChannelContactPlan(channel)); }
+  youtubeChannelContact(binding: VerifiedOpenCliBrowserBinding, channel: string, task: string) { return this.#native(binding, youtubeChannelContactPlan(channel, task)); }
   nativeComments(binding: VerifiedOpenCliBrowserBinding, source: NativeOpenCliCommentSource, limit: number) { return this.#native(binding, nativeCommentsPlan(source, limit)); }
   tiktokPublicProfile(binding: VerifiedOpenCliBrowserBinding, username: string, authorId: string) { return this.#native(binding, tiktokProfilePlan(username, authorId)); }
+  tiktokProfileIdentity(binding: VerifiedOpenCliBrowserBinding, username: string) { return this.#native(binding, tiktokProfileIdentityPlan(username)); }
+  instagramProfileIdentity(binding: VerifiedOpenCliBrowserBinding, username: string) { return this.#native(binding, instagramProfileIdentityPlan(username)); }
   bilibiliPublicProfile(binding: VerifiedOpenCliBrowserBinding, mid: string) { return this.#native(binding, bilibiliProfilePlan(mid)); }
   instagramPublicProfile(binding: VerifiedOpenCliBrowserBinding, username: string, authorId: string) { return this.#native(binding, instagramProfilePlan(username, authorId)); }
   twitterPublicProfile(binding: VerifiedOpenCliBrowserBinding, handle: string) { return this.#native(binding, twitterProfilePlan(handle)); }
@@ -244,7 +248,7 @@ export class OpenCliReader {
   facebookSourceIdentity(binding: VerifiedOpenCliBrowserBinding, source: string) { return this.#native(binding, facebookIdentityPlan(source)); }
   facebookPublicProfile(binding: VerifiedOpenCliBrowserBinding, authorId: string) { return this.#native(binding, facebookProfilePlan(authorId)); }
   facebookNativeProfile(binding: VerifiedOpenCliBrowserBinding, authorId: string, source: string) { return this.#native(binding, facebookProfilePlan(authorId, source)); }
-  facebookContactPage(binding: VerifiedOpenCliBrowserBinding, authorId: string) { return this.#native(binding, facebookContactPlan(authorId)); }
+  facebookContactPage(binding: VerifiedOpenCliBrowserBinding, authorId: string, source?: string) { return this.#native(binding, facebookContactPlan(authorId, undefined, source)); }
   facebookNativeContactPage(binding: VerifiedOpenCliBrowserBinding, authorId: string, base: string, source: string) { return this.#native(binding, facebookContactPlan(authorId, { base, source })); }
   facebookNativeTargets(binding: VerifiedOpenCliBrowserBinding, authorId: string, base: string) { return this.#native(binding, facebookRecentPlan(authorId, base)); }
   facebookRecentLanguageUrls(binding: VerifiedOpenCliBrowserBinding, authorId: string) { return this.#native(binding, facebookRecentPlan(authorId)); }

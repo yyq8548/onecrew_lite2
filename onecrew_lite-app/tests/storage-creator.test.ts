@@ -6,7 +6,7 @@ import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { extractCreatorHistory } from "./creator-history.ts";
-import { creatorSchemaSnapshot, initializeNewCreatorDatabase, normalizeCreatorSchemaSql, validateCreatorSchema90 } from "../src/storage/creator-schema.ts";
+import { creatorSchemaSnapshot, initializeNewCreatorDatabase, normalizeCreatorSchemaSql, validateCreatorSchema, validateCreatorSchema90 } from "../src/storage/creator-schema.ts";
 import { inspectLegacyDatabase } from "../src/storage/legacy-sqlite.ts";
 import { createPrivateDirectory } from "../src/storage/private-backup.ts";
 
@@ -23,7 +23,13 @@ test("new Creator SQLite matches the frozen schema contract across every schema 
     const original = new DatabaseSync(join(directory, "creator-schema90-oracle.sqlite"), { readOnly: true });
     try {
       validateCreatorSchema90(original);
-      assert.deepEqual(creatorSchemaSnapshot(created), creatorSchemaSnapshot(original));
+      validateCreatorSchema(created);
+      assert.equal(created.prepare("PRAGMA user_version").get()!.user_version, 91);
+      const changed = new Set(["discovery_contact_observations", "discovery_web_source_reads"]);
+      const previous = creatorSchemaSnapshot(original);
+      assert.deepEqual(creatorSchemaSnapshot(created).tables, previous.tables);
+      assert.deepEqual(creatorSchemaSnapshot(created).objects.filter(item => !changed.has(String(item.name))), previous.objects.filter(item => !changed.has(String(item.name))));
+      assert.match(String(created.prepare("SELECT sql FROM sqlite_schema WHERE name='discovery_contact_observations'").get()!.sql), /'website','messenger','phone'/);
       const snapshot = creatorSchemaSnapshot(created);
       assert.equal(snapshot.tables.length, 79);
       assert.equal(snapshot.tables.reduce((count, table) => count + table.columns.length, 0), 661);

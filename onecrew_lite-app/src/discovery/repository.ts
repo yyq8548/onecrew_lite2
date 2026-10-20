@@ -26,6 +26,7 @@ import { pendingReview, pendingReviewLabels, type PendingReviewState } from "./p
 import type { DiscoveryContentClaim } from "./content-result.ts";
 import { DiscoveryPublicPageRepository, type DiscoveryPublicPageClaim, type FinishDiscoveryPublicPageInput } from "./public-page-repository.ts";
 import type { DiscoveryPublicPageInput } from "./contact-native.ts";
+import { recordYoutubeContactObservation, youtubeContactObservation } from "./youtube-contact-observation.ts";
 import { DiscoveryLanguageRepository } from "./language-repository.ts";
 import type { DiscoveryLanguageClaim, DiscoveryLanguageSample } from "./language-contracts.ts";
 import { DiscoveryContactLookupRepository, type DiscoveryContactLookup } from "./public-page-lookup.ts";
@@ -55,6 +56,7 @@ export class DiscoveryRepository {
     return this.#db.prepare(`SELECT c.id FROM discovery_candidates c JOIN discovery_campaigns d ON d.id=c.discovery_campaign_id
       WHERE d.id=?1 AND c.criteria_revision=d.current_revision AND c.verdict='qualified' ORDER BY c.id`).all(campaign).map(row => z.string().parse(row.id));
   }
+  recordYoutubeContactObservation(input: z.infer<typeof youtubeContactObservation>) { return this.#transaction(() => recordYoutubeContactObservation(this.#db, input)); }
   nextFacebookIdentity(campaign: string, excluded: readonly string[] = []) { return new DiscoveryFacebookIdentityRepository(this.#db).next(campaign, excluded); }
   claimFacebookIdentity(campaign: string, revision: number, hit: string) { return new DiscoveryFacebookIdentityRepository(this.#db).claim(campaign, revision, hit); }
   finishFacebookIdentity(claim: DiscoveryFacebookIdentityClaim, native: Record<string, unknown> | null, stop: string | null) { return new DiscoveryFacebookIdentityRepository(this.#db).settle(claim, native, stop); }

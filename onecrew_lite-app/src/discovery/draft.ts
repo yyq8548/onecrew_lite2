@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PINTEREST_MIN_MONTHLY_VIEWS_EXCLUSIVE } from "@onecrew/runtime-contracts/discovery";
 import { discoveryIntentProposal, proposedDiscoveryConstraint, validateDiscoveryIntent } from "./intent.ts";
 import type { DiscoveryIntentProposal } from "./intent.ts";
 import { discoveryPlanInput, type DiscoveryPlanInput } from "./contracts.ts";
@@ -88,6 +89,7 @@ export function buildDiscoveryDraft(raw: unknown, rawPlan: unknown, sources: rea
   if (plan.contact_search_terms.length > 6 || plan.contact_search_terms.some(term => !term.trim() || [...term].length > 50 || /["():|<>\\/@\p{Cc}]/u.test(term))) invalid("plan_invalid");
   const min = plan.intent.min_subscribers, threshold = input.min_followers_override ?? (min.state === "specified" ? min.value : min.state === "unrestricted" ? 0 : previous ? previous.criteria.min_subscribers ?? previous.criteria.min_followers ?? 0 : 2000);
   const criteria: Record<string, unknown> = { category: inheritedText("category"), region: "", language: inheritedText("language"), min_subscribers: threshold, requires_ai_tool_demo: false, requires_public_tool_url: false };
+  if (plan.scopes.some(scope => scope.platform === "pinterest")) criteria.pinterest_min_monthly_views_exclusive = previous?.criteria.pinterest_min_monthly_views_exclusive ?? PINTEREST_MIN_MONTHLY_VIEWS_EXCLUSIVE;
   if (plan.intent.other_hard_conditions.length) criteria.requirements = plan.intent.other_hard_conditions;
   criteria.contact_preference = "public_email_first";
   if (input.refinement !== null) criteria.refinement = input.refinement;

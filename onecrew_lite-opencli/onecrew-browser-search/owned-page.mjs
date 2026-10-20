@@ -2,38 +2,52 @@ import { restoreOriginalLanguage } from './original-language.mjs';
 
 // One owned target per navigation. Never retry another profile or close user tabs.
 export async function withOwnedSearchPage(page, task) {
-  let target;
+  let target, cancelled=false, creationUnconfirmed=false;
+  const targets=new Set();
+  const cancel=()=>{cancelled=true;};
+  const checkpoint=()=>{if(cancelled) throw new Error('ONECREW_BROWSER_CANCEL_REQUESTED');};
+  const step=async work=>{checkpoint();const result=await work();checkpoint();return result;};
+  process.once('SIGTERM',cancel);
   const wrapped = new Proxy(page, {get(object, key) {
     if (key === 'goto') return async (url, options = {}) => {
-      const next = await object.newTab(url);
+      const next = await step(async()=>{
+        creationUnconfirmed=true;
+        const created=await object.newTab(url);
+        creationUnconfirmed=false;
+        if(created) targets.add(created);
+        return created;
+      });
       if (!next) throw new Error('Search target unavailable');
       const previous = target;
       target = next;
-      await object.setActivePage(next);
-      if (previous) await object.closeTab(previous);
-      await object.sleep(Math.max(1, (options.settleMs || 0) / 1000));
-      await object.setActivePage(target);
-      await object.evaluate('(' + waitForSearchDocument.toString() + ')()');
+      await step(()=>object.setActivePage(next));
+      if (previous) await step(async()=>{await object.closeTab(previous);targets.delete(previous);});
+      await step(()=>object.sleep(Math.max(1, (options.settleMs || 0) / 1000)));
+      await step(()=>object.setActivePage(target));
+      await step(()=>object.evaluate('(' + waitForSearchDocument.toString() + ')()'));
       const destination = new URL(url);
       if (destination.hostname === 'www.youtube.com' && destination.pathname === '/results') {
-        await object.evaluate('(' + waitForYoutubeSearch.toString() + ')(' + JSON.stringify(destination.searchParams.get('search_query')) + ')');
+        await step(()=>object.evaluate('(' + waitForYoutubeSearch.toString() + ')(' + JSON.stringify(destination.searchParams.get('search_query')) + ')'));
       }
       if (destination.hostname === 'www.facebook.com' && destination.pathname.startsWith('/search/')) {
-        await object.evaluate('(' + waitForFacebookSearch.toString() + ')()');
+        await step(()=>object.evaluate('(' + waitForFacebookSearch.toString() + ')()'));
       }
-      await object.evaluate('(' + restoreOriginalLanguage.toString() + ')()');
+      await step(()=>object.evaluate('(' + restoreOriginalLanguage.toString() + ')()'));
     };
     if (key === 'evaluate') return async (...args) => {
-      if (target) await object.setActivePage(target);
-      await object.evaluate('(' + restoreOriginalLanguage.toString() + ')()');
-      return object.evaluate(...args);
+      if (target) await step(()=>object.setActivePage(target));
+      await step(()=>object.evaluate('(' + restoreOriginalLanguage.toString() + ')()'));
+      return step(()=>object.evaluate(...args));
     };
     const value = Reflect.get(object, key);
-    return typeof value === 'function' ? value.bind(object) : value;
+    return typeof value === 'function' ? (...args)=>step(()=>value.apply(object,args)) : value;
   }});
   try { return await task(wrapped); }
   finally {
-    if (target) await page.closeTab(target);
+    try {
+      for(const owned of targets) await page.closeTab(owned);
+      if(cancelled&&!creationUnconfirmed) process.stderr.write('ONECREW_BROWSER_CANCELLED_CLOSED\n');
+    } finally { process.removeListener('SIGTERM',cancel); }
   }
 }
 

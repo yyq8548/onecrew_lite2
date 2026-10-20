@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { nativeContentObservations } from "../platforms/opencli/observations.ts";
 import { stringifyApplicationJson } from "../contracts/application-json.ts";
-import { facebookSourceValid } from "../platforms/opencli/facebook-profile.ts";
+import { facebookSourceValid, facebookNumericContactSource, facebookProfilePlan } from "../platforms/opencli/facebook-profile.ts";
 import { weiboProfilePlan } from "../platforms/opencli/weibo.ts";
 import { blueskyPostPlan, blueskyProfilePlan, blueskyUriFromSource } from "../platforms/opencli/bluesky.ts";
 import { linkedinContentPlan, linkedinProfilePlan } from "../platforms/opencli/linkedin.ts";
@@ -18,9 +18,10 @@ export function validateDiscoveryRetainedProfile(platform: string, author: strin
     z.strictObject({ adapter_version: z.literal("1.0.0"), id: z.literal(author).refine(value => /^t2_[a-z0-9]{1,15}$/u.test(value)), username: z.string().regex(/^[A-Za-z0-9_-]{3,20}$/u), biography: z.string().refine(value => [...value].length <= 2000 && !value.includes("\0")), follower_count: z.number().int().nonnegative().safe().nullable(), profile_url: z.literal(authorUrl), evidence_source: z.literal("native_profile_response") }).refine(value => value.profile_url === `https://www.reddit.com/user/${value.username}/`).parse(native);
   }
   else if (platform === "facebook") {
-    const row = z.strictObject({ adapter_version: z.enum(["1.0.0", "2.0.0"]), id: z.literal(author).refine(value => /^[1-9][0-9]{0,19}$/u.test(value)), display_name: z.string().refine(value => !!value.trim() && [...value].length <= 200 && !/\p{Cc}/u.test(value)), follower_count: z.number().int().nonnegative().safe().nullable(), follower_text: z.string().refine(value => [...value].length <= 100 && !/\p{Cc}/u.test(value)), profile_url: z.literal(`https://www.facebook.com/profile.php?id=${author}`), evidence_source: z.string(), contact_links: z.array(z.string()).optional(), observed_profile_url: z.string().optional() }).parse(native);
+    facebookProfilePlan(author, typeof native.observed_profile_url === "string" ? native.observed_profile_url : undefined).decode([native]);
+    const row = z.object({ adapter_version: z.enum(["1.0.0", "2.0.0"]), id: z.literal(author).refine(value => /^[1-9][0-9]{0,19}$/u.test(value)), display_name: z.string().refine(value => !!value.trim() && [...value].length <= 200 && !/\p{Cc}/u.test(value)), follower_count: z.number().int().nonnegative().safe().nullable(), follower_text: z.string().refine(value => [...value].length <= 100 && !/\p{Cc}/u.test(value)), profile_url: z.literal(`https://www.facebook.com/profile.php?id=${author}`), evidence_source: z.string(), contact_links: z.array(z.string()).optional(), observed_profile_url: z.string().optional() }).parse(native);
     if (row.adapter_version === "1.0.0") {
-      if (Object.hasOwn(native, "observed_profile_url") || row.evidence_source !== "visible_numeric_profile_header" || row.contact_links !== undefined && (row.contact_links.length > 1 || row.contact_links.some(link => link !== `https://www.facebook.com/profile.php?id=${author}&sk=about_contact_and_basic_info`))) throw new Error("review_native_profile_binding_unavailable");
+      if (Object.hasOwn(native, "observed_profile_url") || row.evidence_source !== "visible_numeric_profile_header" || row.contact_links !== undefined && (row.contact_links.length > 2 || row.contact_links.some(link => !facebookNumericContactSource(author, link)))) throw new Error("review_native_profile_binding_unavailable");
     } else {
       const base = row.observed_profile_url;
       if (base === undefined || !facebookSourceValid(base) || base.endsWith("/") || row.evidence_source !== "native_profile_header_response" || row.contact_links === undefined || row.contact_links.length > 2 || new Set(row.contact_links).size !== row.contact_links.length || row.contact_links.some(link => ![`${base}/directory_contact_info`, `${base}/directory_links`].includes(link)) || base.toLowerCase() !== source.replace(/\/+$/u, "").toLowerCase()) throw new Error("review_native_profile_binding_unavailable");

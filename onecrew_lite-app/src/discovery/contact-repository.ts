@@ -83,7 +83,7 @@ export function loadDiscoveryContactObservations(database: DatabaseSync, campaig
   if (!database.isTransaction) throw new Error("contact_projection_requires_snapshot");
   const statement = database.prepare(`SELECT kind,original_value,normalized_value,source_url,source_excerpt,captured_at,attribution
     FROM discovery_contact_observations WHERE discovery_campaign_id=?1 AND criteria_revision=?2 AND candidate_id=?3 AND native_author_id=?4
-      AND ((?5=1 AND kind='social_profile' AND attribution='author_published') OR (?5=0 AND (kind IN ('email','telegram') OR (kind IN ('hidden_email','social_profile','whatsapp','wechat','wechat_official') AND attribution='author_published'))))
+      AND ((?5=1 AND kind='social_profile' AND attribution='author_published') OR (?5=0 AND (kind IN ('email','telegram') OR (kind IN ('hidden_email','social_profile','whatsapp','wechat','wechat_official','website','messenger','phone') AND attribution='author_published'))))
     ORDER BY normalized_value,source_url LIMIT 100`);
   statement.setReadBigInts(true);
   return statement.all(campaign, revision, candidate, author, Number(socialOnly)).map(row => discoveryContact.parse({ ...row, captured_at: typeof row.captured_at === "bigint" && row.captured_at >= BigInt(Number.MIN_SAFE_INTEGER) && row.captured_at <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(row.captured_at) : row.captured_at, native_author_id: author, attribution: row.attribution === "author_published" ? "author_published" : "unconfirmed" })).filter(contact => contact.attribution === "author_published" || !discoveryNonContact(contact.source_url));

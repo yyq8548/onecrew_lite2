@@ -36,6 +36,7 @@ const candidateSchema = z.object({
     source_urls: z.array(z.string().url()),
     public_links: z.array(z.string().url()).optional(),
     assessment: z.object({ reasons: z.array(z.string()), subscribers_normalized: u64.nullable(),
+      pinterest_scale: z.object({ state: z.enum(["passed", "failed", "unknown"]), passed_by: z.array(z.enum(["followers", "monthly_views"])).optional() }).optional(),
       match_rating: z.object({ level: z.enum(["excellent", "good", "medium", "low"]), reason: z.string(), source_url: z.string().url() }).nullable().optional(),
     }).optional(),
   }).passthrough(),
@@ -513,7 +514,7 @@ export function canVerifyDiscovery(campaign: DiscoveryCampaign, profileRef: stri
 export function canRecoverDiscoverySearch(campaign: DiscoveryCampaign, profileRef: string, platform: string): boolean {
   const run = campaign.platform_runs.find(item => item.platform === platform && item.profile_ref === profileRef);
   const scope = campaign.scopes.find(item => item.platform === platform && item.profile_ref === profileRef);
-  const repairedCodes = ["provider_endpoint_not_found", "provider_response_invalid_json", "provider_response_shape_invalid", "provider_response_http_error", "provider_source_unavailable", "opencli_command_unavailable", "opencli_command_failed", "opencli_invalid_output", "opencli_output_too_large"];
+  const repairedCodes = ["provider_endpoint_not_found", "provider_response_invalid_json", "provider_response_shape_invalid", "provider_response_http_error", "provider_source_unavailable", "opencli_command_unavailable", "opencli_command_failed", "opencli_invalid_output", "opencli_output_too_large", "opencli_timeout"];
   return campaign.phase === "active" && (campaign.max_calls === null || campaign.used_calls < campaign.max_calls) && run?.status === "technical_stop" && !!scope
     && !campaign.platform_runs.some(item => item.status === "searching" || item.status === "unsearched")
     && (run.stop_code === "interrupted_read" || typeof run.updated_at === "number" && !!run.stop_code && repairedCodes.includes(run.stop_code) && run.calls_used < scope.keywords.length);
@@ -523,7 +524,7 @@ export type DiscoveryDraft = {
   id: string;
   brief: string;
   opencli_version: string;
-  criteria: { min_subscribers: number | bigint; region: string; language: string; category?: string; requires_ai_tool_demo: boolean; requires_public_tool_url: boolean };
+  criteria: { min_subscribers: number | bigint; region: string; language: string; category?: string; requires_ai_tool_demo: boolean; requires_public_tool_url: boolean; pinterest_min_monthly_views_exclusive?: number; contact_preference?: "public_email_first"; requirements?: { description: string; excerpt: string }[] };
   scopes: { platform: string; profile_ref: string; keywords: string[] }[];
   target_count: number;
   max_calls: number | null;

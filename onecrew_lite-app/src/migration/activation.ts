@@ -334,7 +334,7 @@ export async function readActivationCandidate(lease: InstanceLease, id: string) 
   if ((await profileIdentity(lease)).sha256 !== candidate.profileSha256) throw new Error("migration.profile_changed");
   for (const path of [candidate.creator, candidate.vault, candidate.masterKey]) await verifyPrivateFile(path);
   const creatorInspection = inspectLegacyDatabase(candidate.creator, "creator"), vaultInspection = inspectLegacyDatabase(candidate.vault, "vault");
-  if (creatorInspection.version !== 90 || vaultInspection.version !== 4 || !creatorInspection.schemaValidated || !vaultInspection.schemaValidated ||
+  if (creatorInspection.version !== creatorInspection.currentVersion || vaultInspection.version !== 4 || !creatorInspection.schemaValidated || !vaultInspection.schemaValidated ||
       !isDeepStrictEqual({ creator: fingerprintSqlite(candidate.creator), vault: fingerprintSqlite(candidate.vault) }, candidate.fingerprints)) throw new Error("migration.candidate_data_changed");
   const key = await readVaultMasterKey(candidate.masterKey);
   using releaseKey = { [Symbol.dispose]() { key.fill(0); } };
@@ -375,7 +375,7 @@ export async function readActiveGeneration(lease: InstanceLease) {
   const key = await readVaultMasterKey(masterKeyPath);
   using releaseKey = { [Symbol.dispose]() { key.fill(0); } };
   const creatorInspection = inspectLegacyDatabase(creatorPath, "creator"), vaultInspection = inspectLegacyDatabase(vaultPath, "vault");
-  if (sha256(key) !== manifest.masterKeySha256 || creatorInspection.version !== 90 || vaultInspection.version !== 4 || !creatorInspection.schemaValidated || !vaultInspection.schemaValidated) throw new Error("migration.active_generation_invalid");
+  if (sha256(key) !== manifest.masterKeySha256 || creatorInspection.version !== creatorInspection.currentVersion || vaultInspection.version !== 4 || !creatorInspection.schemaValidated || !vaultInspection.schemaValidated) throw new Error("migration.active_generation_invalid");
   const library = await readLibraryMigrationAccount(lease, tablesDirectory);
   using releaseLibrary = { [Symbol.dispose]() { library.credential?.dispose(); } };
   if (!library.tenants.some(value => value.owner_user_id === manifest.owner.accountId && value.id === manifest.owner.tenantId && value.base_id === manifest.owner.baseId)) throw new Error("migration.generation_owner_mismatch");

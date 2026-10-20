@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
 import { z } from "zod";
-import { validateCreatorSchema90 } from "../storage/creator-schema.ts";
+import { validateCreatorSchema } from "../storage/creator-schema.ts";
 import { bulkIdempotencyKey, mailFingerprint } from "./gmail-bulk.ts";
 import type { BulkBatch, BulkItem } from "./gmail-bulk.ts";
 import { gmailReceiptMessageIdMatches } from "./gmail-mime.ts";
@@ -33,7 +33,7 @@ export function stageOriginalGmailReceipt(db: DatabaseSync, batch: BulkBatch, it
   if (db.prepare("UPDATE idempotency_records SET state='remote_verified',result_json=?,updated_at=? WHERE key=? AND state=? AND request_fingerprint=?").run(JSON.stringify(commit), Math.floor(Date.now() / 1000), key, string.parse(row.state), string.parse(row.request_fingerprint)).changes !== 1) throw new Error("gmail_verified_receipt_stage_mismatch");
 }
 export function reserveOriginalGmailSend(db: DatabaseSync, batch: BulkBatch, item: BulkItem, message: GmailBulkMessage): boolean {
-  validateCreatorSchema90(db);
+  validateCreatorSchema(db);
   if (!db.isTransaction) throw new Error("Original Gmail send claim requires the durable attempt transaction");
   if (item.state !== "attempting" || message.idempotencyKey !== bulkIdempotencyKey(item) || message.to !== item.recipient || message.subject !== batch.subject || message.body !== batch.body || mailFingerprint(message.from, message.to, message.subject, message.body) !== item.fingerprint) throw new Error("gmail_bulk_frozen_claim_mismatch");
   if (db.prepare("SELECT 1 FROM gmail_send_attempts WHERE idempotency_key=?").get(message.idempotencyKey) || db.prepare("SELECT 1 FROM idempotency_records WHERE key=?").get(message.idempotencyKey)) return false;

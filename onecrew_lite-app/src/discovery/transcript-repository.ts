@@ -1,7 +1,7 @@
 import type { DatabaseSync } from "node:sqlite";
 import { z } from "zod";
 import { stringifyApplicationJson } from "../contracts/application-json.ts";
-import { validateCreatorSchema90 } from "../storage/creator-schema.ts";
+import { validateCreatorSchema } from "../storage/creator-schema.ts";
 import { discoveryTranscriptSegment } from "./review-material.ts";
 import { getDiscoverySavedTranscript } from "./saved-read-repository.ts";
 import { discoveryReadPlatformStatus, sourceLocalReadFailure } from "./stops.ts";
@@ -17,7 +17,7 @@ export function validateDiscoveryTranscriptResult(raw: unknown) {
 }
 export class DiscoveryTranscriptRepository {
   readonly #db: DatabaseSync;
-  constructor(database: DatabaseSync) { validateCreatorSchema90(database); this.#db = database; }
+  constructor(database: DatabaseSync) { validateCreatorSchema(database); this.#db = database; }
   #transaction<T>(body: () => T): T { this.#db.exec("BEGIN IMMEDIATE"); let committed = false; try { const value = body(); this.#db.exec("COMMIT"); committed = true; return value; } finally { if (!committed) this.#db.exec("ROLLBACK"); } }
   next(campaign: string, held: readonly string[] = []): { id: string; profile_ref: string } | null {
     const result = this.#db.prepare(`SELECT h.id,h.profile_ref FROM discovery_search_hits h JOIN discovery_video_completions v ON v.search_hit_id=h.id

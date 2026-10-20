@@ -2,7 +2,7 @@ import type { DatabaseSync } from "node:sqlite";
 import { isDeepStrictEqual } from "node:util";
 import { z } from "zod";
 import { stringifyApplicationJson } from "../contracts/application-json.ts";
-import { validateCreatorSchema90 } from "../storage/creator-schema.ts";
+import { validateCreatorSchema } from "../storage/creator-schema.ts";
 import { validateSavedDiscoveryDouyinContent, validateSavedDiscoveryDouyinProfile } from "./douyin-material.ts";
 import { DiscoveryProfileRepository } from "./profile-repository.ts";
 import { discoveryReadPlatformStatus, sourceLocalReadFailure } from "./stops.ts";
@@ -15,7 +15,7 @@ export function discoveryDouyinSourcePost(source: string): string | null { retur
 export class DiscoverySourceAuthorRepository {
   readonly #db: DatabaseSync;
   readonly #profiles: DiscoveryProfileRepository;
-  constructor(database: DatabaseSync) { validateCreatorSchema90(database); this.#db = database; this.#profiles = new DiscoveryProfileRepository(database); }
+  constructor(database: DatabaseSync) { validateCreatorSchema(database); this.#db = database; this.#profiles = new DiscoveryProfileRepository(database); }
   #transaction<T>(body: () => T): T { this.#db.exec("BEGIN IMMEDIATE"); let committed = false; try { const value = body(); this.#db.exec("COMMIT"); committed = true; return value; } finally { if (!committed) this.#db.exec("ROLLBACK"); } }
   next(campaign: string, excluded: readonly string[] = []): string | null {
     if (excluded.includes("douyin")) return null;

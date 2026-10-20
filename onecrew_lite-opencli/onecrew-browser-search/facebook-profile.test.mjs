@@ -20,13 +20,8 @@ test('reject identity drift, redirects, malformed and oversized public fields',(
     {display_name:''},{display_name:'x'.repeat(201)},{display_name:'x\0y'},{follower_text:'9007199254740992 followers'},{follower_text:'x'.repeat(101)}])
     assert.throws(()=>projectFacebookProfile({...fixture(),...changes},id));
 });
-test('single owned page read validates response before returning',async()=>{
-  let navigation=0,reads=0;
-  const page={goto:async(source)=>{navigation++;assert.equal(source,facebookProfileTarget(id));},evaluate:async()=>{reads++;return {session:'discarded',data:fixture()};}};
-  const row=await readFacebookProfile(page,{id},async(p,task)=>task(p));
-  assert.equal(row.id,id);assert.equal(row.follower_count,null);assert.equal(navigation,1);assert.equal(reads,1);
-  await assert.rejects(()=>readFacebookProfile(page,{id:'creator'},async(p,task)=>task(p)));
-  assert.equal(navigation,1);
+test('invalid numeric profile targets fail before any browser ownership is requested',async()=>{
+  for(const id of ['creator','0','123&sk=about','123/456']) await assert.rejects(()=>readFacebookProfile(null,{id},null),/ONECREW_FB_PROFILE_INPUT/);
 });
 test('numeric profile header binds only its visible relationship link and unique name',async()=>{
   const previous={location:globalThis.location,document:globalThis.document};
@@ -87,7 +82,7 @@ test('contact projection preserves exact owner and strips unexpected fields',()=
     assert.throws(()=>projectFacebookContact({...data,...changes},id),/INVALID/);
 });
 
-test('contact reader uses selected same-author About, excludes feed and expands observed external link',async()=>{
+test('contact reader rejects an About tab without an isolated author contact scope',async()=>{
   const previous={location:globalThis.location,document:globalThis.document,NodeFilter:globalThis.NodeFilter};
   const element=(text,excluded=false)=>({textContent:text,getClientRects:()=>[1],closest:()=>excluded?{}:null});
   const heading=element('Creator');const selected={...element('Contact'),href:facebookContactTarget(id)};
@@ -101,10 +96,8 @@ test('contact reader uses selected same-author About, excludes feed and expands 
     globalThis.location={origin:'https://www.facebook.com',pathname:'/profile.php',href:facebookContactTarget(id)};
     globalThis.NodeFilter={SHOW_TEXT:4};
     globalThis.document={querySelectorAll:()=>{iterations++;if(iterations===2)busy=false;return [main];},createTreeWalker:()=>{let i=-1;return {nextNode(){i++;this.currentNode=texts[i];return i<texts.length;}};}};
-    const row=await readFacebookContactPanel(facebookContactTarget(id),id);
-    assert.equal(iterations,2);assert.equal(row.truncated,true);
-    assert.match(row.contact_text,/business@example.com/);assert.doesNotMatch(row.contact_text,/commenter@/);
-    assert.deepEqual(row.contact_links,['https://creator.example/contact']);
+    await assert.rejects(()=>readFacebookContactPanel(facebookContactTarget(id),id),/CONTACT_INVALID/);
+    assert.equal(iterations,2);
     globalThis.location.pathname='/two_step_verification/two_factor/';
     await assert.rejects(()=>readFacebookContactPanel(facebookContactTarget(id),id),/RISK/);
     globalThis.location.pathname='/login/';

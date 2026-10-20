@@ -23,7 +23,7 @@ test("原生YouTube证据保留原description，隐藏邮件仅保留可见入�
   assert.throws(() => plan.decode([{ ...value, channelId: "@not-stable" }]));
   assert.throws(() => plan.decode([{ ...value, links: [{ ...value.links[0], url: "https://127.0.0.1/" }] }]));
   assert.throws(() => plan.decode([{ ...value, description: "字".repeat(5334) }]));
-  const contact = youtubeChannelContactPlan(value.channelId).decode([{ adapterVersion: "1.0.0", channelId: value.channelId, sourceUrl: `https://www.youtube.com/channel/${value.channelId}`, title: "Creator", description: "Public description", hiddenEmailAvailable: true, aboutDataAvailable: true }]);
+  const contact = youtubeChannelContactPlan(value.channelId, "youtube-channel-contract").decode([{ adapterVersion: "1.0.0", channelId: value.channelId, sourceUrl: `https://www.youtube.com/channel/${value.channelId}`, title: "Creator", description: "Public description", hiddenEmailAvailable: true, aboutDataAvailable: true }]);
   assert.equal(contact.hiddenEmailAvailable, true);
   assert.equal("email" in contact, false);
   assert.throws(() => youtubeRecentLanguagePlan(value.channelId).decode([{ source_url: value.sourceUrl }, { source_url: value.sourceUrl }]));

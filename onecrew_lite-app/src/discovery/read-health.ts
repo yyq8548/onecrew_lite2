@@ -8,7 +8,7 @@ export function discoveryOperationStopped(rows: readonly { author: string; code:
   for (const { author, code } of rows) {
     if (code === null) break;
     if (code === "opencli_risk_control" || code === "opencli_auth_required") return true;
-    if (code !== "opencli_invalid_output" && code !== "opencli_output_too_large") break;
+    if (!["opencli_invalid_output", "opencli_output_too_large", "provider_response_shape_invalid", "provider_response_invalid_json"].includes(code)) break;
     if (previous !== null && previous !== code) break;
     previous = code; if (author) authors.add(author); if (authors.size >= 3) return true;
   }

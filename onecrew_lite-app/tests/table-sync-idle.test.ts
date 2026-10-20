@@ -35,6 +35,7 @@ test("idle sync timer does not refresh identity or invalidate a local session wi
   const sync = createTableSyncModule(identities, databases, new OperationRegistry(identities.contexts), new DiscoveryAdmissionGate(identities.contexts), createLibraryCaptureSource(identities.contexts, tables), () => false);
   try {
     await setTimeout(32_000);
+    await sync.close();
     identities.contexts.assertCurrent(context);
     assert.equal(requests, 0);
     assert.deepEqual(sync.status(), { running: false, failed: false });

@@ -2,7 +2,7 @@ import type { DatabaseSync } from "node:sqlite";
 import { isDeepStrictEqual } from "node:util";
 import { z } from "zod";
 import { parseApplicationJson, stringifyApplicationJson } from "../contracts/application-json.ts";
-import { validateCreatorSchema90 } from "../storage/creator-schema.ts";
+import { validateCreatorSchema } from "../storage/creator-schema.ts";
 import { facebookSourceValid } from "../platforms/opencli/facebook-profile.ts";
 import { discoveryReadPlatformStatus, sourceLocalReadFailure } from "./stops.ts";
 
@@ -19,7 +19,7 @@ export function validateDiscoveryFacebookIdentity(claim: DiscoveryFacebookIdenti
 }
 export class DiscoveryFacebookIdentityRepository {
   readonly #db: DatabaseSync;
-  constructor(database: DatabaseSync) { validateCreatorSchema90(database); this.#db = database; }
+  constructor(database: DatabaseSync) { validateCreatorSchema(database); this.#db = database; }
   #transaction<T>(body: () => T): T { this.#db.exec("BEGIN IMMEDIATE"); let committed = false; try { const value = body(); this.#db.exec("COMMIT"); committed = true; return value; } finally { if (!committed) this.#db.exec("ROLLBACK"); } }
   next(campaign: string, excluded: readonly string[] = []): string | null {
     if (excluded.includes("facebook")) return null;

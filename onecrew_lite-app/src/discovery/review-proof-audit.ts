@@ -4,6 +4,15 @@ import { parseApplicationJson } from "../contracts/application-json.ts";
 import { mergePendingDiscoveryEvidence } from "./qualification.ts";
 const object = (value: unknown): Record<string, unknown> => value !== null && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
 const text = (value: unknown): string | null => typeof value === "string" ? value : null;
+const webProfileProof = `(h.platform IN ('google','yahoo') AND json_extract(r.material_json,'$.format_version')=2
+  AND EXISTS(SELECT 1 FROM discovery_web_source_reads web WHERE web.search_hit_id=h.id
+    AND web.discovery_campaign_id=r.discovery_campaign_id AND web.expected_revision=r.criteria_revision
+    AND web.origin_platform=h.platform AND web.profile_ref=h.profile_ref AND web.source_url=h.source_url
+    AND web.status='completed' AND web.stop_code IS NULL AND web.target_platform IN ('instagram','tiktok')
+    AND web.target_platform=json_extract(r.material_json,'$.native_platform') AND web.native_author_id=r.native_author_id
+    AND json_extract(web.native_material_json,'$.profile.profile_url')=json_extract(r.material_json,'$.native_profile.profile_url')
+    AND json_extract(web.native_material_json,CASE web.target_platform WHEN 'tiktok' THEN '$.profile.signature' ELSE '$.profile.biography' END) IS json_extract(r.material_json,'$.native_profile.bio')
+    AND json_extract(web.native_material_json,'$.profile.web_text') IS json_extract(r.material_json,'$.native_profile.web_text')))`;
 
 export function stripUnauditedDiscoveryProofs(database: DatabaseSync, raw: unknown, candidateId: string, planId: string, revision: number, author: string): Record<string, unknown> {
   if (!database.isTransaction) throw new Error("review_proof_audit_requires_snapshot");
@@ -27,7 +36,11 @@ export function stripUnauditedDiscoveryProofs(database: DatabaseSync, raw: unkno
           OR (r.policy_version IN ('category-content-review-v1','language-match-review-v1')
               AND ((json_extract(r.material_json,'$.format_version')=1 AND h.platform='youtube')
                 OR (json_extract(r.material_json,'$.format_version')=2 AND h.platform IN ('twitter','tiktok'))
-                OR (json_extract(r.material_json,'$.format_version')=2 AND h.platform='bilibili'))))
+                OR (json_extract(r.material_json,'$.format_version')=2 AND h.platform='bilibili')))
+          OR (r.policy_version IN ('category-content-review-v1','language-match-review-v1') AND ?8='category_content'
+              AND ((json_extract(r.material_json,'$.format_version')=2
+                AND h.platform IN ('reddit','facebook','instagram','weibo','bluesky','zhihu','hackernews','pinterest','pixiv','linkedin','douyin'))
+                OR ${webProfileProof})))
         AND json_extract(f.value,'$.criterion')=?8
         AND json_extract(f.value,'$.outcome')='supported'
         AND (?8!='creator_residence_outside_mainland' OR json_extract(f.value,'$.country_code')=?9)
@@ -53,7 +66,8 @@ export function stripUnauditedDiscoveryProofs(database: DatabaseSync, raw: unkno
                 AND web.origin_platform=h.platform AND web.profile_ref=h.profile_ref AND web.source_url=h.source_url
                 AND web.status='completed' AND web.stop_code IS NULL AND web.target_platform=json_extract(r.material_json,'$.native_platform')
                 AND web.native_author_id=r.native_author_id
-                AND json_extract(web.native_material_json,CASE WHEN web.target_platform IN ('twitter','douyin') THEN '$.content.text' ELSE '$.description' END)=json_extract(r.material_json,'$.video_description'))))
+                AND json_extract(web.native_material_json,CASE WHEN web.target_platform IN ('twitter','douyin') THEN '$.content.text' ELSE '$.description' END)=json_extract(r.material_json,'$.video_description')))
+          OR (?8='match_fit' AND ${webProfileProof}))
         AND json_extract(f.value,'$.criterion')=?8
         AND json_extract(f.value,'$.outcome')=?9
         AND json_extract(f.value,'$.rationale')=?10
@@ -71,7 +85,7 @@ export function stripUnauditedDiscoveryProofs(database: DatabaseSync, raw: unkno
       const row = database.prepare("SELECT r.material_json FROM discovery_evidence_reviews r JOIN discovery_search_hits h ON h.id=r.search_hit_id JOIN json_each(r.findings_json) f WHERE r.id=? AND r.candidate_id=? AND r.discovery_campaign_id=? AND r.criteria_revision=? AND r.native_author_id=? AND r.material_hash=? AND h.source_url=? AND json_extract(f.value,'$.criterion.requirement')=? AND json_extract(f.value,'$.outcome')=? AND json_extract(f.value,'$.rationale')=?").get(text(proof.review_id) ?? "", candidateId, planId, revision, author, text(proof.material_hash) ?? "", text(proof.source_url) ?? "", index, text(proof.outcome), text(proof.reason));
       if (typeof row?.material_json !== "string") return false;
       const requirements = object(object(parseApplicationJson(row.material_json)).criteria).requirements;
-      return Array.isArray(requirements) && isDeepStrictEqual(requirements[index], proof.requirement);
+      return Array.isArray(requirements) && isDeepStrictEqual(requirements[index], proof.requirement, { skipPrototype: true });
     });
     if (!valid) delete evidence.reviewed_requirements;
   }

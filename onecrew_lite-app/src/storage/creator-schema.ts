@@ -11,6 +11,7 @@ import { migrateCreatorLimitEdge } from "./creator-limit-edge.ts";
 import { migrateCreatorFacebookContentEdge } from "./creator-facebook-content-edge.ts";
 import { migrateCreatorTikTokEdge } from "./creator-tiktok-edge.ts";
 import { migrateCreatorTaskOriginEdge } from "./creator-task-origin-edge.ts";
+import { migrateCreatorPublicContactEdge } from "./creator-public-contact-edge.ts";
 
 const schemaSql = () => ["creator-schema90.sql", "creator-indexes90.sql", "creator-triggers90.sql"]
   .map(readStorageSql).join("\n");
@@ -70,6 +71,11 @@ function validateStoredTags(db: DatabaseSync): void {
 export function validateCreatorSchema90(db: DatabaseSync): void {
   validateCreatorSchemaVersion(db, 90);
 }
+export function validateCreatorSchema(db: DatabaseSync): void {
+  const version = Number(db.prepare("PRAGMA user_version").get()!.user_version);
+  if (version !== 90 && version !== 91) throw new Error(`Creator current schema is unsupported: ${version}`);
+  validateCreatorSchemaVersion(db, version);
+}
 
 export function rebuildCreatorTable(db: DatabaseSync, table: string, from: string, to: string): void {
   rebuildCreatorTableChanges(db, table, [[from, to]]);
@@ -92,7 +98,7 @@ export function rebuildCreatorTableChanges(db: DatabaseSync, table: string, repl
 }
 
 export function validateCreatorSchemaVersion(db: DatabaseSync, expectedVersion: number): void {
-  if (!Number.isInteger(expectedVersion) || expectedVersion < 27 || expectedVersion > 90) throw new Error(`Creator version ${expectedVersion} frozen validation is not implemented`);
+  if (!Number.isInteger(expectedVersion) || expectedVersion < 27 || expectedVersion > 91) throw new Error(`Creator version ${expectedVersion} frozen validation is not implemented`);
   const version = Number(db.prepare("PRAGMA user_version").get()!.user_version);
   if (version !== expectedVersion) throw new Error(`Creator schema validation requires version ${expectedVersion}; found ${version}`);
   const checks = db.prepare("PRAGMA integrity_check").all();
@@ -100,6 +106,7 @@ export function validateCreatorSchemaVersion(db: DatabaseSync, expectedVersion: 
   const reference = new DatabaseSync(":memory:");
   try {
     reference.exec(schemaSql());
+    if (expectedVersion >= 91) migrateCreatorPublicContactEdge(reference);
     if (expectedVersion < 90) reference.exec("DROP TABLE discovery_query_rounds");
     if (expectedVersion < 89) rebuildCreatorTable(reference, "discovery_target_increases", "new_target_count != previous_target_count", "new_target_count > previous_target_count");
     if (expectedVersion < 88) {
@@ -199,8 +206,9 @@ export async function initializeNewCreatorDatabase(path: string): Promise<void> 
   try {
     db.exec("PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000; BEGIN IMMEDIATE");
     db.exec(schemaSql());
-    db.exec("PRAGMA user_version = 90");
-    validateCreatorSchema90(db);
+    migrateCreatorPublicContactEdge(db);
+    db.exec("PRAGMA user_version = 91");
+    validateCreatorSchema(db);
     await verifyPrivateFile(absolute);
     db.exec("COMMIT");
     committed = true;

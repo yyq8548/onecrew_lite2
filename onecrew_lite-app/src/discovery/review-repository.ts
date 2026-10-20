@@ -2,7 +2,7 @@ import type { DatabaseSync } from "node:sqlite";
 import { isDeepStrictEqual } from "node:util";
 import { z } from "zod";
 import { parseApplicationJson } from "../contracts/application-json.ts";
-import { validateCreatorSchema90 } from "../storage/creator-schema.ts";
+import { validateCreatorSchema } from "../storage/creator-schema.ts";
 import { observeDiscoveryReviewContacts } from "./contact-repository.ts";
 import { discoveryMaterialDigest } from "./library-material.ts";
 import { loadDiscoveryReviewBasis } from "./review-basis.ts";
@@ -13,7 +13,7 @@ export type DiscoveryReviewPreparation = { state: "committed"; receipt: Discover
 export class DiscoveryReviewRepository {
   readonly #database: DatabaseSync;
   readonly #issued = new WeakMap<PreparedDiscoveryReview, string>();
-  constructor(database: DatabaseSync) { validateCreatorSchema90(database); this.#database = database; }
+  constructor(database: DatabaseSync) { validateCreatorSchema(database); this.#database = database; }
   #transaction<T>(write: boolean, body: () => T): T {
     this.#database.exec(write ? "BEGIN IMMEDIATE" : "BEGIN DEFERRED"); let committed = false;
     try { const value = body(); this.#database.exec("COMMIT"); committed = true; return value; }

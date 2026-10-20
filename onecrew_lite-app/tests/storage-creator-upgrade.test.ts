@@ -7,7 +7,7 @@ import { extractCreatorHistory } from "./creator-history.ts";
 import { fileURLToPath } from "node:url";
 import { backupLegacyDatabase } from "../src/storage/legacy-sqlite.ts";
 import { upgradeCreatorStagingCopy } from "../src/storage/creator-upgrade.ts";
-import { validateCreatorSchema90, validateCreatorSchemaVersion } from "../src/storage/creator-schema.ts";
+import { validateCreatorSchema, validateCreatorSchemaVersion } from "../src/storage/creator-schema.ts";
 import { legacyResendAuthConnectionId } from "../src/storage/creator-mailbox-edge.ts";
 import { migrateCreatorTaskOriginEdge } from "../src/storage/creator-task-origin-edge.ts";
 
@@ -72,10 +72,10 @@ for (const legacyVersion of Array.from({ length: 11 }, (_, index) => 27 + index)
       }
     }
     finally { staged.close(); }
-    assert.deepEqual(await upgradeCreatorStagingCopy({ sourcePath, stagingPath }), { fromVersion: legacyVersion, toVersion: 90 });
+    assert.deepEqual(await upgradeCreatorStagingCopy({ sourcePath, stagingPath }), { fromVersion: legacyVersion, toVersion: 91 });
     const current = new DatabaseSync(stagingPath, { readOnly: true });
     try {
-      validateCreatorSchema90(current);
+      validateCreatorSchema(current);
       assert.equal(current.prepare("SELECT notes FROM creators WHERE id='historical'").get()!.notes, "preserved");
       assert.equal(current.prepare("SELECT count(*) AS count FROM discovery_campaigns").get()!.count, 0);
       if (legacyVersion <= 31) {
@@ -115,7 +115,7 @@ for (const legacyVersion of Array.from({ length: 11 }, (_, index) => 27 + index)
   } finally { await rm(directory, { recursive: true }); }
 });
 for (const version of Array.from({ length: 52 }, (_, index) => 38 + index)) {
-  test(`Creator v${version} isolated copy reaches v90 while preserving rows`, async () => {
+  test(`Creator v${version} isolated copy reaches v91 while preserving rows`, async () => {
     const directory = await mkdtemp(fileURLToPath(new URL("../../.scratch/storage-creator-upgrade-", import.meta.url)));
     try {
       const sourcePath = join(oracleDirectory, `creator-schema${version}-oracle.sqlite`);
@@ -208,10 +208,10 @@ for (const version of Array.from({ length: 52 }, (_, index) => 38 + index)) {
       validateCreatorSchemaVersion(staged, version);
       staged.close();
       stagedClosed = true;
-      assert.deepEqual(await upgradeCreatorStagingCopy({ sourcePath, stagingPath }), { fromVersion: version, toVersion: 90 });
+      assert.deepEqual(await upgradeCreatorStagingCopy({ sourcePath, stagingPath }), { fromVersion: version, toVersion: 91 });
       const current = new DatabaseSync(stagingPath, { readOnly: true });
       try {
-        validateCreatorSchema90(current);
+        validateCreatorSchema(current);
         assert.equal(current.prepare("SELECT rowid FROM discovery_campaigns WHERE id='campaign'").get()!.rowid, 123);
         if (version < 65) {
           assert.deepEqual(current.prepare("SELECT policy FROM discovery_recommendation_policies").all().map((row) => row.policy), ["legacy"]);

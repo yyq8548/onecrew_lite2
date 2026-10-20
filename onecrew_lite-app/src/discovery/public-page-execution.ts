@@ -15,7 +15,7 @@ export function discoveryFacebookContactAuthor(saved: DiscoveryProfileReceipt, c
   return saved.claim.author_id;
 }
 function facebookAuthor(source: string): string | null {
-  const match = /^https:\/\/www\.facebook\.com\/profile\.php\?id=([1-9]\d{0,19})&sk=about_contact_and_basic_info$/u.exec(source);
+  const match = /^https:\/\/www\.facebook\.com\/profile\.php\?id=([1-9]\d{0,19})&sk=(?:about_contact_and_basic_info|directory_contact_info|directory_links)$/u.exec(source);
   return match?.[1] ?? null;
 }
 function linkedinHandle(source: string): string | null {
@@ -42,9 +42,13 @@ export class DiscoveryPublicPageExecutor {
     const read = async () => {
       const channel = /^https:\/\/www\.youtube\.com\/channel\/([^/?#]+)$/u.exec(input.requested_url)?.[1];
       if (channel !== undefined) {
-        const value = await this.reader.youtubeChannelContact(browser, channel);
+        const value = await this.reader.youtubeChannelContact(browser, channel, input.campaign_id);
         if (value.channelId !== channel) throw new OpenCliError("opencli_invalid_output");
-        return { document_url: input.requested_url, title: value.title, markdown_excerpt: `${value.title}\n${value.description}`, truncated: true, hidden: value.hiddenEmailAvailable };
+        const status = value.hiddenEmailStatus === undefined ? "" : `\nYouTube hidden email status: ${value.hiddenEmailStatus}; task: ${input.campaign_id}`;
+        const text = `${value.title}\n${value.description}\n${(value.publicLinks ?? []).map(link => `Website: ${link}`).join("\n")}${status}`;
+        let excerpt = "", bytes = 0;
+        for (const character of text) { const size = Buffer.byteLength(character); if (bytes + size > 20000) break; excerpt += character; bytes += size; }
+        return { document_url: input.requested_url, title: value.title, markdown_excerpt: excerpt, truncated: bytes < Buffer.byteLength(text) || value.linksTruncated === true || value.descriptionStatus === undefined || value.descriptionStatus === "unknown", hidden: value.hiddenEmailAvailable };
       }
       const base = facebookNativeContactBase(input.requested_url);
       if (base !== null) {
@@ -52,7 +56,7 @@ export class DiscoveryPublicPageExecutor {
         return { ...await this.reader.facebookNativeContactPage(browser, author, base, input.requested_url), hidden: false };
       }
       const facebook = facebookAuthor(input.requested_url);
-      if (facebook !== null) return { ...await this.reader.facebookContactPage(browser, facebook), hidden: false };
+      if (facebook !== null) return { ...await this.reader.facebookContactPage(browser, facebook, input.requested_url), hidden: false };
       const linkedin = linkedinHandle(input.requested_url);
       if (linkedin !== null) {
         const saved = owned.repository.getProfile(input.campaign_id, claim.search_hit_id), native = saved.native_profile;

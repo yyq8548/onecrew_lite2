@@ -1,11 +1,12 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import { parseApplicationJson, stringifyApplicationJson } from "../contracts/application-json.ts";
+import { discoveryScale, parseDiscoverySubscribers } from "./qualification.ts";
 
 const text = z.string().refine(value => value.isWellFormed());
 const integer = z.union([z.number().int().safe(), z.bigint()]);
 export const discoverySearchHit = z.strictObject({ id: text, campaign_id: text, platform: text, profile_ref: text, search_keyword: text, source_url: text, title: text, author_label: text, captured_at: integer, author_id: text.nullable(), author_url: text.nullable(), author_observed_at: integer.nullable() });
-export const discoveryContact = z.strictObject({ kind: z.enum(["email", "telegram", "hidden_email", "social_profile", "whatsapp", "wechat", "wechat_official"]), original_value: text, normalized_value: text, source_url: text, source_excerpt: text, captured_at: integer, native_author_id: text, attribution: z.enum(["author_published", "unconfirmed"]) });
+export const discoveryContact = z.strictObject({ kind: z.enum(["email", "telegram", "hidden_email", "social_profile", "whatsapp", "wechat", "wechat_official", "website", "messenger", "phone"]), original_value: text, normalized_value: text, source_url: text, source_excerpt: text, captured_at: integer, native_author_id: text, attribution: z.enum(["author_published", "unconfirmed"]) });
 export const discoveryLibraryBasis = z.strictObject({ campaign_id: text, revision: z.number().int().positive(), criteria_json: text, scopes_json: text, approved_at: integer, contact_required: z.boolean(), rows: z.array(z.strictObject({ hit: discoverySearchHit, candidate: z.strictObject({ id: text, followers: text.nullish().transform(value => value ?? null), native_platform: text.nullish().transform(value => value ?? null), native_author_id: text, verdict: text, evidence_json: text, identity_receipt: text, manual_approved_at: integer.nullable(), contacts: z.array(discoveryContact).default([]), pending_details: z.array(text).max(4).default([]) }).nullable() })).max(10000) });
 export type DiscoveryLibraryBasis = z.infer<typeof discoveryLibraryBasis>;
 const matchRating = z.object({ level: z.enum(["excellent", "good", "medium", "low"]), reason: text });
@@ -63,7 +64,11 @@ export function buildDiscoveryLibrarySnapshot(raw: unknown) {
     if (verdict === "pending" && candidate?.pending_details.length) reasons = [...reasons, ...candidate.pending_details];
     const ratingValue = object(object(evidence).assessment).match_rating;
     const rating = candidate !== null && candidate.manual_approved_at !== null && candidate.verdict !== "qualified" ? null : ratingValue !== null && typeof ratingValue === "object" && !Array.isArray(ratingValue) ? matchRating.parse(ratingValue) : null;
-    return { hit: source.hit, ...(candidate?.followers !== null && candidate?.followers !== undefined ? { followers: candidate.followers } : {}), ...(candidate?.native_platform !== null && candidate?.native_platform !== undefined ? { native_platform: candidate.native_platform } : {}), candidate_id: candidateId, native_author_id: authorId, verdict, reasons, evidence_version: evidenceVersion, ...(rating !== null ? { match_rating: rating } : {}), ...(candidate !== null && candidate.contacts.length ? { contacts: candidate.contacts } : {}) };
+    const pinterest = (candidate?.native_platform ?? source.hit.platform) === "pinterest" && candidate !== null;
+    const monthlyRaw = pinterest && typeof object(evidence).pinterest_monthly_views_raw === "string" ? object(evidence).pinterest_monthly_views_raw as string : null;
+    const scale = pinterest ? discoveryScale(criteria, candidate.followers ? parseDiscoverySubscribers(candidate.followers) : null, monthlyRaw) : null;
+    const bioStatus = object(evidence).profile_bio_status;
+    return { hit: source.hit, ...(candidate?.followers !== null && candidate?.followers !== undefined ? { followers: candidate.followers } : {}), ...(candidate?.native_platform !== null && candidate?.native_platform !== undefined ? { native_platform: candidate.native_platform } : {}), candidate_id: candidateId, native_author_id: authorId, verdict, reasons, evidence_version: evidenceVersion, ...(rating !== null ? { match_rating: rating } : {}), ...(typeof bioStatus === "string" && ["complete", "truncated", "missing", "unavailable", "unknown"].includes(bioStatus) ? { bio_status: bioStatus } : {}), ...(scale !== null ? { pinterest_monthly_views_raw: monthlyRaw, pinterest_scale_passed_by: scale.passed_by } : {}), ...(candidate !== null && candidate.contacts.length ? { contacts: candidate.contacts } : {}) };
   });
   if (object(criteria).contact_preference === "public_email_first") rows.sort((left, right) => Number(left.verdict !== "qualified") - Number(right.verdict !== "qualified") || Number(!left.contacts?.some(contact => contact.kind === "email")) - Number(!right.contacts?.some(contact => contact.kind === "email")));
   const snapshotBasis = [1, basis.campaign_id, basis.revision, criteria, scopes, rows];

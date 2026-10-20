@@ -191,7 +191,7 @@ if (!isMainThread) {
       db.exec("DROP INDEX gmail_bulk_duplicates");
       assert.throws(() => new GmailBulkRepository(db), /index/);
       db.exec("CREATE INDEX gmail_bulk_duplicates ON gmail_bulk_items(fingerprint,state); PRAGMA user_version=89");
-      assert.throws(() => new GmailBulkRepository(db), /schema 90/);
+      assert.throws(() => new GmailBulkRepository(db), /supported Creator schema/);
       db.exec("PRAGMA user_version=90; ALTER TABLE gmail_bulk_items ADD COLUMN extra TEXT");
       assert.throws(() => new GmailBulkRepository(db), /columns/);
     } finally { db.close(); }

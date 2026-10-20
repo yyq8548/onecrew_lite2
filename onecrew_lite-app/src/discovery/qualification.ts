@@ -1,7 +1,8 @@
 import { isDeepStrictEqual } from "node:util";
 import { z } from "zod";
 export interface SubscriberEstimate { nominal: bigint; lower: bigint; upper: bigint }
-export interface DiscoveryAssessment { verdict: "qualified" | "pending" | "rejected"; reasons: string[]; subscribers: bigint | null }
+export type PinterestScaleBranch = "followers" | "monthly_views";
+export interface DiscoveryAssessment { verdict: "qualified" | "pending" | "rejected"; reasons: string[]; subscribers: bigint | null; pinterest_scale?: { state: "passed" | "failed" | "unknown"; passed_by: PinterestScaleBranch[] } }
 const MAX = 18446744073709551615n;
 const object = (value: unknown): Record<string, unknown> => value !== null && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
 const u64 = (value: unknown): bigint | null => typeof value === "bigint" && value >= 0n && value <= MAX ? value : typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? BigInt(value) : null;
@@ -27,6 +28,19 @@ export function parseDiscoverySubscribers(raw: string): SubscriberEstimate | nul
   return { nominal, lower: nominal < margin ? 0n : nominal - margin, upper: nominal + margin > MAX ? MAX : nominal + margin };
 }
 export function discoverySubscriberDisplay(raw: string): string | null { const value = parseDiscoverySubscribers(raw); return value === null ? null : `${value.lower === value.upper ? "" : "~"}${value.nominal}`; }
+export function discoveryScale(criteriaValue: unknown, followers: SubscriberEstimate | null, monthlyRaw?: string | null): { state: "passed" | "failed" | "unknown"; reasons: string[]; passed_by: PinterestScaleBranch[] } {
+  const criteria = object(criteriaValue), minimum = u64(criteria.min_subscribers) ?? u64(criteria.min_followers);
+  const followerState = minimum === null || minimum === 0n ? "passed" : followers === null ? "unknown" : followers.lower >= minimum ? "passed" : followers.upper < minimum ? "failed" : "unknown";
+  const monthlyMinimum = u64(criteria.pinterest_min_monthly_views_exclusive);
+  if (monthlyRaw === undefined || monthlyMinimum === null) return { state: followerState, reasons: followerState === "passed" ? [] : followerState === "failed" ? ["below_min_subscribers"] : [followers === null ? "subscriber_count_unverified" : "subscriber_count_near_threshold"], passed_by: minimum !== null && followerState === "passed" ? ["followers"] : [] };
+  const monthly = typeof monthlyRaw === "string" && /^[0-9][0-9,.]*\s*[KMB万亿千]?\s*(?:月浏览量|monthly views)$/iu.test(monthlyRaw) ? parseDiscoverySubscribers(monthlyRaw.replace(/\s*(?:月浏览量|monthly views)$/iu, "").replace(/\s+(?=[KMB万亿千])/iu, "")) : null;
+  const monthlyState = monthly === null ? "unknown" : monthly.lower > monthlyMinimum ? "passed" : monthly.upper <= monthlyMinimum ? "failed" : "unknown";
+  const state = minimum === null ? monthlyState : followerState === "passed" || monthlyState === "passed" ? "passed" : followerState === "failed" && monthlyState === "failed" ? "failed" : "unknown";
+  const passedBy: PinterestScaleBranch[] = [];
+  if (minimum !== null && followerState === "passed") passedBy.push("followers");
+  if (monthlyState === "passed") passedBy.push("monthly_views");
+  return { state, reasons: state === "passed" ? [] : state === "failed" ? ["below_pinterest_scale"] : ["pinterest_scale_unverified"], passed_by: passedBy };
+}
 export function parseDiscoveryInstagramFollowers(raw: string): (SubscriberEstimate & { display: string }) | null {
   const display = raw.trim();
   if (!/^[0-9][0-9,.]*\s*[KMB万亿千]?\s*(?:followers|位粉丝|粉丝)$/iu.test(display)) return null;
@@ -57,7 +71,7 @@ export function parseDiscoveryFacebookFollowers(raw: string): (SubscriberEstimat
   if (nominal + resolution > BigInt(Number.MAX_SAFE_INTEGER)) return null;
   return { display: raw.trim(), nominal, lower: nominal < resolution ? 0n : nominal - resolution, upper: nominal + resolution };
 }
-export function assessDiscoveryWithCount(rawCriteria: unknown, rawEvidence: unknown, author: string, estimate: SubscriberEstimate | null, youtubeContentSupported: boolean): DiscoveryAssessment {
+export function assessDiscoveryWithCount(rawCriteria: unknown, rawEvidence: unknown, author: string, estimate: SubscriberEstimate | null, youtubeContentSupported: boolean, pinterestMonthlyRaw?: string | null): DiscoveryAssessment {
   const criteria = object(rawCriteria), evidence = object(rawEvidence), sources = Array.isArray(evidence.source_urls) ? evidence.source_urls : [];
   const observed = (value: unknown) => typeof value === "string" && sources.some(source => source === value);
   const proof = object(evidence.reviewed_match), count = estimate?.nominal ?? null;
@@ -76,14 +90,7 @@ export function assessDiscoveryWithCount(rawCriteria: unknown, rawEvidence: unkn
     if (proof.outcome === "supported" && proof.level === "low") initial = { verdict: "rejected", reasons: ["initial_match_low"], subscribers: count };
     if (proof.outcome === "insufficient" && proof.level == null) initial = { verdict: "pending", reasons: ["initial_match_unrated"], subscribers: count };
   }
-  const reasons: string[] = [], rawMin = u64(Object.hasOwn(criteria, "min_subscribers") ? criteria.min_subscribers : criteria.min_followers), minimum = rawMin !== null && rawMin > 0n ? rawMin : null;
-  let below = false;
-  if (minimum !== null) {
-    if (estimate === null) reasons.push("subscriber_count_unverified");
-    else if (estimate.upper < minimum) below = true;
-    else if (estimate.lower < minimum) reasons.push("subscriber_count_near_threshold");
-  }
-  if (below) reasons.push("below_min_subscribers");
+  const scale = discoveryScale(criteria, estimate, pinterestMonthlyRaw), reasons: string[] = [...scale.reasons], below = scale.state === "failed";
   if (criteria.requires_ai_tool_demo !== false) {
     const demo = object(evidence.own_ai_tool_demo);
     if (!(youtubeContentSupported && demo.verified === true && demo.channel_id === author && youtubeVideo(demo.source_url) && observed(demo.source_url))) reasons.push("own_ai_tool_demo_unverified");
@@ -111,19 +118,25 @@ export function assessDiscoveryWithCount(rawCriteria: unknown, rawEvidence: unkn
     if (!Array.isArray(criteria.requirements) || criteria.requirements.length > 32) requirementReasons.push("requirements_invalid");
     else for (const [index, requirement] of criteria.requirements.entries()) {
       const reviewed = Array.isArray(evidence.reviewed_requirements) ? object(evidence.reviewed_requirements[index]) : {};
-      const bound = isDeepStrictEqual(reviewed.requirement, requirement) && u64(reviewed.index) === BigInt(index) && reviewed.native_author_id === author && nonempty(reviewed.review_id) && observed(reviewed.source_url);
+      const bound = isDeepStrictEqual(reviewed.requirement, requirement, { skipPrototype: true }) && u64(reviewed.index) === BigInt(index) && reviewed.native_author_id === author && nonempty(reviewed.review_id) && observed(reviewed.source_url);
       if (bound && reviewed.outcome === "contradicted") { requirementConflict = true; requirementReasons.push("requirement_contradicted"); }
       else if (!bound || reviewed.outcome !== "supported") requirementReasons.push("requirement_unverified");
     }
   }
-  if (Object.keys(criteria).some(key => !["min_subscribers", "min_followers", "requires_ai_tool_demo", "requires_public_tool_url", "region", "language", "category", "table_subject", "contact_search_terms", "automatic_query_expansion", "requirements", "contact_preference", "refinement", "excluded_accounts"].includes(key))) reasons.push("unsupported_criterion");
-  if (initial !== null) return { ...initial, verdict: requirementConflict ? "rejected" : requirementReasons.length && initial.verdict === "qualified" ? "pending" : initial.verdict, reasons: [...initial.reasons, ...requirementReasons] };
+  if (Object.keys(criteria).some(key => !["min_subscribers", "min_followers", "pinterest_min_monthly_views_exclusive", "requires_ai_tool_demo", "requires_public_tool_url", "region", "language", "category", "table_subject", "contact_search_terms", "automatic_query_expansion", "requirements", "contact_preference", "refinement", "excluded_accounts"].includes(key))) reasons.push("unsupported_criterion");
+  if (initial !== null) return { ...initial, verdict: requirementConflict || pinterestMonthlyRaw !== undefined && below ? "rejected" : (requirementReasons.length || pinterestMonthlyRaw !== undefined && scale.state === "unknown") && initial.verdict === "qualified" ? "pending" : initial.verdict, reasons: [...initial.reasons, ...(pinterestMonthlyRaw !== undefined ? scale.reasons : []), ...requirementReasons] };
   reasons.push(...requirementReasons);
   return { verdict: below || languageConflict || requirementConflict ? "rejected" : reasons.length ? "pending" : "qualified", reasons, subscribers: count };
 }
-export function assessDiscoveryProfile(criteria: unknown, evidence: unknown, author: string, followers: bigint | number | null): DiscoveryAssessment {
+export function assessDiscoveryProfile(criteria: unknown, evidence: unknown, author: string, followers: bigint | number | null, pinterestMonthlyRaw?: string | null): DiscoveryAssessment {
   const value = followers === null ? null : u64(followers); if (followers !== null && value === null) throw new Error("discovery_native_follower_count_invalid");
-  return assessDiscoveryWithCount(criteria, evidence, author, value === null ? null : { nominal: value, lower: value, upper: value }, false);
+  const estimate = value === null ? null : { nominal: value, lower: value, upper: value };
+  const assessment = assessDiscoveryWithCount(criteria, evidence, author, estimate, false, pinterestMonthlyRaw);
+  if (pinterestMonthlyRaw !== undefined && object(criteria).pinterest_min_monthly_views_exclusive !== undefined) {
+    const scale = discoveryScale(criteria, estimate, pinterestMonthlyRaw);
+    assessment.pinterest_scale = { state: scale.state, passed_by: scale.passed_by };
+  }
+  return assessment;
 }
 export function assessDiscoveryYoutube(criteria: unknown, raw: unknown, author: string): DiscoveryAssessment {
   const evidence = object(raw), sources = Array.isArray(evidence.source_urls) ? evidence.source_urls : [];
@@ -142,8 +155,8 @@ export function assessDiscoveryFacebook(criteria: unknown, evidence: unknown, au
 export function assessedDiscoveryEvidence(raw: unknown, assessment: DiscoveryAssessment): unknown {
   if (raw === null || typeof raw !== "object" || Array.isArray(raw)) return raw;
   const evidence = object(raw), fit = object(evidence.reviewed_match), sources = Array.isArray(evidence.source_urls) ? evidence.source_urls : [];
-  const rated = (assessment.verdict === "qualified" || assessment.verdict === "rejected" && fit.policy_version === "initial-match-evaluation-v1" && fit.level === "low") && fit.verified === true && ["language-match-review-v1", "initial-match-evaluation-v1"].includes(String(fit.policy_version)) && fit.outcome === "supported" && typeof fit.reason === "string" && !!fit.reason.trim() && Buffer.byteLength(fit.reason) <= 4000 && typeof fit.source_url === "string" && sources.includes(fit.source_url) && ["excellent", "good", "medium", "low"].includes(String(fit.level));
-  return { ...evidence, assessment: { reasons: assessment.reasons, subscribers_normalized: assessment.subscribers, match_rating: rated ? { level: fit.level, reason: fit.reason, source_url: fit.source_url } : null } };
+  const rated = (assessment.verdict === "qualified" || assessment.reasons.includes("related_alternative") || assessment.verdict === "rejected" && fit.policy_version === "initial-match-evaluation-v1" && fit.level === "low") && fit.verified === true && ["language-match-review-v1", "initial-match-evaluation-v1"].includes(String(fit.policy_version)) && fit.outcome === "supported" && typeof fit.reason === "string" && !!fit.reason.trim() && Buffer.byteLength(fit.reason) <= 4000 && typeof fit.source_url === "string" && sources.includes(fit.source_url) && ["excellent", "good", "medium", "low"].includes(String(fit.level));
+  return { ...evidence, assessment: { reasons: assessment.reasons, subscribers_normalized: assessment.subscribers, ...(assessment.pinterest_scale ? { pinterest_scale: assessment.pinterest_scale } : {}), match_rating: rated ? { level: fit.level, reason: fit.reason, source_url: fit.source_url } : null } };
 }
 
 export function mergePendingDiscoveryEvidence(current: unknown, previous: unknown): unknown {

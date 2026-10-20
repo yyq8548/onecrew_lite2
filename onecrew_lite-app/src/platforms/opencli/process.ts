@@ -15,7 +15,7 @@ interface RunOptions { readonly deadlineMs: number; readonly signal?: AbortSigna
 
 export function classifyOpenCliFailure(exitCode: number | null, stdout: Uint8Array, stderr: Uint8Array): OpenCliError {
   const output = `${new TextDecoder().decode(stdout)} ${new TextDecoder().decode(stderr)}`.toLowerCase();
-  const families = ["onecrew_instagram_search", "onecrew_reddit_profile", "onecrew_pinterest"];
+  const families = ["onecrew_instagram_search", "onecrew_reddit_profile", "onecrew_pinterest", "onecrew_linkedin", "onecrew_fb_profile", "onecrew_fb_contact"];
   if (families.some(family => output.includes(`${family}_risk`))) return new OpenCliError("opencli_risk_control");
   if (families.some(family => output.includes(`${family}_auth`))) return new OpenCliError("opencli_auth_required");
   if (exitCode === 77 || ["auth_required", "not logged in", "http 401 - make sure you are logged in to instagram"].some(marker => output.includes(marker))) return new OpenCliError("opencli_auth_required");
@@ -29,6 +29,17 @@ export function classifyOpenCliFailure(exitCode: number | null, stdout: Uint8Arr
 function classifyNativeReadFailure(output: string): OpenCliError | null {
   if (output.includes("onecrew_youtube_search_bootstrap_timeout")) return new OpenCliError("opencli_timeout");
   const stages: readonly (readonly [string, OpenCliErrorCode])[] = [
+    ["onecrew_linkedin_invalid_contact_profile_route", "linkedin_contact_profile_route"],
+    ["onecrew_linkedin_invalid_contact_dialog_owner", "linkedin_contact_dialog_owner_conflict"],
+    ["onecrew_linkedin_invalid_contact_owner", "linkedin_contact_owner_conflict"],
+    ["onecrew_linkedin_invalid_contact_before_click", "linkedin_contact_before_click"],
+    ["onecrew_linkedin_invalid_contact_projection", "linkedin_contact_projection_invalid"],
+    ["onecrew_linkedin_invalid_contact_unavailable", "linkedin_contact_unavailable"],
+    ["onecrew_linkedin_content_unavailable", "linkedin_content_unavailable"],
+    ["onecrew_linkedin_profile_unavailable", "linkedin_profile_unavailable"],
+    ["onecrew_fb_profile_timeout", "facebook_profile_timeout"],
+    ["onecrew_fb_profile_invalid", "facebook_profile_layout_invalid"],
+    ["onecrew_fb_contact_invalid", "facebook_contact_layout_invalid"],
     ["onecrew_youtube_search_source_invalid", "provider_response_redirected"],
     ["youtube search bootstrap data not found", "provider_response_shape_invalid"],
     ["youtube search returned malformed result rows", "provider_response_shape_invalid"],
@@ -90,9 +101,19 @@ export function runTrustedOpenCliProcess(installation: TrustedOpenCliProcess, ar
       child.kill("SIGKILL");
       child.stdout.destroy(); child.stderr.destroy();
     };
-    const cancel = () => stop(new OpenCliError("opencli_cancelled"));
-    const deadline = setTimeout(() => stop(new OpenCliError("opencli_timeout")), options.deadlineMs);
-    const cleanup = () => { settled = true; clearTimeout(deadline); options.signal?.removeEventListener("abort", cancel); };
+    let cooperativeReason: "opencli_cancelled" | "opencli_timeout" | null = null;
+    let forceStop: ReturnType<typeof setTimeout> | undefined;
+    const requestStop = (reason: "opencli_cancelled" | "opencli_timeout") => {
+      if (!options.foregroundBrowser) { stop(new OpenCliError(reason)); return; }
+      if (settled || failure) return;
+      cooperativeReason = reason;
+      failure = new OpenCliError("opencli_cancel_pending");
+      child.kill("SIGTERM");
+      forceStop = setTimeout(() => { child.kill("SIGKILL"); child.stdout.destroy(); child.stderr.destroy(); }, 5000);
+    };
+    const cancel = () => requestStop("opencli_cancelled");
+    const deadline = setTimeout(() => requestStop("opencli_timeout"), options.deadlineMs);
+    const cleanup = () => { settled = true; clearTimeout(deadline); clearTimeout(forceStop); options.signal?.removeEventListener("abort", cancel); };
     options.signal?.addEventListener("abort", cancel, { once: true });
     child.stdout.on("data", (chunk: Buffer) => {
       if (failure) return;
@@ -101,7 +122,7 @@ export function runTrustedOpenCliProcess(installation: TrustedOpenCliProcess, ar
       else stdout.push(chunk);
     });
     child.stderr.on("data", (chunk: Buffer) => {
-      if (failure) return;
+      if (failure && failure.code !== "opencli_cancel_pending") return;
       if (!options.webDiagnostics) {
         stderrSize += chunk.length;
         if (stderrSize > MAX_STDERR) stop(new OpenCliError("opencli_output_too_large"));
@@ -126,7 +147,10 @@ export function runTrustedOpenCliProcess(installation: TrustedOpenCliProcess, ar
     child.once("close", code => {
       if (settled) return;
       cleanup();
-      if (failure) { reject(failure); return; }
+      if (failure) {
+        const closed = cooperativeReason !== null && Buffer.concat(stderr).toString("utf8").split(/\r?\n/u).includes("ONECREW_BROWSER_CANCELLED_CLOSED");
+        reject(closed ? new OpenCliError(cooperativeReason!) : failure); return;
+      }
       if (line.length) stderr.push(Buffer.from(line));
       const output = Buffer.concat(stdout);
       const diagnostic = Buffer.concat(stderr);

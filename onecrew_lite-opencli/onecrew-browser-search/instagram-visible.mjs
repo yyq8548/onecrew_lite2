@@ -18,7 +18,6 @@ export async function observeInstagramVisibleProfile(username, authorId) {
       continue;
     }
     const more = [...main.querySelectorAll('button,[role="button"]')].find(n => visible(n) && /^(更多|more)$/i.test(n.innerText.trim()));
-    if (more) { more.click(); await new Promise(resolve => setTimeout(resolve,100)); }
     const updated = main.innerText.split('\n').map(s => s.trim()).filter(Boolean);
     const following = updated.findIndex(s => /^[0-9][0-9,.\s]*[KMB万亿千]?\s*(?:following|关注)$/i.test(s));
     const bioLines = following < 0 ? [] : updated.slice(following+1);
@@ -27,16 +26,24 @@ export async function observeInstagramVisibleProfile(username, authorId) {
     const emails = [...new Set(biography.match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g) || [])];
     const exact = (follower || '').replace(/(?:followers|位粉丝|粉丝)/i,'').trim();
     const numeric = /^(?:[0-9]+|[0-9]{1,3}(?:,[0-9]{3})+)$/.test(exact) ? Number(exact.replaceAll(',','')) : null;
-    const links = [...main.querySelectorAll('a[href]')].filter(visible).map(a => a.href).filter(href => {
-      const url = new URL(href);
-      return ['http:','https:'].includes(url.protocol) && !['www.instagram.com','instagram.com','l.instagram.com'].includes(url.hostname) && !url.username && !url.password;
-    });
+    const links = [];
+    for(const anchor of [...main.querySelectorAll('a[href]')].filter(visible)) {
+      let url=new URL(anchor.href);
+      if(url.origin==='https://l.instagram.com'&&url.searchParams.has('u')) url=new URL(url.searchParams.get('u'));
+      const account=url.origin===location.origin&&/^\/[a-z0-9_.]{1,30}\/$/i.test(url.pathname)&&/^@[a-z0-9_.]+$/i.test(anchor.innerText.trim())&&url.pathname.toLowerCase()!==`/${username}/`;
+      if(['http:','https:'].includes(url.protocol)&&!url.username&&!url.password&&url.href.length<=2048&&(account||!['www.instagram.com','instagram.com','l.instagram.com'].includes(url.hostname))) links.push(url.href);
+    }
+    const exactTitles=[...main.querySelectorAll('[title]')].filter(node=>visible(node)&&/followers|粉丝/i.test(node.parentElement?.innerText||'')).map(node=>node.getAttribute('title')).filter(value=>/^[0-9]+(?:,[0-9]{3})*$/.test(value||''));
+    const exactCounts=[...new Set(exactTitles.map(value=>Number(value.replaceAll(',',''))).filter(Number.isSafeInteger))];
+    if(exactCounts.length>1) return {stop:'identity'};
     return {profile:{adapter_version:'1.0.0',id:authorId,username,
       display_name:(updated[1] || username).slice(0,200),biography,
-      follower_count:Number.isSafeInteger(numeric) ? numeric : null,...(follower ? {follower_text:follower} : {}),
+      follower_count:exactCounts.length===1?exactCounts[0]:Number.isSafeInteger(numeric) ? numeric : null,...(follower ? {follower_text:follower} : {}),
+      execution_mode:'computer_use',bio_truncated:!!more,bio_status:more?'truncated':biography?'complete':'missing',
       private_account:privateAccount ? true : null,verified:null,
       public_email:emails.length === 1 ? emails[0] : null,contact_links:[...new Set(links)].slice(0,10),
-      profile_url:`https://www.instagram.com/${username}/`,evidence_source:'public_profile_dom_search_bound',web_text:''}};
+      profile_url:`https://www.instagram.com/${username}/`,
+      ...(authorId===`https://www.instagram.com/${username}/`?{identity_kind:'profile_url',evidence_source:'public_profile_dom_profile_bound'}:{evidence_source:'public_profile_dom_search_bound'}),web_text:''}};
   }
   return {stop:'timeout'};
 }

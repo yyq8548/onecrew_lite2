@@ -30,11 +30,12 @@ export function loadDiscoveryReviewBasis(database: DatabaseSync, campaign: strin
   const source = database.prepare("SELECT platform FROM discovery_search_hits WHERE discovery_campaign_id=?1 AND id=?2").get(campaign, hit);
   if (!source) throw new Error("review_source_unavailable");
   const platform = z.string().parse(source.platform);
+  const webSource = ["google", "yahoo"].includes(platform) || platform === "instagram" && database.prepare("SELECT 1 FROM discovery_web_source_reads WHERE discovery_campaign_id=? AND search_hit_id=?").get(campaign, hit) !== undefined;
   let sourceJoin: string, candidateJoin: string;
-  if (["google", "yahoo"].includes(platform)) {
+  if (webSource) {
     sourceJoin = `JOIN discovery_web_source_reads web ON web.search_hit_id=h.id AND web.discovery_campaign_id=d.id
       AND web.expected_revision=d.current_revision AND web.origin_platform=h.platform AND web.profile_ref=h.profile_ref
-      AND web.source_url=h.source_url AND web.target_platform IN ('youtube','twitter','douyin') AND web.status='completed' AND web.stop_code IS NULL
+      AND web.source_url=h.source_url AND web.target_platform IN ('youtube','twitter','douyin','instagram','tiktok') AND web.status='completed' AND web.stop_code IS NULL
       JOIN discovery_video_completions v ON v.search_hit_id=h.id
       JOIN discovery_video_identity_bindings b ON b.search_hit_id=h.id AND b.discovery_campaign_id=d.id
       AND b.criteria_revision=d.current_revision AND b.native_author_id=web.native_author_id`;
@@ -113,19 +114,20 @@ export function loadDiscoveryReviewBasis(database: DatabaseSync, campaign: strin
     const admitted = database.prepare("SELECT scopes_json FROM discovery_query_rounds WHERE discovery_campaign_id=?1 AND revision=?2 ORDER BY round").all(campaign, revision).some(round => scopesSchema.parse(parse(z.string().parse(round.scopes_json))).some(value => value.platform === platform && value.profile_ref === scope.profile_ref && value.keywords.includes(basis.hit.search_keyword)));
     if (admitted) { scope.keywords.push(basis.hit.search_keyword); basis.scopes_json = stringifyApplicationJson(scopes); }
   }
-  if (["google", "yahoo"].includes(platform)) {
+  if (webSource) {
     const read = loadDiscoveryWebSourceReceipt(database, campaign, hit), evidence = object(parse(basis.evidence_json)), native = read.native, profile = object(native.profile), content = object(native.content);
     if (read.is_primary_source !== 1 || read.status !== "completed" || read.expected_revision !== revision || read.origin_platform !== platform || read.profile_ref !== basis.hit.profile_ref || read.source_url !== basis.hit.source_url || read.candidate_id !== basis.candidate_id || read.native_author_id !== basis.native_author_id || object(evidence.web_origin).target_platform !== read.target_platform) throw new Error("review_native_web_source_binding_unavailable");
-    const social = ["twitter", "douyin"].includes(read.target_platform), description = social ? content.text : native.description;
+    const profileTarget = ["instagram", "tiktok"].includes(read.target_platform), social = ["twitter", "douyin", "instagram", "tiktok"].includes(read.target_platform), description = profileTarget ? null : social ? content.text : native.description;
     basis.source_description = typeof description === "string" ? description : null;
-    basis.hit.author_label = z.string().parse(read.target_platform === "douyin" ? profile.author_label : read.target_platform === "twitter" ? profile.name : native.author);
+    basis.hit.author_label = z.string().parse(read.target_platform === "douyin" ? profile.author_label : read.target_platform === "twitter" ? profile.name : profileTarget ? profile.display_name : native.author);
     basis.hit.author_id = basis.native_author_id; basis.hit.author_url = social ? z.string().parse(profile.profile_url) : `https://www.youtube.com/channel/${basis.native_author_id}`; basis.hit.author_observed_at = read.updated_at;
     if (social) {
       basis.native_followers = typeof profile.follower_count === "number" || typeof profile.follower_count === "bigint" ? profile.follower_count : null;
-      basis.native_profile = { web_text: null, profile_url: basis.hit.author_url, observed_at: read.updated_at, bio: read.target_platform === "douyin" && profile.bio_truncated === true ? null : typeof profile.bio === "string" ? profile.bio : null, self_declared_location: typeof profile.self_declared_location === "string" ? profile.self_declared_location : null };
+      const bio = profileTarget ? read.target_platform === "instagram" ? profile.biography : profile.signature : profile.bio;
+      basis.native_profile = { web_text: typeof profile.web_text === "string" ? profile.web_text : null, profile_url: basis.hit.author_url, observed_at: read.updated_at, bio: typeof bio === "string" ? bio : null, bio_status: profile.bio_truncated === true ? "truncated" : profile.bio_truncated === false || read.target_platform === "tiktok" ? typeof bio === "string" && bio.trim() ? "complete" : "missing" : "unknown", self_declared_location: typeof profile.self_declared_location === "string" ? profile.self_declared_location : null };
     }
   }
-  if (["pinterest", "instagram"].includes(platform)) {
+  if (["pinterest", "instagram"].includes(platform) && !webSource) {
     const profile = loadDiscoveryProfileReceipt(database, campaign, hit), native = object(profile.native_profile), sources = object(parse(basis.evidence_json)).source_urls;
     if (profile.status !== "completed" || profile.stop_code !== null || profile.claim.expected_revision !== revision || profile.claim.platform !== platform || profile.claim.profile_ref !== basis.hit.profile_ref || profile.claim.author_id !== basis.native_author_id || profile.claim.source_url !== basis.hit.source_url || platform === "instagram" && profile.claim.author_url !== basis.hit.source_url || !Array.isArray(sources) || sources[0] !== basis.hit.source_url) throw new Error("review_native_profile_binding_unavailable");
     if (Buffer.byteLength(stringifyApplicationJson(native)) > 16000) throw new Error("review_native_profile_binding_unavailable");
@@ -135,6 +137,8 @@ export function loadDiscoveryReviewBasis(database: DatabaseSync, campaign: strin
     basis.native_followers = typeof native.follower_count === "number" ? native.follower_count : null;
     if (platform === "instagram" && basis.native_followers === null && typeof native.follower_text === "string") basis.native_follower_estimate = parseDiscoveryInstagramFollowers(native.follower_text);
     basis.native_profile = { web_text: bounded(native.web_text, 4000), profile_url: profile.claim.author_url, observed_at: profile.captured_at, bio: bounded(native[platform === "instagram" ? "biography" : "bio"], 8000), self_declared_location: null };
+    if (platform === "pinterest") basis.native_profile.monthly_views_raw = bounded(native.monthly_views_raw, 100);
+    if (platform === "instagram") basis.native_profile.bio_status = native.bio_status === "complete" || native.bio_status === "truncated" || native.bio_status === "missing" ? native.bio_status : "unknown";
     if (database.prepare("SELECT EXISTS(SELECT 1 FROM discovery_content_reads WHERE discovery_campaign_id=?1 AND search_hit_id=?2) AS present").get(campaign, hit)?.present === 1) {
       const content = loadDiscoveryContentReceipt(database, campaign, hit);
       if (content.status === "completed" && content.stop_code === null) {
@@ -162,7 +166,7 @@ export function loadDiscoveryReviewBasis(database: DatabaseSync, campaign: strin
     const followers = profile.follower_count;
     if (!(typeof followers === "number" && Number.isSafeInteger(followers) && followers >= 0 || typeof followers === "bigint" && followers >= 0n && followers <= BigInt(Number.MAX_SAFE_INTEGER))) throw new Error("review_native_followers_invalid");
     basis.native_followers = followers;
-    basis.native_profile = { web_text: null, profile_url: profileUrl, observed_at: z.number().int().safe().parse(stored.updated_at), bio: bounded(profile.signature, 1000), self_declared_location: null };
+    basis.native_profile = { web_text: null, profile_url: profileUrl, observed_at: z.number().int().safe().parse(stored.updated_at), bio: bounded(profile.signature, 16000), self_declared_location: null, bio_status: profile.bio_truncated === true ? "truncated" : typeof profile.signature === "string" && profile.signature ? "complete" : "missing" };
     basis.hit.author_id = z.string().parse(stored.author_id); basis.hit.author_url = z.string().parse(stored.author_url); basis.hit.author_observed_at = z.number().int().safe().parse(stored.observed_at);
   }
   if (["reddit", "facebook", "weibo", "bluesky", "linkedin", "douyin", "zhihu", "hackernews", "pixiv"].includes(platform)) {
@@ -175,6 +179,7 @@ export function loadDiscoveryReviewBasis(database: DatabaseSync, campaign: strin
     if (platform === "douyin" && typeof native.follower_text === "string") basis.native_follower_estimate = parseDiscoveryDouyinFollowers(native.follower_text);
     if (platform === "facebook" && basis.native_followers === null && typeof native.follower_text === "string") basis.native_follower_estimate = parseDiscoveryFacebookFollowers(native.follower_text);
     basis.native_profile = { web_text: null, profile_url: authorUrl, observed_at: profile.captured_at, bio: bounded(native[["weibo", "linkedin", "douyin", "zhihu", "pixiv"].includes(platform) ? "bio" : "biography"], ["bluesky", "linkedin", "douyin", "zhihu", "hackernews", "pixiv"].includes(platform) ? 8000 : 2000), self_declared_location: null };
+    if (["facebook", "weibo", "linkedin", "douyin"].includes(platform)) basis.native_profile.bio_status = native.bio_status === "complete" || native.bio_status === "truncated" || native.bio_status === "missing" || native.bio_status === "unavailable" || native.bio_status === "unknown" ? native.bio_status : native.bio_truncated === true ? "truncated" : native.bio_truncated === false ? basis.native_profile.bio ? "complete" : "missing" : "unknown";
     basis.hit.author_id = platform === "linkedin" ? basis.native_author_id : profile.claim.author_id; basis.hit.author_url = authorUrl; basis.native_content = content;
   }
   if (platform === "bilibili") {
@@ -188,7 +193,7 @@ export function loadDiscoveryReviewBasis(database: DatabaseSync, campaign: strin
     if (stored.author_id !== basis.native_author_id || profile.mid !== stored.author_id || profile.profile_url !== profileUrl || stored.author_url !== profileUrl || content.status !== "completed" || content.stop_code !== null || content.claim.expected_revision !== revision || content.claim.platform !== "bilibili" || content.claim.profile_ref !== basis.hit.profile_ref || content.claim.author_id !== basis.native_author_id || content.claim.source_url !== basis.hit.source_url || native.author_id !== stored.author_id || native.source_url !== basis.hit.source_url || !basis.hit.source_url.startsWith("https://www.bilibili.com/video/") || native.bvid !== basis.hit.source_url.slice("https://www.bilibili.com/video/".length) || !Array.isArray(sources) || sources[0] !== basis.hit.source_url) throw new Error("review_native_content_binding_unavailable");
     const followers = profile.follower_count;
     if (!(typeof followers === "number" && Number.isSafeInteger(followers) && followers >= 0 || typeof followers === "bigint" && followers >= 0n && followers <= BigInt(Number.MAX_SAFE_INTEGER))) throw new Error("review_native_followers_invalid");
-    basis.native_followers = followers; basis.native_profile = { web_text: null, profile_url: profileUrl, observed_at: z.number().int().safe().parse(stored.updated_at), bio: bounded(profile.sign, 1000), self_declared_location: null };
+    basis.native_followers = followers; basis.native_profile = { web_text: null, profile_url: profileUrl, observed_at: z.number().int().safe().parse(stored.updated_at), bio: bounded(profile.sign, 8000), self_declared_location: null, bio_status: profile.bio_status === "complete" || profile.bio_status === "truncated" || profile.bio_status === "missing" || profile.bio_status === "unavailable" ? profile.bio_status : "unknown" };
     basis.hit.author_id = z.string().parse(stored.author_id); basis.hit.author_url = z.string().parse(stored.author_url); basis.hit.author_observed_at = z.number().int().safe().parse(stored.observed_at); basis.native_content = content;
   }
   if (platform === "twitter") {

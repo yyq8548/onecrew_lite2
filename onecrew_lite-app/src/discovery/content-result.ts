@@ -7,9 +7,10 @@ import { validateDiscoveryPinterestContent } from "./pinterest-material.ts";
 import { discoveryContentClaim } from "./review-material.ts";
 import type { z as Zod } from "zod";
 import { discoveryPostIdForSource } from "./post-author-contracts.ts";
+import { NATIVE_READ_FAILURE_CODES, PLATFORM_READ_FAILURE_CODES } from "../platforms/opencli/errors.ts";
 
 export type DiscoveryContentClaim = Zod.infer<typeof discoveryContentClaim>;
-const text = z.string().refine(value => value.isWellFormed()), stop = z.enum(["opencli_timeout", "opencli_output_too_large", "opencli_version_changed", "opencli_daemon_unavailable", "opencli_extension_unavailable", "opencli_profile_unavailable", "opencli_command_unavailable", "opencli_invalid_output", "opencli_invalid_input", "opencli_unavailable", "opencli_command_failed", "opencli_risk_control", "opencli_auth_required"]);
+const text = z.string().refine(value => value.isWellFormed()), stop = z.enum(["opencli_timeout", "opencli_output_too_large", "opencli_version_changed", "opencli_daemon_unavailable", "opencli_extension_unavailable", "opencli_profile_unavailable", "opencli_command_unavailable", "opencli_invalid_output", "opencli_invalid_input", "opencli_unavailable", "opencli_command_failed", "opencli_risk_control", "opencli_auth_required", ...NATIVE_READ_FAILURE_CODES, ...PLATFORM_READ_FAILURE_CODES]);
 export function validateDiscoveryContentResult(claim: DiscoveryContentClaim, raw: unknown, failure: string | null): Record<string, unknown> | null {
   discoveryContentClaim.parse(claim);
   if (failure !== null) { stop.parse(failure); if (raw !== null) throw new Error("discovery_content_result_invalid"); return null; }

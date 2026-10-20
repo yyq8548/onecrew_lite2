@@ -20,8 +20,14 @@ export function planDiscoveryStep(repository: DiscoveryStepSource, campaignId: s
   if (campaign.phase !== "active" || campaign.revision !== revision) throw new Error("discovery_step_approval_changed");
   if (campaign.platform_runs.some(run => run.status === "searching")) return { kind: "busy" };
   const counts = repository.countCandidates(campaignId, excluded);
-  if (counts.qualified >= campaign.target_count) return { kind: "target_reached" };
   const blocked = [...new Set([...excluded, ...deferred])], scopes = campaign.scopes.filter(scope => !blocked.includes(scope.platform)), runs = campaign.platform_runs.filter(run => !blocked.includes(run.platform));
+  if (counts.qualified >= campaign.target_count) {
+    if (campaign.max_calls === null || campaign.used_calls < campaign.max_calls) {
+      const page = repository.nextPublicPage(campaignId, blocked);
+      if (page) return { kind: "read_public_page", profile_ref: page.profile_ref, candidate_id: page.candidate_id, requested_url: page.requested_url };
+    }
+    return { kind: deferred.length ? "busy" : "target_reached" };
+  }
   const first = scopes.flatMap(scope => runs.filter(run => run.platform === scope.platform && run.status === "unsearched"))[0];
   if (campaign.max_calls !== null && campaign.used_calls >= campaign.max_calls) return { kind: "budget_exhausted" };
   if (!blocked.includes("youtube")) { const transcript = repository.nextTranscriptHit(campaignId); if (transcript) return { kind: "read_transcript", profile_ref: transcript.profile_ref, search_hit_id: transcript.id }; }

@@ -156,6 +156,7 @@
     "editSourceDetails": "查看和编辑来源明细",
     "verdict": {
       "qualified": "推荐候选人",
+      "related": "相关备选（不计入推荐人数）",
       "pending": "待核实",
       "rejected": "未进入推荐名单",
       "unverified": "尚未核实"
@@ -166,6 +167,9 @@
       "subscriber_count_unverified": "粉丝数未核实",
       "subscriber_count_near_threshold": "粉丝数接近门槛，尚不确定",
       "below_min_subscribers": "粉丝数低于门槛",
+      "below_pinterest_scale": "粉丝数和月浏览量均未达到要求",
+      "pinterest_scale_unverified": "Pinterest 粉丝数或月浏览量条件尚待核实",
+      "related_alternative": "相关备选，不计入推荐目标",
       "own_ai_tool_demo_unverified": "本人 AI 工具演示未核实",
       "public_tool_url_unverified": "公开工具链接未核实",
       "region_unverified": "创作者所在地未核实",

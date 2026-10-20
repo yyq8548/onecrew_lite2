@@ -32,7 +32,7 @@ test("原Rust真实三阶段SQLite的profile付费领取/回执/候选证据全�
     const originalCandidate = originalAfter.prepare("SELECT platform,source_profile_ref,platform_account_id,display_name,profile_url,verdict,evidence_json,source_platform FROM discovery_candidates").get()!;
     const evidence = parseApplicationJson(String(candidate.evidence_json)) as Record<string, unknown>, originalEvidence = parseApplicationJson(String(originalCandidate.evidence_json)) as Record<string, unknown>;
     assert.equal(evidence.captured_at, receipt.captured_at);
-    assert.deepEqual({ ...candidate, evidence_json: { ...evidence, captured_at: originalEvidence.captured_at } }, { ...originalCandidate, evidence_json: originalEvidence });
+    assert.deepEqual({ ...candidate, evidence_json: { ...evidence, captured_at: originalEvidence.captured_at } }, { ...originalCandidate, evidence_json: { ...originalEvidence, pinterest_monthly_views_raw: null, pinterest_monthly_views_source_url: candidate.profile_url, profile_bio_status: "unknown", profile_bio_status_source_url: candidate.profile_url } });
     assert.equal(db.prepare("SELECT status FROM discovery_platform_runs").get()!.status, "completed");
   } finally { db.close(); competing.close(); originalClaimed.close(); originalAfter.close(); }
   assert.equal(createHash("sha256").update(await readFile(new URL("before.sqlite", source))).digest("hex"), createHash("sha256").update(before).digest("hex"));

@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
 import { z } from "zod";
 import { parseApplicationJson, stringifyApplicationJson } from "../contracts/application-json.ts";
-import { validateCreatorSchema90 } from "../storage/creator-schema.ts";
+import { validateCreatorSchema } from "../storage/creator-schema.ts";
 import { assessDiscoveryYoutube, assessedDiscoveryEvidence } from "./qualification.ts";
 import { mergeAuditedDiscoveryProofs } from "./review-proof-audit.ts";
 import { sourceLocalReadFailure } from "./stops.ts";
@@ -28,7 +28,7 @@ function videoTarget(source: string): boolean {
 
 export class DiscoveryVideoRepository {
   readonly #db: DatabaseSync;
-  constructor(database: DatabaseSync) { validateCreatorSchema90(database); this.#db = database; }
+  constructor(database: DatabaseSync) { validateCreatorSchema(database); this.#db = database; }
   #transaction<T>(body: () => T): T { this.#db.exec("BEGIN IMMEDIATE"); let committed = false; try { const value = body(); this.#db.exec("COMMIT"); committed = true; return value; } finally { if (!committed) this.#db.exec("ROLLBACK"); } }
   next(campaign: string): { id: string; profile_ref: string } | null {
     const row = this.#db.prepare(`SELECT h.id,h.profile_ref FROM discovery_search_hits h LEFT JOIN discovery_search_authors p ON p.search_hit_id=h.id

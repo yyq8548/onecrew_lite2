@@ -3,12 +3,12 @@ import { dirname, resolve } from "node:path";
 import { backup, DatabaseSync } from "node:sqlite";
 import { createPrivateDirectory, verifyPrivateFile } from "./private-backup.ts";
 import { validateVaultSchema } from "./vault-schema.ts";
-import { validateCreatorSchema90 } from "./creator-schema.ts";
+import { validateCreatorSchema } from "./creator-schema.ts";
 
 export type LegacyDatabaseKind = "creator" | "vault";
 
 const versions = {
-  creator: { current: 90, earliest: 27 },
+  creator: { current: 91, earliest: 27 },
   vault: { current: 4, earliest: 2 },
 } as const;
 
@@ -35,12 +35,12 @@ function inspectConnection(db: DatabaseSync, kind: LegacyDatabaseKind): LegacyDa
   const empty = version === 0 && tables.length === 0;
   if (!empty && version < policy.earliest) throw new Error(`Unsupported ${kind} schema version ${version}`);
   if (kind === "vault" && !empty) validateVaultSchema(db);
-  if (kind === "creator" && version === 90) validateCreatorSchema90(db);
+  if (kind === "creator" && (version === 90 || version === 91)) validateCreatorSchema(db);
   if (db.prepare("PRAGMA foreign_key_check").all().length !== 0) {
     throw new Error(`${kind} database foreign key check failed`);
   }
   return {
-    kind, version, currentVersion: policy.current, tables, schemaValidated: !empty && (kind === "vault" || version === 90),
+    kind, version, currentVersion: policy.current, tables, schemaValidated: !empty && (kind === "vault" || version === 90 || version === 91),
     state: empty ? "empty" : version === policy.current ? "current" : "upgrade-required",
   };
 }

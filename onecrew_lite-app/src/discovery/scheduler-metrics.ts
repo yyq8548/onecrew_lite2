@@ -15,7 +15,7 @@ export function recordDiscoveryReadTiming(metrics: FileDiscoveryExecutionMetrics
 export function discoveryReadFailureLocation(result: DiscoveryAdvanceResult) {
   const step = result.step;
   const kind = step.kind === "search" ? "search" : step.kind === "read_facebook_identity" ? "identity" : step.kind.startsWith("read_") ? step.kind.slice(5) : "read";
-  const fixed = ({ read_video: "youtube", read_transcript: "youtube", read_identity: "twitter", read_facebook_identity: "facebook", read_source_author: "douyin", read_web_source: "youtube", read_content_targets: "facebook" } as Record<string, string>)[step.kind];
+  const fixed = ({ read_video: "youtube", read_transcript: "youtube", read_identity: "twitter", read_facebook_identity: "facebook", read_source_author: "douyin", read_content_targets: "facebook" } as Record<string, string>)[step.kind];
   const platform = fixed ?? (step.kind === "search" ? step.platform : result.profile?.claim.platform ?? result.web_source?.claim.target_platform ?? result.content?.claim.platform ?? null);
   return { step: kind, platform, target_id: "search_hit_id" in step ? step.search_hit_id : result.public_page?.candidate_id ?? null };
 }

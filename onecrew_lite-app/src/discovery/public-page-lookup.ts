@@ -2,9 +2,8 @@ import type { DatabaseSync } from "node:sqlite";
 import { isDeepStrictEqual } from "node:util";
 import { z } from "zod";
 import { parseApplicationJson, stringifyApplicationJson } from "../contracts/application-json.ts";
-import { validateCreatorSchema90 } from "../storage/creator-schema.ts";
+import { validateCreatorSchema } from "../storage/creator-schema.ts";
 import { loadDiscoveryNativeContactMaterial } from "./contact-native.ts";
-import { loadDiscoveryContactObservations } from "./contact-repository.ts";
 import { discoveryContactSearchQuery, discoveryExactUsername, discoveryLinkedUsername } from "./contact-navigation.ts";
 import { DiscoveryProfileRepository } from "./profile-repository.ts";
 
@@ -13,7 +12,7 @@ export const discoveryContactLookup = z.object({ campaign_id: text, expected_rev
 export type DiscoveryContactLookup = z.infer<typeof discoveryContactLookup>;
 export class DiscoveryContactLookupRepository {
   readonly #db: DatabaseSync;
-  constructor(database: DatabaseSync) { validateCreatorSchema90(database); this.#db = database; }
+  constructor(database: DatabaseSync) { validateCreatorSchema(database); this.#db = database; }
   #transaction<T>(write: boolean, body: () => T): T {
     this.#db.exec(write ? "BEGIN IMMEDIATE" : "BEGIN DEFERRED"); let committed = false;
     try { const value = body(); this.#db.exec("COMMIT"); committed = true; return value; }
@@ -34,8 +33,6 @@ export class DiscoveryContactLookupRepository {
       const input: DiscoveryContactLookup = { campaign_id: campaign, expected_revision: row.criteria_revision, candidate_id: row.id, profile_ref: row.source_profile_ref, method: "", native_author_id: "", author_label: "", username: null, query: "", call_number: 0, status: "planned", links: [], stop_code: null };
       const material = loadDiscoveryNativeContactMaterial(this.#db, this.#page(input));
       if (material === null) continue;
-      const social = loadDiscoveryContactObservations(this.#db, campaign, row.criteria_revision, row.id, material.native_author_id, true);
-      if (social.some(contact => contact.attribution === "author_published")) continue;
       let bluesky: string | null = null;
       if (material.hit.platform === "bluesky") {
         const native = new DiscoveryProfileRepository(this.#db).get(campaign, material.hit.id).native_profile;
@@ -53,7 +50,6 @@ export class DiscoveryContactLookupRepository {
       const criteria = z.record(text, z.unknown()).parse(parseApplicationJson(text.parse(this.#db.prepare("SELECT criteria_json FROM discovery_campaign_revisions WHERE discovery_campaign_id=? AND revision=?").get(campaign, row.criteria_revision)?.criteria_json)));
       const terms = Array.isArray(criteria.contact_search_terms) ? criteria.contact_search_terms.filter((value): value is string => typeof value === "string") : [];
       input.query = discoveryContactSearchQuery(name, typeof criteria.language === "string" ? criteria.language : "", terms);
-      if (loadDiscoveryContactObservations(this.#db, campaign, row.criteria_revision, row.id, input.native_author_id).length) continue;
       for (const method of ["maigret", "search"]) {
         if (method === "maigret" && input.username === null) continue;
         if (this.#db.prepare("SELECT 1 FROM discovery_contact_lookups WHERE candidate_id=? AND criteria_revision=? AND method=?").get(row.id, row.criteria_revision, method)) continue;

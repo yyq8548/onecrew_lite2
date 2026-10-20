@@ -4,6 +4,7 @@ export function discoveryProviderFailureKey(code: string) {
 }
 export function discoveryExecutionFailureKey(code?: string) {
   switch (code) {
+    case "opencli_cancel_pending": return "browserCancelPending";
     case "discovery_repository_busy":
     case "creator_repository_overloaded":
     case "creator_repository_read_pool_unavailable":

@@ -42,7 +42,7 @@ export async function observeCurrentAccount(site, allowRequest = true) {
   }
   if (site === 'pinterest') {
     const login = visible('a[href="/login/"], [data-test-id="simple-login-button"]');
-    const own = Array.from(document.querySelectorAll('a[data-test-id="header-profile"], [data-test-id="header-profile"] a')).some(node => {
+    const own = Array.from(document.querySelectorAll('a[data-test-id="header-profile"], [data-test-id="header-profile"] a, a[aria-label="你的个人资料"]')).some(node => {
       if (!node.getClientRects().length) return false;
       const url = new URL(node.href, location.origin);
       return url.origin === origins.pinterest && /^\/[A-Za-z0-9_]+\/?$/.test(url.pathname)

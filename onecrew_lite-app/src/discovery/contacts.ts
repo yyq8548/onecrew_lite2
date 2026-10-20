@@ -1,5 +1,6 @@
 import type { z } from "zod";
 import type { discoveryContact } from "./library-material.ts";
+import { isIP } from "node:net";
 
 export type DiscoveryContact = z.infer<typeof discoveryContact>;
 const host = (value: string): string | null => { const name = URL.parse(value)?.hostname.replace(/^www\./u, ""); return name === "twitter.com" ? "x.com" : name === "space.bilibili.com" ? "bilibili.com" : name === "m.facebook.com" ? "facebook.com" : name ?? null; };
@@ -23,6 +24,7 @@ export function discoverySocialProfile(value: string): boolean {
 export function discoveryNonContact(source: string): boolean {
   const url = URL.parse(source); if (!url) return true;
   const name = url.hostname.replace(/^www\./u, ""), path = url.pathname, parts = path.split("/");
+  if (name === "go.shopmy.us") return true;
   if (["amzn.to", "geni.us", "a.co", "amzn.eu"].includes(url.hostname) || /(?:^|\.)amazon\.(?:com|co\.uk)$/u.test(url.hostname) || url.hostname.startsWith("shop.") && parts.includes("collections") || parts.some(part => ["dp", "products"].includes(part))) return true;
   return ["docs.google.com", "drive.google.com", "inex.osekai.net", "osekai.net", "youtu.be", "collabs.shop", "rover.ebay.com", "rocketreach.co", "contactout.com", "muckrack.com", "instainflu.com", "scrumball.com", "shop.anker.com", "ankerfast.club", "lddy.no", "rstyle.me", "go.magik.ly", "c.klarna.com", "aritzia.com", "kit.co", "store.cablemod.com", "go.hototools.com", "hototools.com"].includes(name)
     || name === "wooting.io" && !["/contact", "/contact/"].includes(path)
@@ -31,7 +33,7 @@ export function discoveryNonContact(source: string): boolean {
     || name === "tiktok.com" && (path.includes("/video/") || path.startsWith("/discover/"))
     || name === "linkedin.com" && ["/posts/", "/feed/"].some(prefix => path.startsWith(prefix))
     || name === "reddit.com" && (path.startsWith("/r/") || path.includes("/comments/"))
-    || parts.some(part => ["form-submission-response", "checkout", "cart", "shop", "store", "stores", "product", "privacy-policy", "terms-of-service", "discord"].includes(part))
+    || parts.some(part => ["form-submission-response", "checkout", "cart", "shop", "store", "stores", "product", "donate", "donation", "donations", "privacy-policy", "terms-of-service", "discord"].includes(part))
     || name === "bit.ly" && ["keychron", "k65plus", "hyper-next-drive"].some(slug => path.toLowerCase().includes(slug))
     || name === "youtube.com" && (["/watch", "/playlist"].includes(path) || path.startsWith("/shorts/") || path.endsWith("/join"))
     || name === "cherryxtrfy.com" && ["/mice/", "/xtrfy-"].some(prefix => path.startsWith(prefix))
@@ -52,6 +54,10 @@ export function extractDiscoveryContacts(text: string, source: string, author: s
   const url = URL.parse(source);
   if (Buffer.byteLength(text) > 20000 || !author || Buffer.byteLength(author) > 128 || Buffer.byteLength(source) > 2048 || capturedAt <= 0 || !url || url.protocol !== "https:" || !url.hostname || url.username || url.password) return [];
   const contacts: DiscoveryContact[] = [], seen = new Set<string>();
+  const sourceLine = (start: number, length: number) => {
+    const beginning = text.lastIndexOf("\n", start - 1) + 1, newline = text.indexOf("\n", start + length), end = newline < 0 ? text.length : newline;
+    return text.slice(Math.max(beginning, start - 150), Math.min(end, start + length + 150)).trim();
+  };
   const push = (kind: DiscoveryContact["kind"], original: string, normalized: string, excerpt: string) => { contacts.push({ kind, original_value: original, normalized_value: normalized, source_url: source, source_excerpt: excerpt, captured_at: capturedAt, native_author_id: author, attribution }); };
   for (const [kind, expression] of [["email", /[a-z0-9][a-z0-9.!#$%&'*+/=?^_`{|}~\-]*@[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+/giu], ["telegram", /https:\/\/(?:t\.me|telegram\.me)\/[a-z0-9_+/-]+(?:\?[a-z0-9_=&%\-]+)?/giu]] as const) {
     for (const match of text.matchAll(expression)) {
@@ -61,17 +67,35 @@ export function extractDiscoveryContacts(text: string, source: string, author: s
       if (kind === "email") { const at = original.lastIndexOf("@"), local = original.slice(0, at); if (local.length > 64 || original.length > 254 || local.endsWith(".") || local.includes("..")) continue; normalized = `${local}@${original.slice(at + 1).toLowerCase()}`; }
       else { const targetUrl = new URL(original), target = targetUrl.pathname.replace(/^\/+/u, ""); if (!target || ["share", "iv", "login", "proxy", "socks"].includes(target.toLowerCase()) || target.startsWith("share/") || target.startsWith("s/") || target.includes("/") && !target.startsWith("joinchat/")) continue; normalized = `https://t.me/${target}${targetUrl.search}`; }
       if (seen.has(normalized)) continue; seen.add(normalized);
-      push(kind, original, normalized, [...text.slice(0, start)].slice(-100).join("") + original + [...text.slice(end)].slice(0, 100).join(""));
+      push(kind, original, normalized, sourceLine(start, original.length));
     }
   }
   for (const match of text.matchAll(/(?:^|[\s,，;；|])(?:telegram|tg|电报)[ \t]*[:：][ \t]*@?([a-z][a-z0-9_]{4,31})/gimu)) {
     const end = match.index + match[0].length, after = [...text.slice(end)][0]; if (after && /[\p{Alphabetic}\p{Number}_…/@.\-]/u.test(after) || text.slice(end).startsWith("...")) continue;
-    const normalized = `https://t.me/${match[1]!}`; if (seen.has(normalized)) continue; seen.add(normalized); push("telegram", match[0].trim(), normalized, match[0].trim());
+    const normalized = `https://t.me/${match[1]!}`; if (seen.has(normalized)) continue; seen.add(normalized); push("telegram", match[0].trim(), normalized, sourceLine(match.index, match[0].length));
   }
   for (const match of text.matchAll(/https:\/\/[^\s<>"']+/gu)) {
-    const value = match[0].replace(/[.,;)\]]+$/u, ""); if (!discoverySocialProfile(value) || host(value) === host(source) || thirdParty(value, text) || seen.has(value)) continue; seen.add(value); push("social_profile", value, value, value);
+    const value = match[0].replace(/[.,;)\]]+$/u, ""); if (!discoverySocialProfile(value) || host(value) === host(source) || thirdParty(value, text) || seen.has(value)) continue; seen.add(value); push("social_profile", value, value, sourceLine(match.index, value.length));
   }
   if (attribution === "author_published") {
+    for (const match of text.matchAll(/(?:https?:\/\/|www\.)[^\s<>"']+/gu)) {
+      const original = match[0].replace(/[.,;)\]]+$/u, ""), target = URL.parse(original.startsWith("www.") ? `https://${original}` : original);
+      const excerpt = sourceLine(match.index, original.length);
+      if (!target || !["http:", "https:"].includes(target.protocol) || target.username || target.password || target.port || original.length > 2048 || seen.has(original)) continue;
+      if (host(source) === "facebook.com" && target.href === `https://www.facebook.com/messages/t/${author}/`) {
+        seen.add(original); push("messenger", original, original, excerpt); continue;
+      }
+      const hostname = target.hostname;
+      if (!hostname.includes(".") || isIP(hostname.replace(/^\[|\]$/gu, "")) || /(?:^|\.)(?:localhost|local|internal|test)$/iu.test(hostname)
+        || discoveryContactPlatform(target.href) !== null || ["t.me", "telegram.me", "wa.me", "vt.tiktok.com", "vm.tiktok.com"].includes(hostname)
+        || discoveryNonContact(target.href) || thirdParty(original, text) || !/(?:website|contact|business|官网|官網|网站|網站|商务|商務|合作)/iu.test(excerpt)) continue;
+      seen.add(original); push("website", original, original, excerpt);
+    }
+    for (const match of text.matchAll(/(?:phone|mobile|telephone|tel|电话|電話|手机|手機)[ \t]*[:：][ \t]*(\+?[0-9][0-9 ()-]{5,23}[0-9])/giu)) {
+      const value = match[1]!, digits = value.replace(/[^0-9]/gu, ""), normalized = `${value.startsWith("+") ? "+" : ""}${digits}`;
+      if (digits.length < 7 || digits.length > 15 || seen.has(normalized)) continue;
+      seen.add(normalized); push("phone", value, normalized, sourceLine(match.index, match[0].length));
+    }
     const messaging: DiscoveryContact[] = [], messagingSeen = new Map<string, DiscoveryContact>();
     for (const [kind, pattern] of [
       ["wechat", /(?:微信号?|wechat|\bwx|\bvx|商务(?:合作)?(?:[ \t]*(?:wx|vx|v|微信))?|[🌍🌎🌏][\uFE0F \t]*[:：])[ \t]*[:：]?[ \t]*([a-z][a-z0-9_-]{5,19})(?:[ \t]*[（(]([^\r\n）)]{1,100})[）)])?/giu],
@@ -85,7 +109,7 @@ export function extractDiscoveryContacts(text: string, source: string, author: s
       const digits = raw.replace(/[^0-9]/gu, ""); if (kind === "whatsapp" && (digits.length < 7 || digits.length > 15)) continue;
       const normalized = kind === "whatsapp" ? `https://wa.me/${digits}` : raw, key = `${kind}:${normalized}`, existing = messagingSeen.get(key);
       if (existing) { if ([...original].length > [...existing.source_excerpt].length) { existing.original_value = original; existing.source_excerpt = original; } continue; }
-      const contact: DiscoveryContact = { kind, original_value: original, normalized_value: normalized, source_url: source, source_excerpt: original, captured_at: capturedAt, native_author_id: author, attribution }; messaging.push(contact); messagingSeen.set(key, contact);
+      const contact: DiscoveryContact = { kind, original_value: original, normalized_value: normalized, source_url: source, source_excerpt: sourceLine(match.index, original.length), captured_at: capturedAt, native_author_id: author, attribution }; messaging.push(contact); messagingSeen.set(key, contact);
     }
     contacts.push(...messaging);
   }

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { contactDisplay } from '@onecrew/contracts/tables';
 import { Button } from '@/components/ui/button';
 import type { Table } from './model';
 import { SemanticCell } from './SemanticCell';
@@ -27,6 +28,9 @@ export function CreatorMainView({
   onUnavailable?: () => void;
 }) {
   const { t, i18n } = useTranslation();
+  const biographyStatusLabels: Record<string, string> = i18n.language.startsWith('zh')
+    ? { complete: '简介已完整读取', truncated: '简介未完整展开', missing: '主页未提供简介', unavailable: '简介读取失败', unknown: '简介完整性尚未核实' }
+    : { complete: 'Full biography read', truncated: 'Biography truncated', missing: 'No biography provided', unavailable: 'Biography read failed', unknown: 'Biography completeness unverified' };
   const [material, setMaterial] = useState<CreatorMaterial | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -86,7 +90,7 @@ export function CreatorMainView({
         <label>
           {i18n.language.startsWith('zh') ? '核实状态 ' : 'Verification '}
           <select value={filter} onChange={event => setFilter(event.target.value as VerdictFilter)}>
-            {(['qualified', 'pending', 'rejected', 'all'] as const).map(value => <option key={value} value={value}>
+            {(['qualified', 'related', 'pending', 'rejected', 'all'] as const).map(value => <option key={value} value={value}>
               {value === 'all' ? (i18n.language.startsWith('zh') ? '全部' : 'All') : t(`detail.verdict.${value}`, value)}
               {value !== 'all' && ` (${grouped.creators.filter(creator => creator.verdict === value).length})`}
             </option>)}
@@ -154,6 +158,7 @@ export function CreatorMainView({
                         {creator.accounts.map((account) => (
                           <li key={JSON.stringify([account.platform, account.nativeId])}>
                             {account.platform.toLowerCase() === 'twitter' ? 'X' : account.platform} · {account.label}
+                            {account.bioStatus && <small> · {account.bioStatus.split(',').map(status => biographyStatusLabels[status] ?? status).join(' · ')}</small>}
                             {account.authorUrl && (
                               <>
                                 {' '}
@@ -170,10 +175,15 @@ export function CreatorMainView({
                     <td><ul>{creator.accounts.map(account => <li key={JSON.stringify([account.platform, account.nativeId])}>
                       {creator.accounts.length > 1 && `${account.platform === 'twitter' ? 'X' : account.platform} · `}
                       {followerDigits(account.followers) ?? t('detail.followersUnknown')}
+                      {account.pinterestMonthlyViews && <div>{account.pinterestMonthlyViews}</div>}
                     </li>)}</ul></td>
                     <td>
                       {t(`detail.verdict.${creator.verdict}`, creator.verdict)}
-                      {creator.verdict === 'pending' && <ul>{creator.reasons
+                      <ul>{creator.accounts.flatMap(account => (account.pinterestScalePassedBy ?? []).map(branch => <li key={`${account.platform}:${account.nativeId}:${branch}`}>
+                        {creator.accounts.length > 1 && `${account.platform} · `}
+                        {branch === 'monthly_views' ? (i18n.language.startsWith('zh') ? '月浏览量达标' : 'Monthly views requirement met') : (i18n.language.startsWith('zh') ? '粉丝数达标' : 'Follower requirement met')}
+                      </li>))}</ul>
+                      {(creator.verdict === 'pending' || creator.verdict === 'related') && <ul>{creator.reasons
                         .filter(reason => /^(核实状态|证据缺口|下一步|最后核实时间)：/.test(reason))
                         .map(reason => <li key={reason}>{reason}</li>)}</ul>}
                     </td>
@@ -190,20 +200,20 @@ export function CreatorMainView({
                     <td>
                       <ul>
                         {creator.contacts.map((contact) => (
-                          <li key={contact.normalized_value}>
-                            <a
+                          <li key={`${contact.kind}:${contact.normalized_value}`}>
+                            {['wechat', 'wechat_official'].includes(contact.kind) || contact.kind === 'website' && contact.normalized_value.startsWith('www.') ? <span>{contactDisplay(contact)}</span> : <a
                               href={
                                 contact.kind === 'email'
                                   ? `mailto:${encodeURIComponent(contact.normalized_value).replace('%40', '@')}`
-                                  : contact.normalized_value
+                                  : contact.kind === 'phone' ? `tel:${contact.normalized_value}` : contact.normalized_value
                               }
                               target="_blank"
                               rel="noreferrer"
                             >
-                              {contact.kind === 'hidden_email'
-                                ? '有隐藏邮箱，需手动查看 · 主页'
+                              {['hidden_email', 'social_profile', 'website', 'messenger', 'phone'].includes(contact.kind)
+                                ? contactDisplay(contact)
                                 : contact.original_value}
-                            </a>
+                            </a>}
                           </li>
                         ))}
                       </ul>

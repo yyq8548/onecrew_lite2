@@ -76,6 +76,7 @@ import {
 } from './discovery-projection.js';
 
 type TableAggregate = CreateTableResult['table'];
+const discoveryEnrichmentNames = new Set(['Content category', 'Followers', 'Pinterest monthly views', 'Pinterest scale passed by', 'Biography status']);
 type FieldTypesDatabase = {
   onecrew_field_types: {
     table_id: string;
@@ -507,10 +508,8 @@ export const createTableData = async (database: LocalDatabase): Promise<TableDat
           )
             conflict('data.projection_field_conflict');
           const types = await readFieldTypes(tableId, executionContext);
-          const categoryField = table.getFields().find((field) =>
-            field.name().toString() === 'Content category')?.id().toString();
-          const followersField = table.getFields().find((field) =>
-            field.name().toString() === 'Followers')?.id().toString();
+          const enrichmentFields = new Set(table.getFields().filter((field) =>
+            discoveryEnrichmentNames.has(field.name().toString())).map(field => field.id().toString()));
           for (const row of sources.rows) {
             const scores: Record<string, unknown> = {};
             for (const [field, value] of Object.entries(row.values)) {
@@ -521,7 +520,7 @@ export const createTableData = async (database: LocalDatabase): Promise<TableDat
               )
                 conflict('data.projection_field_conflict');
               if (score) scores[field] = encodeValue('score', value);
-              else if ((field === categoryField || field === followersField) && types.get(field) === 'string')
+              else if (enrichmentFields.has(field) && types.get(field) === 'string')
                 scores[field] = value === '' ? null : value;
             }
             scoreCells.set(row.search_hit_id, scores);
@@ -690,10 +689,9 @@ export const createTableData = async (database: LocalDatabase): Promise<TableDat
           );
         };
         const before = await readRecords();
-        // Adding the category export field must also populate older owned
-        // rows, even when their qualification/source revision is unchanged.
+        // 来源补充字段须更新已有行，证据版本未变化时也比较实际单元格。
         const enrichedFields = table.getFields().filter((field) =>
-          ['Content category', 'Followers'].includes(field.name().toString())).map(field => field.id().toString());
+          discoveryEnrichmentNames.has(field.name().toString())).map(field => field.id().toString());
         for (const categoryField of enrichedFields) for (const row of incoming) {
           const values = scoreCells.get(row.search_hit_id);
           if (values && Object.hasOwn(values, categoryField) &&

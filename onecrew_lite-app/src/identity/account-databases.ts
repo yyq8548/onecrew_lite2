@@ -14,7 +14,7 @@ import { GmailReplyRepository } from "../mail/gmail-reply-repository.ts";
 import type { GmailBulkRepositoryOwner } from "../mail/gmail-bulk-account-binding.ts";
 import type { VerifiedMailIdentityProvider } from "../mail/gmail-access.ts";
 import type { InstanceLease } from "../service/instance-lock.ts";
-import { initializeNewCreatorDatabase, validateCreatorSchema90 } from "../storage/creator-schema.ts";
+import { initializeNewCreatorDatabase, validateCreatorSchema } from "../storage/creator-schema.ts";
 import { createPrivateDirectory, verifyPrivateDirectory, verifyPrivateFile } from "../storage/private-backup.ts";
 import type { AccountContext, AccountContextService } from "./account-context.ts";
 import { VerifiedMigrationCredential } from "./access-verification.ts";
@@ -192,7 +192,7 @@ export class AccountDatabases {
     const database = new DatabaseSync(path);
     let ready = false;
     try {
-      validateCreatorSchema90(database);
+      validateCreatorSchema(database);
       database.exec("PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA busy_timeout=5000");
       const after = await lstat(path);
       if (after.dev !== info.dev || after.ino !== info.ino || after.isSymbolicLink()) throw new Error("Account database path changed during opening");

@@ -9,7 +9,7 @@ for (const name of ['profile','search-users','search-pins','content','content-pi
     : name === 'content-pin' ? [{name:'username',required:true,positional:true},{name:'author',required:true,positional:true},{name:'pin',required:true,positional:true}]
     : name === 'content' ? [{name:'username',required:true,positional:true},{name:'author',required:true,positional:true}]
     : [{name:'query',required:true,positional:true},{name:'limit',type:'int',default:10}],
-  columns:['author_id','username','profile_url','follower_count'],
+  columns:['author_id','username','profile_url','follower_count','monthly_views_raw'],
   func:async(page,args) => {
     try {return name === 'profile' ? await readProfile(page,args.username,withOwnedSearchPage)
       : name === 'content-pin' ? await readContent(page,args.author,args.username,withOwnedSearchPage,args.pin)

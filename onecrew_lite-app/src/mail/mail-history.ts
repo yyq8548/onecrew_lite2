@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
 import { z } from "zod";
-import { validateCreatorSchema90 } from "../storage/creator-schema.ts";
+import { validateCreatorSchema } from "../storage/creator-schema.ts";
 import type { GmailBulkRepositoryOwner } from "./gmail-bulk-account-binding.ts";
 
 const string = z.string().refine(value => value.isWellFormed());
@@ -28,7 +28,7 @@ export class MailHistoryRepository {
   readonly owner: Readonly<GmailBulkRepositoryOwner>;
   readonly #scope: string;
   constructor(db: DatabaseSync, owner: GmailBulkRepositoryOwner) {
-    validateCreatorSchema90(db);
+    validateCreatorSchema(db);
     this.owner = Object.freeze(z.object({ accountId: string.min(1), tenantId: string.min(1), baseId: string.min(1) }).strict().parse(owner));
     this.#scope = createHash("sha256").update(JSON.stringify([this.owner.accountId, this.owner.tenantId, this.owner.baseId])).digest("hex");
     this.#db = db;

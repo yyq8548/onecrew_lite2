@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { discoveryReviewCriterion } from "@onecrew/runtime-contracts/discovery";
 import { containsDiscoveryCitation, matchedDiscoveryLanguageSource, type DiscoveryReviewMaterial } from "./review-material.ts";
+import { discoveryScale } from "./qualification.ts";
 
 export const INITIAL_MATCH_REVIEWER = "onecrew-match-evaluation-0cebf122-initial-v1";
 export const INITIAL_MATCH_POLICY = "initial-match-evaluation-v1";
@@ -54,13 +55,12 @@ export function applyInitialDiscoveryMatch(material: DiscoveryReviewMaterial, ra
   if (finding.tool != null || finding.country_code != null) throw new Error("initial_match_auxiliary_field_invalid");
   if (finding.citations.length > 8) throw new Error("initial_match_citation_count_invalid");
   if (!finding.citations.every(citation => containsDiscoveryCitation(material, citation))) throw new Error("initial_match_citation_not_saved");
-  const rawMinimum = u64(criteria.min_subscribers) ?? u64(criteria.min_followers), minimum = rawMinimum !== null && rawMinimum > 0n ? rawMinimum : null;
   const count = u64(material.native_followers) ?? u64(object(evidence.assessment).subscribers_normalized), estimate = material.native_follower_estimate;
-  const below = minimum !== null && (estimate ? BigInt(estimate.upper) < minimum : count !== null && count < minimum);
-  const unknown = estimate ? minimum !== null && BigInt(estimate.lower) < minimum && BigInt(estimate.upper) >= minimum : count === null;
-  if (secondary && minimum !== null && unknown) throw new Error("initial_match_language_request_invalid");
+  const scale = discoveryScale(criteria, estimate ? { nominal: BigInt(estimate.nominal), lower: BigInt(estimate.lower), upper: BigInt(estimate.upper) } : count === null ? null : { nominal: count, lower: count, upper: count }, material.hit.platform === "pinterest" ? material.native_profile?.monthly_views_raw ?? null : undefined);
+  const below = scale.state === "failed", unknown = scale.state === "unknown";
+  if (secondary && unknown) throw new Error("initial_match_language_request_invalid");
   if (below && finding.match_level !== "low") throw new Error("initial_match_required_failure_must_be_low");
-  if (!below && minimum !== null && unknown && supported && finding.match_level !== "low") throw new Error("initial_match_required_count_unknown");
+  if (!below && unknown && supported && finding.match_level !== "low") throw new Error("initial_match_required_count_unknown");
   if (supported && !below && !finding.citations.some(citation => ["description", "search_caption", "transcript", "native_content", "native_profile"].includes(citation.kind))) throw new Error("initial_match_author_evidence_required");
   if (supported && !below && finding.match_level !== "low" && typeof language === "string" && language.trim() && finding.citations.some(citation => citation.kind === "native_profile") && !finding.citations.some(citation => ["description", "search_caption", "transcript", "native_content"].includes(citation.kind))) throw new Error("initial_match_content_language_unavailable");
   validateAudienceLanguage(material, finding);

@@ -27,6 +27,14 @@ export class DiscoveryWebSourceExecutor {
     };
     const observed = await (async () => {
       if (claim.profile_ref !== browser.profile || claim.source_url !== source.source_url || claim.target_platform !== target.platform || claim.video_id !== target.id) throw new OpenCliError("opencli_invalid_output");
+      if (claim.target_platform === "tiktok") {
+        const profile = await timed("identity_ms", () => this.reader.tiktokProfileIdentity(browser, claim.video_id));
+        return { identity: profile, profile };
+      }
+      if (claim.target_platform === "instagram") {
+        const profile = await timed("profile_ms", () => this.reader.instagramProfileIdentity(browser, claim.video_id));
+        return { identity: profile, profile };
+      }
       if (claim.target_platform === "douyin") {
         const content = await timed("content_ms", () => this.reader.douyinOriginalContent(browser, claim.video_id));
         const profile = await timed("profile_ms", () => this.reader.douyinPublicProfile(browser, content.author_id));
@@ -44,7 +52,7 @@ export class DiscoveryWebSourceExecutor {
       return timed("content_ms", () => this.reader.youtubeVideoEvidence(browser, claim.video_id));
     })().then(value => ({ ok: true as const, value }), error => ({ ok: false as const, error: error as unknown }));
     owned.assertOwned();
-    if (!observed.ok && (!(observed.error instanceof OpenCliError) || observed.error.code === "opencli_cancelled")) throw observed.error;
+    if (!observed.ok && (!(observed.error instanceof OpenCliError) || ["opencli_cancelled", "opencli_cancel_pending"].includes(observed.error.code))) throw observed.error;
     const stop = observed.ok ? null : (observed.error as OpenCliError).code === "opencli_read_command_unavailable" ? "opencli_command_unavailable" : (observed.error as OpenCliError).code;
     const receipt = owned.repository.finishWebSource(claim, observed.ok ? observed.value : null, stop);
     await this.audit?.record(claim.campaign_id, { kind: "web_source", call_number: claim.call_number, search_hit_id: claim.search_hit_id, origin_platform: claim.origin_platform, target_platform: claim.target_platform, reserved_native_calls: target.cost, issued_native_commands: issued, native_timings: timings, elapsed_ms: Math.floor(performance.now() - started), provider_status: receipt.status === "completed" ? "completed" : "failed", stop_code: receipt.stop_code, native_identity_observed: receipt.native_author_id !== null, contact_or_recommendation_promoted: false });

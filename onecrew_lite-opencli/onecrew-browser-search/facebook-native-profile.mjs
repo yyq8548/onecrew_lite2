@@ -1,5 +1,5 @@
 import {facebookVanitySource,facebookHeaderNodes} from './facebook-identity.mjs';
-import {facebookProfileTarget} from './facebook-profile.mjs';
+import {facebookProfileTarget,observeFacebookAbout} from './facebook-profile.mjs';
 
 export function facebookNativeContactTarget(base,source) {
   const profile=facebookVanitySource(base);
@@ -32,7 +32,7 @@ export async function readFacebookNativeHeader(expected,id,base,collect) {
     if(mains.length===1 && owners.length) {
       const owner=owners[0],main=mains[0];
       const visible=n=>n.getClientRects().length && !n.closest('[role="article"],[role="feed"],[aria-hidden="true"]');
-      const followers=[...main.querySelectorAll('a[href]')].filter(n=>visible(n)&&n.getAttribute('role')!=='tab'&&n.href.replace(/\/$/,'').toLowerCase()===`${base}/followers`.toLowerCase());
+      const followers=[...main.querySelectorAll('a[href]')].filter(n=>visible(n)&&n.getAttribute('role')!=='tab'&&n.href.replace(/\/$/,'').toLowerCase()===`${base}/followers`.toLowerCase()&&/^[0-9][0-9,.]*\s*[KMB]? followers?$/i.test(n.innerText.trim()));
       const names=[...main.querySelectorAll('h1,[role="button"]')].filter(n=>visible(n)&&n.innerText.trim()===owner.display_name);
       if(followers.length===1 && names.length>=1) return {id,display_name:owner.display_name,profile_url:base,follower_text:followers[0].innerText.trim()};
     }
@@ -52,7 +52,8 @@ export function projectFacebookNativeProfile(data,id,base) {
   const count=match?Number(match[1].replaceAll(',','')):null;
   if(count!==null&&!Number.isSafeInteger(count)) throw new Error('ONECREW_FB_PROFILE_INVALID');
   return {adapter_version:'2.0.0',id,display_name:data.display_name.trim(),follower_count:count,follower_text:data.follower_text.trim(),
-    profile_url:canonical,observed_profile_url:profile,contact_links:data.contact_links,evidence_source:'native_profile_header_response'};
+    profile_url:canonical,observed_profile_url:profile,contact_links:data.contact_links,evidence_source:'native_profile_header_response',
+    ...(typeof data.biography==='string'?{biography:data.biography,bio_truncated:data.bio_truncated,bio_status:data.bio_status}:{})};
 }
 
 export async function readFacebookNativeProfile(page,args,ownPage) {
@@ -62,7 +63,8 @@ export async function readFacebookNativeProfile(page,args,ownPage) {
     const raw=await owned.evaluate(String.raw`(async()=>{const owner=await (${readFacebookNativeHeader.toString()})(${JSON.stringify(source)},${JSON.stringify(args.id)},${JSON.stringify(base)},${facebookHeaderNodes.toString()});
       const main=[...document.querySelectorAll('[role="main"]')].find(n=>n.getClientRects().length);
       const links=[...main.querySelectorAll('a[role="tab"][href]')].filter(n=>n.getClientRects().length && !n.closest('[role="article"],[role="feed"]')).map(n=>n.href);
-      return {...owner,profile_url:${JSON.stringify(canonical)},observed_profile_url:${JSON.stringify(base)},contact_links:[...new Set(links.filter(url=>[${JSON.stringify(`${base}/directory_contact_info`)},${JSON.stringify(`${base}/directory_links`)}].includes(url)))]};})()`);
+      const about=await (${observeFacebookAbout.toString()})(${JSON.stringify(source)},${JSON.stringify(base)});
+      return {...owner,...about,profile_url:${JSON.stringify(canonical)},observed_profile_url:${JSON.stringify(base)},contact_links:[...new Set(links.filter(url=>[${JSON.stringify(`${base}/directory_contact_info`)},${JSON.stringify(`${base}/directory_links`)}].includes(url)))]};})()`);
     const data=raw&&'session' in Object(raw)&&'data' in Object(raw)?raw.data:raw;
     return projectFacebookNativeProfile(data,args.id,base);
   });
@@ -101,13 +103,14 @@ export async function readFacebookNativeContact(page,args,ownPage) {
         if(/^(Reviews|Ratings|评论|評論|评价|評價)$/i.test(title)) continue;
         const text=section.innerText.trim();if(text.length>12000) continue;
         if(${JSON.stringify(source.endsWith('/directory_contact_info'))}) {
-          if(!/^(Email|E-mail|E-Mail|电子邮箱|電子郵箱|邮箱|郵箱|Correo electrónico|Adresse e-mail|メール|メールアドレス|이메일|Электронная почта|E-posta|البريد الإلكتروني|אימייל|ईमेल|อีเมล)$/i.test(title)) continue;
-          const emails=text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g)||[];
-          parts.push(...emails.slice(0,10));
-        } else for(const anchor of section.querySelectorAll('a[href]')) {
+          if(!/^(Email|E-mail|Phone|Mobile|Messenger|WhatsApp|Website|Social links|电子邮箱|電子郵箱|邮箱|郵箱|电话|電話|網站|网站|Correo electrónico|Adresse e-mail|メール|メールアドレス|이메일|Электронная почта|E-posta|البريد الإلكتروني|אימייל|ईमेल|อีเมล)$/i.test(title)) continue;
+          parts.push(text);
+        }
+        for(const anchor of section.querySelectorAll('a[href]')) {
           if(!visible(anchor)) continue;
           try {let url=new URL(anchor.href);if(url.origin==='https://www.facebook.com'&&url.pathname==='/l.php'){const dest=url.searchParams.get('u');if(dest)url=new URL(dest);}
-            if(['https:','http:'].includes(url.protocol)&&url.hostname!=='facebook.com'&&!url.hostname.endsWith('.facebook.com')&&!url.username&&!url.password&&url.href.length<=2048&&!links.includes(url.href)&&links.length<10)links.push(url.href);
+            const messenger=url.href==='https://www.facebook.com/messages/t/'+owner.id+'/';
+            if((messenger||['https:','http:'].includes(url.protocol)&&url.hostname!=='facebook.com'&&!url.hostname.endsWith('.facebook.com')&&!url.username&&!url.password&&url.href.length<=2048)&&!links.includes(url.href)&&links.length<10)links.push(url.href);
           }catch{}
         }
       }

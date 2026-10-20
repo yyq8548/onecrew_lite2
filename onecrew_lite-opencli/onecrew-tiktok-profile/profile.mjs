@@ -32,12 +32,27 @@ export function readProfilePage(username, expectedId, project) {
   if (typeof bootstrap !== 'string' || new TextEncoder().encode(bootstrap).length > 4 * 1024 * 1024) {
     throw new Error('ONECREW_TIKTOK_PROFILE_INVALID');
   }
-  return [project(JSON.parse(bootstrap), username, expectedId)];
+  const data=JSON.parse(bootstrap);
+  const observedId=data?.['__DEFAULT_SCOPE__']?.['webapp.user-detail']?.userInfo?.user?.id;
+  if(expectedId===null && (typeof observedId!=='string'||!/^[1-9][0-9]{0,24}$/.test(observedId))) throw new Error('ONECREW_TIKTOK_PROFILE_INVALID');
+  const profile=project(data, username, expectedId===null?observedId:expectedId);
+  const links=[];
+  for(const anchor of document.querySelectorAll('a[data-e2e="user-link"][href]')) {
+    if(!anchor.getClientRects().length) continue;
+    const observed=new URL(anchor.href,location.href);
+    const target=observed.origin==='https://www.tiktok.com'&&observed.pathname==='/link/v2'?observed.searchParams.get('target'):observed.href;
+    if(!target) throw new Error('ONECREW_TIKTOK_PROFILE_INVALID');
+    const url=new URL(target);
+    if(!['https:','http:'].includes(url.protocol)||url.username||url.password||url.port||url.href.length>2048) throw new Error('ONECREW_TIKTOK_PROFILE_INVALID');
+    if(!links.includes(url.href)) links.push(url.href);
+  }
+  if(links.length>10||new TextEncoder().encode(links.join('\n')).length>6000) throw new Error('ONECREW_TIKTOK_PROFILE_INVALID');
+  return [{...profile,contact_links:links}];
 }
 
-export async function readTikTokProfile(page, username, expectedId) {
+export async function readTikTokProfile(page, username, expectedId, resolveIdentity=false) {
   if (typeof username !== 'string' || !/^[A-Za-z0-9_.]{1,24}$/.test(username)
-      || typeof expectedId !== 'string' || !/^[1-9][0-9]{0,24}$/.test(expectedId)) throw new Error('ONECREW_TIKTOK_PROFILE_INPUT');
+      || !resolveIdentity && (typeof expectedId !== 'string' || !/^[1-9][0-9]{0,24}$/.test(expectedId))) throw new Error('ONECREW_TIKTOK_PROFILE_INPUT');
   const identity = await page.newTab('https://www.tiktok.com/@' + username);
   if (!identity) throw new Error('ONECREW_TIKTOK_PROFILE_IDENTITY');
   try {
@@ -45,7 +60,7 @@ export async function readTikTokProfile(page, username, expectedId) {
     // Numeric wait(n) may return on early DOM stability before hydration exists.
     await page.wait({ time: 3 });
     await page.evaluate(`(${restoreOriginalLanguage.toString()})()`);
-    const result = await page.evaluate(`(${readProfilePage.toString()})(${JSON.stringify(username)}, ${JSON.stringify(expectedId)}, ${projectProfile.toString()})`);
+    const result = await page.evaluate(`(${readProfilePage.toString()})(${JSON.stringify(username)}, ${JSON.stringify(resolveIdentity?null:expectedId)}, ${projectProfile.toString()})`);
     const rows = result && 'session' in result && 'data' in result ? result.data : result;
     if (!Array.isArray(rows) || rows.length !== 1) throw new Error('ONECREW_TIKTOK_PROFILE_INVALID');
     return rows;

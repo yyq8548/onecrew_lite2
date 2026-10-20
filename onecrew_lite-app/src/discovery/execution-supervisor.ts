@@ -40,6 +40,7 @@ export class DiscoveryExecutionSupervisor {
     try {
       lease.assertCurrent(); if (this.#closing) throw new Error("discovery_execution_stopping");
       const previous = this.#active;
+      if (previous?.status.failure_code === "opencli_cancel_pending") throw new Error("opencli_cancel_pending");
       if (previous && executing(previous.status.stage)) {
         if (previous.context === context && previous.input.campaign_id === input.campaign_id && previous.input.expected_revision === input.expected_revision) return structuredClone(previous.status);
         throw new Error("discovery_execution_busy");

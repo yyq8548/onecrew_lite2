@@ -5,7 +5,7 @@ import { discoveryScorePasses } from "./library-material.ts";
 import { discoveryNonContact, extractDiscoveryContacts } from "./contacts.ts";
 import { discoveryCommunityInvite, discoveryContactPageLinks, discoveryContactPriority, discoveryContactReadKey, discoveryObservesLink, discoveryPromotional, discoveryThirdPartyLink, trimDiscoveryLink } from "./contact-navigation.ts";
 import { discoveryProfileContactFields } from "./contact-profile.ts";
-import { discoveryLookupPageMatchesMaterial, discoveryYoutubeProfileUrl, loadDiscoveryContactLookupLinks, loadDiscoveryContactObservations, storeDiscoveryContacts } from "./contact-repository.ts";
+import { discoveryLookupPageMatchesMaterial, discoveryYoutubeProfileUrl, loadDiscoveryContactLookupLinks, storeDiscoveryContacts } from "./contact-repository.ts";
 import { buildDiscoveryReviewMaterial, discoveryPublicPageRead, type DiscoveryReviewMaterial } from "./review-material.ts";
 import { loadDiscoveryReviewBasis } from "./review-basis.ts";
 import { stripUnauditedDiscoveryProofs } from "./review-proof-audit.ts";
@@ -36,8 +36,6 @@ export function discoveryHasHiddenEmail(database: DatabaseSync, campaign: string
 export function loadDiscoveryNativeContactMaterial(database: DatabaseSync, raw: DiscoveryPublicPageInput): DiscoveryReviewMaterial | null {
   snapshot(database); const input = discoveryPublicPageInput.parse(raw), author = discoveryEligibleContactAuthor(database, input.campaign_id, input.expected_revision, input.candidate_id);
   if (author === null) return null;
-  const requiresEvidence = database.prepare("SELECT verdict='pending' pending FROM discovery_candidates WHERE id=? AND discovery_campaign_id=? AND criteria_revision=?").get(input.candidate_id, input.campaign_id, input.expected_revision)?.pending === 1;
-  if (!requiresEvidence && (loadDiscoveryContactObservations(database, input.campaign_id, input.expected_revision, input.candidate_id, author).length > 0 || discoveryHasHiddenEmail(database, input.campaign_id, input.expected_revision, input.candidate_id, author))) return null;
   const row = database.prepare(`SELECT h.id FROM discovery_search_hits h JOIN discovery_candidates c ON c.discovery_campaign_id=h.discovery_campaign_id
     AND c.source_platform=h.platform AND c.source_profile_ref=h.profile_ref
     WHERE c.id=? AND c.discovery_campaign_id=? AND c.criteria_revision=? AND c.source_profile_ref=? AND h.source_url=json_extract(c.evidence_json,'$.source_urls[0]')`).get(input.candidate_id, input.campaign_id, input.expected_revision, input.profile_ref);
@@ -85,9 +83,7 @@ export function nextDiscoveryNativeContactLink(database: DatabaseSync, campaign:
     WHERE d.id=? AND d.phase='active' AND c.criteria_revision=d.current_revision AND a.approved_at IS NOT NULL
       AND NOT EXISTS(SELECT 1 FROM json_each(?) excluded WHERE excluded.value IN (c.platform,c.source_platform))
       AND policy.policy='score_and_contact_v1' AND (c.verdict='qualified' OR (c.verdict='pending' AND json_array_length(json_extract(a.criteria_json,'$.requirements'))>0)) AND (d.max_calls IS NULL OR d.used_calls<d.max_calls)
-      AND ((COALESCE(json_extract(a.criteria_json,'$.contact_preference'),'')!='public_email_first' AND c.verdict='qualified')
-        OR ((c.verdict='pending' OR NOT EXISTS(SELECT 1 FROM discovery_contact_observations contact WHERE contact.candidate_id=c.id AND contact.criteria_revision=c.criteria_revision AND contact.kind='email'))
-          AND (SELECT COUNT(*) FROM discovery_public_page_reads page WHERE page.candidate_id=c.id)<CASE WHEN c.verdict='pending' THEN 2 ELSE 1 END))
+      AND (c.verdict='qualified' OR (SELECT COUNT(*) FROM discovery_public_page_reads page WHERE page.candidate_id=c.id)<2)
       AND NOT EXISTS(SELECT 1 FROM discovery_platform_runs r WHERE r.discovery_campaign_id=d.id AND r.status='searching')
       AND (p.status='completed' OR (p.status='technical_stop' AND p.stop_code='interrupted_public_page_read')) ORDER BY c.id`).all(campaign, stringifyApplicationJson(excludedPlatforms));
   for (const raw of rows) {
@@ -134,7 +130,9 @@ export function observeDiscoveryPublicPageContacts(database: DatabaseSync, campa
     const material = loadDiscoveryNativeContactMaterial(database, { campaign_id: campaign, expected_revision: revision, candidate_id: page.candidate_id, profile_ref: page.profile_ref, requested_url: page.requested_url });
     if (material === null || !discoveryLookupPageMatchesMaterial(database, material, page)) return;
   }
-  storeDiscoveryContacts(database, campaign, revision, page.candidate_id, extractDiscoveryContacts(page.markdown_excerpt, source, author, page.captured_at, "unconfirmed"));
+  const nativeChannel = `https://www.youtube.com/channel/${author}`;
+  const attribution = /^UC[A-Za-z0-9_-]{22}$/u.test(author) && page.requested_url === nativeChannel && source === nativeChannel ? "author_published" : "unconfirmed";
+  storeDiscoveryContacts(database, campaign, revision, page.candidate_id, extractDiscoveryContacts(page.markdown_excerpt, source, author, page.captured_at, attribution));
 }
 export function observeDiscoveryHiddenEmail(database: DatabaseSync, campaign: string, revision: number, raw: z.infer<typeof discoveryPublicPageRead>): void {
   snapshot(database); const page = discoveryPublicPageRead.parse(raw);
@@ -142,7 +140,10 @@ export function observeDiscoveryHiddenEmail(database: DatabaseSync, campaign: st
   const author = discoveryEligibleContactAuthor(database, campaign, revision, page.candidate_id); if (author === null) return;
   const expected = `https://www.youtube.com/channel/${author}`;
   if (!author.startsWith("UC") || Buffer.byteLength(author) !== 24 || page.requested_url !== expected || page.document_url !== expected || author !== page.platform_account_id) throw new Error("hidden_email_author_mismatch");
-  storeDiscoveryContacts(database, campaign, revision, page.candidate_id, [{ kind: "hidden_email", original_value: "有隐藏邮箱，需手动查看", normalized_value: expected, source_url: expected, source_excerpt: "YouTube native businessEmailLabel/businessEmailButton entry observed; address not disclosed", captured_at: page.captured_at, native_author_id: author, attribution: "author_published" }]);
+  const status = page.markdown_excerpt.split("\n").findLast(line => line.startsWith("YouTube hidden email status: "));
+  const excerpt = status ?? "YouTube native businessEmailLabel/businessEmailButton entry observed; address not disclosed";
+  if (status) database.prepare("UPDATE discovery_contact_observations SET source_excerpt=?,captured_at=? WHERE candidate_id=? AND discovery_campaign_id=? AND criteria_revision=? AND native_author_id=? AND kind='hidden_email' AND source_url=? AND captured_at<=?").run(excerpt, page.captured_at, page.candidate_id, campaign, revision, author, expected, page.captured_at);
+  storeDiscoveryContacts(database, campaign, revision, page.candidate_id, [{ kind: "hidden_email", original_value: "有隐藏邮箱，需手动查看", normalized_value: expected, source_url: expected, source_excerpt: excerpt, captured_at: page.captured_at, native_author_id: author, attribution: "author_published" }]);
 }
 export function discoveryManualWechatLabels(bio: string): { kind: "wechat" | "wechat_official"; value: string }[] {
   const patterns = [

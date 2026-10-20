@@ -1,5 +1,6 @@
 import { platformDisplayName } from "@/lib/platform-display";
 import { DiscoveryPlanRequirements } from "./discovery-plan-requirements";
+import { PINTEREST_MIN_MONTHLY_VIEWS_EXCLUSIVE } from "@onecrew/runtime-contracts/discovery";
 import { discoveryProviderFailureKey } from "@/lib/discovery-execution-error";
 import { isU64 } from "@onecrew/runtime-contracts/result-wire";
 import { creatorU64 } from "@onecrew/runtime-contracts/creators";
@@ -289,7 +290,7 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
   const librarySync = useMutation({
     mutationFn: syncDiscoveryLibrary,
     onMutate: () => { librarySyncing.current = true; },
-    onSuccess: (result, id) => { setLastTables(previous => ({ ...previous, [id]: result })); setSyncFailure(previous => previous?.campaignId === id ? null : previous); reviewSyncPending.current.delete(id); },
+    onSuccess: (result, id) => { queryClient.setQueryData(["discovery-library", credentialId, id], result); setLastTables(previous => ({ ...previous, [id]: result })); setSyncFailure(previous => previous?.campaignId === id ? null : previous); reviewSyncPending.current.delete(id); },
     onError: (error, id) => setSyncFailure({ campaignId: id, key: discoveryLibraryFailureKey(error) }),
     onSettled: () => { librarySyncing.current = false; void queryClient.invalidateQueries({ queryKey: discoveryExecutionKey(credentialId) }); },
   });
@@ -297,6 +298,8 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
     mutationFn: () => createDiscoveryCampaign({
       id: draftId, brief: brief.trim(), opencli_version: version,
       criteria: { min_subscribers: minSubscribers, region: region.trim(), language: language.trim(),
+        contact_preference: "public_email_first", requirements: [{ description: "核实账号符合请求中的创作者角色，并说明实际账号类型及其发布或策展证据。普通评论、消费提问或销售服务不能仅凭主题相关计入；不得添加未要求的原创、频率或所在地条件。", excerpt: brief.trim() }],
+        ...(suppliedScopes.some(scope => scope.platform === "pinterest") ? { pinterest_min_monthly_views_exclusive: PINTEREST_MIN_MONTHLY_VIEWS_EXCLUSIVE } : {}),
         ...(category.trim() ? { category: category.trim() } : {}), requires_ai_tool_demo: requireDemo, requires_public_tool_url: requireToolLink },
       scopes: suppliedScopes.map(scope => ({ ...scope, profile_ref: profileRef })),
       target_count: targetCount, max_calls: maxCalls,
@@ -310,6 +313,7 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
   const restore = useMutation({
     mutationFn: (id: string) => getDiscoveryCampaign(id),
     onSuccess: result => {
+      void queryClient.invalidateQueries({ queryKey: ["discovery-library", credentialId, result.id] });
       queryClient.setQueryData(["opencli-campaign", result.id], result);
       try { window.localStorage.setItem(SAVED_CAMPAIGN_KEY, result.id); } catch { /* Current page still resumes. */ }
       setCampaignId(result.id);
@@ -414,7 +418,7 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
   const savedLibrary = useQuery({
     queryKey: ["discovery-library", credentialId, current?.id],
     queryFn: () => getDiscoveryLibrary(current!.id), enabled: !!current,
-    retry: false, staleTime: Infinity, refetchOnWindowFocus: false,
+    retry: false, staleTime: 5_000, refetchOnWindowFocus: true,
   });
   const recentLibrarySync = current && librarySync.data?.campaign_id === current.id
     && librarySync.submittedAt > Number(currentExecution?.synced_at ?? 0) ? librarySync.data : null;
@@ -639,6 +643,7 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
           </fieldset>;
         })}</div>
         {selectedBrowserPlatforms.length > 0 && <Alert><AlertDescription>{t("opencliPilot.accountSetup", { platforms: browserPlatformSummary })}</AlertDescription></Alert>}
+        {platforms.includes("pinterest") && <DiscoveryPlanRequirements criteria={{ min_subscribers: minSubscribers, pinterest_min_monthly_views_exclusive: PINTEREST_MIN_MONTHLY_VIEWS_EXCLUSIVE }} />}
         {platforms.some(platform => platform === "v2ex-node" || platform === "reddit-subreddit" || TAG_SEARCH_PLATFORMS.some(source => source === platform) || CATEGORY_SEARCH_PLATFORMS.some(source => source === platform)) && <p className="text-xs text-muted-foreground">{t("opencliPilot.scopedSourcesHelp")}</p>}
         {platforms.includes("v2ex-node") && <div className="grid gap-1"><Label htmlFor="discovery-v2ex-nodes">{t("opencliPilot.v2exNodes")}</Label><Input id="discovery-v2ex-nodes" value={v2exNodes} onChange={event => setV2exNodes(event.target.value)} placeholder={t("opencliPilot.v2exNodesExample")} /><p className="text-xs text-muted-foreground">{t("opencliPilot.v2exNodesHelp")}</p></div>}
         {platforms.includes("reddit-subreddit") && <div className="grid gap-1"><Label htmlFor="discovery-reddit-communities">{t("opencliPilot.redditCommunities")}</Label><Input id="discovery-reddit-communities" value={redditCommunities} onChange={event => setRedditCommunities(event.target.value)} placeholder={t("opencliPilot.redditCommunitiesExample")} /><p className="text-xs text-muted-foreground">{t("opencliPilot.redditCommunitiesHelp")}</p></div>}

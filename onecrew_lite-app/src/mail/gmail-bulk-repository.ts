@@ -23,7 +23,7 @@ const expectedColumns = {
 } as const;
 
 function validateSchema(db: DatabaseSync): void {
-  if (db.prepare("PRAGMA user_version").get()!.user_version !== 90) throw new Error("Gmail bulk storage requires Creator schema 90");
+  if (![90, 91].includes(Number(db.prepare("PRAGMA user_version").get()!.user_version))) throw new Error("Gmail bulk storage requires a supported Creator schema");
   if (db.prepare("PRAGMA foreign_keys").get()!.foreign_keys !== 1) throw new Error("Gmail bulk storage requires foreign key enforcement");
   for (const [table, expected] of Object.entries(expectedColumns)) {
     const actual = db.prepare(`PRAGMA table_info(${table})`).all().map(row => `${row.name}:${row.type}:${row.notnull}:${row.pk}`);

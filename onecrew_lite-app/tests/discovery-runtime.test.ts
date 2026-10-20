@@ -23,7 +23,7 @@ test("完整注册器使用真实SQLite/PGlite：缺浏览器不领取，严格�
   try {
     await databases.createNewAccount(context); const registry = new OperationRegistry(accounts); runtime.registerOperations(registry);
     const execute = (name: string, input: unknown) => registry.execute(name, input, context.principal.user.id, context.epoch);
-    assert.equal(registry.names().length, 31); assert.equal(await execute("onecrew_discovery_execution_get", {}), null);
+    assert.equal(registry.names().length, 32); assert.equal(await execute("onecrew_discovery_execution_get", {}), null);
     const repository = (await databases.discoveryResolver().resolve(context)).repository;
     repository.create({ id: "runtime-plan", brief: "找鞋子作者", opencli_version: "1.8.8", criteria: {}, scopes: [{ platform: "youtube", profile_ref: "work", keywords: ["shoe review"] }], target_count: 2, max_calls: 2 }); repository.approve("runtime-plan", 1);
     const input = { id: "runtime-plan", expectedRevision: 1, profileRef: "work", limit: 10 };

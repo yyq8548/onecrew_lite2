@@ -1,7 +1,7 @@
 import type { DatabaseSync } from "node:sqlite";
 import { isDeepStrictEqual } from "node:util";
 import { z } from "zod";
-import { validateCreatorSchema90 } from "../storage/creator-schema.ts";
+import { validateCreatorSchema } from "../storage/creator-schema.ts";
 import { getDiscoverySavedIdentity } from "./saved-read-repository.ts";
 import { discoveryPostAuthorClaim, discoveryPostIdForSource, validateDiscoveryPostAuthorResult, type DiscoveryPostAuthorClaim } from "./post-author-contracts.ts";
 import { discoveryReadPlatformStatus, sourceLocalReadFailure } from "./stops.ts";
@@ -9,7 +9,7 @@ import { discoveryReadPlatformStatus, sourceLocalReadFailure } from "./stops.ts"
 const u32 = z.number().int().min(0).max(4294967295);
 export class DiscoveryPostAuthorRepository {
   readonly #db: DatabaseSync;
-  constructor(database: DatabaseSync) { validateCreatorSchema90(database); this.#db = database; }
+  constructor(database: DatabaseSync) { validateCreatorSchema(database); this.#db = database; }
   #transaction<T>(body: () => T): T { this.#db.exec("BEGIN IMMEDIATE"); let committed = false; try { const value = body(); this.#db.exec("COMMIT"); committed = true; return value; } finally { if (!committed) this.#db.exec("ROLLBACK"); } }
   needs(campaign: string, hit: string): boolean { return this.#db.prepare("SELECT EXISTS(SELECT 1 FROM discovery_search_hits h WHERE h.id=?1 AND h.discovery_campaign_id=?2 AND h.platform='twitter' AND NOT EXISTS(SELECT 1 FROM discovery_identity_reads i WHERE i.search_hit_id=h.id)) needed").get(hit, campaign)!.needed === 1; }
   claim(campaign: string, revision: number, hit: string): DiscoveryPostAuthorClaim {

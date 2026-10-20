@@ -8,7 +8,7 @@ import { z } from "zod";
 import type { InstanceLease } from "../../service/instance-lock.ts";
 import { VerifiedMigrationCredential } from "../../identity/access-verification.ts";
 import { verifyPrivateDirectory, verifyPrivateFile } from "../../storage/private-backup.ts";
-import { validateCreatorSchema90 } from "../../storage/creator-schema.ts";
+import { validateCreatorSchema } from "../../storage/creator-schema.ts";
 import { fingerprintSqlite } from "../../migration/sqlite-fingerprint.ts";
 import { platformAccountManifestSchema } from "./owned-accounts.ts";
 import { platformAccountOwnerSchema } from "./platform-manifest.ts";
@@ -74,7 +74,7 @@ export async function prepareLegacyPlatformOwnership(lease: InstanceLease, input
   const before = { creator: fingerprintSqlite(creatorPath), vault: fingerprintSqlite(input.vaultPath) };
   const vault = new PlatformVaultReader(input.vaultPath, input.masterKeyPath);
   const manifest: Manifest = { format: 1, owner, deviceId: z.string().min(1).parse(input.deviceId), profiles: [], services: [] };
-  using database = new DatabaseSync(creatorPath, { readOnly: true }); validateCreatorSchema90(database);
+  using database = new DatabaseSync(creatorPath, { readOnly: true }); validateCreatorSchema(database);
   for (const id of selected) {
     const row = database.prepare("SELECT id,platform,kind,active,availability FROM account_refs WHERE id=?").get(id);
     const reference = z.object({ id: z.literal(id), platform: z.enum(["x", "instagram", "telegram", "youtube"]), kind: z.enum(["profile", "service_credential"]), active: z.literal(1), availability: z.literal("available") }).strict().parse(row);

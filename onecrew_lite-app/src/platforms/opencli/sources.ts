@@ -6,7 +6,7 @@ interface SearchSource { readonly site: string; readonly name: string; readonly 
 export const CREATOR_SEARCH_SOURCES: Readonly<Record<string, SearchSource>> = Object.freeze({
   youtube: { site: "onecrew-search-youtube", name: "search", maximum: 50, addon: "onecrew-browser-search", discovery: true },
   tiktok: { site: "onecrew-tiktok", name: "search", maximum: 50, addon: "onecrew-tiktok", discovery: true },
-  instagram: { site: "onecrew-search-instagram", name: "search", maximum: 50, addon: "onecrew-browser-search", discovery: true },
+  instagram: { site: "onecrew-search-instagram", name: "search", maximum: 20, addon: "onecrew-browser-search", discovery: true },
   twitter: { site: "onecrew-search-twitter", name: "search", maximum: 50, addon: "onecrew-browser-search", discovery: true },
   linkedin: { site: "onecrew-search-linkedin", name: "people-search", maximum: 10, addon: "onecrew-browser-search", discovery: true },
   facebook: { site: "onecrew-search-facebook", name: "search", maximum: 50, addon: "onecrew-browser-search", discovery: true },

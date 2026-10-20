@@ -8,6 +8,7 @@ import { prepareDiscoveryDraftInput } from "./draft.ts";
 import type { DiscoveryDraftRuntime } from "./draft-runtime.ts";
 import { discoveryPlanInput } from "./contracts.ts";
 import { submitDiscoveryReviewInput } from "./review-submission.ts";
+import { youtubeContactObservation } from "./youtube-contact-observation.ts";
 
 const text = z.string().min(1).refine(value => value.isWellFormed());
 const material = z.strictObject({ campaign_id: text, expected_revision: z.number().int().min(1).max(4294967295), search_hit_id: text });
@@ -39,6 +40,7 @@ export function registerDiscoveryWriteOperations(registry: OperationRegistry, ac
   registry.register("onecrew_discovery_budget_increase", z.strictObject({ input: z.strictObject({ campaign_id: text, expected_revision: revision, expected_max_calls: count, new_max_calls: count, decision_id: text }) }), async ({ input }, context) => write(context, repository => { repository.increaseBudget(context.principal.user.id, { decisionId: input.decision_id, planId: input.campaign_id, expectedRevision: input.expected_revision, expectedMaxCalls: input.expected_max_calls, newMaxCalls: input.new_max_calls }); return repository.getPlan(input.campaign_id); }));
   registry.register("onecrew_discovery_target_increase", z.strictObject({ input: z.strictObject({ campaign_id: text, expected_revision: revision, expected_target_count: z.number().int().min(1).max(4294967295), new_target_count: count, decision_id: text }) }), async ({ input }, context) => write(context, repository => { repository.adjustTarget(context.principal.user.id, { decisionId: input.decision_id, planId: input.campaign_id, expectedRevision: input.expected_revision, expectedTargetCount: input.expected_target_count, newTargetCount: input.new_target_count }); return repository.getPlan(input.campaign_id); }));
   registry.register("onecrew_discovery_review_submit", z.strictObject({ input: submitDiscoveryReviewInput }), async ({ input }, context) => write(context, repository => repository.submitReview(context.principal.user.id, input)));
+  registry.register("onecrew_discovery_youtube_contact_observation_record", z.strictObject({ input: youtubeContactObservation }), async ({ input }, context) => write(context, repository => repository.recordYoutubeContactObservation(input)));
 }
 export function registerDiscoveryDraftOperations(registry: OperationRegistry, runtime: DiscoveryDraftRuntime): void {
   registry.register("onecrew_discovery_draft_prepare", z.strictObject({ input: prepareDiscoveryDraftInput }), async ({ input }, context) => runtime.prepare(context, input));

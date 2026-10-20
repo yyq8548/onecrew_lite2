@@ -8,7 +8,7 @@ const text = z.string().refine(value => value.isWellFormed());
 const bounded = (maximum: number) => text.refine(value => Buffer.byteLength(value) <= maximum && !value.includes("\0"));
 const handleValid = (value: string) => /^[A-Za-z\d][A-Za-z\d_-]{0,127}$/u.test(value) && !["me", "self"].includes(value.toLowerCase());
 const accountValid = (value: string) => /^ACo[A-Za-z\d_-]{16,125}$/u.test(value);
-const publicLink = text.refine(value => value.startsWith("https://") && publicWebUrl(value) !== null);
+const publicLink = text.refine(value => publicWebUrl(value, true) !== null);
 const label = text.refine(value => !!value.trim() && Buffer.byteLength(value) <= 512 && !/\p{Cc}/u.test(value));
 const numeric = /^[1-9]\d{0,19}$/u;
 function target(handle: string, account?: string) { if (!handleValid(handle) || account !== undefined && !accountValid(account)) throw new OpenCliError("opencli_invalid_input"); }
@@ -19,7 +19,7 @@ function followers(value: string) {
 }
 export function linkedinProfilePlan(handle: string) {
   target(handle); const source = `https://www.linkedin.com/in/${handle}/`;
-  const schema = z.strictObject({ adapter_version: z.literal("1.0.0"), author_handle: z.literal(handle), account_id: text.refine(accountValid), author_label: label, profile_url: z.literal(source), follower_count: z.number().int().nonnegative().safe().nullable().optional().transform(value => value ?? null), follower_text: bounded(100), headline: bounded(2000), bio: bounded(8000), public_links: z.array(publicLink).max(10), contact_links: z.array(z.literal(`${source}overlay/contact-info/`)).max(1), evidence_source: z.literal("visible_profile_header"), bio_truncated: z.literal(true) }).refine(row => row.follower_count === followers(row.follower_text));
+  const schema = z.strictObject({ adapter_version: z.literal("1.0.0"), author_handle: z.literal(handle), account_id: text.refine(accountValid), author_label: label, profile_url: z.literal(source), follower_count: z.number().int().nonnegative().safe().nullable().optional().transform(value => value ?? null), follower_text: bounded(100), headline: bounded(2000), bio: bounded(8000), public_links: z.array(publicLink).max(10), contact_links: z.array(z.literal(`${source}overlay/contact-info/`)).max(1), evidence_source: z.literal("visible_profile_header"), bio_truncated: z.boolean() }).refine(row => row.follower_count === followers(row.follower_text));
   return { site: "onecrew-linkedin-reader", name: "profile", args: ["-f", "json", "--", handle], addons: ["onecrew-browser-search"], foregroundBrowser: true, maximumBytes: 32000, decode: (value: unknown) => one(schema, value) } satisfies ReviewedOpenCliRead<unknown>;
 }
 export function linkedinContentPlan(handle: string, account: string) {
@@ -31,7 +31,7 @@ export function linkedinContactPlan(handle: string, account: string) {
   target(handle, account); const source = `https://www.linkedin.com/in/${handle}/overlay/contact-info/`;
   const schema = z.strictObject({ adapter_version: z.literal("1.0.0"), author_handle: z.literal(handle), account_id: z.literal(account), source_url: z.literal(source), title: label.refine(value => [...value].length <= 200), contact_text: bounded(8000), contact_links: z.array(publicLink).max(10), truncated: z.literal(true), evidence_source: z.literal("visible_contact_dialog") });
   return { site: "onecrew-linkedin-reader", name: "contact", args: ["-f", "json", "--", handle, account], addons: ["onecrew-browser-search"], foregroundBrowser: true, maximumBytes: 32000, decode(value: unknown) {
-    const row = one(schema, value); const excerpt = `${row.contact_links.join("\n")}\n${row.contact_text}`;
+    const row = one(schema, value); const excerpt = `${row.contact_links.map(link => `Website: ${link}`).join("\n")}\n${row.contact_text}`;
     if (Buffer.byteLength(excerpt) > 20000) throw new OpenCliError("opencli_output_too_large");
     return { requested_url: source, document_url: source, title: row.title, markdown_excerpt: excerpt, truncated: true };
   } } satisfies ReviewedOpenCliRead<unknown>;

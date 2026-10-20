@@ -11,12 +11,13 @@ export function projectProfile(observation, expectedMid) {
   const count = Number(raw.replace(/,/g, ''));
   if (!Number.isSafeInteger(count) || count < 0) fail();
   const sign = observation.sign;
-  if (sign !== undefined && (typeof sign !== 'string' || [...sign].length > 1000
+  if (sign !== undefined && (typeof sign !== 'string' || new TextEncoder().encode(sign).length > 8000
       || /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f]/.test(sign))) fail();
   return { adapter_version: '1.0.0', mid: observation.mid, name: observation.name.trim(),
     follower_count: count, follower_count_text: raw, follower_display: observation.follower_display,
     profile_url: 'https://space.bilibili.com/' + observation.mid, evidence_source: 'profile_tooltip',
-    ...(sign === undefined ? {} : {sign:sign.trim()}) };
+    ...(sign === undefined ? {} : {sign:sign.trim()}),
+    ...(observation.bio_status===undefined?{}:{bio_status:observation.bio_status,bio_truncated:observation.bio_status==='truncated',signature_status:observation.signature_status,announcement_status:observation.announcement_status}) };
 }
 
 export function readProfilePage(expectedMid, project) {
@@ -42,11 +43,12 @@ export function readProfilePage(expectedMid, project) {
   const signs = document.querySelectorAll('.upinfo-detail__bottom .sign.header-sign .pure-text');
   const original = signs.length === 1 ? signs[0].textContent?.trim() : undefined;
   const tooltip = signs.length === 1 ? signs[0].getAttribute('title') : null;
-  const bio = typeof original === 'string' && [...original].length <= 1000
-    && (!tooltip || tooltip.trim() === original) ? original : undefined;
+  const bio = typeof original === 'string' ? original : undefined;
+  const signature_status=signs.length===0?'missing':signs.length!==1||tooltip&&tooltip.trim()!==original?'unavailable':original?'complete':'missing';
   // Observed author-owned announcement, isolated from video descriptions/comments.
   const announcements = document.querySelectorAll('.ann-section');
   let announcement;
+  let announcement_status=announcements.length===0?'missing':'unavailable';
   if (announcements.length === 1
       && announcements[0].querySelector('.ann-section__header')?.textContent?.trim() === '公告') {
     const content = announcements[0].querySelectorAll('.ann-section__content .show-text');
@@ -55,12 +57,16 @@ export function readProfilePage(expectedMid, project) {
       announcement = paragraphs.length
         ? paragraphs.map(p => p.textContent?.trim() ?? '').join('\n')
         : content[0].textContent?.trim();
+      announcement_status=announcement?'complete':'missing';
     }
   }
   const parts = [bio, announcement].filter(value => typeof value === 'string' && value.length > 0);
-  const sign = parts.length ? [...new Set(parts)].join('\n') : undefined;
+  const originalSign = parts.length ? [...new Set(parts)].join('\n') : undefined;
+  let sign=originalSign,bytes=0;
+  if(originalSign!==undefined) { sign='';for(const character of originalSign){const size=new TextEncoder().encode(character).length;if(bytes+size>8000)break;sign+=character;bytes+=size;} }
+  const bio_status=sign!==originalSign?'truncated':[signature_status,announcement_status].includes('unavailable')?'unavailable':parts.length?'complete':'missing';
   return [project({ mid: match[1], name: names[0].textContent, label: '粉丝数',
-    follower_count_text: values[0].getAttribute('title'), follower_display: values[0].textContent?.trim(), sign }, expectedMid)];
+    follower_count_text: values[0].getAttribute('title'), follower_display: values[0].textContent?.trim(), sign,bio_status,signature_status,announcement_status }, expectedMid)];
 }
 
 export async function readBilibiliProfile(page, mid) {

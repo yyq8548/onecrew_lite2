@@ -18,8 +18,9 @@ export function youtubeVideoEvidencePlan(video: string) {
     return parsed;
   } } satisfies ReviewedOpenCliRead<unknown>;
 }
-export function youtubeChannelContactPlan(channel: string) {
+export function youtubeChannelContactPlan(channel: string, task: string) {
   if (!/^UC[A-Za-z\d_-]{22}$/u.test(channel)) throw new OpenCliError("opencli_invalid_input");
-  const contact = z.object({ adapterVersion: z.literal("1.0.0"), channelId: z.literal(channel), sourceUrl: z.literal(`https://www.youtube.com/channel/${channel}`), title: z.string().refine(value => value.isWellFormed() && Buffer.byteLength(value) <= 2000), description: z.string().refine(value => value.isWellFormed() && Buffer.byteLength(value) <= 64000), hiddenEmailAvailable: z.boolean(), aboutDataAvailable: z.boolean() }).strict();
-  return { site: "onecrew-youtube", name: "channel-contact", args: ["-f", "json", "--", channel], addons: ["onecrew-youtube"], maximumBytes: 128000, decode: (value: unknown) => row(contact, value) } satisfies ReviewedOpenCliRead<unknown>;
+  if (!task.trim() || task.length > 200 || !task.isWellFormed()) throw new OpenCliError("opencli_invalid_input");
+  const contact = z.object({ adapterVersion: z.literal("1.0.0"), channelId: z.literal(channel), sourceUrl: z.literal(`https://www.youtube.com/channel/${channel}`), title: z.string().refine(value => value.isWellFormed() && Buffer.byteLength(value) <= 2000), description: z.string().refine(value => value.isWellFormed() && Buffer.byteLength(value) <= 64000), publicLinks: z.array(z.string().refine(value => publicWebUrl(value, true))).max(50).optional(), linksTruncated: z.boolean().optional(), descriptionStatus: z.enum(["complete", "missing", "unknown"]).optional(), hiddenEmailAvailable: z.boolean(), aboutDataAvailable: z.boolean(), hiddenEmailStatus: z.enum(["public_email", "revealed", "cached", "not_available", "task_limited", "busy", "daily_limit", "verification_required"]).optional(), hiddenEmailTaskId: z.literal(task).optional(), hiddenEmailCapturedAt: z.number().int().positive().safe().optional() }).strict();
+  return { site: "onecrew-youtube", name: "channel-contact", args: ["--task", task, "-f", "json", "--", channel], addons: ["onecrew-youtube"], maximumBytes: 128000, decode: (value: unknown) => row(contact, value) } satisfies ReviewedOpenCliRead<unknown>;
 }

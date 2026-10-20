@@ -11,11 +11,13 @@ export function DiscoveryCandidateCard({ item, campaign, reasonLabels }: {
   const { met, reasons } = candidateConditions(item, campaign.criteria);
   const gaps = candidateRequirementGaps(item, campaign.criteria);
   const requirementLabels: Record<string, string> = {
+    below_pinterest_scale: t("opencliPilot.pinterestScaleFailed"), pinterest_scale_unverified: t("opencliPilot.pinterestScaleUnknown"),
+    related_alternative: t("opencliPilot.relatedAlternative"),
     requirement_unverified: t("opencliPilot.reason.requirement"), requirement_contradicted: t("opencliPilot.reason.requirementConflict"),
     excluded_by_customer: t("opencliPilot.reason.excludedAccount"), excluded_account_identity_unverified: t("opencliPilot.reason.requirement"),
     requirements_invalid: t("opencliPilot.reason.unsupported"), excluded_accounts_invalid: t("opencliPilot.reason.unsupported"),
   };
-  const rating = item.verdict !== "pending" ? item.evidence.assessment?.match_rating : null;
+  const rating = item.verdict !== "pending" || reasons.includes("related_alternative") ? item.evidence.assessment?.match_rating : null;
   return <li className="rounded-md border p-3 text-sm">
     <div className="flex flex-wrap items-center justify-between gap-2">
       <a className="inline-flex items-center gap-1 text-primary underline" href={item.profile_url} target="_blank" rel="noreferrer">
@@ -27,6 +29,7 @@ export function DiscoveryCandidateCard({ item, campaign, reasonLabels }: {
       {t(`opencliPilot.matchLevel.${rating.level}`)}
     </p>}
     {met.length > 0 && <p className="mt-1 text-muted-foreground">{met.map(key => t(`opencliPilot.${key}`)).join(" · ")}</p>}
+    {item.platform === "pinterest" && typeof item.evidence.pinterest_monthly_views_raw === "string" && <p className="mt-1 text-muted-foreground">{item.evidence.pinterest_monthly_views_raw}</p>}
     <p className="mt-1 text-muted-foreground">{rating?.reason || (reasons.length
       ? reasons.map(reason => requirementLabels[reason] ?? reasonLabels[reason] ?? reason).join(" · ")
       : t(item.verdict === "qualified" ? "opencliPilot.autoRecommended" : "opencliPilot.matchUnknown"))}</p>

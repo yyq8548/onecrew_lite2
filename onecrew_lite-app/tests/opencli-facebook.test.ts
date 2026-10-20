@@ -19,7 +19,7 @@ test("Facebook联系页保留观察链接并按字节截取，不跨作者页", 
   const source = base + "/directory_contact_info";
   const row = { adapter_version: "2.0.0", id: author, source_url: source, observed_profile_url: base, title: "Contact", contact_text: "中".repeat(10000), contact_links: ["http://creator.example/contact"], truncated: false };
   const result = facebookContactPlan(author, { base, source }).decode([row]);
-  assert.equal(result.markdown_excerpt.startsWith("http://creator.example/contact\n"), true);
+  assert.equal(result.markdown_excerpt.startsWith("Website: http://creator.example/contact\n"), true);
   assert.equal(result.truncated, true); assert.ok(Buffer.byteLength(result.markdown_excerpt) <= 20000);
   assert.throws(() => facebookContactPlan(author, { base, source: "https://www.facebook.com/Other/directory_links" }));
 });

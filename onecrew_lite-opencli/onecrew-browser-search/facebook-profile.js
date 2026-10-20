@@ -66,7 +66,7 @@ cli({site:'onecrew-facebook-profile',name:'read',access:'read',browser:true,
 cli({site:'onecrew-facebook-profile',name:'contact',access:'read',browser:true,
   domain:'www.facebook.com',strategy:Strategy.COOKIE,navigateBefore:false,
   description:'Read only an observed same-author Facebook contact-information page',
-  args:[{name:'id',positional:true,required:true}],columns:['id','source_url','title','contact_text','contact_links','truncated'],
+  args:[{name:'id',positional:true,required:true},{name:'source',positional:true,required:false}],columns:['id','source_url','title','contact_text','contact_links','truncated'],
   func:async(page,args)=>{
     try{return [await readFacebookContact(page,args,withOwnedSearchPage)];}
     catch(error){

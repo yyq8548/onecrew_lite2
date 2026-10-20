@@ -17,11 +17,13 @@ export function projectWeiboProfile(payload, expectedId) {
       || user.screen_name.length > 200) throw new Error('ONECREW_WEIBO_PROFILE_INVALID');
   const text = (value, limit) => typeof value === 'string' ? Array.from(value).slice(0, limit).join('') : '';
   const count = user.followers_count;
+  if (user.description != null && typeof user.description !== 'string') throw new Error('ONECREW_WEIBO_PROFILE_INVALID');
   if (count != null && (!Number.isSafeInteger(count) || count < 0))
     throw new Error('ONECREW_WEIBO_FOLLOWERS_INVALID');
   return {id: expectedId, name: user.screen_name, follower_count: count ?? null,
     profile_url: `https://weibo.com/u/${expectedId}`,
-    bio: text(user.description, 2000), self_declared_location: text(user.location, 200)};
+    bio: text(user.description, 2000), bio_truncated: typeof user.description==='string' && [...user.description].length>2000,
+    bio_status: typeof user.description!=='string'||!user.description?'missing':[...user.description].length>2000?'truncated':'complete', self_declared_location: text(user.location, 200)};
 }
 
 export function projectWeiboRecent(payload, expectedId) {

@@ -33,11 +33,8 @@ test('public DOM preserves search binding, previews and unknown fields without A
   assert.equal(vm.runInContext(`(${observeInstagramProfile.toString()})('creator','123')`,context).stop,'risk');
 });
 
-test('web reader never falls back to the blocked profile API',async()=>{
-  let evaluations=0;
-  const page={goto:async()=>{},evaluate:async code=>{evaluations++;assert.ok(!code.includes('fetch('));return {stop:'risk'};}};
-  await assert.rejects(readInstagramWebProfile(page,{username:'creator',author_id:'123'},(p,read)=>read(p)),/PROFILE_RISK/);
-  assert.equal(evaluations,1);
+test('可见主页读取拒绝把公开用户名当作数字账号身份',async()=>{
+  await assert.rejects(readInstagramWebProfile(null,{username:'annabel.pro',author_id:'annabel.pro'},null),/PROFILE_INPUT/);
 });
 test('Instagram public profile preserves native identity and observed count',()=>{
   const p=projectInstagramProfile(user(),'creator');

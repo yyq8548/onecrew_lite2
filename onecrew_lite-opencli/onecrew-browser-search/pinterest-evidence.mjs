@@ -110,11 +110,23 @@ export async function readProfile(page, username, ownPage) {
   nativeUsername(username);
   return ownPage(page, async owned => {
     await owned.goto(`https://www.pinterest.com/${username}/`);
-    const raw = await owned.evaluate(`(${fetchNativeResource.toString()})("profile",${JSON.stringify(username)})`);
+    const raw = await owned.evaluate(`(async function(kind,target){const native=await (${fetchNativeResource.toString()})(kind,target);if(native?.stop)return native;return {...native,onecrew_public_monthly_views_raw:(${readVisibleMonthlyViews.toString()})(target)};})("profile",${JSON.stringify(username)})`);
     const result = raw && 'session' in Object(raw) && 'data' in Object(raw) ? raw.data : raw;
     throwResourceStop(result);
-    return projectProfile(result, username);
+    const profile = projectProfile(result, username);
+    const monthly = result.onecrew_public_monthly_views_raw ?? null;
+    return profile.map(row => ({...row, monthly_views_raw:monthly}));
   });
+}
+
+// 月浏览量只读取当前作者主页的公开标签，保留圆整显示值。
+export function readVisibleMonthlyViews(username) {
+  if (location.origin !== 'https://www.pinterest.com' || location.pathname !== `/${username}/`) throw new Error('ONECREW_PINTEREST_READ_SOURCE');
+  const header = document.querySelector('[data-test-id="profile-header"]');
+  if (!header || !header.innerText.split('\n').some(line => line.trim() === username)) return null;
+  const labels = [...header.querySelectorAll('span')].filter(el => el.getClientRects().length && /^(?:[0-9][0-9,.]*\s*[KMB万亿千]?\s*)(?:月浏览量|monthly views)$/iu.test(el.innerText.trim())).map(el => el.innerText.trim());
+  if (labels.length > 1) throw new Error('ONECREW_PINTEREST_INVALID_MONTHLY_VIEWS');
+  return labels[0] ?? null;
 }
 
 export function projectSearch(payload, limit) {

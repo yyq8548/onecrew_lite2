@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { stringify } from "lossless-json";
 import type { DatabaseSync, SQLInputValue } from "node:sqlite";
-import { validateCreatorSchema90 } from "../storage/creator-schema.ts";
+import { validateCreatorSchema } from "../storage/creator-schema.ts";
 import { creatorOutput, manualCreatorInput, updateCreatorInput, trim, text, type ManualCreatorInput } from "./contracts.ts";
 import { normalizeContact } from "./normalization.ts";
 import { creatorDetail, contactRoutes } from "./detail.ts";
@@ -22,7 +22,7 @@ import type { SelectedCandidateBatch } from "./candidate-selection.ts";
 
 export class CreatorRepository {
   readonly #db: DatabaseSync;
-  constructor(db: DatabaseSync) { validateCreatorSchema90(db); this.#db = db; }
+  constructor(db: DatabaseSync) { validateCreatorSchema(db); this.#db = db; }
   #transaction<T>(write: boolean, operation: () => T): T {
     this.#db.exec(write ? "BEGIN IMMEDIATE" : "BEGIN DEFERRED");
     let committed = false;

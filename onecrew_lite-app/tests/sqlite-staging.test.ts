@@ -88,7 +88,7 @@ for (const vaultVersion of [2, 3, 4] as const) test(`SQLite staging upgrades rea
     const result = await prepareSqliteStaging(value.lease, value);
     assert.equal(result.activated, false);
     assert.equal(result.state, "sqlite_staging_ready");
-    assert.equal(result.creator.inspection.version, 90);
+    assert.equal(result.creator.inspection.version, 91);
     assert.equal(result.vault.inspection.version, 4);
     assert.deepEqual(result.envelopes, { profiles: 1, service_credentials: 1 });
     assert.deepEqual(await readFile(result.masterKey), value.key);

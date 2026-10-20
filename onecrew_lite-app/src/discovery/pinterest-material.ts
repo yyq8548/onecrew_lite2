@@ -1,10 +1,11 @@
 import { z } from "zod";
 import { nativeContentObservations } from "../platforms/opencli/observations.ts";
+import { pinterestMonthlyViews } from "../platforms/opencli/pinterest.ts";
 import { publicLink as validDiscoverySavedLink } from "./historical-native-material.ts";
 
 const text = z.string().refine(value => value.isWellFormed());
 const id = text.regex(/^[1-9][0-9]{0,19}$/u), username = text.regex(/^[A-Za-z0-9_]{1,30}$/u);
-const profile = z.strictObject({ author_id: id, username, author_label: text.refine(value => !!value.trim() && Buffer.byteLength(value) <= 512 && !/\p{Cc}/u.test(value)), profile_url: text, follower_count: z.number().int().nonnegative().safe().nullable(), bio: text.refine(value => Buffer.byteLength(value) <= 8000 && !value.includes("\0")), public_links: z.array(text.refine(validDiscoverySavedLink)).max(1) }).refine(value => value.profile_url === `https://www.pinterest.com/${value.username}/`);
+const profile = z.strictObject({ author_id: id, username, author_label: text.refine(value => !!value.trim() && Buffer.byteLength(value) <= 512 && !/\p{Cc}/u.test(value)), profile_url: text, follower_count: z.number().int().nonnegative().safe().nullable(), monthly_views_raw: pinterestMonthlyViews, bio: text.refine(value => Buffer.byteLength(value) <= 8000 && !value.includes("\0")), public_links: z.array(text.refine(validDiscoverySavedLink)).max(1) }).refine(value => value.profile_url === `https://www.pinterest.com/${value.username}/`);
 export function validateDiscoveryPinterestProfile(author: string, authorUrl: string, raw: unknown): Record<string, unknown> {
   const value = profile.parse(raw);
   if (value.author_id !== author || value.profile_url !== authorUrl) throw new Error("review_native_profile_binding_unavailable");

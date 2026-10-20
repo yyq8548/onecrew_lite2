@@ -1,0 +1,69 @@
+{
+  "captured_on": "2026-10-19",
+  "opencli_version": "1.8.8",
+  "instagram_visible_search": [
+    {"username":"annabel.pro","name":"Makeup & Hair Valencia | Beauty Creator | Визажист Валенсия","url":"https://www.instagram.com/annabel.pro/"},
+    {"username":"akylai_uvaisova","name":"UGC CREATOR | MAKE-UP | BEAUTY | LIFESTYLE | АКТОБЕ","url":"https://www.instagram.com/akylai_uvaisova/"},
+    {"username":"la_kiss_boutique","name":"Katty | Makeup Artist & Beauty Creator","url":"https://www.instagram.com/la_kiss_boutique/"},
+    {"username":"arinarad.makeup","name":"آرینا‌ | Beauty Creator| میکاپ آرتیست| LifeStyle💄","url":"https://www.instagram.com/arinarad.makeup/"},
+    {"username":"oopsits_prachiii","name":"prachi bahadure | makeup & beauty creator","url":"https://www.instagram.com/oopsits_prachiii/"}
+  ],
+  "pinterest_profile": {
+    "author_id": "1089237997285034121", "username": "Velourabeauty01_", "author_label": "Veloura Beauty Edit",
+    "profile_url": "https://www.pinterest.com/Velourabeauty01_/", "follower_count": 33,
+    "bio": "Beauty inspiration for skincare, makeup, nails & healthy hair. Daily beauty ideas, tutorials and product recommendations.",
+    "public_links": [], "monthly_views_raw": "119.8 万 月浏览量"
+  },
+  "facebook_profile": {
+    "adapter_version": "1.0.0", "id": "100077440782965", "display_name": "美妆师姐皮皮子", "follower_count": null,
+    "follower_text": "13K followers", "profile_url": "https://www.facebook.com/profile.php?id=100077440782965",
+    "evidence_source": "visible_numeric_profile_header", "contact_links": ["https://www.facebook.com/profile.php?id=100077440782965&sk=directory_contact_info"],
+    "biography": "", "bio_truncated": false, "bio_status": "missing"
+  },
+  "facebook_contact": {
+    "adapter_version": "1.0.0", "id": "100077440782965", "source_url": "https://www.facebook.com/profile.php?id=100077440782965&sk=directory_contact_info",
+    "title": "美妆师姐皮皮子", "contact_text": "About\nCategory\nDetails\nContact info\nMessenger\n美妆师姐皮皮子", "contact_links": ["https://www.facebook.com/messages/t/100077440782965/"], "truncated": true
+  },
+  "linkedin_http_contact": {
+    "adapter_version": "1.0.0", "author_handle": "christina-flach-1185825", "account_id": "ACoAAAD5YiQBMpV9wxbws3S9LwUKwrWnceaw_r0",
+    "source_url": "https://www.linkedin.com/in/christina-flach-1185825/overlay/contact-info/", "title": "CHRISTINA FLACH", "contact_text": "",
+    "contact_links": ["http://www.christinaflach.com/", "http://www.scoutcreatives.com/", "http://www.prettygirlmakeup.com/"],
+    "truncated": true, "evidence_source": "visible_contact_dialog"
+  },
+  "linkedin_bare_contact": {
+    "adapter_version": "1.0.0", "author_handle": "jaleesajaikaran", "account_id": "ACoAAAvaGRYBVQ6Ip4Tsdmm3HmcREKw8nvNvGoI",
+    "source_url": "https://www.linkedin.com/in/jaleesajaikaran/overlay/contact-info/", "title": "Jaleesa Jaikaran",
+    "contact_text": "Website: www.jaleesajaikaranbeauty.com\nWebsite: www.jaleesajaikaran.com", "contact_links": [],
+    "truncated": true, "evidence_source": "visible_contact_dialog"
+  },
+  "linkedin_content_excerpt": {
+    "account_id": "ACoAAAvaGRYBVQ6Ip4Tsdmm3HmcREKw8nvNvGoI", "author_handle": "jaleesajaikaran", "profile_url": "https://www.linkedin.com/in/jaleesajaikaran/",
+    "post_id": "7490406218851848192", "source_url": "https://www.linkedin.com/feed/update/urn:li:activity:7490406218851848192/",
+    "text": "CurlFest always reminds me that beauty is so much bigger than products…it’s culture, community, and connection🖤🤎",
+    "text_truncated": true, "observations": {"published_at": null, "text_completeness": "truncated"}, "evidence_source": "visible_author_activity"
+  },
+  "content_excerpt_note": "动态测试样本只保留真实读取的首句，已将截断状态显式标为 true。未将手写内容当作平台返回。",
+  "tiktok_profile": {
+    "adapter_version": "1.0.0", "evidence_source": "profile_bootstrap", "id": "65510054933", "username": "behira.xx",
+    "display_name": "6 năm ko tăng kí nào🤡", "signature": "Zalo lhcv: 077-7946-339\nĐồ tui dùng link dưới đây nhé Nàng ⤵️⤵️⤵️\n@ig.behira.xx",
+    "follower_count": 194200, "verified": false, "private_account": false, "profile_url": "https://www.tiktok.com/@behira.xx", "contact_links": ["https://beacons.ai/behira.xx"]
+  },
+  "role_medium_review": {
+    "author_id": "1890993902473109504", "followers": 11,
+    "criteria": {"automatic_query_expansion": false, "category": "美妆", "contact_preference": "public_email_first", "requires_ai_tool_demo": false, "requires_public_tool_url": false},
+    "evidence": {
+      "source_urls": ["https://x.com/i/status/2110359286308384773", "https://x.com/12300otani"],
+      "reviewed_category_content": {"category": "美妆", "material_hash": "ab8ee217218b586da6b59e24b7558702fc4009c7ee401241b193ddb38c1ffb42", "native_author_id": "1890993902473109504", "policy_version": "category-content-review-v1", "review_id": "9d66c1f6-e7ce-4878-ae91-83feb204b284", "source_url": "https://x.com/i/status/2110359286308384773", "verified": true},
+      "reviewed_match": {"language": null, "level": "medium", "material_hash": "ab8ee217218b586da6b59e24b7558702fc4009c7ee401241b193ddb38c1ffb42", "native_author_id": "1890993902473109504", "outcome": "supported", "policy_version": "language-match-review-v1", "reason": "已保存内容是对他人妆容的简短赞美，能证明话题相关，无法据此核实账号的美妆博主身份。评为 medium，列入相关备选，不计入推荐人数；不据此否定账号其他尚未读取的内容。", "review_id": "9d66c1f6-e7ce-4878-ae91-83feb204b284", "source_url": "https://x.com/i/status/2110359286308384773", "verified": true},
+      "reviewed_requirements": []
+    }
+  },
+  "pinterest_content_failure": {
+    "claim": {"campaign_id":"494c9293-c79e-43bb-aec0-799c767557b1","expected_revision":1,"search_hit_id":"d9690cd6-75eb-4c6a-99ba-5de5108ce847","platform":"pinterest","profile_ref":"d5pskwub","author_id":"150870793675347190","source_url":"https://www.pinterest.com/pin/150870656261234516/","call_number":13},
+    "code": "provider_response_shape_invalid"
+  },
+  "tiktok_other_links": [
+    {"profile_url": "https://www.tiktok.com/@erinjmonaghan", "author_id": "6808504042949739525", "link": "https://www.unicef.org.uk/donate/"},
+    {"profile_url": "https://www.tiktok.com/@cloudysstory", "author_id": "6808876632012342274", "link": "https://vt.tiktok.com/ZS9U1kaD4D58o-FHoBH/"}
+  ]
+}

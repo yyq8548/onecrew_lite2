@@ -2,13 +2,22 @@ import { z } from "zod";
 import { validateDiscoveryWebNative } from "./web-receipt.ts";
 const text = z.string().refine(value => value.isWellFormed());
 const u32 = z.number().int().min(0).max(4_294_967_295);
-export const discoveryWebSourceClaim = z.strictObject({ campaign_id: text, expected_revision: u32.positive(), search_hit_id: text, origin_platform: z.enum(["google", "yahoo"]), profile_ref: text, source_url: text, target_platform: z.enum(["youtube", "twitter", "douyin"]), video_id: text, call_number: u32.positive() });
+export const discoveryWebSourceClaim = z.strictObject({ campaign_id: text, expected_revision: u32.positive(), search_hit_id: text, origin_platform: z.enum(["google", "yahoo", "instagram"]), profile_ref: text, source_url: text, target_platform: z.enum(["youtube", "twitter", "douyin", "instagram", "tiktok"]), video_id: text, call_number: u32.positive() });
 export type DiscoveryWebSourceClaim = z.infer<typeof discoveryWebSourceClaim>;
 export const discoveryWebSourceRead = z.strictObject({ claim: discoveryWebSourceClaim, status: text, native_author_id: text.nullable(), native_material: z.unknown(), stop_code: text.nullable(), captured_at: z.union([z.number().int().safe(), z.bigint()]), candidate_id: text.nullable(), is_primary_source: z.boolean() });
 const stops = z.enum(["opencli_timeout", "opencli_output_too_large", "opencli_version_changed", "opencli_daemon_unavailable", "opencli_extension_unavailable", "opencli_profile_unavailable", "opencli_command_unavailable", "opencli_invalid_output", "opencli_invalid_input", "opencli_unavailable", "opencli_command_failed", "opencli_risk_control", "opencli_auth_required"]);
-export function discoveryWebSourceTarget(source: string): { platform: "youtube" | "twitter" | "douyin"; id: string; cost: number; handle?: string } | null {
+export function discoveryWebSourceTarget(source: string): { platform: "youtube" | "twitter" | "douyin" | "instagram" | "tiktok"; id: string; cost: number; handle?: string } | null {
   const url = URL.parse(source);
   if (!url || url.protocol !== "https:" || url.username || url.password || url.port || url.hash) return null;
+  if ([...url.searchParams.keys()].every(key => key === "hl") && url.searchParams.getAll("hl").length <= 1 && ["instagram.com", "www.instagram.com"].includes(url.hostname)) {
+    const match = /^\/([a-z\d_.]{1,30})\/?$/iu.exec(url.pathname);
+    const username = match?.[1]?.toLowerCase();
+    if (username && !["accounts", "direct", "explore", "reels", "reel", "p", "stories", "about", "legal", "popular"].includes(username)) return { platform: "instagram", id: username, cost: 1 };
+  }
+  if ([...url.searchParams.keys()].every(key => key === "lang") && url.searchParams.getAll("lang").length <= 1 && ["tiktok.com", "www.tiktok.com"].includes(url.hostname)) {
+    const match = /^\/@([a-z\d_.]{1,24})\/?$/iu.exec(url.pathname);
+    if (match) return { platform: "tiktok", id: match[1]!, cost: 1 };
+  }
   if (["youtube.com", "www.youtube.com"].includes(url.hostname)) {
     const parts = url.pathname.split("/"), query = url.searchParams.getAll("v");
     const id = url.pathname === "/watch" && query.length === 1 ? query[0] : parts.length === 3 && (parts[1] === "watch" && !url.search || parts[1] === "shorts" || parts[1] === "live") ? parts[2] : null;

@@ -4,7 +4,7 @@ import * as XLSX from 'xlsx';
 import { buildCreatorWorkbook } from '../../src/modules/tables/files.js';
 import type { DiscoveryCreatorView, TableDto } from '../../src/modules/tables/data.js';
 import { recommendationCapture } from '../../src/modules/tables/recommendation-capture.js';
-import { contactDisplay, isSocialProfile } from '@onecrew/contracts/tables';
+import { contactDisplay, isSocialProfile, preferredContacts } from '@onecrew/contracts/tables';
 
 const table: TableDto = {
   id: 'table',
@@ -133,9 +133,14 @@ assert.equal(
 );
 assert.equal(
   (read(withContacts([hidden, social, contact]))[1] as unknown[])[4],
-  `${social.normalized_value}\nbusiness@example.com`,
+  `business@example.com\n隐藏邮箱，在更多信息手动查看 — ${homepage}\n${social.normalized_value}`,
 );
 assert.equal((read(withContacts([social]))[1] as unknown[])[4], social.normalized_value);
+const originalContacts = [hidden, social, contact];
+assert.match(contactDisplay({ ...hidden, source_excerpt: 'YouTube hidden email status: daily_limit; task: youtube-export' }), /本次任务跳过/);
+assert.match(contactDisplay({ ...hidden, source_excerpt: 'YouTube hidden email status: verification_required; task: youtube-export' }), /需要人工完成验证/);
+assert.deepEqual(preferredContacts(originalContacts), [contact, hidden, social]);
+assert.deepEqual(originalContacts, [hidden, social, contact]);
 const { discoveryContactSchema } = await import('../../src/modules/tables/discovery-projection.js');
 assert.equal(discoveryContactSchema.safeParse(hidden).success, true);
 assert.equal(

@@ -1,0 +1,95 @@
+{
+  "criteria": {
+    "category": "美妆",
+    "region": "",
+    "language": "",
+    "min_subscribers": 2000,
+    "requires_ai_tool_demo": false,
+    "requires_public_tool_url": false,
+    "pinterest_min_monthly_views_exclusive": 50000,
+    "requirements": [
+      {
+        "description": "核验账号具有博主角色，并以账号及其发布或署名整理的内容为证据。",
+        "excerpt": "美妆博主"
+      }
+    ],
+    "contact_preference": "public_email_first",
+    "contact_search_terms": [
+      "email",
+      "business inquiries",
+      "contact",
+      "official website"
+    ],
+    "automatic_query_expansion": true,
+    "table_subject": "美妆内容"
+  },
+  "candidate": {
+    "id": "7ec1cf52-4671-4e94-a67f-b1f9c03965d5",
+    "campaign_id": "494c9293-c79e-43bb-aec0-799c767557b1",
+    "criteria_revision": 1,
+    "platform": "pinterest",
+    "source_profile_ref": "d5pskwub",
+    "platform_account_id": "938789622232949829",
+    "display_name": "Luxury Touch",
+    "profile_url": "https://www.pinterest.com/luxuryt29/",
+    "verdict": "pending",
+    "created_at": 1792469649,
+    "updated_at": 1792469685,
+    "evidence": {
+      "assessment": {
+        "match_rating": null,
+        "pinterest_scale": {
+          "passed_by": [
+            "monthly_views"
+          ],
+          "state": "passed"
+        },
+        "reasons": [
+          "requirement_unverified"
+        ],
+        "subscribers_normalized": 107
+      },
+      "author_identity_kind": "native_id",
+      "author_identity_search_hit_id": null,
+      "captured_at": 1792469649,
+      "pinterest_monthly_views_raw": "10.5 万 月浏览量",
+      "pinterest_monthly_views_source_url": "https://www.pinterest.com/luxuryt29/",
+      "profile_bio_status": "unknown",
+      "profile_bio_status_source_url": "https://www.pinterest.com/luxuryt29/",
+      "reviewed_match": {
+        "language_only_pending": false,
+        "level": "good",
+        "material_hash": "de680def8dce3629a21039e03c8afbda14c1c5e1a482f89de5f7734c816326d1",
+        "native_author_id": "938789622232949829",
+        "outcome": "supported",
+        "policy_version": "initial-match-evaluation-v1",
+        "reason": "账号简介明确定位于时尚、美妆灵感整理，保存的匹配内容为化妆教程，支持美妆主题的初步匹配；应用已核验 Pinterest 规模条件通过，月浏览量满足要求，107 名粉丝不影响达标。这是基于保存样本的初步评估，未检查账号全部发布历史，也不代表联系方式已核验。",
+        "review_id": "405bed70-27c3-42e2-abed-8fab40ee15ab",
+        "source_url": "https://www.pinterest.com/pin/938789484858896089/",
+        "verified": true
+      },
+      "reviewed_requirements": [
+        {
+          "criteria_revision": 1,
+          "index": 0,
+          "material_hash": "de680def8dce3629a21039e03c8afbda14c1c5e1a482f89de5f7734c816326d1",
+          "native_author_id": "938789622232949829",
+          "outcome": "supported",
+          "reason": "观察到的账号类型为内容整理者：简介将账号定位为时尚、美妆及新娘妆容灵感与精选发现，结合账号绑定的化妆教程匹配内容，支持其具有美妆内容整理型博主角色。该判断仅依据保存的简介与匹配样本，不主张教程为账号原创，也不推断发布频率。",
+          "requirement": {
+            "description": "核验账号具有博主角色，并以账号及其发布或署名整理的内容为证据。",
+            "excerpt": "美妆博主"
+          },
+          "review_id": "405bed70-27c3-42e2-abed-8fab40ee15ab",
+          "source_url": "https://www.pinterest.com/pin/938789484858896089/"
+        }
+      ],
+      "source_urls": [
+        "https://www.pinterest.com/pin/938789484858896089/",
+        "https://www.pinterest.com/luxuryt29/"
+      ],
+      "subscribers_raw": "107",
+      "subscribers_source_url": "https://www.pinterest.com/luxuryt29/"
+    }
+  }
+}

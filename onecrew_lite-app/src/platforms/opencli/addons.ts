@@ -6,7 +6,7 @@ const nativeLock = createRequire(import.meta.url)("fs-native-extensions") as { t
 
 // 只读适配器分发清单；测试文件不作为可执行插件分发。
 export const OPENCLI_ADDON_FILES = Object.freeze({
-  "onecrew-youtube": ["language.mjs", "language.js", "evidence.mjs", "channel.mjs", "channel-contact.js", "video-evidence.js"],
+  "onecrew-youtube": ["language.mjs", "language.js", "evidence.mjs", "channel.mjs", "channel-contact.js", "video-evidence.js", "hidden-email.mjs", "hidden-email-store.mjs"],
   "onecrew-tiktok": ["search.mjs", "search.js"],
   "onecrew-bilibili": ["search.mjs", "search.js"],
   "onecrew-tiktok-profile": ["profile.mjs", "read.js"],

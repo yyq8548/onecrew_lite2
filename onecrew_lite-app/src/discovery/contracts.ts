@@ -15,6 +15,7 @@ export const discoveryCriteria = z.record(z.string(), z.unknown()).superRefine((
   if (Buffer.byteLength(stringifyApplicationJson(value)) > 16384) fail("", "criteria_too_large");
   if (Object.hasOwn(value, "min_subscribers") && Object.hasOwn(value, "min_followers")) fail("min_followers", "competing_follower_thresholds");
   for (const key of ["min_subscribers", "min_followers"]) if (Object.hasOwn(value, key) && !z.union([z.number().int().safe().nonnegative(), z.bigint().min(0n).max(18446744073709551615n)]).safeParse(value[key]).success) fail(key, "invalid_follower_threshold");
+  if (Object.hasOwn(value, "pinterest_min_monthly_views_exclusive") && !z.number().int().safe().nonnegative().safeParse(value.pinterest_min_monthly_views_exclusive).success) fail("pinterest_min_monthly_views_exclusive", "invalid_monthly_views_threshold");
   for (const key of ["requires_ai_tool_demo", "requires_public_tool_url"]) if (Object.hasOwn(value, key) && typeof value[key] !== "boolean") fail(key, "invalid_evidence_requirement");
   for (const key of ["region", "language"]) if (Object.hasOwn(value, key) && (typeof value[key] !== "string" || !value[key].isWellFormed() || chars(value[key]) > 160 || control(value[key]))) fail(key, "invalid_criteria_text");
   if (value.contact_preference !== undefined && value.contact_preference !== "public_email_first") fail("contact_preference", "invalid_contact_preference");

@@ -18,12 +18,12 @@ test("read-only inspection rejects unsupported versions and missing/corrupt file
     db.exec("INSERT INTO creators (id,display_name,created_at,updated_at) VALUES ('id','保留',1,1); PRAGMA user_version = 90");
     db.close();
     const before = await readFile(path);
-    assert.equal(inspectLegacyDatabase(path, "creator").state, "current");
+    assert.equal(inspectLegacyDatabase(path, "creator").state, "upgrade-required");
     assert.equal(inspectLegacyDatabase(path, "creator").schemaValidated, true);
     assert.deepEqual(await readFile(path), before);
     assert.throws(() => inspectLegacyDatabase(path, "vault"), /Future/);
     const future = new DatabaseSync(path);
-    future.exec("PRAGMA user_version = 91");
+    future.exec("PRAGMA user_version = 92");
     future.close();
     assert.throws(() => inspectLegacyDatabase(path, "creator"), /Future/);
     assert.throws(() => inspectLegacyDatabase(join(directory, "missing"), "creator"));

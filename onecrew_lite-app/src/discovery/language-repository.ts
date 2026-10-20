@@ -3,7 +3,7 @@ import type { DatabaseSync } from "node:sqlite";
 import { z } from "zod";
 import { parseApplicationJson, stringifyApplicationJson } from "../contracts/application-json.ts";
 import { runtimeAssetPath } from "../packaging/runtime-context.ts";
-import { validateCreatorSchema90 } from "../storage/creator-schema.ts";
+import { validateCreatorSchema } from "../storage/creator-schema.ts";
 import { assertDiscoveryReadHealthy } from "./read-health.ts";
 import { loadDiscoveryReviewBasis } from "./review-basis.ts";
 import { loadDiscoveryContentReceipt, loadDiscoveryLanguageSamples, loadDiscoveryProfileReceipt } from "./review-receipts.ts";
@@ -32,13 +32,17 @@ function utf8Prefix(value: string, maximum: number): string {
 
 export class DiscoveryLanguageRepository {
   readonly #db: DatabaseSync;
-  constructor(database: DatabaseSync) { validateCreatorSchema90(database); this.#db = database; }
+  constructor(database: DatabaseSync) { validateCreatorSchema(database); this.#db = database; }
   #transaction<T>(body: () => T): T {
     this.#db.exec("BEGIN IMMEDIATE"); let committed = false;
     try { const result = body(); this.#db.exec("COMMIT"); committed = true; return result; }
     finally { if (!committed) this.#db.exec("ROLLBACK"); }
   }
-  eligible(campaign: string, hit: string): boolean { return this.#db.prepare(eligibleSql).get(campaign, hit)!.eligible === 1; }
+  eligible(campaign: string, hit: string): boolean {
+    // 主页简介不能替代作者原帖的语言样本。
+    if (this.#db.prepare("SELECT 1 FROM discovery_web_source_reads WHERE discovery_campaign_id=? AND search_hit_id=? AND target_platform IN ('instagram','tiktok')").get(campaign, hit)) return false;
+    return this.#db.prepare(eligibleSql).get(campaign, hit)!.eligible === 1;
+  }
   source(campaign: string, hit: string) {
     return z.object({ platform: text, profile_ref: text }).parse(this.#db.prepare("SELECT platform,profile_ref FROM discovery_search_hits WHERE discovery_campaign_id=? AND id=?").get(campaign, hit));
   }

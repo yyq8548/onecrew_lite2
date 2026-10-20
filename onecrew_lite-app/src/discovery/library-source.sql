@@ -15,13 +15,14 @@ WITH bindings AS (
  FROM discovery_search_hits h
  JOIN discovery_web_source_reads web ON web.search_hit_id=h.id AND web.discovery_campaign_id=h.discovery_campaign_id
    AND web.origin_platform=h.platform AND web.profile_ref=h.profile_ref AND web.source_url=h.source_url
-   AND web.expected_revision=?2 AND web.target_platform IN ('youtube','twitter','douyin') AND web.status='completed' AND web.stop_code IS NULL
-   AND json_extract(web.native_material_json,CASE web.target_platform WHEN 'twitter' THEN '$.identity.account_id' WHEN 'douyin' THEN '$.content.author_id' ELSE '$.channelId' END)=web.native_author_id
-   AND json_extract(web.native_material_json,CASE web.target_platform WHEN 'twitter' THEN '$.identity.post_id' WHEN 'douyin' THEN '$.content.post_id' ELSE '$.videoId' END)=web.video_id
+   AND web.expected_revision=?2 AND web.target_platform IN ('youtube','twitter','douyin','instagram','tiktok') AND web.status='completed' AND web.stop_code IS NULL
+   AND json_extract(web.native_material_json,CASE web.target_platform WHEN 'twitter' THEN '$.identity.account_id' WHEN 'douyin' THEN '$.content.author_id' WHEN 'instagram' THEN '$.profile.id' WHEN 'tiktok' THEN '$.profile.id' ELSE '$.channelId' END)=web.native_author_id
+   AND json_extract(web.native_material_json,CASE web.target_platform WHEN 'twitter' THEN '$.identity.post_id' WHEN 'douyin' THEN '$.content.post_id' WHEN 'instagram' THEN '$.profile.username' WHEN 'tiktok' THEN '$.profile.username' ELSE '$.videoId' END)=web.video_id
+   AND (web.target_platform NOT IN ('instagram','tiktok') OR json_extract(web.native_material_json,'$.identity')=json_extract(web.native_material_json,'$.profile'))
  JOIN discovery_video_completions done ON done.search_hit_id=h.id
  JOIN discovery_video_identity_bindings b ON b.search_hit_id=h.id AND b.discovery_campaign_id=h.discovery_campaign_id
    AND b.criteria_revision=?2 AND b.native_author_id=web.native_author_id
- WHERE h.discovery_campaign_id=?1 AND h.platform IN ('google','yahoo')
+ WHERE h.discovery_campaign_id=?1 AND (h.platform IN ('google','yahoo') OR h.platform='instagram' AND web.target_platform='instagram')
  UNION ALL
  SELECT h.id,
    CASE p.platform WHEN 'twitter' THEN m.account_id WHEN 'linkedin' THEN json_extract(p.native_profile_json,'$.account_id') ELSE p.author_id END,NULL,
@@ -68,7 +69,7 @@ FROM discovery_search_hits h
 LEFT JOIN discovery_search_authors a ON a.search_hit_id=h.id
 LEFT JOIN bindings b ON b.hit_id=h.id
 LEFT JOIN discovery_candidates c ON c.discovery_campaign_id=h.discovery_campaign_id
- AND ((h.platform IN ('google','yahoo') AND c.platform IN ('youtube','twitter','douyin') AND c.id=b.candidate_id)
+ AND ((h.platform IN ('google','yahoo') AND c.platform IN ('youtube','twitter','douyin','instagram','tiktok') AND c.id=b.candidate_id)
    OR (c.platform=h.platform AND c.source_platform=h.platform AND c.source_profile_ref=h.profile_ref))
  AND c.criteria_revision=?2 AND c.platform_account_id=b.native_author_id
  AND (b.candidate_id IS NULL OR c.id=b.candidate_id)

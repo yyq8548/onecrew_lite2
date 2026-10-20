@@ -9,11 +9,16 @@ export function applyDiscoveryReviewFindings(material: DiscoveryReviewMaterial, 
   const evidence = structuredClone(rawEvidence) as Record<string, unknown>, criteria = object(material.criteria), language = requiredDiscoveryLanguage(criteria);
   const proof = (policy: string) => ({ verified: true, native_author_id: material.native_author_id, source_url: material.hit.source_url, review_id: reviewId, material_hash: material.material_hash, policy_version: policy });
   const authorContent = (citation: DiscoveryReviewFinding["citations"][number]) => ["transcript", "native_content", "description"].includes(citation.kind) || material.hit.platform === "tiktok" && citation.kind === "search_caption";
+  // 账号绑定的可见作品预览可证明主题与匹配程度；语言、口播及工具演示仍须原有正文证据。
+  const matchingContent = (citation: DiscoveryReviewFinding["citations"][number]) => authorContent(citation)
+    || citation.kind === "native_profile" && (material.native_platform ?? material.hit.platform) === "instagram"
+      && material.native_profile?.web_text?.startsWith("Visible profile post previews; bounded excerpts, not verified full original captions.\n") === true
+      && material.native_profile.web_text.slice(material.native_profile.web_text.indexOf("\n") + 1).includes(citation.quote);
   for (const criterion of ["content_language", "match_fit"] as const) {
     const selected = findings.filter(finding => finding.criterion === criterion);
     if (selected.length > 1 || criterion === "content_language" && language === null && selected.length) throw new Error("review_conditions_mismatch");
     const finding = selected[0]; if (!finding) continue;
-    if (!text(finding.rationale, 4000) || finding.tool != null || finding.country_code != null || finding.citations.length > 8 || !finding.citations.every(citation => containsDiscoveryCitation(material, citation)) || finding.outcome !== "insufficient" && !finding.citations.some(authorContent)) throw new Error("review_first_hand_evidence_required");
+    if (!text(finding.rationale, 4000) || finding.tool != null || finding.country_code != null || finding.citations.length > 8 || !finding.citations.every(citation => containsDiscoveryCitation(material, citation)) || finding.outcome !== "insufficient" && !finding.citations.some(criterion === "match_fit" ? matchingContent : authorContent)) throw new Error("review_first_hand_evidence_required");
     if (criterion === "content_language" && finding.outcome !== "insufficient" && language !== null && ["spoken", "speech", "口语", "口播", "语音"].some(word => language.toLowerCase().includes(word)) && !finding.citations.some(citation => citation.kind === "transcript")) throw new Error("review_transcript_required");
     if (criterion !== "match_fit" && finding.match_level != null || criterion === "match_fit" && (finding.outcome === "supported") !== (finding.match_level != null) || criterion === "match_fit" && finding.outcome === "contradicted") throw new Error("review_match_level_invalid");
     const key = criterion === "content_language" ? "reviewed_language" : "reviewed_match"; delete evidence[key];
@@ -55,7 +60,7 @@ export function applyDiscoveryReviewFindings(material: DiscoveryReviewMaterial, 
       if (finding.country_code != null || !finding.citations.some(citation => ["transcript", "native_content", "search_caption"].includes(citation.kind))) throw new Error("review_first_hand_evidence_required");
       evidence[key] = proof(apparelPolicy);
     } else if (criterion === "category_content") {
-      if (finding.country_code != null || !finding.citations.some(authorContent)) throw new Error("review_first_hand_evidence_required");
+      if (finding.country_code != null || !finding.citations.some(matchingContent)) throw new Error("review_first_hand_evidence_required");
       evidence[key] = { ...proof("category-content-review-v1"), category: criteria.category };
     } else {
       const country = finding.country_code; if (country == null) throw new Error("review_country_required");

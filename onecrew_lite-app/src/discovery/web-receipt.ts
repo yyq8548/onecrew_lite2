@@ -5,11 +5,31 @@ import { parseApplicationJson, stringifyApplicationJson } from "../contracts/app
 import { youtubeVideoEvidencePlan } from "../platforms/opencli/youtube-evidence.ts";
 import { twitterPostContentPlan, twitterPostIdentityPlan } from "../platforms/opencli/twitter-posts.ts";
 import { douyinContentPlan, douyinProfilePlan } from "../platforms/opencli/douyin.ts";
+import { instagramProfilePlan, tiktokProfilePlan } from "../platforms/opencli/profiles.ts";
+import { instagramProfileIdentityPlan } from "../platforms/opencli/profile-identity.ts";
 const object = z.record(z.string(), z.unknown());
 
 export function validateDiscoveryWebNative(source: string, target: string, video: string, raw: unknown): Record<string, unknown> {
   const native = object.parse(raw), url = URL.parse(source);
   if (!url || url.protocol !== "https:" || url.username || url.password || url.port || url.hash || Buffer.byteLength(stringifyApplicationJson(native)) > 65536) throw new Error("web_source_native_material_invalid");
+  if (target === "instagram" || target === "tiktok") {
+    const instagram = target === "instagram";
+    const username = (instagram ? /^\/([a-z\d_.]{1,30})\/?$/iu : /^\/@([a-z\d_.]{1,24})\/?$/iu).exec(url.pathname)?.[1];
+    const languageKey = instagram ? "hl" : "lang";
+    if ([...url.searchParams.keys()].some(key => key !== languageKey) || url.searchParams.getAll(languageKey).length > 1 || ![`${target}.com`, `www.${target}.com`].includes(url.hostname) || (instagram ? username?.toLowerCase() : username) !== video) throw new Error("web_source_claim_invalid");
+    const pair = z.strictObject({ identity: object, profile: object }).parse(native);
+    if (instagram) {
+      instagramProfileIdentityPlan(video).decode([pair.identity]);
+      instagramProfilePlan(video, `https://www.instagram.com/${video}/`).decode([pair.profile]);
+      if (!isDeepStrictEqual(pair.identity, pair.profile)) throw new Error("web_source_native_material_invalid");
+    } else {
+      const author = z.string().regex(/^[1-9][0-9]{0,24}$/u).parse(pair.identity.id);
+      tiktokProfilePlan(video, author).decode([pair.identity]);
+      tiktokProfilePlan(video, author).decode([pair.profile]);
+      if (!isDeepStrictEqual(pair.identity, pair.profile)) throw new Error("web_source_native_material_invalid");
+    }
+    return native;
+  }
   if (target === "youtube") {
     if (!["youtube.com", "www.youtube.com"].includes(url.hostname)) throw new Error("web_source_claim_invalid");
     const parts = url.pathname.split("/"), id = url.pathname === "/watch" && url.searchParams.getAll("v").length === 1 ? url.searchParams.get("v") : parts.length === 3 && (parts[1] === "watch" && !url.search || ["shorts", "live"].includes(parts[1]!)) ? parts[2] : null;
@@ -49,7 +69,7 @@ export function loadDiscoveryWebSourceReceipt(database: DatabaseSync, campaign: 
       AND c.platform=p.target_platform AND c.platform_account_id=p.native_author_id
     WHERE p.discovery_campaign_id=?1 AND p.search_hit_id=?2`).get(campaign, hit);
   if (!raw) throw new Error("web_source_receipt_not_found");
-  const row = z.object({ expected_revision: z.number().int().positive(), origin_platform: z.enum(["google", "yahoo"]), profile_ref: z.string(), source_url: z.string(), target_platform: z.enum(["youtube", "twitter", "douyin"]), video_id: z.string(), call_number: z.number().int().positive(), status: z.string(), native_author_id: z.string().nullable(), native_material_json: z.string().nullable(), stop_code: z.string().nullable(), updated_at: z.number().int().safe(), candidate_id: z.string().nullable(), is_primary_source: z.union([z.literal(0), z.literal(1)]) }).parse(raw);
+  const row = z.object({ expected_revision: z.number().int().positive(), origin_platform: z.enum(["google", "yahoo", "instagram"]), profile_ref: z.string(), source_url: z.string(), target_platform: z.enum(["youtube", "twitter", "douyin", "instagram", "tiktok"]), video_id: z.string(), call_number: z.number().int().positive(), status: z.string(), native_author_id: z.string().nullable(), native_material_json: z.string().nullable(), stop_code: z.string().nullable(), updated_at: z.number().int().safe(), candidate_id: z.string().nullable(), is_primary_source: z.union([z.literal(0), z.literal(1)]) }).parse(raw);
   if (row.stop_code !== null || row.native_material_json === null) throw new Error("web_source_native_material_unavailable");
   return { ...row, native: validateDiscoveryWebNative(row.source_url, row.target_platform, row.video_id, parseApplicationJson(Buffer.from(row.native_material_json))) };
 }

@@ -2,7 +2,7 @@ import type { DatabaseSync } from "node:sqlite";
 import { isDeepStrictEqual } from "node:util";
 import { z } from "zod";
 import { parseApplicationJson, stringifyApplicationJson } from "../contracts/application-json.ts";
-import { validateCreatorSchema90 } from "../storage/creator-schema.ts";
+import { validateCreatorSchema } from "../storage/creator-schema.ts";
 import { DiscoveryProfileRepository, discoveryProfileClaim, type DiscoveryProfileClaim } from "./profile-repository.ts";
 import { validateDiscoveryContentResult } from "./content-result.ts";
 import { discoveryReadPlatformStatus, sourceLocalReadFailure } from "./stops.ts";
@@ -12,7 +12,7 @@ export interface DiscoveryFacebookTargetsRead { claim: DiscoveryProfileClaim; st
 export const discoveryFacebookReelValid = (source: string) => /^https:\/\/www\.facebook\.com\/reel\/[1-9]\d{0,24}$/u.test(source);
 export class DiscoveryFacebookTargetsRepository {
   readonly #db: DatabaseSync;
-  constructor(database: DatabaseSync) { validateCreatorSchema90(database); this.#db = database; }
+  constructor(database: DatabaseSync) { validateCreatorSchema(database); this.#db = database; }
   #transaction<T>(body: () => T): T { this.#db.exec("BEGIN IMMEDIATE"); let committed = false; try { const value = body(); this.#db.exec("COMMIT"); committed = true; return value; } finally { if (!committed) this.#db.exec("ROLLBACK"); } }
   next(campaign: string): string | null {
     const row = this.#db.prepare(`SELECT p.search_hit_id FROM discovery_profile_reads p

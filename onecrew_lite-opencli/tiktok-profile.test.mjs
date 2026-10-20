@@ -53,6 +53,7 @@ function pageFixture({ href, body = '', nodes = [JSON.stringify(fixture())] } = 
       return vm.runInNewContext(code, { URL, TextEncoder,
         location: { href: href ?? calls[0][1] },
         document: { body: { innerText: body }, querySelectorAll: selector => {
+          if (selector === 'a[data-e2e="user-link"][href]') return [];
           assert.equal(selector, 'script#__UNIVERSAL_DATA_FOR_REHYDRATION__');
           return nodes.map(textContent => ({ textContent }));
         } },

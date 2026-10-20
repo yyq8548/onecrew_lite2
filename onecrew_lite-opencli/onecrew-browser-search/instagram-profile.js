@@ -1,14 +1,18 @@
 import {cli,Strategy} from '@jackwener/opencli/registry';
 import {ArgumentError,AuthRequiredError,CommandExecutionError,TimeoutError} from '@jackwener/opencli/errors';
-import {readInstagramProfile,readInstagramWebProfile} from './instagram-profile.mjs';
+import {instagramProfileTarget,readInstagramWebProfile} from './instagram-profile.mjs';
 import {withOwnedSearchPage} from './owned-page.mjs';
-cli({site:'onecrew-instagram-profile',name:'read',access:'read',browser:true,
+for(const operation of ['read','identity']) cli({site:'onecrew-instagram-profile',name:operation,access:'read',browser:true,
   domain:'www.instagram.com',strategy:Strategy.COOKIE,navigateBefore:false,
-  description:'Read native public Instagram author identity and observed follower count',
+  description:'Verify the visible Instagram account, expand its biography and preserve public contacts through Computer Use',
   args:[{name:'username',positional:true,required:true},{name:'author_id',positional:true}],
   columns:['id','username','follower_count','profile_url'],
   func:async(page,args)=>{
-    try{return [await (args.author_id?readInstagramWebProfile:readInstagramProfile)(page,args,withOwnedSearchPage)];}
+    try{
+      const username=instagramProfileTarget(args.username);
+      const authorId=operation==='identity'||!args.author_id?`https://www.instagram.com/${username}/`:args.author_id;
+      return [await readInstagramWebProfile(page,{...args,username,author_id:authorId},withOwnedSearchPage)];
+    }
     catch(error){
       if(error?.message==='ONECREW_PROFILE_INPUT')throw new ArgumentError('Invalid Instagram username');
       if(error?.message==='ONECREW_PROFILE_TIMEOUT')throw new TimeoutError('Instagram public profile response',8);

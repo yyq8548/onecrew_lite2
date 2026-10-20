@@ -3,7 +3,7 @@ import type { DatabaseSync } from "node:sqlite";
 import { isDeepStrictEqual } from "node:util";
 import { z } from "zod";
 import { parseApplicationJson, stringifyApplicationJson } from "../contracts/application-json.ts";
-import { validateCreatorSchema90 } from "../storage/creator-schema.ts";
+import { validateCreatorSchema } from "../storage/creator-schema.ts";
 import { facebookSourceValid } from "../platforms/opencli/facebook-profile.ts";
 import { validateDiscoveryPinterestProfile } from "./pinterest-material.ts";
 import { validateSavedDiscoveryInstagramProfile } from "./contact-profile-contracts.ts";
@@ -37,7 +37,7 @@ export function validateDiscoveryProfileResult(claim: DiscoveryProfileClaim, nat
 
 export class DiscoveryProfileRepository {
   readonly #db: DatabaseSync;
-  constructor(database: DatabaseSync) { validateCreatorSchema90(database); this.#db = database; }
+  constructor(database: DatabaseSync) { validateCreatorSchema(database); this.#db = database; }
   #transaction<T>(body: () => T): T {
     this.#db.exec("BEGIN IMMEDIATE"); let committed = false;
     try { const result = body(); this.#db.exec("COMMIT"); committed = true; return result; }
@@ -141,7 +141,12 @@ export class DiscoveryProfileRepository {
     const account = claim.platform === "twitter" ? text.parse(this.#db.prepare("SELECT account_id FROM discovery_profile_identity_matches WHERE search_hit_id=?").get(claim.search_hit_id)!.account_id) : claim.platform === "linkedin" ? text.parse(native.account_id) : claim.author_id;
     const criteria = parseApplicationJson(text.parse(this.#db.prepare("SELECT criteria_json FROM discovery_campaign_revisions WHERE discovery_campaign_id=? AND revision=? AND approved_at IS NOT NULL").get(claim.campaign_id, claim.expected_revision)!.criteria_json));
     const evidence = { source_urls: [claim.source_url, claim.author_url], subscribers_raw: claim.platform === "douyin" || ["facebook", "instagram"].includes(claim.platform) && followers === null ? typeof native.follower_text === "string" ? native.follower_text : null : followers === null ? null : String(followers), subscribers_source_url: claim.author_url, author_identity_kind: "native_id", author_identity_search_hit_id: claim.platform === "twitter" ? claim.search_hit_id : null, captured_at: receipt.captured_at };
-    const assessment = claim.platform === "instagram" && native.private_account === true ? { verdict: "rejected" as const, reasons: ["private_account"], subscribers: followers } : claim.platform === "instagram" && followers === null ? assessDiscoveryInstagram(criteria, evidence, account, typeof native.follower_text === "string" ? native.follower_text : null) : claim.platform === "douyin" && followers === null ? assessDiscoveryDouyin(criteria, evidence, account, typeof native.follower_text === "string" ? native.follower_text : null) : claim.platform === "facebook" && followers === null ? assessDiscoveryFacebook(criteria, evidence, account, typeof native.follower_text === "string" ? native.follower_text : null) : assessDiscoveryProfile(criteria, evidence, account, followers);
+    const monthly = claim.platform === "pinterest" ? typeof native.monthly_views_raw === "string" ? native.monthly_views_raw : null : undefined;
+    const assessment = claim.platform === "instagram" && native.private_account === true ? { verdict: "rejected" as const, reasons: ["private_account"], subscribers: followers } : claim.platform === "instagram" && followers === null ? assessDiscoveryInstagram(criteria, evidence, account, typeof native.follower_text === "string" ? native.follower_text : null) : claim.platform === "douyin" && followers === null ? assessDiscoveryDouyin(criteria, evidence, account, typeof native.follower_text === "string" ? native.follower_text : null) : claim.platform === "facebook" && followers === null ? assessDiscoveryFacebook(criteria, evidence, account, typeof native.follower_text === "string" ? native.follower_text : null) : assessDiscoveryProfile(criteria, evidence, account, followers, monthly);
+    if (claim.platform === "pinterest") Object.assign(evidence, { pinterest_monthly_views_raw: monthly, pinterest_monthly_views_source_url: claim.author_url });
+    const biography = native[["weibo", "linkedin", "douyin"].includes(claim.platform) ? "bio" : claim.platform === "tiktok" ? "signature" : claim.platform === "bilibili" ? "sign" : "biography"];
+    const bioStatus = ["complete", "truncated", "missing", "unavailable", "unknown"].includes(String(native.bio_status)) ? native.bio_status : native.bio_truncated === true ? "truncated" : native.bio_truncated === false || claim.platform === "tiktok" ? typeof biography === "string" && biography.trim() ? "complete" : "missing" : "unknown";
+    Object.assign(evidence, { profile_bio_status: bioStatus, profile_bio_status_source_url: claim.author_url });
     const saved = stringifyApplicationJson(assessedDiscoveryEvidence(evidence, assessment)); if (Buffer.byteLength(saved) > 16384) throw new Error("discovery_profile_evidence_too_large");
     this.#db.prepare(`INSERT INTO discovery_candidates(id,discovery_campaign_id,criteria_revision,platform,source_profile_ref,platform_account_id,display_name,profile_url,verdict,evidence_json,created_at,updated_at,source_platform) VALUES(?,?,?,?,?,?,?,?,?,?,?11,?11,?4) ON CONFLICT(discovery_campaign_id,platform,platform_account_id) DO NOTHING`).run(randomUUID(), claim.campaign_id, claim.expected_revision, claim.platform, claim.profile_ref, account, [...name].slice(0, 200).join(""), claim.author_url, assessment.verdict, saved, receipt.captured_at);
   }

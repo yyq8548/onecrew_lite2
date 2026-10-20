@@ -3,8 +3,8 @@ import type { DatabaseSync } from "node:sqlite";
 import { isDeepStrictEqual } from "node:util";
 import { z } from "zod";
 import { parseApplicationJson, stringifyApplicationJson } from "../contracts/application-json.ts";
-import { validateCreatorSchema90 } from "../storage/creator-schema.ts";
-import { assessDiscoveryYoutube, assessedDiscoveryEvidence } from "./qualification.ts";
+import { validateCreatorSchema } from "../storage/creator-schema.ts";
+import { assessDiscoveryProfile, assessDiscoveryYoutube, assessedDiscoveryEvidence } from "./qualification.ts";
 import { discoveryJsonValue } from "./library-material.ts";
 import { discoveryReadPlatformStatus } from "./stops.ts";
 import { discoveryWebSourceClaim, discoveryWebSourceRead, discoveryWebSourceTarget, validateDiscoveryWebSourceResult, type DiscoveryWebSourceClaim } from "./web-source-contracts.ts";
@@ -15,7 +15,7 @@ const eligible = `FROM discovery_search_hits h
  JOIN discovery_campaign_revisions v ON v.discovery_campaign_id=c.id AND v.revision=c.current_revision
  JOIN discovery_platform_runs r ON r.discovery_campaign_id=c.id AND r.platform=h.platform AND r.profile_ref=h.profile_ref
  WHERE c.id=?1 AND c.phase='active' AND v.approved_at IS NOT NULL
- AND h.platform IN ('google','yahoo') AND r.status='completed'
+ AND (h.platform IN ('google','yahoo') OR (h.platform='instagram' AND NOT EXISTS(SELECT 1 FROM discovery_search_authors a WHERE a.search_hit_id=h.id))) AND r.status='completed'
  AND (c.max_calls IS NULL OR c.used_calls<c.max_calls)
  AND (EXISTS(SELECT 1 FROM json_each(v.scope_json) s WHERE json_extract(s.value,'$.platform')=h.platform
    AND json_extract(s.value,'$.profile_ref')=h.profile_ref AND EXISTS(SELECT 1 FROM json_each(s.value,'$.keywords') k WHERE k.value=h.search_keyword))
@@ -27,7 +27,7 @@ const eligible = `FROM discovery_search_hits h
 
 export class DiscoveryWebSourceRepository {
   readonly #db: DatabaseSync;
-  constructor(database: DatabaseSync) { validateCreatorSchema90(database); this.#db = database; }
+  constructor(database: DatabaseSync) { validateCreatorSchema(database); this.#db = database; }
   #transaction<T>(work: () => T): T { this.#db.exec("BEGIN IMMEDIATE"); let committed = false; try { const result = work(); this.#db.exec("COMMIT"); committed = true; return result; } finally { if (!committed) this.#db.exec("ROLLBACK"); } }
   #targetReady(campaign: string, hit: string, target: string, cost: number): boolean {
     return this.#db.prepare(`SELECT EXISTS(SELECT 1 FROM discovery_search_hits h JOIN discovery_campaigns c ON c.id=h.discovery_campaign_id
@@ -84,7 +84,7 @@ export class DiscoveryWebSourceRepository {
       const now = Math.floor(Date.now() / 1000), nativeStop = stop === "opencli_auth_required" || stop === "opencli_risk_control", status = nativeStop ? "completed" : discoveryReadPlatformStatus(stop);
       if (this.#db.prepare(`UPDATE discovery_platform_runs SET status=?5,active_query=NULL,stop_code=?6,updated_at=?7 WHERE discovery_campaign_id=?1 AND platform=?2 AND profile_ref=?3 AND status='searching' AND active_query=?4
         AND EXISTS(SELECT 1 FROM discovery_campaigns c JOIN discovery_campaign_revisions v ON v.discovery_campaign_id=c.id AND v.revision=c.current_revision WHERE c.id=?1 AND c.current_revision=?8 AND c.phase='active' AND c.used_calls>=?9 AND v.approved_at IS NOT NULL)`).run(claim.campaign_id, claim.origin_platform, claim.profile_ref, `web_source:${claim.search_hit_id}:${claim.call_number}`, status, status === "completed" ? null : stop, now, claim.expected_revision, claim.call_number).changes !== 1) throw new Error("web_source_approval_or_reservation_changed");
-      const author = native === null ? null : text.parse(claim.target_platform === "douyin" ? object(native.content).author_id : claim.target_platform === "twitter" ? object(native.identity).account_id : native.channelId);
+      const author = native === null ? null : text.parse(claim.target_platform === "douyin" ? object(native.content).author_id : claim.target_platform === "twitter" ? object(native.identity).account_id : ["instagram", "tiktok"].includes(claim.target_platform) ? object(native.profile).id : native.channelId);
       this.#db.prepare("UPDATE discovery_web_source_reads SET status=?2,native_author_id=?3,native_material_json=?4,stop_code=?5,updated_at=?6 WHERE search_hit_id=?1").run(claim.search_hit_id, native === null ? "failed" : "completed", author, native === null ? null : stringifyApplicationJson(discoveryJsonValue(native)), stop, now);
       if (native !== null) this.#bindCandidate(claim, native, author!, now);
       return this.get(claim.campaign_id, claim.search_hit_id);
@@ -93,9 +93,12 @@ export class DiscoveryWebSourceRepository {
   #bindCandidate(claim: DiscoveryWebSourceClaim, native: Record<string, unknown>, author: string, now: number): void {
     const criteria = parseApplicationJson(Buffer.from(text.parse(this.#db.prepare("SELECT criteria_json FROM discovery_campaign_revisions WHERE discovery_campaign_id=? AND revision=?").get(claim.campaign_id, claim.expected_revision)!.criteria_json)));
     const profile = claim.target_platform === "youtube" ? `https://www.youtube.com/channel/${author}` : text.parse(object(native.profile).profile_url);
-    const name = claim.target_platform === "douyin" ? object(native.profile).author_label : claim.target_platform === "twitter" ? object(native.profile).name : native.author;
-    const evidence = { source_urls: [claim.source_url, profile], captured_at: now, subscribers_raw: native.subscribers ?? null, subscribers_source_url: claim.source_url, author_identity_kind: "native_id", web_origin: { search_hit_id: claim.search_hit_id, origin_platform: claim.origin_platform, target_platform: claim.target_platform, call_number: claim.call_number } };
-    const assessment = assessDiscoveryYoutube(criteria, evidence, author), assessed = assessedDiscoveryEvidence(evidence, assessment);
+    const profileTarget = ["instagram", "tiktok"].includes(claim.target_platform);
+    const name = claim.target_platform === "douyin" ? object(native.profile).author_label : claim.target_platform === "twitter" ? object(native.profile).name : profileTarget ? object(native.profile).display_name : native.author;
+    const evidence = { source_urls: [claim.source_url, profile], captured_at: now, subscribers_raw: native.subscribers ?? null, subscribers_source_url: claim.source_url, author_identity_kind: claim.target_platform === "instagram" ? "profile_url" : "native_id", web_origin: { search_hit_id: claim.search_hit_id, origin_platform: claim.origin_platform, target_platform: claim.target_platform, call_number: claim.call_number } };
+    const nativeProfile = profileTarget ? object(native.profile) : {};
+    if (profileTarget) Object.assign(evidence, { profile_bio_status: claim.target_platform === "tiktok" ? typeof nativeProfile.signature === "string" && nativeProfile.signature.trim() ? "complete" : "missing" : nativeProfile.bio_status ?? "unknown", profile_bio_status_source_url: profile });
+    const assessment = claim.target_platform === "instagram" && nativeProfile.private_account === true ? { verdict: "rejected" as const, reasons: ["private_account"], subscribers: null } : profileTarget ? assessDiscoveryProfile(criteria, evidence, author, typeof nativeProfile.follower_count === "number" ? nativeProfile.follower_count : null) : assessDiscoveryYoutube(criteria, evidence, author), assessed = assessedDiscoveryEvidence(evidence, assessment);
     this.#db.prepare("INSERT INTO discovery_candidates(id,discovery_campaign_id,criteria_revision,platform,source_profile_ref,platform_account_id,display_name,profile_url,verdict,evidence_json,created_at,updated_at,source_platform) VALUES(?1,?2,?3,?12,?4,?5,?6,?7,?8,?9,?10,?10,?11) ON CONFLICT(discovery_campaign_id,platform,platform_account_id) DO NOTHING").run(randomUUID(), claim.campaign_id, claim.expected_revision, claim.profile_ref, author, text.parse(name), profile, assessment.verdict, stringifyApplicationJson(discoveryJsonValue(assessed)), now, claim.origin_platform, claim.target_platform);
     this.#db.prepare("INSERT INTO discovery_video_completions(search_hit_id,completed_at) VALUES(?,?)").run(claim.search_hit_id, now);
     if (this.#db.prepare("INSERT INTO discovery_video_identity_bindings(search_hit_id,discovery_campaign_id,criteria_revision,candidate_id,native_author_id,created_at) SELECT ?1,discovery_campaign_id,criteria_revision,id,platform_account_id,?2 FROM discovery_candidates WHERE discovery_campaign_id=?3 AND criteria_revision=?4 AND platform=?6 AND platform_account_id=?5").run(claim.search_hit_id, now, claim.campaign_id, claim.expected_revision, author, claim.target_platform).changes !== 1) throw new Error("web_source_candidate_outside_revision");

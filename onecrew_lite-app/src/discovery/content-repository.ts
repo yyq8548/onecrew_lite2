@@ -2,7 +2,7 @@ import type { DatabaseSync } from "node:sqlite";
 import { isDeepStrictEqual } from "node:util";
 import { z } from "zod";
 import { parseApplicationJson, stringifyApplicationJson } from "../contracts/application-json.ts";
-import { validateCreatorSchema90 } from "../storage/creator-schema.ts";
+import { validateCreatorSchema } from "../storage/creator-schema.ts";
 import { discoveryContentClaim } from "./review-material.ts";
 import { validateDiscoveryContentResult, type DiscoveryContentClaim } from "./content-result.ts";
 import { loadDiscoveryContentReceipt, loadDiscoveryProfileReceipt } from "./review-receipts.ts";
@@ -13,7 +13,7 @@ import { validateDiscoveryRetainedProfile } from "./native-material.ts";
 const text = z.string(), u32 = z.number().int().min(0).max(4294967295), object = z.record(text, z.unknown());
 export class DiscoveryContentRepository {
   readonly #db: DatabaseSync;
-  constructor(database: DatabaseSync) { validateCreatorSchema90(database); this.#db = database; }
+  constructor(database: DatabaseSync) { validateCreatorSchema(database); this.#db = database; }
   #transaction<T>(body: () => T): T { this.#db.exec("BEGIN IMMEDIATE"); let committed = false; try { const value = body(); this.#db.exec("COMMIT"); committed = true; return value; } finally { if (!committed) this.#db.exec("ROLLBACK"); } }
   #twitterIdentity(claim: DiscoveryContentClaim): string {
     const saved = this.#db.prepare("SELECT status,expected_revision,profile_ref,author_handle,source_url,call_number,account_id FROM discovery_identity_reads WHERE discovery_campaign_id=? AND search_hit_id=?").get(claim.campaign_id, claim.search_hit_id);

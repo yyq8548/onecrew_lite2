@@ -166,9 +166,17 @@ export function observeInstagramProfile(username, authorId) {
 
 export async function readInstagramWebProfile(page,args,ownPage) {
   const username=instagramProfileTarget(args.username);
-  if (!/^[1-9][0-9]{0,24}$/.test(args.author_id || '')) throw new Error('ONECREW_PROFILE_INPUT');
+  if (!/^[1-9][0-9]{0,24}$/.test(args.author_id || '')&&args.author_id!==`https://www.instagram.com/${username}/`) throw new Error('ONECREW_PROFILE_INPUT');
   return ownPage(page,async owned=>{
     await owned.goto(`https://www.instagram.com/${username}/`,{settleMs:3000});
+    await owned.snapshot({source:'dom',interactive:true,compact:true});
+    const rawTarget=await owned.evaluate(`(${instagramVisibleExpansion.toString()})(${JSON.stringify(username)})`);
+    const expansion=rawTarget&&'session' in Object(rawTarget)&&'data' in Object(rawTarget)?rawTarget.data:rawTarget;
+    if(expansion?.stop) throw new Error('ONECREW_PROFILE_'+expansion.stop.toUpperCase());
+    if(expansion?.selector) {
+      await owned.click(expansion.selector);
+      await owned.snapshot({source:'dom',interactive:true,compact:true});
+    }
     const raw=await owned.evaluate(`(${observeInstagramVisibleProfile.toString()})(${JSON.stringify(username)},${JSON.stringify(args.author_id)})`);
     const data=raw && 'session' in Object(raw) && 'data' in Object(raw)?raw.data:raw;
     if (!data?.profile) throw new Error('ONECREW_PROFILE_'+(data?.stop || 'read').toUpperCase());
@@ -178,7 +186,33 @@ export async function readInstagramWebProfile(page,args,ownPage) {
       if (posts?.stop) throw new Error('ONECREW_PROFILE_'+posts.stop.toUpperCase());
       if (!Array.isArray(posts?.posts)) throw new Error('ONECREW_INSTAGRAM_PROFILE_INVALID');
       data.profile.visible_posts = posts.posts;
+      const preview='Visible profile post previews; bounded excerpts, not verified full original captions.\n'+posts.posts.map(post=>`${post.url}\n${post.preview}`).join('\n\n');
+      let bytes=0;const characters=[];
+      for(const character of preview) {
+        const size=new TextEncoder().encode(character).length;
+        if(bytes+size>3900) break;
+        characters.push(character);bytes+=size;
+      }
+      data.profile.web_text=posts.posts.length?characters.join(''):'';
     }
     return data.profile;
   });
+}
+
+export function instagramVisibleExpansion(username) {
+  if(location.origin!=='https://www.instagram.com'||location.pathname.toLowerCase()!==`/${username}/`) return {stop:'identity'};
+  const main=document.querySelector('main');
+  if(!main) return {stop:'read'};
+  const buttons=[...main.querySelectorAll('button,[role="button"]')].filter(node=>node.getClientRects().length&&/^(更多|more)$/i.test(node.innerText.trim()));
+  if(buttons.length>1) return {stop:'read'};
+  if(!buttons.length) return {selector:null};
+  let node=buttons[0];const path=[];
+  while(node!==main) {
+    const parent=node.parentElement;
+    if(!parent||path.length>=40) return {stop:'read'};
+    const siblings=[...parent.children].filter(child=>child.tagName===node.tagName);
+    path.unshift(`${node.tagName.toLowerCase()}:nth-of-type(${siblings.indexOf(node)+1})`);
+    node=parent;
+  }
+  return {selector:`main > ${path.join(' > ')}`};
 }

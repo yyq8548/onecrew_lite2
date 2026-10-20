@@ -1,4 +1,5 @@
 import { z } from "zod";
+export const PINTEREST_MIN_MONTHLY_VIEWS_EXCLUSIVE = 50000;
 import { creatorU64 } from "./creators.ts";
 
 const text = z.string();
@@ -22,7 +23,7 @@ export const discoveryReviewMaterial = z.object({
   native_content: z.object({ claim, status: text, native_content: z.unknown(), stop_code: nullableText, captured_at: signedTimestamp, language_sample: languageSample.nullish() }).passthrough().nullish(),
   native_follower_estimate: z.object({ display: text, lower: creatorU64, nominal: creatorU64, upper: creatorU64 }).passthrough().nullish(),
   native_followers: creatorU64.nullish(), native_platform: nullableText.optional(),
-  native_profile: z.object({ profile_url: text, observed_at: signedTimestamp, bio: nullableText.optional(), self_declared_location: nullableText.optional(), web_text: nullableText.optional() }).passthrough().nullish(),
+  native_profile: z.object({ profile_url: text, observed_at: signedTimestamp, bio: nullableText.optional(), self_declared_location: nullableText.optional(), web_text: nullableText.optional(), monthly_views_raw: nullableText.optional(), bio_status: z.enum(["complete", "truncated", "missing", "unknown", "unavailable"]).optional() }).passthrough().nullish(),
 }).passthrough().refine(value => Object.hasOwn(value, "criteria"));
 export const discoveryReviewCriterion = z.union([z.enum(["own_ai_tool_demo", "public_tool_url", "apparel_business_content", "category_content", "creator_residence_outside_mainland", "content_language", "match_fit"]), z.object({ requirement: z.number().int().min(0).max(31) }).strict()]);
 export type DiscoveryReviewCriterion = z.infer<typeof discoveryReviewCriterion>;

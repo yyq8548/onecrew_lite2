@@ -43,7 +43,7 @@ function fixture({ href, body = '', labels = ['粉丝数'], names = ['Example cr
     evaluate: async code => {
       if (code.includes('async function restoreOriginalLanguage()')) return true;
       calls.push(['read']);
-      return vm.runInNewContext(code, { URL,
+      return vm.runInNewContext(code, { URL, TextEncoder,
         location: { href: href ?? calls[0][1] }, document: { body: { innerText: body }, querySelectorAll: selector => {
           if (selector === '.upinfo-detail__top .nickname') return names.map(textContent => ({ textContent }));
           if (selector === '.nav-statistics__item') return stats;
@@ -73,9 +73,15 @@ test('reads only the observed header biography, never unrelated page contacts', 
   const sign = 'Original biography\nBusiness: studio@example.org';
   const {page} = fixture({body:'Comment: unrelated@example.org', signs:[{text:sign,title:sign}]});
   assert.equal((await readBilibiliProfile(page, mid))[0].sign, sign);
-  for (const signs of [[], [{text:sign},{text:sign}], [{text:'partial',title:sign}], [{text:'x'.repeat(1001)}]]) {
+  for (const signs of [[], [{text:sign},{text:sign}]]) {
     assert.equal((await readBilibiliProfile(fixture({body:'unrelated@example.org',signs}).page, mid))[0].sign, undefined);
   }
+  const partial = (await readBilibiliProfile(fixture({signs:[{text:'partial',title:sign}]}).page, mid))[0];
+  assert.equal(partial.sign, 'partial');
+  assert.equal(partial.bio_status, 'unavailable');
+  const complete = (await readBilibiliProfile(fixture({signs:[{text:'x'.repeat(1001)}]}).page, mid))[0];
+  assert.equal(complete.sign, 'x'.repeat(1001));
+  assert.equal(complete.bio_status, 'complete');
 });
 
 test('combines native biography and announcement, retaining contact remarks', async () => {

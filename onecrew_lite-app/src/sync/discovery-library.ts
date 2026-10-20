@@ -42,6 +42,8 @@ const columns = [
   { name: "Source URL", data_type: "website" }, { name: "Search keyword", data_type: "string" },
   { name: "Status", data_type: "string" }, { name: "Captured at (Unix s)", data_type: "string" },
   { name: "Match evaluation", data_type: "score" }, { name: "Content category", data_type: "string" },
+  { name: "Pinterest monthly views", data_type: "string" }, { name: "Pinterest scale passed by", data_type: "string" },
+  { name: "Biography status", data_type: "string" },
 ] as const;
 type Tables = Awaited<ReturnType<typeof createEmbeddedTables>>;
 type SavedRow = Awaited<ReturnType<Tables["data"]["getDiscoveryState"]>>["rows"][number];
@@ -91,7 +93,7 @@ export function createDiscoveryLibraryProjection(accounts: AccountContextService
       if (snapshot.rows.length > 10_000 || new Set(snapshot.rows.map(row => row.hit.id)).size !== snapshot.rows.length) throw new LibraryProjectionError("library_capacity_exceeded");
       const name = resolved.repository.getLibraryTableName(campaign);
       const existing = await libraryCall(() => tables.data.getDiscoveryCampaignTable(selected, campaign)); assertCurrent();
-      const repairValues = existing !== null && ["Content category", "Followers"].some(field => !existing.columns.some(column => column.name === field));
+      const repairValues = existing !== null && ["Content category", "Followers", "Pinterest monthly views", "Pinterest scale passed by", "Biography status"].some(field => !existing.columns.some(column => column.name === field));
       const table = await libraryCall(() => tables.data.ensureDiscoveryCampaignTable(selected, { campaign_id: campaign, name: name.name, previous_auto_name: name.previous_auto_name, columns: columns.map(column => ({ ...column })) }), true); assertCurrent();
       const fields = new Map<string, string>();
       for (const column of columns) {
@@ -123,7 +125,8 @@ export function createDiscoveryLibraryProjection(accounts: AccountContextService
       for (let offset = 0; offset < snapshot.rows.length; offset += 100) {
         assertCurrent();
         const batch = snapshot.rows.slice(offset, offset + 100);
-        if (!repairValues && batch.every(row => matches(row, known.get(row.hit.id)))) continue;
+        const enrichment = batch.some(row => row.pinterest_scale_passed_by !== undefined || row.bio_status !== undefined);
+        if (!repairValues && !enrichment && batch.every(row => matches(row, known.get(row.hit.id)))) continue;
         const rows: IngestRow[] = batch.map(row => {
           const hit = row.hit;
           const values: IngestRow["values"] = {
@@ -131,8 +134,11 @@ export function createDiscoveryLibraryProjection(accounts: AccountContextService
             "Author label": hit.author_label, "Followers": row.followers ?? null, "Author ID": hit.author_id,
             "Author URL": hit.author_url, "Content title": hit.title, "Source URL": hit.source_url,
             "Search keyword": hit.search_keyword, "Status": row.verdict === "qualified" ? "Recommended candidate" : row.verdict === "rejected" ? "Does not meet requirements" : row.verdict === "pending" ? "Awaiting required evidence" : "Awaiting account read", "Captured at (Unix s)": String(hit.captured_at),
-            "Match evaluation": row.verdict === "qualified" || row.verdict === "rejected" && row.match_rating?.level === "low" ? row.match_rating ?? null : null,
+            "Match evaluation": row.verdict === "qualified" || row.verdict === "pending" && row.reasons.includes("related_alternative") && row.match_rating?.level === "medium" || row.verdict === "rejected" && row.match_rating?.level === "low" ? row.match_rating ?? null : null,
             "Content category": typeof plan.criteria.category === "string" ? plan.criteria.category : "",
+            "Pinterest monthly views": row.pinterest_monthly_views_raw ?? null,
+            "Pinterest scale passed by": row.pinterest_scale_passed_by?.join(",") ?? null,
+            "Biography status": row.bio_status ?? null,
           };
           return { search_hit_id: hit.id, candidate_id: row.candidate_id, native_author_id: row.native_author_id, verdict: row.verdict as IngestRow["verdict"], reasons: row.reasons, evidence_version: row.evidence_version, contacts: (row.contacts ?? []).map(contact => ({ ...contact, captured_at: timestamp(contact.captured_at) })), values: Object.fromEntries(Object.entries(values).map(([key, value]) => [fields.get(key)!, value])) };
         });

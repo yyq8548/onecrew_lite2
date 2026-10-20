@@ -46,10 +46,15 @@ export function discoveryThirdPartyLink(source: string, text: string): boolean {
 }
 export function discoveryPromotional(source: string, text: string): boolean {
   const lines = text.split(/\r?\n/u);
+  let productSection = false;
   return lines.some((line, index) => {
+    if (!line.trim()) productSection = false;
+    if (!line.includes("https://") && /products? (?:used|mentioned)|shop (?:the|this) (?:look|video)|使用(?:的)?产品|使用產品|产品清单|產品清單|本期好物|优惠(?:码|碼)/iu.test(line)) productSection = true;
     if (!discoveryObservesLink(line, source)) return false;
     const label = (line.trim() === source ? `${lines[index - 1] ?? ""} ${line}` : line).trim().toLowerCase();
-    if (["contact", "business", "website", "official", "email", "联系", "商务", "官网"].some(word => label.includes(word))) return false;
+    if (["business inquiries", "business enquiries", "contact me", "my website", "商务联系", "商務聯絡", "合作洽谈", "我的官网", "我的官網"].some(word => label.includes(word))) return false;
+    if (productSection || /(?:affiliate|discount|coupon|promo code|sponsored|shopmy|折扣|优惠|優惠|购买|購買|产品链接|產品連結)/iu.test(label)) return true;
+    if (["contact", "business", "website", "email", "联系", "商务", "官网"].some(word => label.includes(word))) return false;
     return ["use code ", "discount code ", "sizing chart", "typing demo", "my tutorials", "my unboxing", "ranking spreadsheet", "my edited version", "affiliate links", "keyboard supplies", "sponsored links", "video setup", "photo setup", "stream setup", "newsletter", "get your", "my gear", "my setup"].some(word => label.includes(word)) || label.startsWith("$") || ["buy ", "shop ", "my mouse", "my books:", "my affiliates:", "购买", "购买链接", "优惠链接"].some(word => label.startsWith(word));
   });
 }
@@ -68,6 +73,7 @@ export function discoveryContactReadKey(source: string): string {
   const url = URL.parse(source); if (!url) return source;
   if (["twitter.com", "www.twitter.com", "www.x.com"].includes(url.hostname)) url.hostname = "x.com";
   url.hash = "";
+  for (const key of [...url.searchParams.keys()]) if (/^utm_/iu.test(key) || ["fbclid", "gclid", "igshid"].includes(key.toLowerCase())) url.searchParams.delete(key);
   if (["youtube.com", "www.youtube.com"].includes(url.hostname)) {
     const parts = url.pathname.replace(/^\/+|\/+$/gu, "").split("/");
     if (parts.length === 3 && parts[0] === "channel" && parts[2] === "about" || parts.length === 2 && parts[0]!.startsWith("@") && parts[1] === "about") { url.pathname = `/${parts.slice(0, -1).join("/")}`; url.search = ""; }

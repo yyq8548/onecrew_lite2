@@ -1,7 +1,7 @@
 import type { DatabaseSync } from "node:sqlite";
 import { z } from "zod";
 import { parseApplicationJson, stringifyApplicationJson } from "../contracts/application-json.ts";
-import { validateCreatorSchema90 } from "../storage/creator-schema.ts";
+import { validateCreatorSchema } from "../storage/creator-schema.ts";
 import { discoveryEligibleContactAuthor, discoveryHasHiddenEmail, loadDiscoveryManualWechat } from "./contact-native.ts";
 import { loadDiscoveryContactObservations } from "./contact-repository.ts";
 import { loadIdentityPublicationBasis } from "./identity-library-publication.ts";
@@ -15,7 +15,7 @@ export type DiscoveryCandidatePageInput = z.infer<typeof discoveryCandidatePageI
 
 export class DiscoveryCandidateRepository {
   readonly #db: DatabaseSync;
-  constructor(database: DatabaseSync) { validateCreatorSchema90(database); this.#db = database; }
+  constructor(database: DatabaseSync) { validateCreatorSchema(database); this.#db = database; }
   #read<T>(body: () => T): T {
     this.#db.exec("BEGIN DEFERRED"); let committed = false;
     try { const result = body(); this.#db.exec("COMMIT"); committed = true; return result; }

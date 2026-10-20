@@ -195,7 +195,7 @@ export async function prepareSqliteStaging(lease: InstanceLease, input: { recove
   if (!isDeepStrictEqual(await readPrivateJournal(join(expectedRecovery, "journal.json")), recovery)) throw new Error("Recovery journal changed during staging");
   const creatorInspection = inspectLegacyDatabase(creatorPath, "creator");
   const vaultInspection = inspectLegacyDatabase(vaultPath, "vault");
-  if (creatorInspection.version !== 90 || !creatorInspection.schemaValidated || vaultInspection.version !== 4 || !vaultInspection.schemaValidated) throw new Error("Staged SQLite versions are not fully validated");
+  if (creatorInspection.version !== creatorInspection.currentVersion || !creatorInspection.schemaValidated || vaultInspection.version !== 4 || !vaultInspection.schemaValidated) throw new Error("Staged SQLite versions are not fully validated");
   const result = { ...initial, state: "sqlite_staging_ready", creator: { path: creatorPath, inspection: creatorInspection, upgrade: creatorUpgrade },
     vault: { path: vaultPath, inspection: vaultInspection, upgrade: vaultUpgrade }, masterKey, envelopes, sourceHashes: before, sharedMemory,
     fingerprints: { creator: fingerprintSqlite(creatorPath), vault: fingerprintSqlite(vaultPath) } } as const;

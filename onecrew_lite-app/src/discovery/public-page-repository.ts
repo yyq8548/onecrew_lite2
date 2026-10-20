@@ -1,7 +1,7 @@
 import type { DatabaseSync } from "node:sqlite";
 import { z } from "zod";
 import { stringifyApplicationJson } from "../contracts/application-json.ts";
-import { validateCreatorSchema90 } from "../storage/creator-schema.ts";
+import { validateCreatorSchema } from "../storage/creator-schema.ts";
 import { discoveryPublicPageInput, discoveryEligibleContactAuthor, discoveryNativeLinkSource, nextDiscoveryNativeContactLink, observeDiscoveryHiddenEmail, observeDiscoveryPublicPageContacts, type DiscoveryPublicPageInput } from "./contact-native.ts";
 import { discoveryCommunityInvite, discoveryObservesLink } from "./contact-navigation.ts";
 import { discoveryReadPlatformStatus, sourceLocalReadFailure } from "./stops.ts";
@@ -28,7 +28,7 @@ export function validateDiscoveryPublicPageResult(raw: unknown): FinishDiscovery
 
 export class DiscoveryPublicPageRepository {
   readonly #db: DatabaseSync;
-  constructor(database: DatabaseSync) { validateCreatorSchema90(database); this.#db = database; }
+  constructor(database: DatabaseSync) { validateCreatorSchema(database); this.#db = database; }
   #transaction<T>(write: boolean, body: () => T): T {
     this.#db.exec(write ? "BEGIN IMMEDIATE" : "BEGIN DEFERRED");
     let committed = false;

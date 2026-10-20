@@ -12,6 +12,7 @@ import { DiscoverySemanticError } from "./semantic-client.ts";
 
 export function discoveryDraftMatchesRequest(campaign: ReturnType<DiscoveryRepository["getPlan"]>, input: z.output<typeof prepareDiscoveryDraftInput>): boolean {
   const criteria = campaign.criteria;
+  if (campaign.scopes.some(scope => scope.platform === "pinterest") && typeof criteria.pinterest_min_monthly_views_exclusive !== "number") return false;
   return campaign.id === input.id && campaign.brief === input.brief && (input.refinement === null || JSON.stringify(criteria.refinement) === JSON.stringify(input.refinement)) && campaign.opencli_version === input.opencli_version && campaign.phase === "draft" && criteria.region === "" && campaign.used_calls === 0
     && (input.target_count === null || campaign.target_count === input.target_count) && (input.max_calls === null || campaign.max_calls === input.max_calls)
     && (input.read_budget?.mode !== "explicit" || campaign.max_calls === input.read_budget.limit)

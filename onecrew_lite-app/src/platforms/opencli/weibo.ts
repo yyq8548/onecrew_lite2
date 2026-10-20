@@ -9,7 +9,7 @@ const numeric = (value: string) => /^[1-9]\d{0,19}$/u.test(value);
 const invalid = (): never => { throw new OpenCliError("opencli_invalid_output"); };
 export function weiboProfilePlan(authorId: string) {
   if (!numeric(authorId)) throw new OpenCliError("opencli_invalid_input");
-  const schema = z.strictObject({ id: z.literal(authorId), name: text.refine(value => !!value.trim() && [...value].length <= 200 && !/\p{Cc}/u.test(value)), follower_count: z.number().int().nonnegative().safe().nullable(), profile_url: z.literal(`https://weibo.com/u/${authorId}`), bio: text.refine(value => [...value].length <= 2000 && !value.includes("\0")), self_declared_location: text.refine(value => [...value].length <= 200 && !value.includes("\0")) });
+  const schema = z.strictObject({ id: z.literal(authorId), name: text.refine(value => !!value.trim() && [...value].length <= 200 && !/\p{Cc}/u.test(value)), follower_count: z.number().int().nonnegative().safe().nullable(), profile_url: z.literal(`https://weibo.com/u/${authorId}`), bio: text.refine(value => [...value].length <= 2000 && !value.includes("\0")), bio_truncated: z.boolean().optional(), bio_status: z.enum(["complete", "truncated", "missing"]).optional(), self_declared_location: text.refine(value => [...value].length <= 200 && !value.includes("\0")) });
   return { site: "onecrew-weibo-reader", name: "profile", args: ["-f", "json", "--", authorId], addons: ["onecrew-browser-search"], maximumBytes: 16000, decode(value: unknown) {
     const parsed = z.array(schema).length(1).safeParse(value);
     return parsed.success ? parsed.data[0]! : invalid();

@@ -4,11 +4,11 @@ import { z } from "zod";
 import { OpenCliError } from "./errors.ts";
 
 const sensitive = new Set(["access_token", "refresh_token", "id_token", "api_key", "password", "authorization"]);
-export function publicWebUrl(value: string): URL | null {
+export function publicWebUrl(value: string, allowPublishedHttp = false): URL | null {
   if (!value.isWellFormed() || Buffer.byteLength(value) > 2048 || /[\p{Cc}\p{White_Space}]/u.test(value) || value.includes("...") || value.includes("…") || !z.url().safeParse(value).success) return null;
   const url = new URL(value);
   const host = url.hostname;
-  if (url.protocol !== "https:" || url.username || url.password || url.port || [...url.searchParams.keys(), ...new URLSearchParams(url.hash.slice(1)).keys()].some(key => sensitive.has(key.toLowerCase())) || isIP(host.replace(/^\[|\]$/gu, "")) !== 0 || !host.includes(".") || host.endsWith(".") || ["localhost", "local", "internal", "invalid", "test", "onion", "home.arpa"].some(suffix => host === suffix || host.endsWith(`.${suffix}`))) return null;
+  if (!(url.protocol === "https:" || allowPublishedHttp && url.protocol === "http:") || url.username || url.password || url.port || [...url.searchParams.keys(), ...new URLSearchParams(url.hash.slice(1)).keys()].some(key => sensitive.has(key.toLowerCase())) || isIP(host.replace(/^\[|\]$/gu, "")) !== 0 || !host.includes(".") || host.endsWith(".") || ["localhost", "local", "internal", "invalid", "test", "onion", "home.arpa"].some(suffix => host === suffix || host.endsWith(`.${suffix}`))) return null;
   return url;
 }
 export function validatePublicWebUrl(value: string): URL {

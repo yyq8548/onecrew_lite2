@@ -7,6 +7,7 @@ import { validateDiscoveryRetainedProfile } from "./native-material.ts";
 import { loadDiscoveryProfileReceipt } from "./review-receipts.ts";
 import type { DiscoveryReviewMaterial } from "./review-material.ts";
 import { loadDiscoveryWebSourceReceipt } from "./web-receipt.ts";
+import { tiktokProfilePlan } from "../platforms/opencli/profiles.ts";
 
 const object = z.record(z.string(), z.unknown());
 const strings = (value: unknown): string[] => Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
@@ -20,28 +21,31 @@ function pixivProfile(author: string, value: Record<string, unknown>) {
 }
 export function discoveryProfileContactFields(database: DatabaseSync, material: DiscoveryReviewMaterial): string {
   if (!database.isTransaction) throw new Error("contact_projection_requires_snapshot");
-  if (["google", "yahoo"].includes(material.hit.platform)) {
+  if (["google", "yahoo"].includes(material.hit.platform) || material.hit.platform === "instagram" && material.native_platform === "instagram") {
     const read = loadDiscoveryWebSourceReceipt(database, material.campaign_id, material.hit.id), native = read.native;
     if (read.is_primary_source !== 1 || read.status !== "completed" || read.stop_code !== null || read.expected_revision !== material.criteria_revision || read.profile_ref !== material.hit.profile_ref || read.source_url !== material.hit.source_url || read.candidate_id !== material.candidate_id || read.native_author_id !== material.native_author_id) throw new Error("contact_native_web_source_binding_unavailable");
-    const social = ["twitter", "douyin"].includes(read.target_platform), profile = social ? object.parse(native.profile) : null;
-    const original = social ? object.parse(native.content).text : native.description;
+    const profileTarget = ["instagram", "tiktok"].includes(read.target_platform), social = ["twitter", "douyin", "instagram", "tiktok"].includes(read.target_platform), profile = social ? object.parse(native.profile) : null;
+    const original = profileTarget ? null : social ? object.parse(native.content).text : native.description;
     if ((typeof original === "string" ? original : null) !== material.video_description) throw new Error("contact_native_web_source_binding_unavailable");
     if (profile !== null) {
       if (material.native_profile?.profile_url !== profile.profile_url) throw new Error("contact_native_web_source_binding_unavailable");
+      if (read.target_platform === "instagram") return [typeof profile.public_email === "string" ? profile.public_email : "", ...strings(profile.contact_links).map(link => `Website: ${link}`)].filter(Boolean).join("\n");
+      if (read.target_platform === "tiktok") return strings(profile.contact_links).map(link => `Website: ${link}`).join("\n");
       return read.target_platform === "douyin" ? strings(z.array(z.unknown()).parse(profile.public_links)).join("\n") : "";
     }
     return z.array(z.unknown()).parse(native.links).flatMap(value => { const row = object.safeParse(value); return row.success && typeof row.data.url === "string" ? [row.data.url] : []; }).join("\n");
   }
   const platform = material.hit.platform;
-  if (!["instagram", "facebook", "pinterest", "pixiv", "linkedin", "douyin"].includes(platform)) return "";
+  if (!["instagram", "facebook", "pinterest", "pixiv", "linkedin", "douyin", "tiktok"].includes(platform)) return "";
   const read = loadDiscoveryProfileReceipt(database, material.campaign_id, material.hit.id), native = object.parse(read.native_profile);
   if (read.status !== "completed" || read.stop_code !== null || read.claim.expected_revision !== material.criteria_revision || read.claim.platform !== platform || read.claim.profile_ref !== material.hit.profile_ref || (platform === "linkedin" ? native.account_id : read.claim.author_id) !== material.native_author_id || material.native_profile?.profile_url !== read.claim.author_url || Buffer.byteLength(stringifyApplicationJson(native)) > 16000) throw new Error("contact_native_profile_binding_unavailable");
   if (platform === "instagram") validateSavedDiscoveryInstagramProfile(read.claim.author_id, native);
+  else if (platform === "tiktok") tiktokProfilePlan(z.string().parse(native.username), read.claim.author_id).decode([native]);
   else if (platform === "pinterest") pinterestProfilePlan(read.claim.author_id, z.string().parse(native.username)).decode([native]);
   else if (platform === "pixiv") pixivProfile(read.claim.author_id, native);
   else validateDiscoveryRetainedProfile(platform, read.claim.author_id, read.claim.author_url, read.claim.source_url, native);
   const fields = typeof native.public_email === "string" ? [native.public_email] : [];
-  fields.push(...strings(native[["pinterest", "pixiv", "linkedin", "douyin"].includes(platform) ? "public_links" : "contact_links"]));
+  fields.push(...strings(native[["pinterest", "pixiv", "linkedin", "douyin"].includes(platform) ? "public_links" : "contact_links"]).map(link => `Website: ${link}`));
   if (platform === "linkedin") fields.push(...strings(native.contact_links));
   return fields.join("\n");
 }

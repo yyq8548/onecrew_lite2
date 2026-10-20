@@ -21,7 +21,7 @@ export function projectLinkedinProfile(data, handle) {
     if (typeof link !== 'string' || link.length > 2048 || /\s|[\u0000-\u001f\u007f]/.test(link)) invalid();
     try {
       const url = new URL(link);
-      if (url.protocol !== 'https:' || url.username || url.password || url.port
+      if (!['https:','http:'].includes(url.protocol) || url.username || url.password || url.port
           || !url.hostname.includes('.') || url.hostname.endsWith('.')
           || /(?:^|\.)(?:localhost|local|internal|test|invalid|onion|home\.arpa)$/.test(url.hostname)
           || /^\d+\.\d+\.\d+\.\d+$/.test(url.hostname) || url.hostname.startsWith('[')) invalid();
@@ -36,7 +36,7 @@ export function projectLinkedinProfile(data, handle) {
     author_label:data.author_label.trim(), profile_url:source, follower_count:followers,
     follower_text:data.follower_text.trim(), headline:data.headline, bio:data.bio,
     public_links:[...new Set(data.public_links)], contact_links:data.contact_links,
-    evidence_source:'visible_profile_header', bio_truncated:true};
+    evidence_source:'visible_profile_header', bio_truncated:data.bio_truncated ?? true};
 }
 
 // This function is serialized into one owned provider page. All filtering and
@@ -92,7 +92,7 @@ export function observeLinkedinProfile(source, handle, contactOverlay = false) {
       if (!target) continue;
       try { url = new URL(target); } catch { continue; }
     }
-    if (url.protocol === 'https:' && url.origin !== location.origin && !url.username && !url.password
+    if (['https:','http:'].includes(url.protocol) && url.origin !== location.origin && !url.username && !url.password
         && !url.port && url.href.length <= 2048 && links.length < 10) links.push(url.href);
   }
   if (ids.size > 1) throw new Error('ONECREW_LINKEDIN_INVALID');
@@ -134,7 +134,8 @@ export function observeLinkedinProfile(source, handle, contactOverlay = false) {
     && !['Contact info','联系信息','聯絡資訊'].includes(text)) || '';
   return {author_handle:handle, account_id:[...ids][0], profile_url:source,
     author_label:bounded(name.textContent,512), headline:bounded(headline,2000), bio:bounded(bio,8000),
-    follower_text:bounded(count,100), public_links:[...new Set(links)], contact_links:[...new Set(contact)], about_pending:!about};
+    follower_text:bounded(count,100), public_links:[...new Set(links)], contact_links:[...new Set(contact)], about_pending:!about,
+    bio_truncated:!about || bio!==bounded(bio,8000) || [...about.querySelectorAll('button,[role="button"]')].some(node=>visible(node)&&/^(?:see more|show more|更多|展开|展開)$/i.test(node.textContent.trim()))};
 }
 
 export async function readLinkedinProfile(page, handle, ownedPage) {
@@ -185,20 +186,22 @@ export function observeLinkedinContent(source, handle, account, readProfile) {
     .filter(node=>node.getClientRects().length).slice(0,5);
   for(const card of cards) {
     const anchors=[...card.querySelectorAll('a[href]')].filter(node=>node.getClientRects().length);
-    const authorLinks=anchors.filter(node=>{
+    const bodySelector='p [data-testid="expandable-text-box"]';
+    const bodyLinks=anchors.filter(node=>/^https:\/\/www\.linkedin\.com\/feed\/update\/urn:li:activity:[1-9]\d{0,19}\/$/.test(node.href) && node.querySelectorAll(bodySelector).length);
+    if(bodyLinks.length!==1) continue;
+    const body=bodyLinks[0];
+    const postUrls=new Set(anchors.filter(node=>/^https:\/\/www\.linkedin\.com\/feed\/update\/urn:li:activity:[1-9]\d{0,19}\/$/.test(node.href)).map(node=>node.href));
+    if(postUrls.size!==1) continue;
+    const headerLinks=anchors.slice(0,anchors.indexOf(body));
+    const authorLinks=headerLinks.filter(node=>{
+      if(node.closest('[data-testid="expandable-text-box"]')) return false;
       try {const url=new URL(node.href);return url.origin===location.origin && url.pathname.startsWith('/in/');}
       catch{return false;}
     });
     if(!authorLinks.length || authorLinks.some(node=>node.href!==source && node.href!==`${source}?isSelfProfile=false`)) continue;
-    if(anchors.some(node=>{try{return new URL(node.href).pathname.startsWith('/company/');}catch{return false;}})) continue;
-    const posts=anchors.filter(node=>/^https:\/\/www\.linkedin\.com\/feed\/update\/urn:li:activity:[1-9]\d{0,19}\/$/.test(node.href));
-    const urls=[...new Set(posts.map(node=>node.href))];
-    if(urls.length!==1) continue;
-    const bodySelector='p [data-testid="expandable-text-box"]';
-    const bodies=posts.filter(node=>node.querySelectorAll(bodySelector).length);
-    if(bodies.length!==1) continue;
+    if(headerLinks.some(node=>new URL(node.href).pathname.startsWith('/company/'))) continue;
     const texts=[];
-    for(const paragraph of bodies[0].querySelectorAll(bodySelector)) {
+    for(const paragraph of body.querySelectorAll(bodySelector)) {
       const walker=document.createTreeWalker(paragraph,NodeFilter.SHOW_TEXT);
       let text='';
       while(walker.nextNode()) {
@@ -215,9 +218,9 @@ export function observeLinkedinContent(source, handle, account, readProfile) {
       text+=character;bytes+=size;
     }
     if(!text.trim()) continue;
-    const post_id=urls[0].match(/urn:li:activity:([1-9]\d{0,19})\/$/)[1];
+    const post_id=body.href.match(/urn:li:activity:([1-9]\d{0,19})\/$/)[1];
     const dates=[...card.querySelectorAll('time[datetime]')].filter(node=>node.getClientRects().length);
-    return {account_id:account,author_handle:handle,profile_url:source,post_id,source_url:urls[0],text,text_truncated:text!==original,
+    return {account_id:account,author_handle:handle,profile_url:source,post_id,source_url:body.href,text,text_truncated:text!==original,
       observations:{published_at:dates.length===1?dates[0].getAttribute('datetime'):null,text_completeness:text!==original?'truncated':'unknown'}};
   }
   return null;
@@ -257,9 +260,12 @@ export function projectLinkedinContact(data,handle,account) {
 }
 
 // The native dialog and background header must identify the same observed
-// author. Extract email/TG and public web links only, not phone, birthday,
-// premium controls, recommendations or the operator's account information.
+// author. Extract published contact links; birthday, premium controls,
+// recommendations and the operator's account information are excluded.
 export function observeLinkedinContact(source,handle,account,readProfile) {
+  if (location.origin !== 'https://www.linkedin.com') throw new Error('ONECREW_LINKEDIN_INVALID_CONTACT_PROFILE_ROUTE');
+  if (/^\/(?:checkpoint|challenge|security)/.test(location.pathname)) throw new Error('ONECREW_LINKEDIN_RISK');
+  if (/^\/(?:login|uas\/login|authwall)/.test(location.pathname)) throw new Error('ONECREW_LINKEDIN_AUTH');
   let profile;
   try {profile=readProfile(source,handle,true);}
   catch(error) {
@@ -287,11 +293,16 @@ export function observeLinkedinContact(source,handle,account,readProfile) {
   });
   if(!authorLinks.length) return null;
   if(authorLinks.some(node=>node.href!==source)) throw new Error('ONECREW_LINKEDIN_INVALID_CONTACT_DIALOG_OWNER');
-  const emails=[],links=[];
+  const emails=[],links=[],published=[];
   let linkBytes=0;
   for(const anchor of anchors) {
     let url;
     try {url=new URL(anchor.href);} catch {continue;}
+    if(url.protocol==='tel:') {
+      const phone=url.pathname;
+      if(/^\+?[0-9 ()-]{7,30}$/.test(phone) && phone.replace(/\D/g,'').length>=7 && phone.replace(/\D/g,'').length<=15 && !published.includes(`Phone: ${phone}`)) published.push(`Phone: ${phone}`);
+      continue;
+    }
     if(url.protocol==='mailto:') {
       let email;
       try {email=decodeURIComponent(url.pathname);} catch {continue;}
@@ -302,16 +313,17 @@ export function observeLinkedinContact(source,handle,account,readProfile) {
     if(url.origin===location.origin && url.pathname==='/safety/go/') {
       const target=url.searchParams.get('url');
       if(!target) continue;
+      if (/^(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,63}\/?$/i.test(target) && target.length<=253 && !/(?:^|\.)(?:localhost|local|internal|test|invalid|onion|home\.arpa)\/?$/i.test(target)) { published.push(`Website: ${target}`); continue; }
       try {url=new URL(target);} catch {continue;}
     }
-    if(url.protocol!=='https:' || url.origin===location.origin || url.username || url.password || url.port
+    if(!['https:','http:'].includes(url.protocol) || url.origin===location.origin || url.username || url.password || url.port
         || url.href.length>2048 || links.includes(url.href) || links.length>=10) continue;
     const size=new TextEncoder().encode(url.href).length;
     if(linkBytes+size>6000) continue;
     links.push(url.href);linkBytes+=size;
   }
   return {author_handle:handle,account_id:account,source_url:location.href,title:[...profile.author_label].slice(0,200).join(''),
-    contact_text:emails.join('\n'),contact_links:links};
+    contact_text:[...emails,...published].join('\n'),contact_links:links};
 }
 
 export async function readLinkedinContact(page,handle,account,ownedPage) {
@@ -333,7 +345,7 @@ export async function readLinkedinContact(page,handle,account,ownedPage) {
     // retaining the owned page and its native background identity.
     await owned.click(`main a[href="${contact}"]`);
     for(let attempt=0;attempt<12;attempt++) {
-      const raw=await owned.evaluate(`(${observeLinkedinContact.toString()})(${JSON.stringify(source)},${JSON.stringify(handle)},${JSON.stringify(account)},(${observeLinkedinProfile.toString()}))`);
+      const raw=await owned.evaluate(`(${observeLinkedinContact.toString()})(${JSON.stringify(source)},${JSON.stringify(handle)},${JSON.stringify(account)},()=>(${JSON.stringify(profile)}))`);
       const data=raw && 'session' in Object(raw) && 'data' in Object(raw) ? raw.data : raw;
       if(data) {
         try {return projectLinkedinContact(data,handle,account);}

@@ -61,6 +61,8 @@ function generic(platform: string, input: unknown): CreatorSearchHit {
   } else if (platform === "facebook") {
     const profile = source.startsWith("https://www.facebook.com/profile.php?id=") ? source.slice("https://www.facebook.com/profile.php?id=".length) : "";
     if (id(profile)) { if (row.author_id !== undefined && row.author_id !== profile) invalid(); authorId = profile; authorUrl = source; }
+  } else if (platform === "instagram" && field("provider") === "onecrew-instagram-visible-v1") {
+    if (row.author_id !== undefined || row.execution_mode !== "computer_use" || !/^[a-z\d_.]{1,30}$/u.test(field("username")) || source !== `https://www.instagram.com/${field("username")}/`) invalid();
   } else if (platform === "instagram" && field("provider") === "onecrew-instagram-native-v1") {
     if (!id(field("author_id"), 25) || !/^[a-z\d_.]{1,30}$/u.test(field("username")) || source !== `https://www.instagram.com/${field("username")}/`) invalid();
     authorId = field("author_id"); authorUrl = source;

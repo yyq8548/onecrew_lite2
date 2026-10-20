@@ -10,6 +10,7 @@ import { parseApplicationJson, stringifyApplicationJson } from "../src/contracts
 import { stripUnauditedDiscoveryProofs } from "../src/discovery/review-proof-audit.ts";
 import { INITIAL_MATCH_REVIEWER } from "../src/discovery/initial-match.ts";
 import { discoveryReviewReceipt } from "@onecrew/runtime-contracts/discovery";
+import { discoveryJsonValue } from "../src/discovery/library-material.ts";
 
 test("真实作者资料经审核事务提交额外条件，伪造证明和跨版本证明被剔除", async () => {
   const directory = await mkdtemp(fileURLToPath(new URL("../../.scratch/discovery-requirement-ledger-", import.meta.url)));
@@ -35,6 +36,8 @@ test("真实作者资料经审核事务提交额外条件，伪造证明和跨�
     const audited = stripUnauditedDiscoveryProofs(db, evidence, material.candidate_id, "merge-review", 1, material.native_author_id);
     assert.deepEqual(audited.reviewed_requirements, evidence.reviewed_requirements);
     assert.equal((audited.reviewed_requirements as unknown[]).length, 1);
+    const jsonEvidence = discoveryJsonValue(evidence) as Record<string, unknown>;
+    assert.ok(Array.isArray(stripUnauditedDiscoveryProofs(db, jsonEvidence, material.candidate_id, "merge-review", 1, material.native_author_id).reviewed_requirements));
     const forged = structuredClone(evidence);
     (forged.reviewed_requirements as Record<string, unknown>[])[0]!.material_hash = "0".repeat(64);
     assert.equal(stripUnauditedDiscoveryProofs(db, forged, material.candidate_id, "merge-review", 1, material.native_author_id).reviewed_requirements, undefined);
