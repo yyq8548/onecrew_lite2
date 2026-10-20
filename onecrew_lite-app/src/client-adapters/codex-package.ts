@@ -9,7 +9,7 @@ import { runtimeCompatibility, type ClientPluginPackage } from "./contracts.ts";
 export const codexPluginId = "onecrew_lite";
 export const codexMarketplaceId = "onecrew_lite-cli";
 export const codexPluginReference = `${codexPluginId}@${codexMarketplaceId}`;
-const baseVersion = "0.7.1";
+const baseVersion = "0.9.0";
 const sha = (bytes: Uint8Array | string) => createHash("sha256").update(bytes).digest("hex");
 const samePath = (a: string, b: string) => process.platform === "win32" ? a.toLowerCase() === b.toLowerCase() : a === b;
 export interface CodexPackageOptions { executable: string; runtimeVersion: string; dataDirectory: string; pluginDirectory: string; codexHome: string }
@@ -114,7 +114,7 @@ export async function prepareCodexPlugin(options: CodexPackageOptions): Promise<
   return { marketplace_root: root, plugin_root: pluginRoot, version, target, binary_sha256: binaryHash, runtime_version: options.runtimeVersion };
 }
 export async function verifyCodexPlugin(root: string, version: string, expectedBinary?: string): Promise<void> {
-  if (!/^0\.7\.1\+codex\.[a-f0-9]{64}$/u.test(version)) throw new Error("codex_plugin_version_invalid");
+  if (!/^0\.9\.0\+codex\.[a-f0-9]{64}$/u.test(version)) throw new Error("codex_plugin_version_invalid");
   const files = await readPluginTree(root), manifestBytes = files.get(".codex-plugin/plugin.json");
   if (!manifestBytes) throw new Error("codex_plugin_manifest_missing");
   const manifest = parseApplicationJson(manifestBytes);

@@ -1,6 +1,6 @@
 {
   "name": "onecrew_lite",
-  "version": "0.7.1",
+  "version": "0.9.0",
   "description": "OneCrew Lite creators, public research and local tables through the unified stdio MCP service.",
   "homepage": "https://onecrewai.io",
   "author": { "name": "onecrew_lite" },

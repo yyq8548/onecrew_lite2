@@ -67,7 +67,7 @@ export function unifiedResources(options: UnifiedResourcesOptions): RuntimeBoots
       await assertNativeTelegramCryptography();
       if (process.platform !== "win32" && process.platform !== "darwin") throw new Error("Unified service requires Windows or macOS");
       const packaged = getPackagedRuntime();
-      const accessLifecycle = new AccessLifecycle(lease, { vaultPath, masterKeyPath, appVersion: packaged ? packaged.manifest.productVersion : "0.7.1", platform: process.platform === "win32" ? "windows" : "macos", deviceLabel: hostname() }, identities);
+      const accessLifecycle = new AccessLifecycle(lease, { vaultPath, masterKeyPath, appVersion: packaged ? packaged.manifest.productVersion : "0.9.0", platform: process.platform === "win32" ? "windows" : "macos", deviceLabel: hostname() }, identities);
       initializedLifecycle = accessLifecycle;
       const business = createBusinessModule(lease, identities, tables, `http://127.0.0.1:${profile.port}`, generationRoot, new PlatformVaultReader(vaultPath, masterKeyPath), profile.originSource === "new-install" && active === null && generationRoot === lease.directory);
       initializedBusiness = business;

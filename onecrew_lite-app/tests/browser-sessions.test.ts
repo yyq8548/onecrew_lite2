@@ -63,7 +63,7 @@ test("real HTTP browser session consumes tickets and enforces CSRF, origin and a
     const handshake = await fetch(`${server.origin}/api/session`, { headers: { cookie } });
     assert.equal(handshake.status, 200);
     assert.equal(handshake.headers.get("set-cookie") === setCookie, true, "有效握手应续期同一 Cookie，保持多页面 CSRF 一致");
-    assert.deepEqual(await handshake.json(), { ok: true, result: { ...session, version: "0.7.1", transport: "local_http", protocol_version: 2 } });
+    assert.deepEqual(await handshake.json(), { ok: true, result: { ...session, version: "0.9.0", transport: "local_http", protocol_version: 2 } });
     const secondWorkspaceTicket = sessions.issueTicket(current);
     const reopened = await fetch(`${server.origin}/api/local/session`, { method: "POST", headers: { origin: server.origin, "content-type": "application/json", cookie }, body: JSON.stringify({ ticket: secondWorkspaceTicket }) });
     assert.equal(reopened.status, 200);

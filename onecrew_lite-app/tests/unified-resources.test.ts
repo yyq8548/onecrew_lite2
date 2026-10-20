@@ -66,7 +66,7 @@ test("unified service starts and closes real embedded PGlite behind the same aut
     const authorize = new URL(pairingResult.authorizeUrl);
     assert.equal(authorize.origin, "https://access.onecrewai.io");
     assert.equal(authorize.pathname, "/pairing/authorize");
-    assert.equal(authorize.searchParams.get("app_version"), "0.7.1");
+    assert.equal(authorize.searchParams.get("app_version"), "0.9.0");
     assert.equal(authorize.searchParams.get("code_challenge_method"), "S256");
     assert.equal((await (await fetch(`${runtime.descriptor.url}/_local/access/status`, { headers: accessHeaders })).json()).flowId, pairingResult.flowId);
     const cancelled = await fetch(`${runtime.descriptor.url}/_local/access/cancel`, { method: "POST", headers: accessHeaders });

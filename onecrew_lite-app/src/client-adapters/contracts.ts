@@ -12,4 +12,4 @@ export interface ClientAdapter {
   status(refresh?: boolean): Promise<LocalServiceStatus["plugin"]>;
   uninstall(): Promise<LocalServiceStatus["plugin"]>;
 }
-export const runtimeCompatibility = Object.freeze({ protocol: 2, minimum: "0.7.1", maximum: "0.7.1" });
+export const runtimeCompatibility = Object.freeze({ protocol: 2, minimum: "0.9.0", maximum: "0.9.0" });

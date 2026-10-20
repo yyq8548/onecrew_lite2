@@ -27,7 +27,7 @@ export { bootstrapShellCommands };
 // 状态读取不安装组件、不批准任务；未取得的组件证据保留明确的 unavailable。
 export class ServiceShell {
   readonly #options: ServiceShellOptions;
-  readonly version = getPackagedRuntime()?.manifest.productVersion ?? "0.7.1";
+  readonly version = getPackagedRuntime()?.manifest.productVersion ?? "0.9.0";
   #locale: "en-US" | "zh-CN" = "en-US";
   constructor(options: ServiceShellOptions) {
     if (!/^[a-f0-9]{64}$/u.test(options.buildIdentity.executable_sha256)) throw new Error("service_build_identity_invalid");

@@ -45,7 +45,7 @@ export async function createMcpAdapter(directory: string, surface: McpSurface = 
     return { ...tool, ...(tool.outputSchema ? { outputSchema: nativeMcpOutputSchema(tool.outputSchema) } : {}), ...(tool.name === "onecrew_result_present" ? { _meta: ui } : {}) };
   })];
   const frozenOutputs = new FrozenMcpOutputValidator(registry, surface);
-  const version = getPackagedRuntime()?.manifest.productVersion ?? "0.7.1";
+  const version = getPackagedRuntime()?.manifest.productVersion ?? "0.9.0";
   const server = new Server({ name: "onecrew_lite", version }, { capabilities: { tools: {}, resources: {} }, jsonSchemaValidator: new McpJsonSchemaValidator(), instructions: "Bootstrap: onecrew_status, onecrew_login, onecrew_login_cancel, onecrew_logout, onecrew_web. Discover only registered operations through onecrew_tool_search, get their exact contract with onecrew_tool_get, and execute at most eight calls. Present each new result_ref once with onecrew_result_present and the conversation locale. Wait for actual user confirmation; never invent bindings or a confirmed plan. MCP has no mail or social sending capability." });
   let session: { runtime: string; descriptor: RuntimeDescriptor; id: string } | undefined;
   let closingSession: Promise<void> | undefined;
