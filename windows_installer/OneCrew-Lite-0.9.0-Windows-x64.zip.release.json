@@ -1,0 +1,32 @@
+{
+  "product": "onecrew_lite",
+  "version": "0.9.0",
+  "target": "win32-x64",
+  "archive": "OneCrew-Lite-0.9.0-Windows-x64.zip",
+  "bytes": 57247684,
+  "sha256": "9dc0621c9659858eaa4c661c0d8f5888299e213c93344364286c1c1289bfadf6",
+  "executableSha256": "0bf3202586ad8728a56c0d5d3d0c5d0ae64575f8d2c58ebf74a35ba9a8be7cbe",
+  "payloadSha256": "313cb518a8d4cabb9c14378d388b1d3e53358cb7f6ad400d50a08b0c9147a5bb",
+  "source": {
+    "repository": "https://github.com/yyq8548/onecrew_lite2.git",
+    "baselineCommit": "8e8ae9bfcbfc471cc42d779f4d8ebde2534e91ea",
+    "buildSourceTreeSha256": "4e26fc4038ca1246b7e2ccf478bcd1dc950a3ad29f51ba7e62dd6103f8fc9106",
+    "lockfileSha256": "e212335217aae1358a6ac6b64810b584f97a80d430f534e3335eaf8bf44e7349",
+    "localFixesIncluded": true
+  },
+  "verifiedFiles": 527,
+  "payloadFiles": 1096,
+  "installationGuide": "OneCrew-Lite/INSTALL-CODEX.md",
+  "checks": {
+    "payloadFilesVerified": 1096,
+    "nativeTests": 6,
+    "sourceMatchesVerifiedWindowsBuild": true
+  },
+  "acceptance": {
+    "macArm": "not_completed",
+    "macIntel": "not_completed",
+    "hostCardButtons": "not_completed",
+    "productionReady": false
+  },
+  "productionReady": false
+}
