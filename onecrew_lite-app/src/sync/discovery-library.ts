@@ -89,7 +89,6 @@ export function createDiscoveryLibraryProjection(accounts: AccountContextService
       const snapshot = publication.material.sources;
       const plan = resolved.repository.getPlan(campaign);
       if (plan.revision !== revision) throw new LibraryProjectionError("library_source_stale");
-      if (!snapshot.rows.length) throw new LibraryProjectionError("library_no_search_hits");
       if (snapshot.rows.length > 10_000 || new Set(snapshot.rows.map(row => row.hit.id)).size !== snapshot.rows.length) throw new LibraryProjectionError("library_capacity_exceeded");
       const name = resolved.repository.getLibraryTableName(campaign);
       const existing = await libraryCall(() => tables.data.getDiscoveryCampaignTable(selected, campaign)); assertCurrent();

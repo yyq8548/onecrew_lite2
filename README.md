@@ -6,7 +6,7 @@ TypeScript 本地程序：生成搜索计划，读取创作者资料和内容，
 
 ## Mac installer
 
-当前 Mac 包：**OneCrew Lite 0.9.0 · Apple Silicon ARM64 · R1**。
+当前 Mac 包：**OneCrew Lite 0.9.0 · Apple Silicon ARM64 · R2**。
 
 - [Mac 安装包、校验记录和安装提示词](mac_installer/)
 - [给 Codex 的安装提示词](mac_installer/CODEX-PROMPT.md)

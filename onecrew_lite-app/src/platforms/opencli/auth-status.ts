@@ -8,7 +8,7 @@ export function creatorAuthProbe(platform: string) {
   const source = creatorSearchSource(platform);
   const native = ["bilibili", "tiktok", "instagram", "facebook", "douyin", "linkedin", "weibo", "tieba", "twitter", "pinterest", "youtube"].includes(platform);
   const site = native ? `onecrew-${platform}-auth` : platform === "reddit" ? "reddit" : source.site;
-  return { site, full: native || platform === "reddit", addon: native };
+  return { site, full: native || platform === "reddit", addon: native, ...(platform === "pinterest" ? { foregroundBrowser: true } : {}) };
 }
 function issue(error: string) {
   const message = error.toLowerCase();

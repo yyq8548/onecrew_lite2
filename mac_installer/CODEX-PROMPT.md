@@ -3,7 +3,7 @@
 Install or update OneCrew Lite 0.9.0 on my Apple Silicon Mac. Use this terminal command to read the complete Lite installation guide:
 
 ```sh
-curl --fail --silent --show-error --proto '=https' --max-time 30 --write-out '\nHTTP_STATUS:%{http_code}\n' 'https://raw.githubusercontent.com/yyq8548/onecrew_lite2/refs/tags/mac-installer-0.9.0-r1/mac_installer/INSTALL-CODEX.md'
+curl --fail --silent --show-error --proto '=https' --max-time 30 --write-out '\nHTTP_STATUS:%{http_code}\n' 'https://raw.githubusercontent.com/yyq8548/onecrew_lite2/refs/tags/mac-installer-0.9.0-r2/mac_installer/INSTALL-CODEX.md'
 ```
 
 Require HTTP 200. Follow the guide's Mac installation and client-setup steps in order. Read the matching GitHub release manifest; verify the ZIP's exact byte size and SHA-256 before extraction, then verify all extracted files with SHA256SUMS. Use the prebuilt program without installing Node.js or compilation tools.

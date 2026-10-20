@@ -158,7 +158,8 @@ export class DiscoveryScheduler {
         publishChanged();
         if (!advancing && hadScores) { if (!await finishOne()) break; readAhead = 0; continue; }
         if (!advancing) {
-          if (["search_exhausted", "needs_evidence"].includes(result.step.kind) && result.campaign.criteria.automatic_query_expansion === true) {
+          if (["search_exhausted", "needs_evidence"].includes(result.step.kind) && result.campaign.criteria.automatic_query_expansion === true
+            && result.campaign.platform_runs.some(run => run.status === "completed" && !input.excluded_platforms.includes(run.platform) && !RETIRED_CREATOR_SOURCES.includes(run.platform))) {
             if (!configuration.dependencies) throw new Error("discovery_dependency_unavailable");
             const expanded = await new DiscoveryQueryRoundExecutor(configuration.accounts, configuration.repositories, configuration.dependencies).expand(context, input.campaign_id, input.expected_revision, input.excluded_platforms, owner.signal);
             if (expanded) continue;

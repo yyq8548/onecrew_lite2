@@ -4,7 +4,7 @@ import { creatorAuthProbe, decodeCreatorAuthStatus } from "../src/platforms/open
 
 test("登录观察使用原生whoami，cookie观察不提升为已验证登录", () => {
   assert.deepEqual(creatorAuthProbe("twitter"), { site: "onecrew-twitter-auth", full: true, addon: true });
-  assert.deepEqual(creatorAuthProbe("pinterest"), { site: "onecrew-pinterest-auth", full: true, addon: true });
+  assert.deepEqual(creatorAuthProbe("pinterest"), { site: "onecrew-pinterest-auth", full: true, addon: true, foregroundBrowser: true });
   assert.deepEqual(creatorAuthProbe("youtube"), { site: "onecrew-youtube-auth", full: true, addon: true });
   assert.deepEqual(creatorAuthProbe("reddit"), { site: "reddit", full: true, addon: false });
   assert.throws(() => creatorAuthProbe("zhihu"));

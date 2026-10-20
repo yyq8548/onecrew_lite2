@@ -3,6 +3,7 @@ import { chmod, copyFile, mkdtemp, readdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
+import { DatabaseSync } from "node:sqlite";
 import { createEmbeddedTables } from "onecrew_lite_tables/embedded";
 import { AccountContextService } from "../src/identity/account-context.ts";
 import { AccountDatabases } from "../src/identity/account-databases.ts";
@@ -25,7 +26,7 @@ test("完整注册器使用真实SQLite/PGlite：缺浏览器不领取，严格�
     const execute = (name: string, input: unknown) => registry.execute(name, input, context.principal.user.id, context.epoch);
     assert.equal(registry.names().length, 32); assert.equal(await execute("onecrew_discovery_execution_get", {}), null);
     const repository = (await databases.discoveryResolver().resolve(context)).repository;
-    repository.create({ id: "runtime-plan", brief: "找鞋子作者", opencli_version: "1.8.8", criteria: {}, scopes: [{ platform: "youtube", profile_ref: "work", keywords: ["shoe review"] }], target_count: 2, max_calls: 2 }); repository.approve("runtime-plan", 1);
+    repository.create({ id: "runtime-plan", brief: "找鞋子作者", opencli_version: "1.8.8", criteria: { automatic_query_expansion: true }, scopes: [{ platform: "youtube", profile_ref: "work", keywords: ["shoe review"] }], target_count: 2, max_calls: 2 }); repository.approve("runtime-plan", 1);
     const input = { id: "runtime-plan", expectedRevision: 1, profileRef: "work", limit: 10 };
     await assert.rejects(execute("onecrew_discovery_youtube_search_once", input), /browser_unavailable/);
     await assert.rejects(execute("onecrew_discovery_search_once", { ...input, platform: "youtube", executable: "untrusted" }));
@@ -41,11 +42,26 @@ test("完整注册器使用真实SQLite/PGlite：缺浏览器不领取，严格�
     assert.equal(started, 1);
     await supervisor.waitForIdle(context);
     await runtime.close();
-    const status = await execute("onecrew_discovery_execution_get", {}) as { stage: string; sync_error: string; sync_pending: boolean };
-    assert.equal(status.stage, "needs_evidence"); assert.equal(status.sync_error, "library_no_search_hits"); assert.equal(status.sync_pending, true);
+    const status = await execute("onecrew_discovery_execution_get", {}) as { stage: string; sync_error: string | null; sync_pending: boolean; library: { table_id: string; total_hits: number } | null };
+    assert.equal(status.stage, "needs_evidence"); assert.equal(status.sync_error, null); assert.equal(status.sync_pending, false);
+    assert.ok(status.library); assert.equal(status.library.total_hits, 0);
+    const projection = createDiscoveryLibraryProjection(accounts, databases, tables, "http://127.0.0.1:33333");
+    const repeated = await projection.publish(context, input.id, 1);
+    assert.equal(repeated.table_id, status.library.table_id); assert.equal(repeated.total_hits, 0); assert.equal(repeated.inserted_rows, 0);
+    const rows = await tables.data.getDiscoveryState(tenant, { table_id: repeated.table_id, campaign_id: input.id, limit: 100 });
+    assert.equal(rows.rows.length, 0);
     assert.equal(runtime.blocksBackendSync(), false); assert.equal(repository.getPlan(input.id).used_calls, 0);
     const activity = await runtime.workspaceActivity(context);
     assert.equal(activity?.campaign_id, input.id); assert.equal(runtime.workspaceHistory(context).length, 1);
+    using original = new DatabaseSync(fileURLToPath(new URL("./fixtures/discovery-video-hydration/after.sqlite", import.meta.url)), { readOnly: true });
+    const source = original.prepare("SELECT h.source_url,h.title,h.author_label,a.author_id,a.author_url FROM discovery_search_hits h LEFT JOIN discovery_search_authors a ON a.search_hit_id=h.id ORDER BY h.id LIMIT 1").get() as { source_url: string; title: string; author_label: string; author_id: string | null; author_url: string | null };
+    assert.ok(source);
+    const claim = repository.claimSearch(input.id, 1, "youtube", "work");
+    repository.finishSearch(claim, "completed", null, [source]);
+    const populated = await projection.publish(context, input.id, 1);
+    assert.equal(populated.table_id, repeated.table_id); assert.equal(populated.total_hits, 1); assert.equal(populated.inserted_rows, 1);
+    const stable = await projection.publish(context, input.id, 1);
+    assert.equal(stable.table_id, populated.table_id); assert.equal(stable.inserted_rows, 0);
   } finally { await runtime.close(); databases.close(); await tables.close(); await lease.close(); await rm(root, { recursive: true }); }
 });
 

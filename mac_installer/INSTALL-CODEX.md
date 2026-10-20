@@ -1,4 +1,4 @@
-# OneCrew Lite 0.9.0 · Mac ARM64 · R1 安装指南
+# OneCrew Lite 0.9.0 · Mac ARM64 · R2 安装指南
 
 适用于用户授权的 Apple Silicon Mac 安装或升级。使用 Mac 原生终端；先执行 `uname -s`、`uname -m`，确认 Darwin 和 arm64。Intel Mac 停止；Rosetta 终端需切换原生 arm64 环境后继续。
 
@@ -9,15 +9,15 @@
 执行下面的终端命令，要求 HTTP 200，完整阅读 JSON：
 
 ```sh
-curl --fail --silent --show-error --proto '=https' --max-time 30 --write-out '\nHTTP_STATUS:%{http_code}\n' 'https://raw.githubusercontent.com/yyq8548/onecrew_lite2/refs/tags/mac-installer-0.9.0-r1/mac_installer/OneCrew-Lite-0.9.0-Mac-arm64-R1.zip.release.json'
+curl --fail --silent --show-error --proto '=https' --max-time 30 --write-out '\nHTTP_STATUS:%{http_code}\n' 'https://raw.githubusercontent.com/yyq8548/onecrew_lite2/refs/tags/mac-installer-0.9.0-r2/mac_installer/OneCrew-Lite-0.9.0-Mac-arm64-R2.zip.release.json'
 ```
 
-确认 `product=onecrew_lite`、`version=0.9.0`、`revision=R1`、`target=darwin-arm64`。记录 `bytes`、`sha256`、`executableSha256`、`sourceCommit`。本指南与发布记录及 ZIP 必须来自同一标签。
+确认 `product=onecrew_lite`、`version=0.9.0`、`revision=R2`、`target=darwin-arm64`。记录 `bytes`、`sha256`、`executableSha256`、`sourceCommit`。本指南与发布记录及 ZIP 必须来自同一标签。
 
 将下载文件保存到用户选定的工作目录，禁止使用 `/tmp`。ZIP 固定地址：
 
 ```text
-https://raw.githubusercontent.com/yyq8548/onecrew_lite2/refs/tags/mac-installer-0.9.0-r1/mac_installer/OneCrew-Lite-0.9.0-Mac-arm64-R1.zip
+https://raw.githubusercontent.com/yyq8548/onecrew_lite2/refs/tags/mac-installer-0.9.0-r2/mac_installer/OneCrew-Lite-0.9.0-Mac-arm64-R2.zip
 ```
 
 通过 `curl --fail --silent --show-error --proto '=https' --max-time 180 --output` 下载，要求 HTTP 200。检查 `stat -f '%z'` 返回字节数与发布记录的 `bytes` 完全一致，并用 `shasum -a 256` 核对 ZIP 哈希。下载失败或校验不一致立即停止，禁止解压或运行。
@@ -45,7 +45,7 @@ shasum -a 256 -c SHA256SUMS
 
 已有服务的命令参数提供 `--data-dir`、`--vault`、`--master-key`；已有插件的同名环境变量提供其原数据目录。多个真实候选目录时列出路径让用户选择，不猜测。`installation-discover` 目前仅支持 Windows，不在 Mac 上调用。
 
-确认从未安装 Lite 且没有已有数据时，使用当前 Mac 用户的默认数据目录 `~/Library/Application Support/OneCrewLite/TypeScript`，默认程序目录 `~/Applications/OneCrewLite/releases/0.9.0-R1`。将 `~` 展开成绝对路径。已有安装沿用原数据目录、vault、主密钥和端口，程序目录使用独立的版本目录。
+确认从未安装 Lite 且没有已有数据时，使用当前 Mac 用户的默认数据目录 `~/Library/Application Support/OneCrewLite/TypeScript`，默认程序目录 `~/Applications/OneCrewLite/releases/0.9.0-R2`。将 `~` 展开成绝对路径。已有安装沿用原数据目录、vault、主密钥和端口，程序目录使用独立的版本目录。
 
 将 `dataDir`、`vaultPath`、`masterKeyPath`、`installDir` 设置为核实后的实际路径。已有目录只允许检查并保留：`vault.sqlite` 和主密钥必须成对存在；历史主密钥可能叫 `masterkey` 或 `master.key`，有多个或缺失时停止。首次安装时二者必须同时不存在，由程序安全创建，禁止自行生成密钥或数据库。
 

@@ -91,7 +91,7 @@ export class OpenCliReader {
     if (!this.#registry.hasBrowserRead(probe.site, "whoami")) return observed("unknown", "skipped", "auth_probe_unavailable");
     const method = probe.full ? "full" : "quick";
     const args = ["--profile", binding.profile, "auth", "status", "--site", probe.site, "--concurrency", "1", "--timeout", probe.full ? "20" : "5", "-f", "json", ...(probe.full ? ["--full"] : [])];
-    const output = await this.#run(args, probe.full ? 30000 : OPENCLI_PROBE_TIMEOUT, binding).then(value => ({ value }), error => ({ error }));
+    const output = await this.#run(args, probe.full ? 30000 : OPENCLI_PROBE_TIMEOUT, binding, false, probe.foregroundBrowser === true).then(value => ({ value }), error => ({ error }));
     if ("error" in output) {
       if (output.error instanceof OpenCliError && output.error.code === "opencli_timeout") return observed("error", method, "auth_probe_timeout");
       if (output.error instanceof OpenCliError && output.error.code === "opencli_risk_control") return observed("error", method, "auth_probe_rate_limited");
