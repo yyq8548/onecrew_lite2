@@ -33,11 +33,15 @@ test("真实原SQLite工作台数字、心跳选择、账号隔离与文件失�
     await workspace.presence(context, { ...presence, sequence: 1, campaign_id: null }); assert.ok(await workspace.snapshot(context));
     const metrics = await workspace.metrics(context);
     metrics.enqueue("merge-review", "profile", 12, "private-target"); metrics.enqueue("other", "search", 1);
-    metrics.enqueueFailure("merge-review", { recorded_at: Date.now(), step: "profile", platform: "youtube", target_id: "hit", call_number: 1, code: "opencli_failed" });
+    const timeoutDiagnostic = { endpoint: "/installations/{id}", elapsed_ms: 10003, transport_code: "TimeoutError" };
+    metrics.enqueueFailure("merge-review", { recorded_at: Date.now(), step: "profile", platform: "youtube", target_id: "hit", call_number: 1, code: "access.remote_unavailable", diagnostic: timeoutDiagnostic });
     await metrics.flushPending(); assert.equal(BigInt((await workspace.snapshot(context))!.read_errors), 1n);
     const files = await readdir(join(ownerDirectory, "discovery-metrics")); assert.equal(files.length, 4);
     for (const name of files) assert.equal((await readFile(join(ownerDirectory, "discovery-metrics", name), "utf8")).includes("private-target"), false);
     const aggregate = files.find(name => name.endsWith(".json")); assert.ok(aggregate); assert.ok(parseApplicationJson(await readFile(join(ownerDirectory, "discovery-metrics", aggregate))));
+    const timeoutRecords = await Promise.all(files.filter(name => name.endsWith(".json")).map(async name => parseApplicationJson(await readFile(join(ownerDirectory, "discovery-metrics", name)))));
+    const withDiagnostic = timeoutRecords.map(value => z.object({ campaign_id: z.string(), failures: z.array(z.object({ diagnostic: z.unknown().optional() })) }).parse(value)).find(value => value.campaign_id === "merge-review");
+    assert.deepEqual(withDiagnostic?.failures[0]?.diagnostic, timeoutDiagnostic);
     for (let index = 0; index < 205; index++) metrics.enqueueFailure("merge-review", { recorded_at: Date.now(), step: "profile", platform: null, target_id: null, call_number: null, code: "failed" });
     await metrics.flushPending(); assert.equal(BigInt(await metrics.failureCount("merge-review")), 206n);
     const snapshots = await Promise.all(files.filter(name => name.endsWith(".json")).map(async name => parseApplicationJson(await readFile(join(ownerDirectory, "discovery-metrics", name)))));

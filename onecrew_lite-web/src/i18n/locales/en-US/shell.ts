@@ -278,6 +278,8 @@ const shell = {
     queryCodexTimeout: "Query generation timed out. Progress is saved; you can continue the existing task.",
     queryPlanInvalid: "Generated queries failed validation and were not executed. Search progress is saved.",
     queryAccountRequired: "The onecrew_lite login state changed. Verify login before continuing the existing task.",
+    accountVerificationUnavailable: "The OneCrew account verification service is unavailable after retrying. Search stopped and existing results are saved. Check read receipts before repeating an operation with an unconfirmed result.",
+    accountVerificationInvalid: "OneCrew account verification failed. Search stopped and existing results are saved. Check the service details and current account.",
     queryCampaignChanged: "The search plan changed, so expansion stopped. Review the current plan before continuing.",
     repositoryBusy: "The local database is busy and search stopped. Check the plan and read history before continuing later.",
     repositoryCampaignMissing: "The search plan was not found. Reopen an existing plan and check the account.",

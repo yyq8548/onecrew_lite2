@@ -6,6 +6,16 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { DiscoveryRepository } from "../src/discovery/repository.ts";
 import { discoveryExecutionFailureCode } from "../src/discovery/execution-failure.ts";
+import { AccessVerificationError } from "../src/identity/access-verification.ts";
+
+test("账号校验超时保留真实错误分类，不混入平台 execution_failed", () => {
+  const error = new AccessVerificationError("access.remote_unavailable", 503, { endpoint: "/installations/{id}", elapsed_ms: 10003, transport_code: "TimeoutError" });
+  assert.equal(discoveryExecutionFailureCode(error), "access.remote_unavailable");
+  assert.equal(discoveryExecutionFailureCode(new AggregateError([error], "discovery_execution_failed")), "access.remote_unavailable");
+  for (const code of ["access.login_required", "access.revoked", "access.unauthorized", "access.account_changed", "access.invalid_response", "access.protocol_mismatch"]) {
+    assert.equal(discoveryExecutionFailureCode(new AccessVerificationError(code)), code);
+  }
+});
 
 test("真实 SQLite 搜索仓储区分锁冲突、计划缺失、连接关闭和读取失败", async () => {
   const scratch = fileURLToPath(new URL("../../.scratch/", import.meta.url));

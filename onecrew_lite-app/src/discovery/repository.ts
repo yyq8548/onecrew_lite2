@@ -170,6 +170,7 @@ export class DiscoveryRepository {
   finishVideo(claim: DiscoveryVideoClaim, candidate: unknown, stop: string | null) { new DiscoveryVideoRepository(this.#db).finish(claim, candidate, stop); return this.getPlan(claim.campaign_id); }
   interruptVideo(claim: DiscoveryVideoClaim) { return new DiscoveryVideoRepository(this.#db).interrupt(claim); }
   claimProfile(campaign: string, revision: number, hit: string) { return new DiscoveryProfileRepository(this.#db).claim(campaign, revision, hit); }
+  getProfileSource(campaign: string, hit: string) { return new DiscoveryProfileRepository(this.#db).source(campaign, hit); }
   nextProfileHit(campaign: string, excluded: readonly string[] = [], held: readonly string[] = []) { return new DiscoveryProfileRepository(this.#db).next(campaign, excluded, held); }
   recoverInterruptedProfiles() { return new DiscoveryProfileRepository(this.#db).recoverInterrupted(); }
   finishProfile(claim: DiscoveryProfileClaim, native: unknown, stop: string | null) { return new DiscoveryProfileRepository(this.#db).finish(claim, native, stop); }

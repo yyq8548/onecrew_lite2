@@ -2,7 +2,8 @@ import type { AccountContext, AccountContextService } from "../identity/account-
 import type { AccountDatabases } from "../identity/account-databases.ts";
 import type { DiscoveryRepositoryResolver } from "./search-execution.ts";
 import type { DiscoveryDependencyResolver } from "./dependencies.ts";
-import { DiscoveryAdvanceExecutor } from "./advance.ts";
+import { DiscoveryAdvanceExecutor, type DiscoveryAdvanceResult } from "./advance.ts";
+import { AccessVerificationError } from "../identity/access-verification.ts";
 import { discoveryExecutionInput, type DiscoveryExecutionOwner, type DiscoveryExecutionStage, type DiscoveryExecutionSupervisor } from "./execution-supervisor.ts";
 import type { DiscoverySemanticMatcher, PreparedSemanticDiscoveryMatch } from "./semantic-match.ts";
 import { resolveDiscoveryScoreDirectory, SavedDiscoveryScores } from "./saved-scores.ts";
@@ -64,6 +65,7 @@ export class DiscoveryScheduler {
     const recommended = new Set(owned.repository.recommendedCandidateIds(input.campaign_id));
     let recommendationVersion = 0;
     let readAhead = 0, used = owned.repository.getPlan(input.campaign_id).used_calls, finalStage: DiscoveryExecutionStage = "paused", finalReason = "execution_interrupted", fatal = false;
+    let attemptedRead: { result: DiscoveryAdvanceResult; started: number } | undefined;
     const elapsed = (start: number) => Math.floor(performance.now() - start), started = performance.now(); metrics.enqueue(input.campaign_id, "pipeline.started", 0);
     const sync = async () => {
       const began = performance.now();
@@ -150,7 +152,8 @@ export class DiscoveryScheduler {
         }
         const saved = restored.shift(); if (saved) { if (!await enqueue(saved.hit, saved.deferred_platforms)) break; continue; }
         owner.change(status => { status.stage = "searching"; }); const began = performance.now();
-        const result = await configuration.advances.advance(context, { campaign_id: input.campaign_id, expected_revision: input.expected_revision, excluded_platforms: input.excluded_platforms }, jobs.flatMap(job => job.deferred), jobs.map(job => job.hit), owner.signal);
+        const result = await configuration.advances.advance(context, { campaign_id: input.campaign_id, expected_revision: input.expected_revision, excluded_platforms: input.excluded_platforms }, jobs.flatMap(job => job.deferred), jobs.map(job => job.hit), owner.signal, result => { attemptedRead = { result, started: began }; });
+        attemptedRead = undefined;
         const advancing = result.step.kind.startsWith("read_") || result.step.kind === "search";
         if (advancing) metrics.enqueue(input.campaign_id, "read", elapsed(began));
         recordDiscoveryReadTiming(metrics, input.campaign_id, result, elapsed(began));
@@ -175,14 +178,32 @@ export class DiscoveryScheduler {
       }
     })().then(() => ({ ok: true as const }), error => ({ ok: false as const, error: error as unknown }));
     const deliberateStop = !work.ok && owner.signal.aborted && (work.error === owner.signal.reason || work.error === context.signal.reason || work.error instanceof DOMException && work.error.name === "AbortError");
-    if (!work.ok && !deliberateStop) { finalStage = "error"; finalReason = "request_failed"; failures.push(work.error); owner.change(status => { status.failure_code = discoveryExecutionFailureCode(work.error); status.failure_phase = status.failure_code.startsWith("score_queue_") ? "score" : "read"; }); }
+    if (!work.ok && !deliberateStop) {
+      const code = discoveryExecutionFailureCode(work.error);
+      if (attemptedRead) {
+        const { result, started } = attemptedRead, campaign = owned.repository.getPlan(input.campaign_id);
+        const location = discoveryReadFailureLocation(result);
+        const platforms = [...new Set(campaign.scopes.map(scope => scope.platform))];
+        if (location.platform === null && platforms.length === 1) location.platform = platforms[0]!;
+        recordDiscoveryReadTiming(metrics, input.campaign_id, result, elapsed(started));
+        metrics.enqueueFailure(input.campaign_id, { recorded_at: Date.now(), ...location, call_number: campaign.used_calls > result.campaign.used_calls ? campaign.used_calls : null, code,
+          ...(work.error instanceof AccessVerificationError && work.error.details ? { diagnostic: work.error.details } : {}) });
+        owner.change(status => { status.used = campaign.used_calls; });
+      }
+      finalStage = "error"; finalReason = "request_failed"; failures.push(work.error);
+      owner.change(status => { status.failure_code = code; status.failure_phase = code.startsWith("access.") ? "account" : code.startsWith("score_queue_") ? "score" : "read"; });
+    }
     owner.change(status => { status.stage = "pausing"; });
     // 暂停只留下未启动队列；已经接纳的模型和本地投影完整排空。
     const scores = await Promise.allSettled(jobs.filter(job => job.state !== "queued").map(async job => { const outcome = await job.task!; recordScore(job.hit, outcome); }));
     for (const score of scores) if (score.status === "rejected") failures.push(score.reason);
     const drained = await lane.close().then(() => ({ ok: true as const }), error => ({ ok: false as const, error: error as unknown })); if (!drained.ok) failures.push(drained.error);
     if (!context.signal.aborted) {
-      const finalSync = await sync().then(() => ({ ok: true as const }), error => ({ ok: false as const, error: error as unknown })); if (!finalSync.ok) failures.push(finalSync.error);
+      const finalSync = await sync().then(() => ({ ok: true as const }), error => ({ ok: false as const, error: error as unknown }));
+      if (!finalSync.ok) {
+        failures.push(finalSync.error);
+        owner.change(status => { if (status.failure_code === null) { status.failure_code = discoveryExecutionFailureCode(finalSync.error); status.failure_phase = status.failure_code.startsWith("access.") ? "account" : "sync"; } });
+      }
     }
     metrics.enqueue(input.campaign_id, "pipeline.wall", elapsed(started));
     const flushed = await metrics.flushPending().then(() => ({ ok: true as const }), error => ({ ok: false as const, error: error as unknown }));

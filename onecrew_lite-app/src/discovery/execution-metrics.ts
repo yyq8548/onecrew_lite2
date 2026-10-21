@@ -7,7 +7,8 @@ import { parseApplicationJson, stringifyApplicationJson } from "../contracts/app
 import { createPrivateDirectory, verifyPrivateDirectory, verifyPrivateFile } from "../storage/private-backup.ts";
 
 const text = z.string(), u32 = z.number().int().min(0).max(4294967295);
-export const discoveryReadFailure = z.strictObject({ recorded_at: creatorU64, step: text, platform: text.nullable(), target_id: text.nullable(), call_number: u32.nullable(), code: text });
+export const discoveryReadFailure = z.strictObject({ recorded_at: creatorU64, step: text, platform: text.nullable(), target_id: text.nullable(), call_number: u32.nullable(), code: text,
+  diagnostic: z.strictObject({ endpoint: text.refine(value => ["/installations/{id}", "/creator-sync/credential", "/me"].includes(value)), elapsed_ms: u32.optional(), http_status: z.number().int().min(100).max(599).optional(), transport_code: text.regex(/^[A-Za-z][A-Za-z0-9_]{0,63}$/u).optional() }).optional() });
 export type DiscoveryReadFailure = z.infer<typeof discoveryReadFailure>;
 const phase = z.strictObject({ calls: creatorU64, elapsed_ms: creatorU64 });
 const metricsSchema = z.object({ campaign_id: text, phases: z.record(text, phase), failures: z.array(discoveryReadFailure).default([]), failure_count: creatorU64.default(0) });

@@ -275,6 +275,8 @@ const shell = {
     queryCodexTimeout: "生成搜索词超时，搜索进度已保存。可继续原任务。",
     queryPlanInvalid: "生成的搜索词未通过格式校验，未执行这些搜索。搜索进度已保存。",
     queryAccountRequired: "onecrew_lite 登录状态已变化。请完成登录检查后继续原任务。",
+    accountVerificationUnavailable: "OneCrew 账号校验服务暂时无法连接，重试后仍未成功，搜索已停止。已有结果已保留；请先检查读取记录，避免重复执行结果未确认的操作。",
+    accountVerificationInvalid: "OneCrew 账号校验未通过，搜索已停止。请检查服务异常详情和当前账号。已有结果已保留。",
     queryCampaignChanged: "搜索计划已变化，补词已停止。请查看当前计划后继续。",
     repositoryBusy: "本地数据库繁忙，搜索已停止。请稍后检查当前计划和读取记录，再继续。",
     repositoryCampaignMissing: "找不到当前搜索计划。请重新打开已有计划并检查账号。",

@@ -3,6 +3,9 @@ import { discoveryExecutionFailureKey } from "./discovery-execution-error";
 
 describe("搜索执行错误说明", () => {
   it("按实际错误码区分登录、启动、超时和计划校验", () => {
+    expect(discoveryExecutionFailureKey("access.remote_unavailable")).toBe("accountVerificationUnavailable");
+    expect(discoveryExecutionFailureKey("access.revoked")).toBe("queryAccountRequired");
+    expect(discoveryExecutionFailureKey("access.protocol_mismatch")).toBe("accountVerificationInvalid");
     expect(discoveryExecutionFailureKey("discovery_draft_codex_login_required")).toBe("queryCodexLoginRequired");
     expect(discoveryExecutionFailureKey("discovery_draft_codex_unavailable")).toBe("queryCodexUnavailable");
     expect(discoveryExecutionFailureKey("discovery_draft_codex_timeout")).toBe("queryCodexTimeout");

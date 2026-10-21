@@ -9,8 +9,21 @@ import { inspect } from "node:util";
 import test from "node:test";
 import { parseStoredJson } from "../src/contracts/stored-json.ts";
 import { creatorSyncLimits, readStoredAccessCredential } from "../src/identity/legacy-access-credential.ts";
-import { AccessInstallationVerifier } from "../src/identity/access-verification.ts";
+import { AccessInstallationVerifier, AccessVerificationError, accessVerificationRetryDelay } from "../src/identity/access-verification.ts";
 import { createPrivateDirectory } from "../src/storage/private-backup.ts";
+
+test("只读远端校验只重试一次临时故障，失效、协议异常及取消立即停止", () => {
+  const controller = new AbortController();
+  const timeout = new AccessVerificationError("access.remote_unavailable", 503, { endpoint: "/installations/{id}", elapsed_ms: 10003, transport_code: "TimeoutError" });
+  assert.equal(accessVerificationRetryDelay(timeout, 0, controller.signal), 500);
+  assert.equal(accessVerificationRetryDelay(timeout, 1, controller.signal), null);
+  for (const code of ["access.revoked", "access.unauthorized", "access.invalid_response", "access.protocol_mismatch", "access.account_changed"]) {
+    assert.equal(accessVerificationRetryDelay(new AccessVerificationError(code), 0, controller.signal), null);
+  }
+  assert.equal(accessVerificationRetryDelay(new Error("network"), 0, controller.signal), null);
+  controller.abort();
+  assert.equal(accessVerificationRetryDelay(timeout, 0, controller.signal), null);
+});
 
 test("stored metadata rejects duplicate keys, rounded integers and invalid Unicode", () => {
   assert.deepEqual(parseStoredJson('{"revision":1}', true), { revision: 1 });

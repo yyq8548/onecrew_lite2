@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { inspect, isDeepStrictEqual } from "node:util";
+import { setTimeout as delay } from "node:timers/promises";
 import { parseStoredJson } from "../contracts/stored-json.ts";
 import { accessCredentialMetadataSchema, type StoredAccessMetadata } from "./legacy-access-credential.ts";
 
@@ -80,6 +81,11 @@ export function classifyAccessHttpFailure(status: number, installationRead: bool
   return status >= 500 ? "unavailable" : "protocol";
 }
 
+// 只重试只读验证的临时网络故障；登录失效、协议错误和取消立即停止。
+export function accessVerificationRetryDelay(error: unknown, attempt: number, signal: AbortSignal): number | null {
+  return !signal.aborted && attempt === 0 && error instanceof AccessVerificationError && error.code === "access.remote_unavailable" ? 500 : null;
+}
+
 // 只验证现有安装身份；不注册设备、不上传系统信息、不启动 OAuth。
 export class AccessInstallationVerifier {
   readonly #onNonActive: (() => void) | undefined;
@@ -134,13 +140,25 @@ export class AccessInstallationVerifier {
     // 401 已证明该凭据非活跃，额外回读失败不恢复其准入权限。
     throw new AccessNonActiveError(credential.fingerprint, state);
   }
-  async #request(path: string, credential: AccessInstallationCredential, signal: AbortSignal): Promise<unknown> {
+  async #requestOnce(path: string, credential: AccessInstallationCredential, signal: AbortSignal): Promise<unknown> {
     const response = await this.#response(path, credential, signal);
     if (response.status === 200) return response.value;
     const failure = classifyAccessHttpFailure(response.status, path.startsWith("/installations/"));
     if (failure === "non_active") return this.#nonActive(credential);
     throw new AccessVerificationError(failure === "unavailable" ? "access.remote_unavailable" : "access.protocol_mismatch", 503,
       { endpoint: path.startsWith("/installations/") ? "/installations/{id}" : path, http_status: response.status });
+  }
+
+  async #request(path: string, credential: AccessInstallationCredential, signal: AbortSignal): Promise<unknown> {
+    for (let attempt = 0; ; attempt++) {
+      signal.throwIfAborted();
+      const outcome = await this.#requestOnce(path, credential, signal).then(value => ({ ok: true as const, value }), error => ({ ok: false as const, error: error as unknown }));
+      if (outcome.ok) return outcome.value;
+      signal.throwIfAborted();
+      const wait = accessVerificationRetryDelay(outcome.error, attempt, signal);
+      if (wait === null) throw outcome.error;
+      await delay(wait, undefined, { signal });
+    }
   }
 
   async #verify(credential: AccessInstallationCredential, signal: AbortSignal) {

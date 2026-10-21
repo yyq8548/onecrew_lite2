@@ -32,12 +32,13 @@ export interface DiscoveryAdvanceResult {
 export class DiscoveryAdvanceExecutor {
   readonly accounts: AccountContextService; readonly repositories: DiscoveryRepositoryResolver; readonly directories: AccountDatabases; readonly dependencies: DiscoveryDependencyResolver | undefined;
   constructor(accounts: AccountContextService, repositories: DiscoveryRepositoryResolver, directories: AccountDatabases, dependencies?: DiscoveryDependencyResolver) { this.accounts = accounts; this.repositories = repositories; this.directories = directories; this.dependencies = dependencies; }
-  async advance(context: AccountContext, raw: unknown, deferred: readonly string[] = [], scoring: readonly string[] = [], signal: AbortSignal = context.signal): Promise<DiscoveryAdvanceResult> {
+  async advance(context: AccountContext, raw: unknown, deferred: readonly string[] = [], scoring: readonly string[] = [], signal: AbortSignal = context.signal, onAttempt?: (result: DiscoveryAdvanceResult) => void): Promise<DiscoveryAdvanceResult> {
     const input = discoveryAdvanceInput.parse(raw); this.accounts.assertCurrent(context); signal.throwIfAborted();
     const owned = await this.repositories.resolve(context); owned.assertOwned(); this.accounts.assertCurrent(context);
     if (owned.owner.accountId !== context.principal.user.id || owned.owner.tenantId !== context.principal.tenantId || owned.owner.baseId !== context.principal.baseId) throw new Error("discovery_repository_owner_mismatch");
     const excluded = [...new Set([...input.excluded_platforms, ...RETIRED_CREATOR_SOURCES])], step = owned.repository.planStepScoring(input.campaign_id, input.expected_revision, excluded, deferred, scoring);
     const result: DiscoveryAdvanceResult = { step, campaign: owned.repository.getPlan(input.campaign_id), counts: owned.repository.countCandidates(input.campaign_id), transcript: null, profile: null, content: null, identity: null };
+    onAttempt?.(result);
     if (!["busy", "target_reached", "budget_exhausted", "needs_evidence", "search_exhausted"].includes(step.kind)) {
       if (!this.dependencies) throw new Error("discovery_browser_unavailable");
       const environment = await this.dependencies.reads(context); this.accounts.assertCurrent(context); owned.assertOwned(); signal.throwIfAborted();

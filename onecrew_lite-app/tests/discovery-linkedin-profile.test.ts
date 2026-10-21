@@ -58,6 +58,11 @@ test("真实LinkedIn已读账号在读取前按已观察主页排除，直接cla
     db.prepare(`INSERT INTO ${table}(${columns.join(",")}) VALUES(${columns.map(() => "?").join(",")})`).run(...Object.values(value));
   }
   const otherHit = String(post.hit.id);
+  const beforePreflight = repository.getPlan(campaign);
+  assert.equal(repository.getProfileSource(campaign, otherHit).profile_ref, post.hit.profile_ref);
+  assert.throws(() => repository.getProfileSource("other-campaign", otherHit), /discovery_profile_source_unobserved/u);
+  assert.deepEqual(repository.getPlan(campaign), beforePreflight);
+  assert.equal(db.prepare("SELECT COUNT(*) AS count FROM discovery_profile_reads").get()!.count, 0);
   assert.equal(repository.nextProfileHit(campaign), otherHit);
   const claim = repository.claimProfile(campaign, 1, otherHit);
   assert.equal(claim.call_number, before.used_calls + 1);
@@ -83,6 +88,20 @@ test("真实Ray主页职位可独立审核，空简介和没有近期帖子不�
   assert.equal(new DiscoveryContentRepository(db).nextNative(campaign, "linkedin"), null);
   db.prepare("DELETE FROM discovery_search_authors WHERE search_hit_id=?").run(hit);
   assert.throws(() => repository.prepareReviewMaterial(campaign, 1, hit), /author_binding_unavailable/);
+});
+
+test("真实LinkedIn资料领取后可保存页面超时回执，保留错误码并停止重复读取该账号", async t => {
+  const { db, repository } = await replay(t, false);
+  db.prepare("DELETE FROM discovery_profile_reads WHERE search_hit_id=?").run(hit);
+  db.prepare("DELETE FROM discovery_candidates WHERE id=?").run(candidate);
+  const before = repository.getPlan(campaign).used_calls;
+  const claim = repository.claimProfile(campaign, 1, hit);
+  const receipt = repository.finishProfile(claim, null, "linkedin_profile_timeout");
+  assert.equal(receipt.status, "failed");
+  assert.equal(receipt.stop_code, "linkedin_profile_timeout");
+  assert.equal(repository.getPlan(campaign).used_calls, before + 1);
+  assert.equal(repository.getPlan(campaign).platform_runs[0]!.status, "completed");
+  assert.equal(repository.nextProfileHit(campaign), null);
 });
 
 test("真实Ray主页完成后先评分，不自动读取帖子，不消耗读取预算", async t => {

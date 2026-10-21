@@ -12,12 +12,16 @@ export class DiscoveryProfileExecutor {
   async readOnce(context: AccountContext, input: { campaign_id: string; expected_revision: number; search_hit_id: string }) {
     this.#accounts.assertCurrent(context); const owned = await this.#repositories.resolve(context); owned.assertOwned(); this.#accounts.assertCurrent(context);
     if (owned.owner.accountId !== context.principal.user.id || owned.owner.tenantId !== context.principal.tenantId || owned.owner.baseId !== context.principal.baseId) throw new Error("discovery_profile_repository_owner_mismatch");
-    const campaign = owned.repository.getPlan(input.campaign_id), claim = owned.repository.claimProfile(input.campaign_id, input.expected_revision, input.search_hit_id);
+    const campaign = owned.repository.getPlan(input.campaign_id);
+    if (campaign.phase !== "active" || campaign.revision !== input.expected_revision) throw new Error("discovery_profile_not_approved");
+    const pending = owned.repository.getProfileSource(input.campaign_id, input.search_hit_id);
+    const browser = await this.#browsers.resolve(context, pending.profile_ref); await browser.assertCurrent();
+    this.#accounts.assertCurrent(context); owned.assertOwned();
+    const claim = owned.repository.claimProfile(input.campaign_id, input.expected_revision, input.search_hit_id);
     const observed = await (async () => {
       if (RETIRED_CREATOR_SOURCES.includes(claim.platform)) throw new OpenCliError("opencli_read_command_unavailable");
       this.#accounts.assertCurrent(context); owned.assertOwned();
       if (this.#reader.version !== "1.8.8" || campaign.opencli_version !== this.#reader.version) throw new OpenCliError("opencli_version_changed");
-      const browser = await this.#browsers.resolve(context, claim.profile_ref); await browser.assertCurrent();
       if (browser.profile !== claim.profile_ref) throw new Error("discovery_browser_profile_mismatch");
       this.#accounts.assertCurrent(context); owned.assertOwned();
       const value = claim.platform === "twitter" ? await this.#reader.twitterIdentityProfile(browser, claim.author_id) : claim.platform === "facebook" && facebookSourceValid(claim.source_url) ? await this.#reader.facebookNativeProfile(browser, claim.author_id, claim.source_url) : await this.#reader.creatorProfileEvidence(browser, claim.platform, claim.author_id, claim.author_url);

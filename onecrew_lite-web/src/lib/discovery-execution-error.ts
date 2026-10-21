@@ -4,6 +4,15 @@ export function discoveryProviderFailureKey(code: string) {
 }
 export function discoveryExecutionFailureKey(code?: string) {
   switch (code) {
+    case "access.remote_unavailable": return "accountVerificationUnavailable";
+    case "access.login_required":
+    case "access.revoked":
+    case "access.unauthorized":
+    case "access.account_changed": return "queryAccountRequired";
+    case "access.invalid_response":
+    case "access.protocol_mismatch":
+    case "access.credential_store_unavailable":
+    case "access.migration_verification_expired": return "accountVerificationInvalid";
     case "opencli_cancel_pending": return "browserCancelPending";
     case "discovery_repository_busy":
     case "creator_repository_overloaded":

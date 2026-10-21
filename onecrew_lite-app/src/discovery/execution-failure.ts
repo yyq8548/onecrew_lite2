@@ -11,7 +11,9 @@ safe.add("opencli_cancel_pending");
 for (const code of ["provider_request_failed", "provider_response_http_error", "provider_endpoint_not_found", "provider_response_redirected", "provider_response_invalid_json", "provider_response_shape_invalid", "provider_source_unavailable", "youtube_video_unavailable", "youtube_watch_layout_unsupported", "youtube_author_identity_invalid", "youtube_description_unavailable", "discovery_draft_intent_invalid", "discovery_draft_scope_invalid"]) safe.add(code);
 for (const code of ["review_requirements_invalid", "review_requirements_incomplete", "review_requirements_mismatch", "review_requirement_citation_invalid"]) deferred.add(code);
 for (const code of ["discovery_repository_busy", "discovery_plan_missing", "discovery_repository_stopped", "discovery_repository_read_failed"]) safe.add(code);
+for (const code of ["access.remote_unavailable", "access.login_required", "access.revoked", "access.unauthorized", "access.account_changed", "access.invalid_response", "access.protocol_mismatch", "access.credential_store_unavailable", "access.migration_verification_expired"]) safe.add(code);
 export function discoveryExecutionFailureCode(error: unknown): string {
+  for (let depth = 0; depth < 4 && error instanceof AggregateError && error.errors.length === 1; depth++) error = error.errors[0];
   if (error instanceof Error && "code" in error) {
     if (error.code === "ERR_SQLITE_ERROR" && "errcode" in error && typeof error.errcode === "number") {
       const primary = error.errcode & 0xff;

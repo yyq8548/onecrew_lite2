@@ -4,6 +4,7 @@ import { isDeepStrictEqual } from "node:util";
 import { z } from "zod";
 import { parseApplicationJson, stringifyApplicationJson } from "../contracts/application-json.ts";
 import { validateCreatorSchema } from "../storage/creator-schema.ts";
+import { PLATFORM_READ_FAILURE_CODES } from "../platforms/opencli/errors.ts";
 import { facebookSourceValid } from "../platforms/opencli/facebook-profile.ts";
 import { validateDiscoveryPinterestProfile } from "./pinterest-material.ts";
 import { validateSavedDiscoveryInstagramProfile } from "./contact-profile-contracts.ts";
@@ -18,6 +19,7 @@ const record = z.record(text, z.unknown());
 export const discoveryProfileClaim = z.strictObject({ campaign_id: text, expected_revision: u32, search_hit_id: text, platform: text, profile_ref: text, author_id: text, author_url: text, source_url: text, call_number: u32 });
 export type DiscoveryProfileClaim = z.infer<typeof discoveryProfileClaim>;
 const profileStops = new Set(["opencli_timeout", "opencli_output_too_large", "opencli_version_changed", "opencli_daemon_unavailable", "opencli_extension_unavailable", "opencli_profile_unavailable", "opencli_command_unavailable", "opencli_invalid_output", "opencli_invalid_input", "opencli_unavailable", "opencli_command_failed", "opencli_risk_control", "opencli_auth_required"]);
+for (const code of PLATFORM_READ_FAILURE_CODES) if (code.startsWith("linkedin_profile_") || code.startsWith("facebook_profile_")) profileStops.add(code);
 export interface DiscoveryProfileReceipt { claim: DiscoveryProfileClaim; status: string; native_profile: Record<string, unknown> | null; stop_code: string | null; captured_at: number | bigint }
 const sourcePlatforms = ["bilibili", "tiktok", "twitter", "reddit", "facebook", "instagram", "weibo", "bluesky", "zhihu", "hackernews", "pinterest", "pixiv", "linkedin"];
 
@@ -54,6 +56,11 @@ export class DiscoveryProfileRepository {
     return { claim: { campaign_id: campaign, search_hit_id: hit, expected_revision: row.expected_revision, platform: row.platform, profile_ref: row.profile_ref, author_id: row.author_id, author_url: row.author_url, source_url: row.source_url, call_number: row.call_number }, status: row.status, native_profile: row.native_profile_json === null ? null : record.parse(parseApplicationJson(row.native_profile_json)), stop_code: row.stop_code, captured_at: row.updated_at };
   }
   get(campaign: string, hit: string): DiscoveryProfileReceipt { return this.#load(campaign, hit); }
+  source(campaign: string, hit: string) {
+    const source = this.#db.prepare("SELECT h.platform,h.profile_ref,a.author_id,a.author_url,h.source_url FROM discovery_search_hits h JOIN discovery_search_authors a ON a.search_hit_id=h.id WHERE h.id=? AND h.discovery_campaign_id=?").get(hit, campaign);
+    if (!source || !sourcePlatforms.includes(text.parse(source.platform))) throw new Error("discovery_profile_source_unobserved");
+    return discoveryProfileClaim.omit({ campaign_id: true, expected_revision: true, search_hit_id: true, call_number: true }).parse(source);
+  }
   next(campaign: string, excludedPlatforms: readonly string[] = [], heldHits: readonly string[] = []): string | null {
     const held = [...heldHits, ...discoveryReadExcludedHits(this.#db, campaign, "profile")];
     const row = this.#db.prepare(`SELECT h.id FROM discovery_search_hits h JOIN discovery_search_authors a ON a.search_hit_id=h.id
@@ -101,8 +108,7 @@ export class DiscoveryProfileRepository {
       const head = z.object({ used_calls: u32, max_calls: u32.nullable() }).parse(rawHead);
       if (head.max_calls !== null && head.used_calls >= head.max_calls) throw new Error("discovery_budget_exhausted");
       if (this.#db.prepare("SELECT EXISTS(SELECT 1 FROM discovery_platform_runs WHERE discovery_campaign_id=? AND status='searching') AS active").get(campaign)!.active === 1) throw new Error("discovery_read_active");
-      const source = this.#db.prepare("SELECT h.platform,h.profile_ref,a.author_id,a.author_url,h.source_url FROM discovery_search_hits h JOIN discovery_search_authors a ON a.search_hit_id=h.id WHERE h.id=? AND h.discovery_campaign_id=?").get(hit, campaign);
-      if (!source || !sourcePlatforms.includes(text.parse(source.platform))) throw new Error("discovery_profile_source_unobserved");
+      const source = this.source(campaign, hit);
       if (this.#db.prepare("SELECT EXISTS(SELECT 1 FROM json_each(v.criteria_json,'$.excluded_accounts') excluded WHERE json_extract(excluded.value,'$.profile_url')=?) AS excluded FROM discovery_campaign_revisions v WHERE v.discovery_campaign_id=? AND v.revision=? AND v.approved_at IS NOT NULL").get(source.author_url!, campaign, revision)!.excluded === 1) throw new Error("discovery_profile_account_excluded");
       const claim = discoveryProfileClaim.parse({ ...source, campaign_id: campaign, expected_revision: revision, search_hit_id: hit, call_number: head.used_calls + 1 });
       const run = z.object({ status: text, stop_code: text.nullable(), active_query: text.nullable() }).parse(this.#db.prepare("SELECT status,stop_code,active_query FROM discovery_platform_runs WHERE discovery_campaign_id=? AND platform=? AND profile_ref=?").get(campaign, claim.platform, claim.profile_ref));
