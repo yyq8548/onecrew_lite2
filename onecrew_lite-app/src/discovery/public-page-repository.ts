@@ -6,6 +6,7 @@ import { discoveryPublicPageInput, discoveryEligibleContactAuthor, discoveryNati
 import { discoveryCommunityInvite, discoveryObservesLink } from "./contact-navigation.ts";
 import { discoveryReadPlatformStatus, sourceLocalReadFailure } from "./stops.ts";
 import { getDiscoverySavedPublicPage } from "./saved-read-repository.ts";
+import { NATIVE_READ_FAILURE_CODES, PLATFORM_READ_FAILURE_CODES } from "../platforms/opencli/errors.ts";
 
 const text = z.string(), u32 = z.number().int().min(0).max(4294967295);
 export const discoveryPublicPageClaim = z.strictObject({ input: discoveryPublicPageInput, search_hit_id: text, source_url: text, call_number: u32 });
@@ -13,16 +14,22 @@ export type DiscoveryPublicPageClaim = z.infer<typeof discoveryPublicPageClaim>;
 export const finishDiscoveryPublicPageInput = z.strictObject({ hidden_email_available: z.boolean(), claim: discoveryPublicPageClaim, document_url: text.nullable(), title: text, markdown_excerpt: text, truncated: z.boolean(), stop_code: text.nullable() });
 export type FinishDiscoveryPublicPageInput = z.infer<typeof finishDiscoveryPublicPageInput>;
 const stopCodes = new Set(["opencli_timeout", "opencli_output_too_large", "opencli_version_changed", "opencli_daemon_unavailable", "opencli_extension_unavailable", "opencli_profile_unavailable", "opencli_command_unavailable", "opencli_invalid_output", "opencli_invalid_input", "opencli_unavailable", "opencli_command_failed", "opencli_risk_control", "opencli_auth_required"]);
-export function validateDiscoveryPublicPageResult(raw: unknown, emptyNativeContact = false): FinishDiscoveryPublicPageInput {
-  const input = finishDiscoveryPublicPageInput.parse(raw);
-  if (input.hidden_email_available && (input.stop_code !== null || input.document_url !== input.claim.input.requested_url || !input.claim.input.requested_url.startsWith("https://www.youtube.com/channel/UC"))) throw new Error("Hidden email entry requires a successful native channel receipt");
-  if (Buffer.byteLength(input.markdown_excerpt) > 20_000 || [...input.title].length > 500 || input.markdown_excerpt.includes("\0")) throw new Error("Public page result exceeds bounded evidence limits");
+for (const code of [...NATIVE_READ_FAILURE_CODES, ...PLATFORM_READ_FAILURE_CODES]) stopCodes.add(code);
+function publicPageEvidenceIssue(input: FinishDiscoveryPublicPageInput, emptyNativeContact: boolean): string | null {
+  if (input.hidden_email_available && (input.stop_code !== null || input.document_url !== input.claim.input.requested_url || !input.claim.input.requested_url.startsWith("https://www.youtube.com/channel/UC"))) return "Hidden email entry requires a successful native channel receipt";
+  if (Buffer.byteLength(input.markdown_excerpt) > 20_000 || [...input.title].length > 500 || input.markdown_excerpt.includes("\0")) return "Public page result exceeds bounded evidence limits";
   if (input.stop_code !== null) {
-    if (!stopCodes.has(input.stop_code) || input.document_url !== null || input.title !== "" || input.markdown_excerpt !== "" || input.truncated) throw new Error("Failed public page reads cannot contain successful evidence");
+    if (!stopCodes.has(input.stop_code) || input.document_url !== null || input.title !== "" || input.markdown_excerpt !== "" || input.truncated) return "Failed public page reads cannot contain successful evidence";
   } else {
     const url = input.document_url === null ? null : URL.parse(input.document_url);
-    if (!input.title.trim() || !input.markdown_excerpt.trim() && !emptyNativeContact || input.document_url === null || Buffer.byteLength(input.document_url) > 2048 || !url || url.protocol !== "https:" || !url.hostname || url.username || url.password || url.port) throw new Error("Successful public page reads require attributed content");
+    if (!input.title.trim() || !input.markdown_excerpt.trim() && !emptyNativeContact || input.document_url === null || Buffer.byteLength(input.document_url) > 2048 || !url || url.protocol !== "https:" || !url.hostname || url.username || url.password || url.port) return "Successful public page reads require attributed content";
   }
+  return null;
+}
+export function validateDiscoveryPublicPageResult(raw: unknown, emptyNativeContact = false): FinishDiscoveryPublicPageInput {
+  const input = finishDiscoveryPublicPageInput.parse(raw);
+  const issue = publicPageEvidenceIssue(input, emptyNativeContact);
+  if (issue !== null) throw new Error(issue);
   return input;
 }
 
@@ -144,12 +151,12 @@ export class DiscoveryPublicPageRepository {
     });
   }
   settle(input: FinishDiscoveryPublicPageInput) {
-    // 原 owner 将无效成功材料结算为明确失败；第二次失败同时保留两项异常。
-    try { return this.finish(input); }
-    catch (original) {
-      try { return this.finish({ hidden_email_available: false, claim: input.claim, document_url: null, title: "", markdown_excerpt: "", truncated: false, stop_code: "opencli_invalid_output" }); }
-      catch (cleanup) { throw new AggregateError([original, cleanup], "discovery_public_page_settlement_failed"); }
-    }
+    const parsed = finishDiscoveryPublicPageInput.parse(input);
+    if (parsed.stop_code !== null) return this.finish(parsed);
+    const emptyNativeContact = parsed.truncated && this.#transaction(false, () => discoveryLinkedinContactPage(this.#db, parsed.claim.input, parsed.document_url));
+    // 仅无效的提供方材料转换为读取失败；归属、事务和陈旧领取异常原样抛出。
+    if (publicPageEvidenceIssue(parsed, emptyNativeContact) !== null) return this.finish({ hidden_email_available: false, claim: parsed.claim, document_url: null, title: "", markdown_excerpt: "", truncated: false, stop_code: "opencli_invalid_output" });
+    return this.finish(parsed);
   }
   interrupt(raw: DiscoveryPublicPageClaim): void {
     const claim = discoveryPublicPageClaim.parse(raw);

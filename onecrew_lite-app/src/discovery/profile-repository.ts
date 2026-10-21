@@ -61,7 +61,7 @@ export class DiscoveryProfileRepository {
     if (!source || !sourcePlatforms.includes(text.parse(source.platform))) throw new Error("discovery_profile_source_unobserved");
     return discoveryProfileClaim.omit({ campaign_id: true, expected_revision: true, search_hit_id: true, call_number: true }).parse(source);
   }
-  next(campaign: string, excludedPlatforms: readonly string[] = [], heldHits: readonly string[] = []): string | null {
+  next(campaign: string, excludedPlatforms: readonly string[] = [], heldHits: readonly string[] = [], platform: string | null = null): string | null {
     const held = [...heldHits, ...discoveryReadExcludedHits(this.#db, campaign, "profile")];
     const row = this.#db.prepare(`SELECT h.id FROM discovery_search_hits h JOIN discovery_search_authors a ON a.search_hit_id=h.id
       JOIN discovery_campaigns c ON c.id=h.discovery_campaign_id JOIN discovery_campaign_revisions v ON v.discovery_campaign_id=c.id AND v.revision=c.current_revision
@@ -70,6 +70,7 @@ export class DiscoveryProfileRepository {
       WHERE c.id=?1 AND c.phase='active' AND v.approved_at IS NOT NULL AND (c.max_calls IS NULL OR c.used_calls<c.max_calls)
         AND h.platform IN ('bilibili','tiktok','twitter','reddit','facebook','instagram','weibo','bluesky','zhihu','hackernews','pinterest','pixiv','linkedin')
         AND h.platform NOT IN(SELECT value FROM json_each(?2)) AND h.id NOT IN(SELECT value FROM json_each(?3))
+        AND (?4 IS NULL OR h.platform=?4)
         AND NOT EXISTS(SELECT 1 FROM json_each(v.criteria_json,'$.excluded_accounts') excluded WHERE json_extract(excluded.value,'$.profile_url')=a.author_url)
         AND NOT EXISTS(SELECT 1 FROM discovery_identity_reads i WHERE i.search_hit_id=h.id AND i.status!='completed')
         AND NOT EXISTS(SELECT 1 FROM discovery_platform_runs b WHERE b.discovery_campaign_id=c.id AND b.status='searching')
@@ -77,7 +78,7 @@ export class DiscoveryProfileRepository {
       ORDER BY CASE WHEN p.status='reading' THEN 0 ELSE 1 END,
         CASE WHEN h.platform='linkedin' THEN (SELECT COUNT(*) FROM discovery_profile_reads seen JOIN discovery_search_hits origin ON origin.id=seen.search_hit_id
           WHERE seen.discovery_campaign_id=c.id AND seen.platform=h.platform AND seen.profile_ref=h.profile_ref AND origin.search_keyword=h.search_keyword) ELSE 0 END,
-        h.captured_at,COALESCE((SELECT position FROM discovery_search_positions WHERE search_hit_id=h.id),9223372036854775807),h.id LIMIT 1`).get(campaign, stringifyApplicationJson(excludedPlatforms), stringifyApplicationJson(held));
+        h.captured_at,COALESCE((SELECT position FROM discovery_search_positions WHERE search_hit_id=h.id),9223372036854775807),h.id LIMIT 1`).get(campaign, stringifyApplicationJson(excludedPlatforms), stringifyApplicationJson(held), platform);
     return row ? text.parse(row.id) : null;
   }
   recoverInterrupted(): number {

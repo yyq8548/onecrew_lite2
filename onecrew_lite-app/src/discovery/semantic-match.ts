@@ -14,14 +14,15 @@ import type { DiscoveryRepositoryResolver, OwnedDiscoveryRepository } from "./se
 import type { SemanticStructuredClient, SemanticTimingPhase } from "./semantic-client.ts";
 import { structuredSemanticSchema } from "./semantic-planner.ts";
 import { DiscoveryScoreGate } from "./score-gate.ts";
-import { discoveryExecutionFailureCode, discoveryFindingFailureCodes } from "./execution-failure.ts";
+import { discoveryExecutionFailureCode, discoveryFindingFailureCodes, discoveryMatchFailure } from "./execution-failure.ts";
+import { applyDiscoveryProfessionalReview, buildDiscoveryProfessionalReviewPrompt, discoveryProfessionalReview } from "./professional-review.ts";
 import { discoveryScale } from "./qualification.ts";
 export { DISCOVERY_SCORE_CONCURRENCY } from "./score-gate.ts";
 
 const conciseFinding = discoveryReviewFinding.extend({ rationale: z.string().min(1).max(1000), citations: discoveryReviewFinding.shape.citations.max(8) });
 export const discoveryMatchProposal = z.strictObject({ selection: conciseFinding.extend({ criterion: z.literal("selection_fit"), match_level: z.null() }), quality_rating: conciseFinding.extend({ criterion: z.literal("quality_rating") }), language_only_pending: z.boolean(), requirement_findings: z.array(conciseFinding).max(32).default([]) });
 const RUBRIC_SHA256 = "7e8a0a14761c9ea86f5e9083dc68daa82cf9b504b86d39433ad7150cf2d2ae81";
-const LINKEDIN_EVIDENCE_POLICY = "linkedin-profile-or-post-v2";
+const LINKEDIN_EVIDENCE_POLICY = "linkedin-professional-review-v3";
 const object = (value: unknown): Record<string, unknown> => value !== null && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
 const u64 = (value: unknown): bigint | null => typeof value === "bigint" && value >= 0n && value <= 18446744073709551615n ? value : typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? BigInt(value) : null;
 export async function loadOriginalDiscoveryMatchRubric(path: string): Promise<string> {
@@ -68,6 +69,9 @@ export function buildDiscoveryMatchPrompt(objective: string, material: Discovery
   if (createHash("sha256").update(rubric).digest("hex") !== RUBRIC_SHA256) throw new Error("discovery_match_rubric_changed");
   const value = object(parseApplicationJson(Buffer.from(stringifyApplicationJson(rawValue)))), criteria = object(value.criteria);
   delete criteria.automatic_query_expansion; delete criteria.table_subject;
+  // 已核实账号排除由读取领取和最终资格校验执行，不向模型重复发送其他作者的资料。
+  const excludedAccounts = criteria.excluded_accounts;
+  if (Array.isArray(excludedAccounts)) { value.account_exclusion_enforced_by_application = true; delete criteria.excluded_accounts; }
   const languageStart = rubric.indexOf("Return language_only_pending=true ONLY"), instagramStart = rubric.indexOf("\nFor Instagram,");
   if (languageStart < 0 || instagramStart <= languageStart) throw new Error("discovery_match_rubric_changed");
   let selected = rubric.slice(0, languageStart);
@@ -110,7 +114,7 @@ export function discoveryMatchEvidenceKey(material: DiscoveryReviewMaterial, cou
 }
 export interface PreparedSemanticDiscoveryMatch { readonly evidenceKey: string }
 export type DiscoveryMatchPreparation = { state: "skipped" } | { state: "cached"; receipt: DiscoveryReviewReceipt } | { state: "model"; prepared: PreparedSemanticDiscoveryMatch };
-interface MatchPayload { context: AccountContext; owned: OwnedDiscoveryRepository; input: { campaign_id: string; expected_revision: number; search_hit_id: string }; material: DiscoveryReviewMaterial; prompt: string; observationKey: string }
+interface MatchPayload { context: AccountContext; owned: OwnedDiscoveryRepository; input: { campaign_id: string; expected_revision: number; search_hit_id: string }; material: DiscoveryReviewMaterial; prompt: string; objective: string; observationKey: string }
 
 export class DiscoverySemanticMatcher {
   readonly #accounts: AccountContextService; readonly #repositories: DiscoveryRepositoryResolver; readonly #client: SemanticStructuredClient; readonly #rubric: string;
@@ -149,10 +153,10 @@ export class DiscoverySemanticMatcher {
     }
     if (!reassess && discoveryNeedsInstagramContent(material, count)) return { state: "skipped" };
     const prepared = Object.freeze({ evidenceKey: key });
-    this.#prepared.set(prepared, { context, owned, input, material, observationKey: discoveryMatchEvidenceKey(material, count, this.#rubric, false), prompt: buildDiscoveryMatchPrompt(campaign.brief, material, discoveryMatchPromptMaterial(material, count), this.#rubric) });
+    this.#prepared.set(prepared, { context, owned, input, material, objective: campaign.brief, observationKey: discoveryMatchEvidenceKey(material, count, this.#rubric, false), prompt: buildDiscoveryMatchPrompt(campaign.brief, material, discoveryMatchPromptMaterial(material, count), this.#rubric) });
     return { state: "model", prepared };
   }
-  async evaluate(context: AccountContext, prepared: PreparedSemanticDiscoveryMatch, onTiming?: (phase: SemanticTimingPhase | "commit", elapsedMs: number) => void): Promise<DiscoveryReviewReceipt | null> {
+  async evaluate(context: AccountContext, prepared: PreparedSemanticDiscoveryMatch, onTiming?: (phase: SemanticTimingPhase | "commit" | "professional_review", elapsedMs: number) => void): Promise<DiscoveryReviewReceipt | null> {
     const payload = this.#prepared.get(prepared); if (!payload || payload.context !== context) throw new Error("initial_match_preparation_not_owned");
     this.#assert(context, payload.owned);
     this.#prepared.delete(prepared);
@@ -161,7 +165,13 @@ export class DiscoverySemanticMatcher {
     try {
       let correction = "";
       for (let attempt = 0; attempt < 2; attempt++) {
-      const proposal = await this.#client.structured({ prompt: payload.prompt + correction, schema: structuredSemanticSchema(discoveryMatchProposal), decode: discoveryMatchProposal, planning: false, signal: context.signal, ...(onTiming ? { onTiming } : {}), assertCurrent: async () => { this.#assert(context, payload.owned); } });
+      let proposal = await this.#client.structured({ prompt: payload.prompt + correction, schema: structuredSemanticSchema(discoveryMatchProposal), decode: discoveryMatchProposal, planning: false, signal: context.signal, ...(onTiming ? { onTiming } : {}), assertCurrent: async () => { this.#assert(context, payload.owned); } }).then(value => value, error => { throw discoveryMatchFailure(error); });
+      if ((payload.material.native_platform ?? payload.material.hit.platform) === "linkedin" && proposal.selection.outcome === "supported") {
+        const started = performance.now();
+        const review = await this.#client.structured({ prompt: buildDiscoveryProfessionalReviewPrompt(payload.objective, payload.material), schema: structuredSemanticSchema(discoveryProfessionalReview), decode: discoveryProfessionalReview, planning: false, signal: context.signal, assertCurrent: async () => { this.#assert(context, payload.owned); } }).then(value => value, error => { throw discoveryMatchFailure(error); });
+        onTiming?.("professional_review", Math.floor(performance.now() - started));
+        proposal = applyDiscoveryProfessionalReview(payload.material, proposal, review);
+      }
       this.#assert(context, payload.owned);
       const current = payload.owned.repository.prepareInitialMatchMaterial(payload.input.campaign_id, payload.input.expected_revision, payload.input.search_hit_id);
       if (discoveryMatchEvidenceKey(current.material, current.count, this.#rubric, false) !== payload.observationKey) return null;

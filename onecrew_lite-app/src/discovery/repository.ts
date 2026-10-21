@@ -114,6 +114,9 @@ export class DiscoveryRepository {
       const transcript = this.nextTranscriptHit(campaign, excludedHits); if (transcript) return { kind: "read_transcript", profile_ref: transcript.profile_ref, search_hit_id: transcript.id };
       const language = this.nextLanguage(campaign, platform, excludedHits); return language ? { kind: "read_content", search_hit_id: language } : null;
     }
+    if (platform === "linkedin") {
+      const profile = this.nextProfileHit(campaign, [], excludedHits, platform); if (profile) return { kind: "read_profile", search_hit_id: profile };
+    }
     const content = this.nextContentHit(campaign, platform, excludedHits); if (content) return { kind: "read_content", search_hit_id: content };
     const profile = this.nextProfileHit(campaign, [], excludedHits); if (profile) return { kind: this.profileNeedsIdentity(campaign, profile) ? "read_identity" : "read_profile", search_hit_id: profile };
     if (platform === "facebook") { const identity = this.nextFacebookIdentity(campaign); if (identity && !held.has(identity)) return { kind: "read_facebook_identity", search_hit_id: identity }; }
@@ -171,7 +174,7 @@ export class DiscoveryRepository {
   interruptVideo(claim: DiscoveryVideoClaim) { return new DiscoveryVideoRepository(this.#db).interrupt(claim); }
   claimProfile(campaign: string, revision: number, hit: string) { return new DiscoveryProfileRepository(this.#db).claim(campaign, revision, hit); }
   getProfileSource(campaign: string, hit: string) { return new DiscoveryProfileRepository(this.#db).source(campaign, hit); }
-  nextProfileHit(campaign: string, excluded: readonly string[] = [], held: readonly string[] = []) { return new DiscoveryProfileRepository(this.#db).next(campaign, excluded, held); }
+  nextProfileHit(campaign: string, excluded: readonly string[] = [], held: readonly string[] = [], platform: string | null = null) { return new DiscoveryProfileRepository(this.#db).next(campaign, excluded, held, platform); }
   recoverInterruptedProfiles() { return new DiscoveryProfileRepository(this.#db).recoverInterrupted(); }
   finishProfile(claim: DiscoveryProfileClaim, native: unknown, stop: string | null) { return new DiscoveryProfileRepository(this.#db).finish(claim, native, stop); }
   interruptProfile(claim: DiscoveryProfileClaim) { return new DiscoveryProfileRepository(this.#db).interrupt(claim); }

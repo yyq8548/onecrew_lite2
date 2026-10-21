@@ -17,6 +17,7 @@ import { prepareDiscoveryReview } from "../src/discovery/review-submission.ts";
 import { buildDiscoveryMatchPrompt, discoveryMatchEvidenceKey, discoveryMatchPromptMaterial, loadBundledDiscoveryMatchRubric } from "../src/discovery/semantic-match.ts";
 import { linkedinConnections, linkedinProfilePlan, linkedinContactPlan } from "../src/platforms/opencli/linkedin.ts";
 import { DiscoveryPublicPageRepository, validateDiscoveryPublicPageResult } from "../src/discovery/public-page-repository.ts";
+import { PLATFORM_READ_FAILURE_CODES } from "../src/platforms/opencli/errors.ts";
 
 const row = z.record(z.string(), z.union([z.string(), z.number(), z.null()]));
 const captured = z.object({ plan: row, hit: row, author: row, profile: row, content: row, candidate: row }).parse(parseApplicationJson(readFileSync(new URL("./fixtures/linkedin-profile-or-post-20261020.json", import.meta.url))));
@@ -167,6 +168,24 @@ test("真实Ray联系浮层没有公开联系方式仍完成，普通空网页�
   assert.equal(repository.getPlan(campaign).used_calls, 1);
 });
 
+test("真实LinkedIn联系领取后保留原始超时分类，失败回执不再次读取且不重复计费", async t => {
+  const { repository, db } = await replay(t, false);
+  const real = z.object({ operator_account_id: z.string(), input: z.unknown() }).parse(parseApplicationJson(readFileSync(new URL("./fixtures/linkedin-profile-review-20261020.json", import.meta.url))));
+  repository.submitReview(real.operator_account_id, real.input);
+  const pages = new DiscoveryPublicPageRepository(db), input = pages.next(campaign);
+  assert.ok(input);
+  const claim = pages.claim(input), used = repository.getPlan(campaign).used_calls;
+  const failed = { hidden_email_available: false, claim, document_url: null, title: "", markdown_excerpt: "", truncated: false, stop_code: "linkedin_contact_timeout" };
+  for (const code of PLATFORM_READ_FAILURE_CODES) assert.equal(validateDiscoveryPublicPageResult({ ...failed, stop_code: code }).stop_code, code);
+  const receipt = pages.settle(failed);
+  assert.equal(receipt.status, "failed");
+  assert.equal(receipt.stop_code, "linkedin_contact_timeout");
+  assert.equal(repository.getPlan(campaign).used_calls, used);
+  assert.equal(repository.getPlan(campaign).platform_runs[0]!.status, "completed");
+  assert.equal(pages.next(campaign), null);
+  assert.throws(() => pages.claim(input), /attempted/u);
+});
+
 test("真实模型对Ex-Binance保留现任雇主缺口，仅此时安排帖子且等待新证据评分", async t => {
   const gap = z.object({ hit: row, author: row, profile: row, candidate: row }).parse(parseApplicationJson(readFileSync(new URL("./fixtures/linkedin-profile-gap-20261020.json", import.meta.url))));
   const { db, repository } = await replay(t, false, { ...captured, ...gap });
@@ -180,6 +199,31 @@ test("真实模型对Ex-Binance保留现任雇主缺口，仅此时安排帖子�
   assert.equal(pendingReview(db, campaign, 1, String(gap.candidate.id))?.state, "awaiting_score");
   db.exec("COMMIT");
   assert.equal(repository.getPlan(campaign).used_calls, 0);
+});
+
+test("真实LinkedIn候选先读未读主页，普通和评分期间调度均保留待补证动态且不重读评分作者", async t => {
+  const { db, repository } = await replay(t, false);
+  const gap = z.object({ hit: row, author: row, profile: row, candidate: row }).parse(parseApplicationJson(readFileSync(new URL("./fixtures/linkedin-profile-gap-20261020.json", import.meta.url))));
+  const post = z.object({ hit: row, author: row, profile: row }).parse(parseApplicationJson(readFileSync(new URL("./fixtures/linkedin-post-control-20261020.json", import.meta.url))));
+  for (const [table, values] of Object.entries({ discovery_search_hits: [gap.hit, post.hit], discovery_search_authors: [gap.author, post.author], discovery_profile_reads: [gap.profile], discovery_candidates: [gap.candidate] })) {
+    for (const value of values) {
+      const columns = Object.keys(value);
+      db.prepare(`INSERT INTO ${table}(${columns.join(",")}) VALUES(${columns.map(() => "?").join(",")})`).run(...Object.values(value));
+    }
+  }
+  const review = z.object({ operator_account_id: z.string(), input: z.unknown() }).parse(parseApplicationJson(readFileSync(new URL("./fixtures/linkedin-gap-review-20261020.json", import.meta.url))));
+  assert.equal(repository.submitReview(review.operator_account_id, review.input).verdict, "pending");
+  const unread = String(post.hit.id), gapHit = String(gap.hit.id), expected = { kind: "read_profile", search_hit_id: unread };
+  assert.equal(repository.nextContentHit(campaign, "linkedin"), gapHit);
+  assert.deepEqual(repository.planStep(campaign, 1), expected);
+  assert.deepEqual(repository.planStepScoring(campaign, 1, [], [], [hit]), expected);
+  assert.equal(repository.getPlan(campaign).used_calls, 0);
+  const claim = repository.claimProfile(campaign, 1, unread);
+  repository.finishProfile(claim, parseApplicationJson(String(post.profile.native_profile_json)), null);
+  assert.equal(repository.nextProfileHit(campaign), null);
+  assert.deepEqual(repository.planStep(campaign, 1), { kind: "read_content", search_hit_id: gapHit });
+  assert.deepEqual(repository.nextIndependentRead(campaign, 1, hit, [hit]), { kind: "read_content", search_hit_id: gapHit });
+  assert.equal(repository.getPlan(campaign).used_calls, 1);
 });
 
 test("真实OpenCLI读取分别保留1548位followers和500+connections，拒绝将下界写成精确总数", () => {

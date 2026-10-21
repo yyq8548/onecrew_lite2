@@ -57,6 +57,7 @@ test("public page provenance and permanent author binding reject before spending
     try {
       claimed.database.exec(corruption);
       assert.throws(() => claimed.repository.finish(completed()));
+      assert.throws(() => claimed.repository.settle(completed()), error => error instanceof Error && !(error instanceof AggregateError));
       assert.equal(claimed.database.prepare("SELECT status FROM discovery_public_page_reads").get()!.status, "reading");
       assert.equal(claimed.database.prepare("SELECT status FROM discovery_platform_runs").get()!.status, "searching");
     } finally { await claimed.close(); }
