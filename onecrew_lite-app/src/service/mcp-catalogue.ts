@@ -6,6 +6,7 @@ import { assertOperationAvailable } from "../contracts/retired-operations.ts";
 import { runtimeAssetPath } from "../packaging/runtime-context.ts";
 import { mcpSurface, type McpSurface } from "./mcp-sessions.ts";
 import { mcpEffect, mcpEntryId, mcpToolkit, mcpToolGetInput } from "./mcp-contracts.ts";
+import { discoveryContact } from "../discovery/library-material.ts";
 
 const object = z.record(z.string(), z.unknown());
 const metadata = z.object({ id: mcpEntryId, title: z.string(), summary: z.string(), aliases: z.array(z.string()), domain_id: z.string(), toolkit: mcpToolkit, surfaces: z.array(mcpSurface) });
@@ -57,6 +58,7 @@ export async function loadCurrentMcpRegistry(): Promise<McpCatalogueData> {
       const properties = schema.properties as Record<string, Record<string, unknown>>;
       if (properties.criterion?.type === "string" && Array.isArray(properties.criterion.enum) && properties.criterion.enum.includes("match_fit")) properties.criterion = { anyOf: [properties.criterion, structuredClone(requirementCriterion)] };
       if (properties.findings?.type === "array" && properties.findings.maxItems === 6) properties.findings.maxItems = 40;
+      if (properties.native_author_id && properties.normalized_value && properties.attribution && Array.isArray(properties.kind?.enum)) properties.kind.enum = [...discoveryContact.shape.kind.options];
     }
     Object.values(schema).forEach(updateDiscoverySchema);
   }

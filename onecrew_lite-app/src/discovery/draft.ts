@@ -17,7 +17,7 @@ export const prepareDiscoveryDraftInput = z.strictObject({
   refinement: z.strictObject({ campaign_id: text.min(1).max(128), expected_revision: z.number().int().positive().max(4294967295) }).nullish().transform(value => value ?? null),
 }).refine(value => !(value.read_budget && value.max_calls !== null) && new Set(value.scope_overrides.map(scope => scope.platform)).size === value.scope_overrides.length && Buffer.byteLength(value.brief) <= (value.refinement === null ? 4000 : 32000));
 const proposedCount = proposedDiscoveryConstraint(z.union([z.number().int().nonnegative().safe(), z.bigint().min(0n).max(18446744073709551615n)]));
-export const semanticDiscoveryDraft = z.strictObject({ table_subject: text.default(""), target_count: proposedCount, max_calls: proposedCount, contact_search_terms: z.array(text).default([]), min_subscribers_exclusive: z.boolean().default(false), intent: discoveryIntentProposal, scopes: z.array(z.strictObject({ platform: text, keywords: z.array(text) })) });
+export const semanticDiscoveryDraft = z.strictObject({ table_subject: text.default(""), target_count: proposedCount, max_calls: proposedCount, contact_search_terms: z.array(text).default([]), min_subscribers_exclusive: z.boolean().default(false), min_subscribers_in_requirements: z.boolean().default(false), intent: discoveryIntentProposal, scopes: z.array(z.strictObject({ platform: text, keywords: z.array(text) })) });
 export interface RegisteredDiscoverySource { readonly platform: string; readonly registered: boolean; readonly allowed_values: readonly string[]; readonly command?: string }
 export class DiscoveryDraftError extends Error { readonly code: string; readonly excerpts: readonly string[]; constructor(code: string, excerpts: readonly string[] = []) { super(code); this.code = code; this.excerpts = excerpts; } }
 export function isEnglishDiscoveryLanguage(value: string): boolean { return ["英文", "英语", "english", "en", "en-us", "en-gb"].includes(value.trim().toLowerCase()); }
@@ -87,8 +87,12 @@ export function buildDiscoveryDraft(raw: unknown, rawPlan: unknown, sources: rea
   }
   if (registered.some(source => !seen.has(source.platform) && !plan.intent.excluded_platforms.some(value => value.platform === source.platform))) invalid("coverage_incomplete");
   if (plan.contact_search_terms.length > 6 || plan.contact_search_terms.some(term => !term.trim() || [...term].length > 50 || /["():|<>\\/@\p{Cc}]/u.test(term))) invalid("plan_invalid");
-  const min = plan.intent.min_subscribers, threshold = input.min_followers_override ?? (min.state === "specified" ? min.value : min.state === "unrestricted" ? 0 : previous ? previous.criteria.min_subscribers ?? previous.criteria.min_followers ?? 0 : 2000);
+  const min = plan.intent.min_subscribers;
+  if (plan.min_subscribers_in_requirements && (min.state !== "unspecified" || !plan.intent.other_hard_conditions.length)) invalid("intent_invalid");
+  const thresholdSource = input.min_followers_override !== null || min.state !== "unspecified" ? "explicit" : plan.min_subscribers_in_requirements ? "requirements" : previous ? previous.criteria.min_subscribers_source : "default";
+  const threshold = input.min_followers_override ?? (plan.min_subscribers_in_requirements ? 0 : min.state === "specified" ? min.value : min.state === "unrestricted" ? 0 : previous ? previous.criteria.min_subscribers ?? previous.criteria.min_followers ?? 0 : plan.scopes.every(scope => scope.platform === "linkedin") ? 0 : 2000);
   const criteria: Record<string, unknown> = { category: inheritedText("category"), region: "", language: inheritedText("language"), min_subscribers: threshold, requires_ai_tool_demo: false, requires_public_tool_url: false };
+  if (thresholdSource !== undefined) criteria.min_subscribers_source = thresholdSource;
   if (plan.scopes.some(scope => scope.platform === "pinterest")) criteria.pinterest_min_monthly_views_exclusive = previous?.criteria.pinterest_min_monthly_views_exclusive ?? PINTEREST_MIN_MONTHLY_VIEWS_EXCLUSIVE;
   if (plan.intent.other_hard_conditions.length) criteria.requirements = plan.intent.other_hard_conditions;
   criteria.contact_preference = "public_email_first";

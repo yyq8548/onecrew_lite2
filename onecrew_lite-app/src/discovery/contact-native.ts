@@ -131,8 +131,16 @@ export function observeDiscoveryPublicPageContacts(database: DatabaseSync, campa
     if (material === null || !discoveryLookupPageMatchesMaterial(database, material, page)) return;
   }
   const nativeChannel = `https://www.youtube.com/channel/${author}`;
-  const attribution = /^UC[A-Za-z0-9_-]{22}$/u.test(author) && page.requested_url === nativeChannel && source === nativeChannel ? "author_published" : "unconfirmed";
+  const nativeLinkedin = discoveryLinkedinContactPage(database, { campaign_id: campaign, expected_revision: revision, candidate_id: page.candidate_id, profile_ref: page.profile_ref, requested_url: page.requested_url }, source);
+  const attribution = /^UC[A-Za-z0-9_-]{22}$/u.test(author) && page.requested_url === nativeChannel && source === nativeChannel || nativeLinkedin ? "author_published" : "unconfirmed";
   storeDiscoveryContacts(database, campaign, revision, page.candidate_id, extractDiscoveryContacts(page.markdown_excerpt, source, author, page.captured_at, attribution));
+}
+export function discoveryLinkedinContactPage(database: DatabaseSync, input: DiscoveryPublicPageInput, document: string | null): boolean {
+  snapshot(database);
+  if (document !== input.requested_url || !/^https:\/\/www\.linkedin\.com\/in\/[A-Za-z\d][A-Za-z\d_-]{0,127}\/overlay\/contact-info\/$/u.test(document)) return false;
+  const material = loadDiscoveryNativeContactMaterial(database, input);
+  return material !== null && material.hit.platform === "linkedin" && material.native_profile?.profile_url + "overlay/contact-info/" === document
+    && discoveryProfileContactFields(database, material).split("\n").includes(document);
 }
 export function observeDiscoveryHiddenEmail(database: DatabaseSync, campaign: string, revision: number, raw: z.infer<typeof discoveryPublicPageRead>): void {
   snapshot(database); const page = discoveryPublicPageRead.parse(raw);

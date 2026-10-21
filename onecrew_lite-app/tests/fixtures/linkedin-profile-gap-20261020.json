@@ -1,0 +1,48 @@
+{
+  "captured_from": "2026-10-20 actual Lauren profile; current employer unconfirmed in earlier saved review",
+  "hit": {
+    "id": "2c41fba8-477d-4a9e-90dc-2161689bc398",
+    "discovery_campaign_id": "602c0efd-6922-4999-9c99-79777b532150",
+    "platform": "linkedin",
+    "profile_ref": "d5pskwub",
+    "search_keyword": "Binance business development",
+    "source_url": "https://www.linkedin.com/in/eujin-lauren-lee-1022/",
+    "title": "Lauren Lee",
+    "author_label": "Lauren Lee",
+    "captured_at": 1792542733
+  },
+  "author": {
+    "search_hit_id": "2c41fba8-477d-4a9e-90dc-2161689bc398",
+    "author_id": "eujin-lauren-lee-1022",
+    "author_url": "https://www.linkedin.com/in/eujin-lauren-lee-1022/",
+    "observed_at": 1792542733
+  },
+  "profile": {
+    "search_hit_id": "2c41fba8-477d-4a9e-90dc-2161689bc398",
+    "discovery_campaign_id": "602c0efd-6922-4999-9c99-79777b532150",
+    "platform": "linkedin",
+    "profile_ref": "d5pskwub",
+    "author_id": "eujin-lauren-lee-1022",
+    "expected_revision": 1,
+    "call_number": 2,
+    "status": "completed",
+    "native_profile_json": "{\"adapter_version\":\"1.0.0\",\"author_handle\":\"eujin-lauren-lee-1022\",\"account_id\":\"ACoAACjQtOEBVpWHOdCrD9JLJqA7XSZAdOzUkH8\",\"author_label\":\"Lauren Lee\",\"profile_url\":\"https://www.linkedin.com/in/eujin-lauren-lee-1022/\",\"follower_count\":null,\"follower_text\":\"\",\"headline\":\"Ex-Binance, Bithumb Web3 Wallet Ecosystem Growth via Strategic Partnerships | Market Expansion | GTM Execution\",\"bio\":\"Crypto growth and ecosystem operator with experience at Binance, focused on building market expansion channels through strategic partnerships, ecosystem development, and GTM execution across Web3 infrastructure.ABD Ph.D. in Business, with international studies background. Fluent in Korean, Japanese, English, and Spanish\",\"public_links\":[],\"contact_links\":[\"https://www.linkedin.com/in/eujin-lauren-lee-1022/overlay/contact-info/\"],\"evidence_source\":\"visible_profile_header\",\"bio_truncated\":false}",
+    "stop_code": null,
+    "updated_at": 1792542741
+  },
+  "candidate": {
+    "id": "b4e21a5b-7f63-4954-a730-15cd3b44bdc5",
+    "discovery_campaign_id": "602c0efd-6922-4999-9c99-79777b532150",
+    "criteria_revision": 1,
+    "platform": "linkedin",
+    "source_profile_ref": "d5pskwub",
+    "platform_account_id": "ACoAACjQtOEBVpWHOdCrD9JLJqA7XSZAdOzUkH8",
+    "display_name": "Lauren Lee",
+    "profile_url": "https://www.linkedin.com/in/eujin-lauren-lee-1022/",
+    "verdict": "pending",
+    "evidence_json": "{\"assessment\":{\"match_rating\":null,\"reasons\":[\"initial_match_unrated\",\"requirement_unverified\"],\"subscribers_normalized\":null},\"author_identity_kind\":\"native_id\",\"author_identity_search_hit_id\":null,\"captured_at\":1792542741,\"profile_bio_status\":\"complete\",\"profile_bio_status_source_url\":\"https://www.linkedin.com/in/eujin-lauren-lee-1022/\",\"reviewed_match\":{\"language_only_pending\":false,\"level\":null,\"material_hash\":\"562d707ebaa1ba82876ec4fdcacf13b2d085faf46aa963a4cd4359e95e32a2e3\",\"native_author_id\":\"ACoAACjQtOEBVpWHOdCrD9JLJqA7XSZAdOzUkH8\",\"outcome\":\"insufficient\",\"policy_version\":\"initial-match-evaluation-v1\",\"reason\":\"公开简介显示其从事加密行业增长、战略合作和市场拓展，并具有 Binance 工作经历，符合商务、BD 和 Marketing 的职能方向。此次仅依据已保存样本进行初步评估，未检查其完整发布历史；简介中的工作经历无法确认其目前任职于指定五家公司之一，因此暂不评级，粉丝数和联系方式不影响此次判断。\",\"review_id\":\"013844b3-59d5-4a6f-a923-c126a916610c\",\"source_url\":\"https://www.linkedin.com/in/eujin-lauren-lee-1022/\",\"verified\":true},\"reviewed_requirements\":[{\"criteria_revision\":1,\"index\":0,\"material_hash\":\"562d707ebaa1ba82876ec4fdcacf13b2d085faf46aa963a4cd4359e95e32a2e3\",\"native_author_id\":\"ACoAACjQtOEBVpWHOdCrD9JLJqA7XSZAdOzUkH8\",\"outcome\":\"insufficient\",\"reason\":\"公开职业简介支持其具有 Binance 经历，并从事增长、战略合作和 GTM 工作，但“experience at Binance”未说明当前雇主，尚不能核实其目前任职于 Binance、OKX、Bitget、Bybit 或 Gate.io。\",\"requirement\":{\"description\":\"人员须任职于币安（Binance）、OKX、Bitget、Bybit 或 Gate.io，依据公开职业资料核实公司关联。\",\"excerpt\":\"币安（Binance）、OKX、Bitget、Bybit、Gate.io 的商务、BD 和 Marketing 人员\"},\"review_id\":\"013844b3-59d5-4a6f-a923-c126a916610c\",\"source_url\":\"https://www.linkedin.com/in/eujin-lauren-lee-1022/\"}],\"source_urls\":[\"https://www.linkedin.com/in/eujin-lauren-lee-1022/\",\"https://www.linkedin.com/in/eujin-lauren-lee-1022/\"],\"subscribers_raw\":null,\"subscribers_source_url\":\"https://www.linkedin.com/in/eujin-lauren-lee-1022/\"}",
+    "created_at": 1792542741,
+    "updated_at": 1792542766,
+    "source_platform": "linkedin"
+  }
+}

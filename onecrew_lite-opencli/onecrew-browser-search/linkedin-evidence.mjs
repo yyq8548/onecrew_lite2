@@ -6,6 +6,17 @@ export function linkedinProfileTarget(handle) {
   return `https://www.linkedin.com/in/${handle}/`;
 }
 
+export function linkedinConnections(raw) {
+  if (typeof raw !== 'string' || new TextEncoder().encode(raw).length > 100 || raw.includes('\0')) throw new Error('ONECREW_LINKEDIN_INVALID');
+  raw = raw.trim();
+  if (!raw) return null;
+  const match = /^(0|[1-9]\d*|[1-9]\d{0,2}(?:,\d{3})+)(\+)?\s*(?:connections?|位好友|位联系人|位人脉)$/i.exec(raw);
+  if (!match) return {raw, lower:null, upper:null};
+  const lower = Number(match[1].replaceAll(',', ''));
+  if (!Number.isSafeInteger(lower)) throw new Error('ONECREW_LINKEDIN_INVALID');
+  return {raw, lower, upper:match[2] ? null : lower};
+}
+
 export function projectLinkedinProfile(data, handle) {
   const source = linkedinProfileTarget(handle);
   const invalid = () => { throw new Error('ONECREW_LINKEDIN_INVALID'); };
@@ -35,6 +46,7 @@ export function projectLinkedinProfile(data, handle) {
   return {adapter_version:'1.0.0', author_handle:handle, account_id:data.account_id,
     author_label:data.author_label.trim(), profile_url:source, follower_count:followers,
     follower_text:data.follower_text.trim(), headline:data.headline, bio:data.bio,
+    ...(data.connection_text !== undefined ? {connections:linkedinConnections(data.connection_text)} : {}),
     public_links:[...new Set(data.public_links)], contact_links:data.contact_links,
     evidence_source:'visible_profile_header', bio_truncated:data.bio_truncated ?? true};
 }
@@ -113,6 +125,10 @@ export function observeLinkedinProfile(source, handle, contactOverlay = false) {
   }
   if(followerTexts.size>1) throw new Error('ONECREW_LINKEDIN_INVALID');
   const count=[...followerTexts][0]||'';
+  const connectionTexts = new Set([...header.querySelectorAll('p,li,div')].filter(visible).map(node=>node.textContent.trim())
+    .filter(value=>/^(?:\d[\d,]*\+?)\s*(?:connections?|位好友|位联系人|位人脉)$/i.test(value)));
+  if (connectionTexts.size > 1) throw new Error('ONECREW_LINKEDIN_INVALID');
+  const connectionText = [...connectionTexts][0] || '';
   // A stable section anchor is preferred. Translated headings are locators only;
   // the paragraph text remains original and is never synthesized or translated.
   const aboutLabels = new Set(['About','关于','關於','概要','소개','Acerca de','À propos','Info','Informazioni','Sobre','Over','Om','O mnie','O mně','Hakkında','О себе','Про себе','Tentang','Giới thiệu','نبذة']);
@@ -130,11 +146,11 @@ export function observeLinkedinProfile(source, handle, contactOverlay = false) {
     return text.trim();
   };
   const bio = about ? [...about.querySelectorAll('p')].filter(visible).map(originalText).filter(Boolean).join('\n') : '';
-  const headline = paragraphs.find(text => text && text !== count && !/^·|^(?:She|He|They)\//.test(text)
+  const headline = paragraphs.find(text => text && text !== count && text !== connectionText && !/^·|^(?:She|He|They)\//.test(text)
     && !['Contact info','联系信息','聯絡資訊'].includes(text)) || '';
   return {author_handle:handle, account_id:[...ids][0], profile_url:source,
     author_label:bounded(name.textContent,512), headline:bounded(headline,2000), bio:bounded(bio,8000),
-    follower_text:bounded(count,100), public_links:[...new Set(links)], contact_links:[...new Set(contact)], about_pending:!about,
+    follower_text:bounded(count,100), connection_text:bounded(connectionText,100), public_links:[...new Set(links)], contact_links:[...new Set(contact)], about_pending:!about,
     bio_truncated:!about || bio!==bounded(bio,8000) || [...about.querySelectorAll('button,[role="button"]')].some(node=>visible(node)&&/^(?:see more|show more|更多|展开|展開)$/i.test(node.textContent.trim()))};
 }
 

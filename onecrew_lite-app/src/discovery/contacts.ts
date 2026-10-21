@@ -53,7 +53,7 @@ function thirdParty(source: string, text: string): boolean {
 export function extractDiscoveryContacts(text: string, source: string, author: string, capturedAt: number | bigint, attribution: DiscoveryContact["attribution"]): DiscoveryContact[] {
   const url = URL.parse(source);
   if (Buffer.byteLength(text) > 20000 || !author || Buffer.byteLength(author) > 128 || Buffer.byteLength(source) > 2048 || capturedAt <= 0 || !url || url.protocol !== "https:" || !url.hostname || url.username || url.password) return [];
-  const contacts: DiscoveryContact[] = [], seen = new Set<string>();
+  const contacts: DiscoveryContact[] = [], seen = new Set<string>(), telegramBoundaries = new Set<number>();
   const sourceLine = (start: number, length: number) => {
     const beginning = text.lastIndexOf("\n", start - 1) + 1, newline = text.indexOf("\n", start + length), end = newline < 0 ? text.length : newline;
     return text.slice(Math.max(beginning, start - 150), Math.min(end, start + length + 150)).trim();
@@ -61,7 +61,11 @@ export function extractDiscoveryContacts(text: string, source: string, author: s
   const push = (kind: DiscoveryContact["kind"], original: string, normalized: string, excerpt: string) => { contacts.push({ kind, original_value: original, normalized_value: normalized, source_url: source, source_excerpt: excerpt, captured_at: capturedAt, native_author_id: author, attribution }); };
   for (const [kind, expression] of [["email", /[a-z0-9][a-z0-9.!#$%&'*+/=?^_`{|}~\-]*@[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+/giu], ["telegram", /https:\/\/(?:t\.me|telegram\.me)\/[a-z0-9_+/-]+(?:\?[a-z0-9_=&%\-]+)?/giu]] as const) {
     for (const match of text.matchAll(expression)) {
-      const original = match[0], start = match.index, end = start + original.length, before = [...text.slice(0, start)].at(-1), after = [...text.slice(end)][0];
+      let original = match[0]; const start = match.index;
+      const gluedLabel = kind === "email" && /Telegram$/iu.test(original) && /\.[a-z0-9-]{2,63}$/iu.test(original.slice(0, -8))
+        && /^[:：][ \t]*@?[a-z][a-z0-9_]{4,31}(?:$|[\s,，;；|])/iu.test(text.slice(start + original.length));
+      if (gluedLabel) { original = original.slice(0, -8); telegramBoundaries.add(start + original.length); }
+      const end = start + original.length, before = [...text.slice(0, start)].at(-1), after = gluedLabel ? undefined : [...text.slice(end)][0];
       if (before && /[A-Za-z0-9@/_]/u.test(before) || after && /[A-Za-z0-9@_…]/u.test(after) || text.slice(end).startsWith("...") || Buffer.byteLength(original) > 2048) continue;
       let normalized: string;
       if (kind === "email") { const at = original.lastIndexOf("@"), local = original.slice(0, at); if (local.length > 64 || original.length > 254 || local.endsWith(".") || local.includes("..")) continue; normalized = `${local}@${original.slice(at + 1).toLowerCase()}`; }
@@ -70,7 +74,8 @@ export function extractDiscoveryContacts(text: string, source: string, author: s
       push(kind, original, normalized, sourceLine(start, original.length));
     }
   }
-  for (const match of text.matchAll(/(?:^|[\s,，;；|])(?:telegram|tg|电报)[ \t]*[:：][ \t]*@?([a-z][a-z0-9_]{4,31})/gimu)) {
+  for (const match of text.matchAll(/(?:telegram|tg|电报)[ \t]*[:：][ \t]*@?([a-z][a-z0-9_]{4,31})/gimu)) {
+    if (match.index > 0 && !/[\s,，;；|]/u.test(text[match.index - 1]!) && !telegramBoundaries.has(match.index)) continue;
     const end = match.index + match[0].length, after = [...text.slice(end)][0]; if (after && /[\p{Alphabetic}\p{Number}_…/@.\-]/u.test(after) || text.slice(end).startsWith("...")) continue;
     const normalized = `https://t.me/${match[1]!}`; if (seen.has(normalized)) continue; seen.add(normalized); push("telegram", match[0].trim(), normalized, sourceLine(match.index, match[0].length));
   }

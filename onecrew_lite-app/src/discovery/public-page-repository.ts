@@ -2,7 +2,7 @@ import type { DatabaseSync } from "node:sqlite";
 import { z } from "zod";
 import { stringifyApplicationJson } from "../contracts/application-json.ts";
 import { validateCreatorSchema } from "../storage/creator-schema.ts";
-import { discoveryPublicPageInput, discoveryEligibleContactAuthor, discoveryNativeLinkSource, nextDiscoveryNativeContactLink, observeDiscoveryHiddenEmail, observeDiscoveryPublicPageContacts, type DiscoveryPublicPageInput } from "./contact-native.ts";
+import { discoveryPublicPageInput, discoveryEligibleContactAuthor, discoveryNativeLinkSource, discoveryLinkedinContactPage, nextDiscoveryNativeContactLink, observeDiscoveryHiddenEmail, observeDiscoveryPublicPageContacts, type DiscoveryPublicPageInput } from "./contact-native.ts";
 import { discoveryCommunityInvite, discoveryObservesLink } from "./contact-navigation.ts";
 import { discoveryReadPlatformStatus, sourceLocalReadFailure } from "./stops.ts";
 import { getDiscoverySavedPublicPage } from "./saved-read-repository.ts";
@@ -13,7 +13,7 @@ export type DiscoveryPublicPageClaim = z.infer<typeof discoveryPublicPageClaim>;
 export const finishDiscoveryPublicPageInput = z.strictObject({ hidden_email_available: z.boolean(), claim: discoveryPublicPageClaim, document_url: text.nullable(), title: text, markdown_excerpt: text, truncated: z.boolean(), stop_code: text.nullable() });
 export type FinishDiscoveryPublicPageInput = z.infer<typeof finishDiscoveryPublicPageInput>;
 const stopCodes = new Set(["opencli_timeout", "opencli_output_too_large", "opencli_version_changed", "opencli_daemon_unavailable", "opencli_extension_unavailable", "opencli_profile_unavailable", "opencli_command_unavailable", "opencli_invalid_output", "opencli_invalid_input", "opencli_unavailable", "opencli_command_failed", "opencli_risk_control", "opencli_auth_required"]);
-export function validateDiscoveryPublicPageResult(raw: unknown): FinishDiscoveryPublicPageInput {
+export function validateDiscoveryPublicPageResult(raw: unknown, emptyNativeContact = false): FinishDiscoveryPublicPageInput {
   const input = finishDiscoveryPublicPageInput.parse(raw);
   if (input.hidden_email_available && (input.stop_code !== null || input.document_url !== input.claim.input.requested_url || !input.claim.input.requested_url.startsWith("https://www.youtube.com/channel/UC"))) throw new Error("Hidden email entry requires a successful native channel receipt");
   if (Buffer.byteLength(input.markdown_excerpt) > 20_000 || [...input.title].length > 500 || input.markdown_excerpt.includes("\0")) throw new Error("Public page result exceeds bounded evidence limits");
@@ -21,7 +21,7 @@ export function validateDiscoveryPublicPageResult(raw: unknown): FinishDiscovery
     if (!stopCodes.has(input.stop_code) || input.document_url !== null || input.title !== "" || input.markdown_excerpt !== "" || input.truncated) throw new Error("Failed public page reads cannot contain successful evidence");
   } else {
     const url = input.document_url === null ? null : URL.parse(input.document_url);
-    if (!input.title.trim() || !input.markdown_excerpt.trim() || input.document_url === null || Buffer.byteLength(input.document_url) > 2048 || !url || url.protocol !== "https:" || !url.hostname || url.username || url.password || url.port) throw new Error("Successful public page reads require attributed content");
+    if (!input.title.trim() || !input.markdown_excerpt.trim() && !emptyNativeContact || input.document_url === null || Buffer.byteLength(input.document_url) > 2048 || !url || url.protocol !== "https:" || !url.hostname || url.username || url.password || url.port) throw new Error("Successful public page reads require attributed content");
   }
   return input;
 }
@@ -106,8 +106,9 @@ export class DiscoveryPublicPageRepository {
     });
   }
   finish(raw: FinishDiscoveryPublicPageInput) {
-    const input = validateDiscoveryPublicPageResult(raw), claim = input.claim, scope = claim.input;
+    const parsed = finishDiscoveryPublicPageInput.parse(raw), claim = parsed.claim, scope = claim.input;
     return this.#transaction(true, () => {
+      const input = validateDiscoveryPublicPageResult(parsed, parsed.stop_code === null && parsed.truncated && discoveryLinkedinContactPage(this.#db, scope, parsed.document_url));
       const platform = text.parse(this.#db.prepare("SELECT platform FROM discovery_search_hits WHERE id=? AND discovery_campaign_id=?").get(claim.search_hit_id, scope.campaign_id)?.platform);
       if (input.stop_code === null && (platform !== "youtube" || discoveryEligibleContactAuthor(this.#db, scope.campaign_id, scope.expected_revision, scope.candidate_id) !== null)) {
         const source = discoveryNativeLinkSource(this.#db, scope);
@@ -131,6 +132,15 @@ export class DiscoveryPublicPageRepository {
       observeDiscoveryPublicPageContacts(this.#db, scope.campaign_id, scope.expected_revision, result);
       if (input.hidden_email_available) observeDiscoveryHiddenEmail(this.#db, scope.campaign_id, scope.expected_revision, result);
       return result;
+    });
+  }
+  reprojectCompleted(campaign: string, revision: number): void {
+    this.#transaction(true, () => {
+      const rows = this.#db.prepare(`SELECT r.candidate_id,r.requested_url FROM discovery_public_page_reads r JOIN discovery_candidates c ON c.id=r.candidate_id
+        JOIN discovery_campaigns d ON d.id=c.discovery_campaign_id AND d.current_revision=c.criteria_revision
+        JOIN discovery_campaign_revisions a ON a.discovery_campaign_id=d.id AND a.revision=d.current_revision
+        WHERE d.id=? AND d.current_revision=? AND a.approved_at IS NOT NULL AND r.status='completed' AND r.stop_code IS NULL`).all(campaign, revision);
+      for (const row of rows) observeDiscoveryPublicPageContacts(this.#db, campaign, revision, getDiscoverySavedPublicPage(this.#db, campaign, text.parse(row.candidate_id), text.parse(row.requested_url)));
     });
   }
   settle(input: FinishDiscoveryPublicPageInput) {

@@ -1,23 +1,31 @@
-# OneCrew Lite 0.9.0 · Mac ARM64 · R3 安装指南
+# OneCrew Lite 0.9.0 · Mac ARM64 · R4 安装指南
 
 适用于用户授权的 Apple Silicon Mac 安装或升级。使用 Mac 原生终端；先执行 `uname -s`、`uname -m`，确认 Darwin 和 arm64。Intel Mac 停止；Rosetta 终端需切换原生 arm64 环境后继续。
 
 本包使用 ad-hoc 签名，未进行 Apple 公证。若系统阻止运行或工具拒绝操作，报告具体步骤并停止，由用户处理；禁止移除 quarantine、关闭 Gatekeeper 或换入口绕过拒绝。程序是独立可执行文件，无须安装 Node.js、pnpm 或编译工具。
+
+## 0. 权限预检和安装断点
+
+停止原服务之前，一次核实并记录原程序路径、版本、数据目录、vault 和主密钥的路径、端口及 live MCP 账号状态，只记录非敏感元数据。已确认的唯一账号和目录直接沿用；出现多个真实候选且现有证据不能区分时才询问用户。
+
+进程枚举（如 `ps`）不是安装的必需检查。已有服务、客户端配置和官方状态接口能够证明归属时，使用这些已授权信息。工具或系统明确拒绝一项操作时，停止该操作，说明缺少的具体权限及用户需要执行的一次操作；用户解决后从该步骤继续。不得为取得相同受限信息更换工具或入口，也不得自动申请整盘读取、移除 quarantine 或降低系统保护。
+
+在用户选定的工作目录保存非敏感安装断点：已完成检查及其输入哈希、原/新程序版本、已确认路径、服务状态、阻塞命令、退出码和下一步。继续安装时先读取断点；程序、文件或账号发生变化，或证据过期时才重做相关检查。保留旧程序和原数据，直到新程序及其客户端验证完成。
 
 ## 1. 下载前读取发布记录
 
 执行下面的终端命令，要求 HTTP 200，完整阅读 JSON：
 
 ```sh
-curl --fail --silent --show-error --proto '=https' --max-time 30 --write-out '\nHTTP_STATUS:%{http_code}\n' 'https://raw.githubusercontent.com/yyq8548/onecrew_lite2/refs/tags/mac-installer-0.9.0-r3/mac_installer/OneCrew-Lite-0.9.0-Mac-arm64-R3.zip.release.json'
+curl --fail --silent --show-error --proto '=https' --max-time 30 --write-out '\nHTTP_STATUS:%{http_code}\n' 'https://raw.githubusercontent.com/yyq8548/onecrew_lite2/refs/tags/mac-installer-0.9.0-r4/mac_installer/OneCrew-Lite-0.9.0-Mac-arm64-R4.zip.release.json'
 ```
 
-确认 `product=onecrew_lite`、`version=0.9.0`、`revision=R3`、`target=darwin-arm64`。记录 `bytes`、`sha256`、`executableSha256`、`sourceCommit`。本指南与发布记录及 ZIP 必须来自同一标签。
+确认 `product=onecrew_lite`、`version=0.9.0`、`revision=R4`、`target=darwin-arm64`。记录 `bytes`、`sha256`、`executableSha256`、`sourceCommit`。本指南与发布记录及 ZIP 必须来自同一标签。
 
 将下载文件保存到用户选定的工作目录，禁止使用 `/tmp`。ZIP 固定地址：
 
 ```text
-https://raw.githubusercontent.com/yyq8548/onecrew_lite2/refs/tags/mac-installer-0.9.0-r3/mac_installer/OneCrew-Lite-0.9.0-Mac-arm64-R3.zip
+https://raw.githubusercontent.com/yyq8548/onecrew_lite2/refs/tags/mac-installer-0.9.0-r4/mac_installer/OneCrew-Lite-0.9.0-Mac-arm64-R4.zip
 ```
 
 通过 `curl --fail --silent --show-error --proto '=https' --max-time 180 --output` 下载，要求 HTTP 200。检查 `stat -f '%z'` 返回字节数与发布记录的 `bytes` 完全一致，并用 `shasum -a 256` 核对 ZIP 哈希。下载失败或校验不一致立即停止，禁止解压或运行。
@@ -45,7 +53,7 @@ shasum -a 256 -c SHA256SUMS
 
 已有服务的命令参数提供 `--data-dir`、`--vault`、`--master-key`；已有插件的同名环境变量提供其原数据目录。多个真实候选目录时列出路径让用户选择，不猜测。`installation-discover` 目前仅支持 Windows，不在 Mac 上调用。
 
-确认从未安装 Lite 且没有已有数据时，使用当前 Mac 用户的默认数据目录 `~/Library/Application Support/OneCrewLite/TypeScript`，默认程序目录 `~/Applications/OneCrewLite/releases/0.9.0-R3`。将 `~` 展开成绝对路径。已有安装沿用原数据目录、vault、主密钥和端口，程序目录使用独立的版本目录。
+确认从未安装 Lite 且没有已有数据时，使用当前 Mac 用户的默认数据目录 `~/Library/Application Support/OneCrewLite/TypeScript`，默认程序目录 `~/Applications/OneCrewLite/releases/0.9.0-R4`。将 `~` 展开成绝对路径。已有安装沿用原数据目录、vault、主密钥和端口，程序目录使用独立的版本目录。
 
 将 `dataDir`、`vaultPath`、`masterKeyPath`、`installDir` 设置为核实后的实际路径。已有目录只允许检查并保留：`vault.sqlite` 和主密钥必须成对存在；历史主密钥可能叫 `masterkey` 或 `master.key`，有多个或缺失时停止。首次安装时二者必须同时不存在，由程序安全创建，禁止自行生成密钥或数据库。
 
@@ -59,7 +67,17 @@ shasum -a 256 -c SHA256SUMS
 "$packageDir/onecrew_lite" status --data-dir "$dataDir"
 ```
 
-状态检查失败立即停止。若原服务运行，记录真实 PID、可执行文件路径、SHA-256 和端口。若运行中的主程序已为本发布记录对应哈希，复用该程序和服务，直接进入客户端配置；程序版本相同但哈希不同仍需升级。
+若命令返回 `cli.failed`，保留原服务，先对同一目录执行一次只读诊断：
+
+```sh
+ONECREW_LITE_DIAGNOSTICS=1 "$packageDir/onecrew_lite" status --data-dir "$dataDir"
+```
+
+记录退出码、程序返回的非敏感错误、旧版与新版程序版本，以及已确认的路径。此诊断命令仅可能补充系统调用和路径信息，仍然只有 `cli.failed` 时按证据不足记录。当前 0.9.0 CLI 不支持 `--help`，不得反复尝试该参数。使用已授权原服务的状态及对应版本的升级说明定位失败步骤；不得依据文件名差异或 `cli.failed` 推断账号、登录或数据不兼容。旧版正常运行的证据和新版升级验收分别记录。
+
+所需归属、兼容检查通过后继续安装；检查仍失败、缺少适用升级说明或工具拒绝操作时，保存断点并报告该阻塞，保持旧服务及数据。不得终止未知归属进程、手工改写数据库或改用空数据目录。
+
+若原服务运行，记录真实 PID、可执行文件路径、SHA-256 和端口。若运行中的主程序已为本发布记录对应哈希，复用该程序和服务，直接进入客户端配置；程序版本相同但哈希不同仍需升级。
 
 需要替换不同构建且已确认原服务归属时，先停止原服务并确认返回 `state=stopped`：
 
@@ -96,6 +114,8 @@ Codex 使用本包自动生成的 Lite 配套插件：
 分别核对主程序与插件版本。预期插件版本从本机 `codex-package` 的 `version` 字段取得，格式为 `0.9.0+codex.<64位摘要>`；完整摘要绑定本机程序和数据目录，不能套用打包电脑的插件摘要。要求安装结果为 `state=installed`、`enabled=true`、`verification=fresh`，并与本机生成的预期版本一致。已有客户端的其他配置和插件保留。
 
 找不到已安装 Codex CLI 时，定位官方 CLI，再通过 `--codex-executable` 指定其绝对路径。宿主需要重新加载或重启时，明确报告程序和插件已完成的步骤；用户重启后继续 live MCP 验证。保留同一 OneCrew Lite 连接，不安装 Pro 插件。
+
+安装目录中的插件版本与 Codex 当前加载的 MCP 进程分别核实。新版主程序和插件注册完成后，若宿主仍运行旧进程，集中提示一次重新加载或重启 Codex，并保存待验收断点。重启后只继续剩余 live MCP 和页面检查；没有输入变更时，不重新下载安装包、不重复选择账号或数据目录，也不因旧进程未刷新而重复安装插件。
 
 其他兼容 MCP 客户端使用同一主程序绝对路径，参数为 `mcp --stdio --data-dir <原数据目录的绝对路径>`。MCP 连接不替代前面的服务启动；客户端是否需要重载按其实际提示处理。
 

@@ -9,7 +9,7 @@ export type DiscoveryExecutionStage = "ready" | "searching" | "verifying" | "pau
 export interface DiscoveryExecutionLibrary { campaign_id: string; table_id: string; web_url: string; total_hits: number; inserted_rows: number }
 export interface DiscoveryExecutionStatus { campaign_id: string; revision: number; stage: DiscoveryExecutionStage; updated_at: number; used: number; reason: string | null; failure_phase: string | null; failure_code: string | null; sync_error: string | null; synced_at: number | null; deferred_scores: number; sync_pending: boolean; excluded_platforms: string[]; deferred_hits: { search_hit_id: string; reason: string }[]; library: DiscoveryExecutionLibrary | null }
 export interface DiscoveryExecutionOwner { readonly context: AccountContext; readonly input: DiscoveryExecutionInput; readonly signal: AbortSignal; change(edit: (status: DiscoveryExecutionStatus) => void): void }
-interface ActiveExecution { context: AccountContext; input: DiscoveryExecutionInput; cancel: AbortController; status: DiscoveryExecutionStatus }
+interface ActiveExecution { context: AccountContext; input: DiscoveryExecutionInput; cancel: AbortController; status: DiscoveryExecutionStatus; failure?: unknown }
 const executing = (stage: DiscoveryExecutionStage) => ["searching", "verifying", "pausing"].includes(stage);
 
 // 进程唯一执行所有者。最终状态与已开始工作分别跟踪，排空前持续阻止后台上传。
@@ -46,8 +46,11 @@ export class DiscoveryExecutionSupervisor {
         throw new Error("discovery_execution_busy");
       }
       if (this.#tasks.size) throw new Error("discovery_execution_busy");
-      this.#report(); await validate(); lease.assertCurrent(); if (this.#closing) throw new Error("discovery_execution_stopping");
       const same = previous?.context.principal.user.id === context.principal.user.id && previous.context.principal.tenantId === context.principal.tenantId && previous.context.principal.baseId === context.principal.baseId && previous.input.campaign_id === input.campaign_id && previous.input.expected_revision === input.expected_revision ? previous.status : undefined;
+      await validate(); lease.assertCurrent(); if (this.#closing) throw new Error("discovery_execution_stopping");
+      // 同一任务显式续跑已展示的失败；其他任务或独立投影的异常继续报告。
+      if (same?.stage === "error" && previous?.failure !== undefined) this.#errors = this.#errors.filter(error => error !== previous.failure);
+      this.#report();
       const active: ActiveExecution = { context, input, cancel: new AbortController(), status: { campaign_id: input.campaign_id, revision: input.expected_revision, stage: "searching", updated_at: Date.now(), used, reason: null, failure_phase: null, failure_code: null, sync_error: same?.sync_error ?? null, synced_at: same?.synced_at ?? null, deferred_scores: same?.deferred_scores ?? 0, sync_pending: same?.sync_pending ?? false, excluded_platforms: [...input.excluded_platforms], deferred_hits: structuredClone(same?.deferred_hits ?? []), library: structuredClone(same?.library ?? null) } };
       this.#active = active;
       const owner: DiscoveryExecutionOwner = Object.freeze({ context, input: structuredClone(input), signal: AbortSignal.any([context.signal, active.cancel.signal]), change: (edit: (status: DiscoveryExecutionStatus) => void) => {
@@ -59,7 +62,7 @@ export class DiscoveryExecutionSupervisor {
       const task = Promise.resolve().then(() => work(owner)).then(() => {
         if (executing(active.status.stage)) throw new Error("discovery_execution_terminal_status_missing");
       }).then(() => undefined, error => {
-        active.status.stage = "error"; active.status.reason = "worker_failed"; active.status.failure_phase ??= "execution"; active.status.updated_at = Date.now(); this.#errors.push(error);
+        active.status.stage = "error"; active.status.reason = "worker_failed"; active.status.failure_phase ??= "execution"; active.status.updated_at = Date.now(); active.failure = error; this.#errors.push(error);
       }).finally(() => { this.#tasks.delete(task); });
       this.#tasks.add(task);
       onAdmitted?.();

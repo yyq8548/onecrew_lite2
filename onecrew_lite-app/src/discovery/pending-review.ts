@@ -23,19 +23,21 @@ export function pendingReview(db: DatabaseSync, campaign: string, revision: numb
   if (!row) return null;
   const evidence = object(parseApplicationJson(Buffer.from(z.string().parse(row.evidence_json)))), review = object(evidence.reviewed_match);
   let last = z.number().int().safe().parse(row.updated_at), state: PendingReviewState, action: string;
-  const stopped = db.prepare(`SELECT stop_code,updated_at FROM (
-    SELECT stop_code,updated_at FROM discovery_content_reads WHERE discovery_campaign_id=?1 AND expected_revision=?2 AND search_hit_id=?3 AND status='failed'
-    UNION ALL SELECT stop_code,created_at AS updated_at FROM discovery_language_samples WHERE discovery_campaign_id=?1 AND criteria_revision=?2 AND candidate_id=?4 AND status='failed'
-    UNION ALL SELECT stop_code,updated_at FROM discovery_platform_runs WHERE discovery_campaign_id=?1 AND platform=?5 AND profile_ref=?6 AND stop_code IN ('opencli_auth_required','opencli_risk_control')
+  const stopped = db.prepare(`SELECT stop_code,updated_at,kind FROM (
+    SELECT stop_code,updated_at,'content' AS kind FROM discovery_content_reads WHERE discovery_campaign_id=?1 AND expected_revision=?2 AND search_hit_id=?3 AND status='failed'
+    UNION ALL SELECT stop_code,created_at AS updated_at,'language' AS kind FROM discovery_language_samples WHERE discovery_campaign_id=?1 AND criteria_revision=?2 AND candidate_id=?4 AND status='failed'
+    UNION ALL SELECT stop_code,updated_at,'platform' AS kind FROM discovery_platform_runs WHERE discovery_campaign_id=?1 AND platform=?5 AND profile_ref=?6 AND stop_code IN ('opencli_auth_required','opencli_risk_control')
   ) ORDER BY updated_at DESC LIMIT 1`).get(campaign, revision, row.hit_id ?? null, candidate, row.platform ?? null, row.profile_ref ?? null);
   const basis = typeof row.hit_id === "string" ? findDiscoveryReviewBasis(db, campaign, revision, row.hit_id) : null;
   const saved = typeof review.review_id === "string" ? db.prepare("SELECT material_json FROM discovery_evidence_reviews WHERE id=?1 AND discovery_campaign_id=?2 AND criteria_revision=?3 AND candidate_id=?4").get(review.review_id, campaign, revision, candidate) : undefined;
   if (basis) last = Math.max(last, Number(basis.native_profile?.observed_at ?? 0), Number(basis.native_content?.captured_at ?? 0));
   const sampleTime = db.prepare("SELECT MAX(created_at) AS time FROM discovery_language_samples WHERE discovery_campaign_id=?1 AND criteria_revision=?2 AND candidate_id=?3").get(campaign, revision, candidate);
   last = Math.max(last, Number(sampleTime?.time ?? 0), Number(stopped?.updated_at ?? 0));
-  if (stopped) { state = "read_blocked"; action = "处理读取错误后再核实，本轮不重复尝试"; }
+  const needsScore = basis !== null && (!saved || discoveryObservationVersion(parseApplicationJson(Buffer.from(z.string().parse(saved.material_json)))) !== discoveryObservationVersion(buildDiscoveryReviewMaterial(basis)));
+  const optionalContent = row.platform === "linkedin" && stopped?.kind === "content" && stopped.stop_code === "linkedin_content_unavailable" && needsScore;
+  if (stopped && !optionalContent) { state = "read_blocked"; action = "处理读取错误后再核实，本轮不重复尝试"; }
   else if (!basis) { state = "needs_identity"; action = "完成原生账号与来源归属验证"; }
-  else if (!saved || discoveryObservationVersion(parseApplicationJson(Buffer.from(z.string().parse(saved.material_json)))) !== discoveryObservationVersion(buildDiscoveryReviewMaterial(basis))) {
+  else if (needsScore) {
     state = "awaiting_score"; action = "使用当前已保存材料评分，无须重复读取";
   } else if (object(evidence.assessment).reasons instanceof Array && (object(evidence.assessment).reasons as unknown[]).includes("contact_unavailable")) {
     state = "needs_requirement"; action = "按原任务联系信息要求核实";
@@ -44,7 +46,7 @@ export function pendingReview(db: DatabaseSync, campaign: string, revision: numb
   } else {
     state = "insufficient_after_read"; action = "保留具体缺口；已用完本轮来源时停止补读";
   }
-  return { state, next_action: action, last_processed_at: last, stop_code: stopped ? z.string().parse(stopped.stop_code) : null, gap: typeof review.reason === "string" ? [...review.reason].slice(0, 500).join("") : null };
+  return { state, next_action: action, last_processed_at: last, stop_code: stopped && !optionalContent ? z.string().parse(stopped.stop_code) : null, gap: typeof review.reason === "string" ? [...review.reason].slice(0, 500).join("") : null };
 }
 export function pendingReviewDetails(db: DatabaseSync, campaign: string, revision: number, candidate: string): string[] {
   const value = pendingReview(db, campaign, revision, candidate);

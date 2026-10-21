@@ -9,8 +9,9 @@ export function applyDiscoveryReviewFindings(material: DiscoveryReviewMaterial, 
   const evidence = structuredClone(rawEvidence) as Record<string, unknown>, criteria = object(material.criteria), language = requiredDiscoveryLanguage(criteria);
   const proof = (policy: string) => ({ verified: true, native_author_id: material.native_author_id, source_url: material.hit.source_url, review_id: reviewId, material_hash: material.material_hash, policy_version: policy });
   const authorContent = (citation: DiscoveryReviewFinding["citations"][number]) => ["transcript", "native_content", "description"].includes(citation.kind) || material.hit.platform === "tiktok" && citation.kind === "search_caption";
-  // 账号绑定的可见作品预览可证明主题与匹配程度；语言、口播及工具演示仍须原有正文证据。
+  // LinkedIn职业资料和Instagram作品预览可证明匹配；语言、口播及演示仍须正文证据。
   const matchingContent = (citation: DiscoveryReviewFinding["citations"][number]) => authorContent(citation)
+    || citation.kind === "native_profile" && (material.native_platform ?? material.hit.platform) === "linkedin"
     || citation.kind === "native_profile" && (material.native_platform ?? material.hit.platform) === "instagram"
       && material.native_profile?.web_text?.startsWith("Visible profile post previews; bounded excerpts, not verified full original captions.\n") === true
       && material.native_profile.web_text.slice(material.native_profile.web_text.indexOf("\n") + 1).includes(citation.quote);

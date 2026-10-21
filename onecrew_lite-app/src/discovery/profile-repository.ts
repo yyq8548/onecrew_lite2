@@ -9,7 +9,7 @@ import { validateDiscoveryPinterestProfile } from "./pinterest-material.ts";
 import { validateSavedDiscoveryInstagramProfile } from "./contact-profile-contracts.ts";
 import { validateDiscoveryRetainedProfile } from "./native-material.ts";
 import { assertDiscoveryReadHealthy, discoveryReadExcludedHits } from "./read-health.ts";
-import { assessedDiscoveryEvidence, assessDiscoveryProfile, assessDiscoveryDouyin, assessDiscoveryFacebook, assessDiscoveryInstagram } from "./qualification.ts";
+import { assessedDiscoveryEvidence, assessDiscoveryProfile, assessDiscoveryDouyin, assessDiscoveryFacebook, assessDiscoveryInstagram, discoveryCriteriaForPlatform } from "./qualification.ts";
 import { discoveryReadPlatformStatus, sourceLocalReadFailure } from "./stops.ts";
 
 const text = z.string().refine(value => value.isWellFormed());
@@ -66,7 +66,10 @@ export class DiscoveryProfileRepository {
         AND NOT EXISTS(SELECT 1 FROM discovery_identity_reads i WHERE i.search_hit_id=h.id AND i.status!='completed')
         AND NOT EXISTS(SELECT 1 FROM discovery_platform_runs b WHERE b.discovery_campaign_id=c.id AND b.status='searching')
         AND ((r.status='completed' AND p.search_hit_id IS NULL) OR (r.status='technical_stop' AND r.stop_code='interrupted_profile_read' AND p.status='reading' AND p.search_hit_id=h.id AND p.expected_revision=c.current_revision AND r.active_query='profile:'||h.id||':'||p.call_number))
-      ORDER BY CASE WHEN p.status='reading' THEN 0 ELSE 1 END,h.captured_at,COALESCE((SELECT position FROM discovery_search_positions WHERE search_hit_id=h.id),9223372036854775807),h.id LIMIT 1`).get(campaign, stringifyApplicationJson(excludedPlatforms), stringifyApplicationJson(held));
+      ORDER BY CASE WHEN p.status='reading' THEN 0 ELSE 1 END,
+        CASE WHEN h.platform='linkedin' THEN (SELECT COUNT(*) FROM discovery_profile_reads seen JOIN discovery_search_hits origin ON origin.id=seen.search_hit_id
+          WHERE seen.discovery_campaign_id=c.id AND seen.platform=h.platform AND seen.profile_ref=h.profile_ref AND origin.search_keyword=h.search_keyword) ELSE 0 END,
+        h.captured_at,COALESCE((SELECT position FROM discovery_search_positions WHERE search_hit_id=h.id),9223372036854775807),h.id LIMIT 1`).get(campaign, stringifyApplicationJson(excludedPlatforms), stringifyApplicationJson(held));
     return row ? text.parse(row.id) : null;
   }
   recoverInterrupted(): number {
@@ -139,7 +142,7 @@ export class DiscoveryProfileRepository {
     const followers = typeof native.follower_count === "bigint" ? native.follower_count : typeof native.follower_count === "number" ? BigInt(native.follower_count) : null;
     if (!["twitter", "reddit", "facebook", "instagram", "weibo", "bluesky", "zhihu", "hackernews", "pinterest", "pixiv", "linkedin", "douyin"].includes(claim.platform) && followers === null) throw new Error("discovery_profile_follower_count_missing");
     const account = claim.platform === "twitter" ? text.parse(this.#db.prepare("SELECT account_id FROM discovery_profile_identity_matches WHERE search_hit_id=?").get(claim.search_hit_id)!.account_id) : claim.platform === "linkedin" ? text.parse(native.account_id) : claim.author_id;
-    const criteria = parseApplicationJson(text.parse(this.#db.prepare("SELECT criteria_json FROM discovery_campaign_revisions WHERE discovery_campaign_id=? AND revision=? AND approved_at IS NOT NULL").get(claim.campaign_id, claim.expected_revision)!.criteria_json));
+    const criteria = discoveryCriteriaForPlatform(parseApplicationJson(text.parse(this.#db.prepare("SELECT criteria_json FROM discovery_campaign_revisions WHERE discovery_campaign_id=? AND revision=? AND approved_at IS NOT NULL").get(claim.campaign_id, claim.expected_revision)!.criteria_json)), claim.platform);
     const evidence = { source_urls: [claim.source_url, claim.author_url], subscribers_raw: claim.platform === "douyin" || ["facebook", "instagram"].includes(claim.platform) && followers === null ? typeof native.follower_text === "string" ? native.follower_text : null : followers === null ? null : String(followers), subscribers_source_url: claim.author_url, author_identity_kind: "native_id", author_identity_search_hit_id: claim.platform === "twitter" ? claim.search_hit_id : null, captured_at: receipt.captured_at };
     const monthly = claim.platform === "pinterest" ? typeof native.monthly_views_raw === "string" ? native.monthly_views_raw : null : undefined;
     const assessment = claim.platform === "instagram" && native.private_account === true ? { verdict: "rejected" as const, reasons: ["private_account"], subscribers: followers } : claim.platform === "instagram" && followers === null ? assessDiscoveryInstagram(criteria, evidence, account, typeof native.follower_text === "string" ? native.follower_text : null) : claim.platform === "douyin" && followers === null ? assessDiscoveryDouyin(criteria, evidence, account, typeof native.follower_text === "string" ? native.follower_text : null) : claim.platform === "facebook" && followers === null ? assessDiscoveryFacebook(criteria, evidence, account, typeof native.follower_text === "string" ? native.follower_text : null) : assessDiscoveryProfile(criteria, evidence, account, followers, monthly);

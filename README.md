@@ -2,11 +2,11 @@
 
 TypeScript 本地程序：生成搜索计划，读取创作者资料和内容，按证据评分，在动态表格整理推荐，通过邮件页 Gmail 批量发送邮件。
 
-当前源码版本为 **0.9.0**，分支为 `codex/contact-collection-20261019`。
+当前源码版本为 **0.9.0**，默认分支为 `codex/typescript-unified-gmail`。
 
 ## Mac installer
 
-当前 Mac 包：**OneCrew Lite 0.9.0 · Apple Silicon ARM64 · R3**。
+当前 Mac 包：**OneCrew Lite 0.9.0 · Apple Silicon ARM64 · R4**。
 
 - [Mac 安装包、校验记录和安装提示词](mac_installer/)
 - [给 Codex 的安装提示词](mac_installer/CODEX-PROMPT.md)
@@ -14,24 +14,23 @@ TypeScript 本地程序：生成搜索计划，读取创作者资料和内容，
 - [Windows 电脑拉取源码与构建步骤](mac_installer/WINDOWS-BUILD.zh-CN.md)
 - [合并与部署流程](docs/release/合并与部署流程.md)
 
-Mac 包为独立程序，使用 ad-hoc 签名，未进行 Apple 公证，保持 `productionReady: false`。安装时保留原数据和登录，主程序和配套插件分别核实版本。本次没有构建 Windows 0.9.0 包，下面的历史 Windows 包及 `windows installer` 目录保持原内容。
+Mac 包为独立程序，使用 ad-hoc 签名，未进行 Apple 公证，保持 `productionReady: false`。R4 包含 LinkedIn 条件识别、联系页、评分队列和断点恢复修复，以及权限预检和断点续装提示词。实测同一任务完成 30 人并保留原结果。安装时保留原数据和登录，主程序和配套插件分别核实版本。
 
 ## Windows installer
 
-当前安装包：**OneCrew Lite 0.7.1 · Windows x64 · R8.3**。
+当前安装包：**OneCrew Lite 0.9.0 · Windows x64**。
 
-- [下载 Windows 安装包 ZIP](https://github.com/yyq8548/onecrew_lite2/releases/download/windows-installer-r8.3/OneCrew-Lite-0.7.1-Windows-x64-R8.3.zip)
-- [仓库中的 windows installer 文件夹](windows%20installer/)
-- [发布校验记录](windows%20installer/OneCrew-Lite-0.7.1-Windows-x64-R8.3.zip.release.json)
-- [SHA-256 文件](windows%20installer/OneCrew-Lite-0.7.1-Windows-x64-R8.3.zip.sha256)
-- [通用 Codex 安装提示词](windows%20installer/OneCrew-Lite-0.7.1-Windows-x64-R8.3-CODEX-PROMPT.zh-CN.md)
-- [GitHub Release：windows installer](https://github.com/yyq8548/onecrew_lite2/releases/tag/windows-installer-r8.3)
+- [下载 Windows 安装包 ZIP](windows_installer/OneCrew-Lite-0.9.0-Windows-x64.zip)
+- [仓库中的 windows_installer 文件夹](windows_installer/)
+- [发布校验记录](windows_installer/OneCrew-Lite-0.9.0-Windows-x64.zip.release.json)
+- [SHA-256 文件](windows_installer/OneCrew-Lite-0.9.0-Windows-x64.zip.sha256)
+- [通用 Codex 安装提示词](windows_installer/OneCrew-Lite-0.9.0-Windows-x64-CODEX-PROMPT.zh-CN.md)
 
 完整解压 ZIP，按包内 INSTALL-CODEX.md 先校验再分步安装。自动识别首次安装和升级，保留已有账号、主密钥、表格、端口和浏览器授权。
 
 搜索使用日常 Chrome 的官方 OpenCLI 扩展；工作台和动态表格使用 Codex 内置浏览器。对外发送只保留邮件页 Gmail 批量发送，需要用户确认。后台表格同步保留。
 
-历史 Windows 包的验收及许可证记录见其原发布记录。新版 Mac 的验收范围和限制见 [RELEASE-STATUS.md](mac_installer/RELEASE-STATUS.md)；Mac Intel 尚未构建和验收。
+Windows 文件沿用远端已发布内容，本次未重新构建或更改 `windows_installer`。其验收及许可证记录见原发布记录。新版 Mac 的验收范围和限制见 [RELEASE-STATUS.md](mac_installer/RELEASE-STATUS.md)；Mac Intel 尚未构建和验收。
 
 ## 源码与构建
 

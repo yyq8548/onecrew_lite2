@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import vm from 'node:vm';
+import {readFileSync} from 'node:fs';
 import {withOwnedSearchPage} from './owned-page.mjs';
-import {linkedinProfileTarget, projectLinkedinProfile, observeLinkedinProfile, readLinkedinProfile,
+import {linkedinProfileTarget, linkedinConnections, projectLinkedinProfile, observeLinkedinProfile, readLinkedinProfile,
   projectLinkedinContent, observeLinkedinContent, readLinkedinContent,
   projectLinkedinContact, observeLinkedinContact, readLinkedinContact} from './linkedin-evidence.mjs';
 
@@ -12,6 +13,14 @@ const source = linkedinProfileTarget(handle);
 const fixture = () => ({author_handle:handle, account_id:id, author_label:'Native Author', profile_url:source,
   headline:'Keyboard reviews', bio:'Business: studio@example.org', follower_text:'1,606 followers',
   public_links:['https://creator.example/contact'], contact_links:[`${source}overlay/contact-info/`]});
+
+test('actual LinkedIn connections observation keeps the open upper bound separate from followers', () => {
+  const actual = JSON.parse(readFileSync(new URL('../../onecrew_lite-app/tests/fixtures/linkedin-metrics-profile-20261020.json', import.meta.url), 'utf8')).profile;
+  assert.deepEqual(linkedinConnections(actual.connections.raw), {raw:'500+connections', lower:500, upper:null});
+  const projected = projectLinkedinProfile({...actual,connection_text:actual.connections.raw}, actual.author_handle);
+  assert.equal(projected.follower_count,1548);
+  assert.deepEqual(projected.connections,actual.connections);
+});
 
 test('LinkedIn projection preserves public identity, original bio and observed contact locators only', () => {
   const row = projectLinkedinProfile({...fixture(), session:'private', recommendation_email:'not-author@example.org'},handle);

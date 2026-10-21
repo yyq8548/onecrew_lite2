@@ -10,6 +10,11 @@ const string = (value: unknown): string | null => typeof value === "string" ? va
 const nonempty = (value: unknown): boolean => typeof value === "string" && value.length > 0;
 const publicHttps = (value: unknown): boolean => typeof value === "string" && URL.parse(value)?.protocol === "https:" && !!URL.parse(value)?.hostname;
 const youtubeVideo = (value: unknown): boolean => { if (typeof value !== "string") return false; const url = URL.parse(value); return url !== null && url.protocol === "https:" && ["youtube.com", "www.youtube.com"].includes(url.hostname) && (url.pathname === "/watch" || url.pathname.startsWith("/shorts/")); };
+export function discoveryCriteriaForPlatform(raw: unknown, platform: string): Record<string, unknown> {
+  const criteria = object(raw), source = criteria.min_subscribers_source;
+  if (source !== undefined && !["default", "explicit", "requirements"].includes(String(source))) throw new Error("discovery_follower_threshold_source_invalid");
+  return platform === "linkedin" && source === "default" ? { ...criteria, min_subscribers: 0 } : criteria;
+}
 export function requiredDiscoveryLanguage(criteria: unknown): string | null {
   const value = string(object(criteria).language)?.trim(); return value === undefined || ["", "不限", "语言不限", "any", "all", "unrestricted"].includes(value.toLowerCase()) ? null : value;
 }
@@ -123,7 +128,7 @@ export function assessDiscoveryWithCount(rawCriteria: unknown, rawEvidence: unkn
       else if (!bound || reviewed.outcome !== "supported") requirementReasons.push("requirement_unverified");
     }
   }
-  if (Object.keys(criteria).some(key => !["min_subscribers", "min_followers", "pinterest_min_monthly_views_exclusive", "requires_ai_tool_demo", "requires_public_tool_url", "region", "language", "category", "table_subject", "contact_search_terms", "automatic_query_expansion", "requirements", "contact_preference", "refinement", "excluded_accounts"].includes(key))) reasons.push("unsupported_criterion");
+  if (Object.keys(criteria).some(key => !["min_subscribers", "min_subscribers_source", "min_followers", "pinterest_min_monthly_views_exclusive", "requires_ai_tool_demo", "requires_public_tool_url", "region", "language", "category", "table_subject", "contact_search_terms", "automatic_query_expansion", "requirements", "contact_preference", "refinement", "excluded_accounts"].includes(key))) reasons.push("unsupported_criterion");
   if (initial !== null) return { ...initial, verdict: requirementConflict || pinterestMonthlyRaw !== undefined && below ? "rejected" : (requirementReasons.length || pinterestMonthlyRaw !== undefined && scale.state === "unknown") && initial.verdict === "qualified" ? "pending" : initial.verdict, reasons: [...initial.reasons, ...(pinterestMonthlyRaw !== undefined ? scale.reasons : []), ...requirementReasons] };
   reasons.push(...requirementReasons);
   return { verdict: below || languageConflict || requirementConflict ? "rejected" : reasons.length ? "pending" : "qualified", reasons, subscribers: count };

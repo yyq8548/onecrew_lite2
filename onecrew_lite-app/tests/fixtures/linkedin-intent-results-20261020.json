@@ -1,0 +1,2367 @@
+[
+  {
+    "index": 0,
+    "input": {
+      "id": "linkedin-intent-real-0",
+      "brief": "只在LinkedIn搜索10位币安、OKX、Bitget、Bybit或Gate.io的商务、BD和Marketing人员。",
+      "profile_ref": "d5pskwub",
+      "opencli_version": "1.8.8"
+    },
+    "sources": [
+      {
+        "platform": "youtube",
+        "command": "onecrew-search-youtube/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "tiktok",
+        "command": "onecrew-tiktok/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "instagram",
+        "command": "onecrew-search-instagram/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "twitter",
+        "command": "onecrew-search-twitter/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "linkedin",
+        "command": "onecrew-search-linkedin/people-search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "facebook",
+        "command": "onecrew-search-facebook/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "pinterest",
+        "command": "onecrew-pinterest-reader/search-pins",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "reddit",
+        "command": "onecrew-search-reddit/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "bilibili",
+        "command": "onecrew-bilibili/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "douyin",
+        "command": "onecrew-search-douyin/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "weibo",
+        "command": "onecrew-search-weibo/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "google",
+        "command": "onecrew-search-google/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "yahoo",
+        "command": "onecrew-search-yahoo/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      }
+    ],
+    "elapsed_ms": 66625,
+    "trace": [
+      {
+        "understanding": {
+          "product_or_topic": "币安、OKX、Bitget、Bybit或Gate.io的商务、BD和Marketing人员",
+          "purpose": "仅通过LinkedIn寻找10位在所列任一公司从事商务、BD或Marketing工作的人员。",
+          "desired_creators": "所列公司的相关从业人员；未要求其具有创作者或博主身份。",
+          "explicit_requirements_with_quotes": [
+            "平台限制：“只在LinkedIn搜索”",
+            "人数：“10位”",
+            "任职公司：“币安、OKX、Bitget、Bybit或Gate.io”",
+            "岗位范围：“商务、BD和Marketing人员”"
+          ],
+          "relevant_content_angles": [
+            "所列公司的在职商务人员资料",
+            "所列公司的BD或Business Development岗位资料",
+            "所列公司的Marketing或市场营销岗位资料"
+          ],
+          "misleading_matches_to_avoid": [
+            "仅讨论所列交易所、没有任职证据的人员",
+            "已离职且没有当前任职证据的前员工",
+            "公司页面、职位招聘页面",
+            "将岗位列表解释为每个人必须同时担任全部岗位",
+            "额外要求创作者身份、发布内容、粉丝数或连接数"
+          ]
+        },
+        "plan": {
+          "target_count": {
+            "state": "specified",
+            "value": 10,
+            "excerpt": "10位"
+          },
+          "max_calls": {
+            "state": "unspecified",
+            "value": null,
+            "excerpt": null
+          },
+          "intent": {
+            "original_request": "只在LinkedIn搜索10位币安、OKX、Bitget、Bybit或Gate.io的商务、BD和Marketing人员。",
+            "goal": "仅在LinkedIn寻找10位任职于币安、OKX、Bitget、Bybit或Gate.io任一公司，且从事商务、BD或Marketing任一岗位的人员。",
+            "category": {
+              "state": "specified",
+              "value": "商务、BD或Marketing人员",
+              "excerpt": "商务、BD和Marketing人员"
+            },
+            "region": {
+              "state": "unspecified",
+              "value": null,
+              "excerpt": null
+            },
+            "language": {
+              "state": "unspecified",
+              "value": null,
+              "excerpt": null
+            },
+            "min_subscribers": {
+              "state": "unspecified",
+              "value": null,
+              "excerpt": null
+            },
+            "other_hard_conditions": [
+              {
+                "description": "当前任职于以下任一公司：币安、OKX、Bitget、Bybit或Gate.io。公司之间为OR关系。",
+                "excerpt": "币安、OKX、Bitget、Bybit或Gate.io"
+              },
+              {
+                "description": "从事商务、BD或Marketing任一岗位；岗位列表表示可接受的不同人员类型，无须每个人同时担任全部岗位。",
+                "excerpt": "商务、BD和Marketing人员"
+              }
+            ],
+            "soft_preferences": [],
+            "suggested_keywords": [
+              "Binance business development",
+              "币安 商务",
+              "OKX BD",
+              "Bitget Marketing",
+              "Bybit business development",
+              "Gate.io Marketing"
+            ],
+            "min_subscribers_exclusive": false,
+            "min_subscribers_in_requirements": false,
+            "exclusion_groups": [
+              {
+                "platforms": [
+                  "youtube",
+                  "tiktok",
+                  "instagram",
+                  "twitter",
+                  "facebook",
+                  "pinterest",
+                  "reddit",
+                  "bilibili",
+                  "douyin",
+                  "weibo",
+                  "google",
+                  "yahoo"
+                ],
+                "excerpt": "只在LinkedIn搜索"
+              }
+            ]
+          },
+          "scopes": [
+            {
+              "platform": "linkedin",
+              "keywords": [
+                "Binance (BD OR \"Business Development\" OR Marketing)",
+                "OKX (BD OR \"Business Development\" OR Marketing)",
+                "Bitget (BD OR \"Business Development\" OR Marketing)",
+                "Bybit (BD OR \"Business Development\" OR Marketing)",
+                "Gate.io (BD OR \"Business Development\" OR Marketing)",
+                "币安 (商务 OR 市场营销)",
+                "OKX (商务 OR 市场营销)",
+                "Bitget (商务 OR 市场营销)"
+              ]
+            }
+          ],
+          "contact_search_terms": [
+            "email",
+            "business cooperation",
+            "contact",
+            "official website"
+          ]
+        }
+      },
+      {
+        "requirements_preserved": true,
+        "requirement_reason": "最终计划保留仅在LinkedIn寻找10人的要求，五家公司为任选其一，商务、BD、Marketing为可接受的岗位类型，两组条件之间为AND。未增加语言、地区、粉丝或连接数限制；LinkedIn的默认粉丝门槛为0，来源标记正确。当前执行设置没有明确覆盖，未提供手动搜索范围，未指定预算时不限调用符合规则。联系偏好和自动扩展属于执行设置，未被列为人员资格条件。仍须依据个人资料核实当前雇主和岗位，搜索命中不能证明符合条件。",
+        "queries": [
+          {
+            "platform": "linkedin",
+            "keyword": "Binance (BD OR \"Business Development\" OR Marketing)",
+            "suitable": true,
+            "reason": "Binance准确对应币安；公司名称结合相关岗位适合people-search，括号、OR和短语引号符合LinkedIn布尔语法。须核实当前任职关系。"
+          },
+          {
+            "platform": "linkedin",
+            "keyword": "OKX (BD OR \"Business Development\" OR Marketing)",
+            "suitable": true,
+            "reason": "保留OKX公司锚点，以受支持的OR语法检索不同目标岗位，符合寻找人员的目的。命中仍须核实当前公司及职责。"
+          },
+          {
+            "platform": "linkedin",
+            "keyword": "Bitget (BD OR \"Business Development\" OR Marketing)",
+            "suitable": true,
+            "reason": "保留Bitget公司锚点，岗位词适合个人资料检索，布尔表达式未要求一人兼任全部岗位。须排除仅在过往经历中匹配的人员。"
+          },
+          {
+            "platform": "linkedin",
+            "keyword": "Bybit (BD OR \"Business Development\" OR Marketing)",
+            "suitable": true,
+            "reason": "Bybit与目标岗位组合符合LinkedIn人员检索用途，语法受支持。英文检索未增加内容语言要求，仍须核实当前任职。"
+          },
+          {
+            "platform": "linkedin",
+            "keyword": "Gate.io (BD OR \"Business Development\" OR Marketing)",
+            "suitable": true,
+            "reason": "保留完整Gate.io品牌名称并检索相关岗位，符合客户指定公司和人员范围。搜索匹配不能单独证明雇佣关系或岗位资格。"
+          },
+          {
+            "platform": "linkedin",
+            "keyword": "币安 (商务 OR 市场营销)",
+            "suitable": true,
+            "reason": "中文公司名称与岗位词适合检索中文个人资料，OR正确表达可接受的岗位分支。作为补充路线无需独自覆盖所有岗位。"
+          },
+          {
+            "platform": "linkedin",
+            "keyword": "OKX (商务 OR 市场营销)",
+            "suitable": true,
+            "reason": "公司锚点明确，中文岗位词提供有用的资料语言覆盖，未引入新的语言资格限制。须依据资料核实当前雇主及实际职责。"
+          },
+          {
+            "platform": "linkedin",
+            "keyword": "Bitget (商务 OR 市场营销)",
+            "suitable": true,
+            "reason": "保留Bitget并使用可出现在个人资料中的岗位词，适合people-search。与英文路线互补，结果仍需核实并按人员去重。"
+          }
+        ]
+      }
+    ],
+    "draft": {
+      "id": "linkedin-intent-real-0",
+      "brief": "只在LinkedIn搜索10位币安、OKX、Bitget、Bybit或Gate.io的商务、BD和Marketing人员。",
+      "opencli_version": "1.8.8",
+      "criteria": {
+        "category": "商务、BD或Marketing人员",
+        "region": "",
+        "language": "",
+        "min_subscribers": 0,
+        "requires_ai_tool_demo": false,
+        "requires_public_tool_url": false,
+        "min_subscribers_source": "default",
+        "requirements": [
+          {
+            "description": "当前任职于以下任一公司：币安、OKX、Bitget、Bybit或Gate.io。公司之间为OR关系。",
+            "excerpt": "币安、OKX、Bitget、Bybit或Gate.io"
+          },
+          {
+            "description": "从事商务、BD或Marketing任一岗位；岗位列表表示可接受的不同人员类型，无须每个人同时担任全部岗位。",
+            "excerpt": "商务、BD和Marketing人员"
+          }
+        ],
+        "contact_preference": "public_email_first",
+        "contact_search_terms": [
+          "email",
+          "business cooperation",
+          "contact",
+          "official website"
+        ],
+        "automatic_query_expansion": true,
+        "table_subject": "币安、OKX、Bitget、Bybit或Gate.io的商务、BD和Market"
+      },
+      "scopes": [
+        {
+          "platform": "linkedin",
+          "profile_ref": "d5pskwub",
+          "keywords": [
+            "Binance (BD OR \"Business Development\" OR Marketing)",
+            "OKX (BD OR \"Business Development\" OR Marketing)",
+            "Bitget (BD OR \"Business Development\" OR Marketing)",
+            "Bybit (BD OR \"Business Development\" OR Marketing)",
+            "Gate.io (BD OR \"Business Development\" OR Marketing)",
+            "币安 (商务 OR 市场营销)",
+            "OKX (商务 OR 市场营销)",
+            "Bitget (商务 OR 市场营销)"
+          ]
+        }
+      ],
+      "target_count": 10,
+      "max_calls": null
+    }
+  },
+  {
+    "index": 1,
+    "input": {
+      "id": "linkedin-intent-real-1",
+      "brief": "只在LinkedIn搜索10位币安的BD人员，followers至少5000。",
+      "profile_ref": "d5pskwub",
+      "opencli_version": "1.8.8"
+    },
+    "sources": [
+      {
+        "platform": "youtube",
+        "command": "onecrew-search-youtube/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "tiktok",
+        "command": "onecrew-tiktok/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "instagram",
+        "command": "onecrew-search-instagram/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "twitter",
+        "command": "onecrew-search-twitter/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "linkedin",
+        "command": "onecrew-search-linkedin/people-search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "facebook",
+        "command": "onecrew-search-facebook/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "pinterest",
+        "command": "onecrew-pinterest-reader/search-pins",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "reddit",
+        "command": "onecrew-search-reddit/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "bilibili",
+        "command": "onecrew-bilibili/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "douyin",
+        "command": "onecrew-search-douyin/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "weibo",
+        "command": "onecrew-search-weibo/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "google",
+        "command": "onecrew-search-google/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "yahoo",
+        "command": "onecrew-search-yahoo/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      }
+    ],
+    "elapsed_ms": 48845,
+    "trace": [
+      {
+        "understanding": {
+          "product_or_topic": "币安的BD人员",
+          "purpose": "仅在LinkedIn寻找10位任职于币安、followers至少5000的BD人员。",
+          "desired_creators": "符合任职和followers要求的币安BD人员；未要求具备创作者身份。",
+          "explicit_requirements_with_quotes": [
+            "平台限制：“只在LinkedIn搜索”",
+            "目标人数：“10位”",
+            "任职及岗位：“币安的BD人员”",
+            "followers包含下限：“followers至少5000”"
+          ],
+          "relevant_content_angles": [
+            "LinkedIn个人资料中的币安任职信息",
+            "LinkedIn个人资料中的BD或Business Development岗位信息",
+            "个人资料中可核实的followers数量"
+          ],
+          "misleading_matches_to_avoid": [
+            "将LinkedIn connections数量当作followers数量",
+            "将提及币安的人当作币安员工",
+            "将其他岗位人员当作BD人员",
+            "额外要求候选人发布内容或具备创作者身份"
+          ]
+        },
+        "plan": {
+          "target_count": {
+            "state": "specified",
+            "value": 10,
+            "excerpt": "10位"
+          },
+          "max_calls": {
+            "state": "unspecified",
+            "value": null,
+            "excerpt": null
+          },
+          "intent": {
+            "original_request": "只在LinkedIn搜索10位币安的BD人员，followers至少5000。",
+            "goal": "仅在LinkedIn寻找10位币安的BD人员，核实其币安任职、BD岗位及followers至少5000的要求。",
+            "category": {
+              "state": "specified",
+              "value": "BD人员",
+              "excerpt": "币安的BD人员"
+            },
+            "region": {
+              "state": "unspecified",
+              "value": null,
+              "excerpt": null
+            },
+            "language": {
+              "state": "unspecified",
+              "value": null,
+              "excerpt": null
+            },
+            "min_subscribers": {
+              "state": "specified",
+              "value": 5000,
+              "excerpt": "followers至少5000"
+            },
+            "other_hard_conditions": [
+              {
+                "description": "候选人须任职于币安并担任BD岗位，两项均须满足。",
+                "excerpt": "币安的BD人员"
+              }
+            ],
+            "soft_preferences": [],
+            "suggested_keywords": [
+              "Binance BD",
+              "Binance business development",
+              "币安 BD",
+              "币安 商务拓展",
+              "Binance 商务拓展",
+              "币安 业务发展"
+            ],
+            "min_subscribers_exclusive": false,
+            "min_subscribers_in_requirements": false,
+            "exclusion_groups": [
+              {
+                "platforms": [
+                  "youtube",
+                  "tiktok",
+                  "instagram",
+                  "twitter",
+                  "facebook",
+                  "pinterest",
+                  "reddit",
+                  "bilibili",
+                  "douyin",
+                  "weibo",
+                  "google",
+                  "yahoo"
+                ],
+                "excerpt": "只在LinkedIn搜索"
+              }
+            ]
+          },
+          "scopes": [
+            {
+              "platform": "linkedin",
+              "keywords": [
+                "Binance BD",
+                "Binance business development",
+                "币安 BD",
+                "币安 商务拓展",
+                "Binance 商务拓展",
+                "币安 业务发展"
+              ]
+            }
+          ],
+          "contact_search_terms": [
+            "email",
+            "business cooperation",
+            "contact",
+            "official website"
+          ]
+        }
+      },
+      {
+        "requirements_preserved": true,
+        "requirement_reason": "最终计划保留仅限LinkedIn、10位、币安任职且担任BD岗位、followers至少5000（含5000）的全部条件。粉丝门槛标为explicit，未混用connections。execution_settings未提供有效覆盖；预算未指定，max_calls=null可表示不限。用户未限定语言，查询使用中英文合理。联系偏好未被列为资格要求。任职、岗位与真实粉丝数仍须通过个人资料核实。",
+        "queries": [
+          {
+            "platform": "linkedin",
+            "keyword": "Binance BD",
+            "suitable": true,
+            "reason": "适合people-search，以公司名和岗位缩写寻找人员；须核实BD含义及当前币安任职。"
+          },
+          {
+            "platform": "linkedin",
+            "keyword": "Binance business development",
+            "suitable": true,
+            "reason": "公司名与完整英文岗位名称明确，符合寻找币安商务拓展人员的目的。"
+          },
+          {
+            "platform": "linkedin",
+            "keyword": "币安 BD",
+            "suitable": true,
+            "reason": "中文公司名搭配常见岗位缩写，适合检索使用这些词语的个人资料。"
+          },
+          {
+            "platform": "linkedin",
+            "keyword": "币安 商务拓展",
+            "suitable": true,
+            "reason": "包含准确公司名称与BD的中文岗位表达，符合人员搜索用途。"
+          },
+          {
+            "platform": "linkedin",
+            "keyword": "Binance 商务拓展",
+            "suitable": true,
+            "reason": "适合发现使用英文公司名、中文岗位名的资料，保留公司与岗位两个锚点。"
+          },
+          {
+            "platform": "linkedin",
+            "keyword": "币安 业务发展",
+            "suitable": true,
+            "reason": "业务发展是business development的可用表达；可能匹配一般业务描述，须核实实际岗位。搜索命中不能证明任职或粉丝达标。"
+          }
+        ]
+      }
+    ],
+    "draft": {
+      "id": "linkedin-intent-real-1",
+      "brief": "只在LinkedIn搜索10位币安的BD人员，followers至少5000。",
+      "opencli_version": "1.8.8",
+      "criteria": {
+        "category": "BD人员",
+        "region": "",
+        "language": "",
+        "min_subscribers": 5000,
+        "requires_ai_tool_demo": false,
+        "requires_public_tool_url": false,
+        "min_subscribers_source": "explicit",
+        "requirements": [
+          {
+            "description": "候选人须任职于币安并担任BD岗位，两项均须满足。",
+            "excerpt": "币安的BD人员"
+          }
+        ],
+        "contact_preference": "public_email_first",
+        "contact_search_terms": [
+          "email",
+          "business cooperation",
+          "contact",
+          "official website"
+        ],
+        "automatic_query_expansion": true,
+        "table_subject": "币安的BD人员"
+      },
+      "scopes": [
+        {
+          "platform": "linkedin",
+          "profile_ref": "d5pskwub",
+          "keywords": [
+            "Binance BD",
+            "Binance business development",
+            "币安 BD",
+            "币安 商务拓展",
+            "Binance 商务拓展",
+            "币安 业务发展"
+          ]
+        }
+      ],
+      "target_count": 10,
+      "max_calls": null
+    }
+  },
+  {
+    "index": 2,
+    "input": {
+      "id": "linkedin-intent-real-2",
+      "brief": "只在LinkedIn搜索10位币安的BD人员，connections至少500。",
+      "profile_ref": "d5pskwub",
+      "opencli_version": "1.8.8"
+    },
+    "sources": [
+      {
+        "platform": "youtube",
+        "command": "onecrew-search-youtube/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "tiktok",
+        "command": "onecrew-tiktok/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "instagram",
+        "command": "onecrew-search-instagram/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "twitter",
+        "command": "onecrew-search-twitter/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "linkedin",
+        "command": "onecrew-search-linkedin/people-search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "facebook",
+        "command": "onecrew-search-facebook/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "pinterest",
+        "command": "onecrew-pinterest-reader/search-pins",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "reddit",
+        "command": "onecrew-search-reddit/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "bilibili",
+        "command": "onecrew-bilibili/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "douyin",
+        "command": "onecrew-search-douyin/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "weibo",
+        "command": "onecrew-search-weibo/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "google",
+        "command": "onecrew-search-google/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "yahoo",
+        "command": "onecrew-search-yahoo/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      }
+    ],
+    "elapsed_ms": 44205,
+    "trace": [
+      {
+        "understanding": {
+          "product_or_topic": "币安（Binance）的商务拓展（BD）人员",
+          "purpose": "在 LinkedIn 找到10位币安的BD人员，每人的connections至少500。",
+          "desired_creators": "币安的BD人员；请求对象是职业人员，未要求其具有创作者身份。",
+          "explicit_requirements_with_quotes": [
+            "平台限制：“只在LinkedIn搜索”",
+            "人数：“10位”",
+            "公司及职位：“币安的BD人员”",
+            "人脉数量：“connections至少500”"
+          ],
+          "relevant_content_angles": [
+            "LinkedIn个人资料中的币安任职信息",
+            "个人资料中的BD或Business Development职位信息",
+            "个人资料中的connections数量"
+          ],
+          "misleading_matches_to_avoid": [
+            "将connections至少500误解为粉丝至少500",
+            "将10位误解为粉丝或connections数量",
+            "将提及币安的人误认为币安员工",
+            "将其他公司的BD人员误认为币安的BD人员",
+            "额外要求候选人发布内容或具有创作者身份"
+          ]
+        },
+        "plan": {
+          "target_count": {
+            "state": "specified",
+            "value": 10,
+            "excerpt": "10位"
+          },
+          "max_calls": {
+            "state": "unspecified",
+            "value": null,
+            "excerpt": null
+          },
+          "intent": {
+            "original_request": "只在LinkedIn搜索10位币安的BD人员，connections至少500。",
+            "goal": "仅在LinkedIn寻找10位币安（Binance）的BD人员，每人的connections至少500。",
+            "category": {
+              "state": "specified",
+              "value": "BD人员",
+              "excerpt": "BD人员"
+            },
+            "region": {
+              "state": "unspecified",
+              "value": null,
+              "excerpt": null
+            },
+            "language": {
+              "state": "unspecified",
+              "value": null,
+              "excerpt": null
+            },
+            "min_subscribers": {
+              "state": "unspecified",
+              "value": null,
+              "excerpt": null
+            },
+            "other_hard_conditions": [
+              {
+                "description": "候选人须任职于币安（Binance），担任BD职位。",
+                "excerpt": "币安的BD人员"
+              },
+              {
+                "description": "每位候选人的LinkedIn connections数量须大于或等于500；该指标为人脉数量。",
+                "excerpt": "connections至少500"
+              }
+            ],
+            "soft_preferences": [],
+            "suggested_keywords": [
+              "Binance BD",
+              "Binance Business Development",
+              "币安 BD",
+              "币安 商务拓展",
+              "币安 业务发展",
+              "Binance 业务拓展"
+            ],
+            "min_subscribers_exclusive": false,
+            "min_subscribers_in_requirements": false,
+            "exclusion_groups": [
+              {
+                "platforms": [
+                  "youtube",
+                  "tiktok",
+                  "instagram",
+                  "twitter",
+                  "facebook",
+                  "pinterest",
+                  "reddit",
+                  "bilibili",
+                  "douyin",
+                  "weibo",
+                  "google",
+                  "yahoo"
+                ],
+                "excerpt": "只在LinkedIn搜索"
+              }
+            ]
+          },
+          "scopes": [
+            {
+              "platform": "linkedin",
+              "keywords": [
+                "Binance BD",
+                "Binance Business Development",
+                "币安 BD",
+                "币安 商务拓展",
+                "币安 业务发展",
+                "Binance 业务拓展"
+              ]
+            }
+          ],
+          "contact_search_terms": [
+            "email",
+            "business cooperation",
+            "contact",
+            "official website"
+          ]
+        }
+      },
+      {
+        "requirements_preserved": true,
+        "requirement_reason": "最终计划保留仅限LinkedIn、10位币安BD人员及每人connections≥500。connections正确保留为独立人脉指标，未转换为粉丝门槛；LinkedIn默认粉丝门槛为0。未指定语言或预算，当前设置没有明确覆盖，max_calls=null符合不限预算。搜索范围、软性联系偏好均未误列为人员资格。六条查询存在同义重复，但均适合人员搜索；搜索命中仍须核实当前任职公司、BD职位及connections数量。",
+        "queries": [
+          {
+            "platform": "linkedin",
+            "keyword": "Binance BD",
+            "suitable": true,
+            "reason": "公司名称与目标职位缩写明确，适合LinkedIn人员搜索；需核实是否为币安现任BD人员。"
+          },
+          {
+            "platform": "linkedin",
+            "keyword": "Binance Business Development",
+            "suitable": true,
+            "reason": "公司名称与完整英文职位名称准确，符合寻找币安商务拓展人员的目的，无不支持的操作符。"
+          },
+          {
+            "platform": "linkedin",
+            "keyword": "币安 BD",
+            "suitable": true,
+            "reason": "中文公司名与常用职位缩写适合匹配人员资料；客户未限定语言，使用此语言组合合理。"
+          },
+          {
+            "platform": "linkedin",
+            "keyword": "币安 商务拓展",
+            "suitable": true,
+            "reason": "保留币安公司名称，并使用BD的常见中文职位表述，适合人员资料检索。"
+          },
+          {
+            "platform": "linkedin",
+            "keyword": "币安 业务发展",
+            "suitable": true,
+            "reason": "业务发展是Business Development的合理中文表述，保留公司与职位方向；需通过具体职责核实BD身份。"
+          },
+          {
+            "platform": "linkedin",
+            "keyword": "Binance 业务拓展",
+            "suitable": true,
+            "reason": "英文公司名与中文BD职位表述可匹配双语人员资料，符合目标；与其他查询同义重复会限制新增覆盖。"
+          }
+        ]
+      }
+    ],
+    "draft": {
+      "id": "linkedin-intent-real-2",
+      "brief": "只在LinkedIn搜索10位币安的BD人员，connections至少500。",
+      "opencli_version": "1.8.8",
+      "criteria": {
+        "category": "BD人员",
+        "region": "",
+        "language": "",
+        "min_subscribers": 0,
+        "requires_ai_tool_demo": false,
+        "requires_public_tool_url": false,
+        "min_subscribers_source": "default",
+        "requirements": [
+          {
+            "description": "候选人须任职于币安（Binance），担任BD职位。",
+            "excerpt": "币安的BD人员"
+          },
+          {
+            "description": "每位候选人的LinkedIn connections数量须大于或等于500；该指标为人脉数量。",
+            "excerpt": "connections至少500"
+          }
+        ],
+        "contact_preference": "public_email_first",
+        "contact_search_terms": [
+          "email",
+          "business cooperation",
+          "contact",
+          "official website"
+        ],
+        "automatic_query_expansion": true,
+        "table_subject": "币安（Binance）的商务拓展（BD）人员"
+      },
+      "scopes": [
+        {
+          "platform": "linkedin",
+          "profile_ref": "d5pskwub",
+          "keywords": [
+            "Binance BD",
+            "Binance Business Development",
+            "币安 BD",
+            "币安 商务拓展",
+            "币安 业务发展",
+            "Binance 业务拓展"
+          ]
+        }
+      ],
+      "target_count": 10,
+      "max_calls": null
+    }
+  },
+  {
+    "index": 3,
+    "input": {
+      "id": "linkedin-intent-real-3",
+      "brief": "只在LinkedIn搜索10位币安的BD人员，followers至少2000或者connections至少500，满足其中一个就行。",
+      "profile_ref": "d5pskwub",
+      "opencli_version": "1.8.8"
+    },
+    "sources": [
+      {
+        "platform": "youtube",
+        "command": "onecrew-search-youtube/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "tiktok",
+        "command": "onecrew-tiktok/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "instagram",
+        "command": "onecrew-search-instagram/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "twitter",
+        "command": "onecrew-search-twitter/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "linkedin",
+        "command": "onecrew-search-linkedin/people-search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "facebook",
+        "command": "onecrew-search-facebook/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "pinterest",
+        "command": "onecrew-pinterest-reader/search-pins",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "reddit",
+        "command": "onecrew-search-reddit/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "bilibili",
+        "command": "onecrew-bilibili/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "douyin",
+        "command": "onecrew-search-douyin/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "weibo",
+        "command": "onecrew-search-weibo/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "google",
+        "command": "onecrew-search-google/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "yahoo",
+        "command": "onecrew-search-yahoo/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      }
+    ],
+    "elapsed_ms": 49228,
+    "trace": [
+      {
+        "understanding": {
+          "product_or_topic": "币安（Binance）的BD人员",
+          "purpose": "在LinkedIn寻找10位币安BD人员，每位满足followers至少2000或者connections至少500中的任一条件。",
+          "desired_creators": "币安的BD人员；未要求其具有创作者身份。",
+          "explicit_requirements_with_quotes": [
+            "平台限制：“只在LinkedIn搜索”",
+            "目标人数：“10位”",
+            "公司与职位：“币安的BD人员”",
+            "完整任选条件：“followers至少2000或者connections至少500，满足其中一个就行。”"
+          ],
+          "relevant_content_angles": [
+            "通过LinkedIn人员资料中的Binance与BD职位信息寻找候选人。",
+            "通过币安与商务拓展、业务发展等职位表述补充检索。",
+            "分别核实followers和connections，任一指标达到对应下限即可。"
+          ],
+          "misleading_matches_to_avoid": [
+            "将followers与connections合并为同一指标。",
+            "要求候选人同时满足两个数量下限。",
+            "把connections至少500理解为粉丝下限或目标人数。",
+            "将一般加密货币从业者或提及币安的账号视为币安BD人员。",
+            "额外要求候选人发布内容或具有创作者身份。"
+          ]
+        },
+        "plan": {
+          "target_count": {
+            "state": "specified",
+            "value": 10,
+            "excerpt": "10位"
+          },
+          "max_calls": {
+            "state": "unspecified",
+            "value": null,
+            "excerpt": null
+          },
+          "intent": {
+            "original_request": "只在LinkedIn搜索10位币安的BD人员，followers至少2000或者connections至少500，满足其中一个就行。",
+            "goal": "仅在LinkedIn寻找10位币安（Binance）的BD人员，每位满足followers至少2000或connections至少500中的任一条件。",
+            "category": {
+              "state": "specified",
+              "value": "BD人员",
+              "excerpt": "BD人员"
+            },
+            "region": {
+              "state": "unspecified",
+              "value": null,
+              "excerpt": null
+            },
+            "language": {
+              "state": "unspecified",
+              "value": null,
+              "excerpt": null
+            },
+            "min_subscribers": {
+              "state": "unspecified",
+              "value": null,
+              "excerpt": null
+            },
+            "other_hard_conditions": [
+              {
+                "description": "候选人须任职于币安（Binance），从事BD工作。",
+                "excerpt": "币安的BD人员"
+              },
+              {
+                "description": "每位候选人须满足以下任一条件：LinkedIn followers >= 2000，或者LinkedIn connections >= 500。两个分支为OR关系，达到任一分支即可；followers和connections分别核实。",
+                "excerpt": "followers至少2000或者connections至少500，满足其中一个就行。"
+              }
+            ],
+            "soft_preferences": [],
+            "suggested_keywords": [
+              "Binance BD",
+              "Binance business development",
+              "币安 商务拓展"
+            ],
+            "min_subscribers_exclusive": false,
+            "min_subscribers_in_requirements": true,
+            "exclusion_groups": [
+              {
+                "platforms": [
+                  "youtube",
+                  "tiktok",
+                  "instagram",
+                  "twitter",
+                  "facebook",
+                  "pinterest",
+                  "reddit",
+                  "bilibili",
+                  "douyin",
+                  "weibo",
+                  "google",
+                  "yahoo"
+                ],
+                "excerpt": "只在LinkedIn搜索"
+              }
+            ]
+          },
+          "scopes": [
+            {
+              "platform": "linkedin",
+              "keywords": [
+                "Binance BD",
+                "Binance business development",
+                "币安 商务拓展",
+                "Binance business developer",
+                "币安 业务发展",
+                "Binance 商务开发"
+              ]
+            }
+          ],
+          "contact_search_terms": [
+            "email",
+            "business cooperation",
+            "contact",
+            "official website"
+          ]
+        }
+      },
+      {
+        "requirements_preserved": true,
+        "requirement_reason": "最终计划保留仅限LinkedIn、10位币安BD人员，以及followers至少2000或connections至少500的完整OR条件，两个门槛均包含等于。min_subscribers=0、source=requirements正确避免增加独立followers门槛；connections未混入人数或followers字段。用户未限定语言和预算，预算不限符合规则；execution_settings未提供新的覆盖值，manual_scopes为空。联系偏好未被列为资格要求。检索结果仍须核实当前任职、BD职责及至少一个数量门槛。",
+        "queries": [
+          {
+            "platform": "linkedin",
+            "keyword": "Binance BD",
+            "suitable": true,
+            "reason": "适合LinkedIn people-search，以公司名和明确岗位缩写寻找人员线索；匹配结果仍须核实当前任职及BD职责。"
+          },
+          {
+            "platform": "linkedin",
+            "keyword": "Binance business development",
+            "suitable": true,
+            "reason": "公司名与完整BD职能名称适合人员资料检索，直接服务于寻找币安BD人员的目的。"
+          },
+          {
+            "platform": "linkedin",
+            "keyword": "币安 商务拓展",
+            "suitable": true,
+            "reason": "中文公司名与BD职能词适合人员检索；用户未限定语言，可以使用中文查询。"
+          },
+          {
+            "platform": "linkedin",
+            "keyword": "Binance business developer",
+            "suitable": true,
+            "reason": "保留Binance公司锚点，并使用可出现在个人资料中的BD岗位名称；未增加资格限制。"
+          },
+          {
+            "platform": "linkedin",
+            "keyword": "币安 业务发展",
+            "suitable": true,
+            "reason": "公司名与BD的中文职能表述相关，适合寻找人员线索；词义较宽仍有检索价值，需核实实际职责。"
+          },
+          {
+            "platform": "linkedin",
+            "keyword": "Binance 商务开发",
+            "suitable": true,
+            "reason": "英文公司名与中文BD职能组合适合多语言个人资料检索，保留公司和岗位范围；搜索命中不能证明数量门槛达标。"
+          }
+        ]
+      }
+    ],
+    "draft": {
+      "id": "linkedin-intent-real-3",
+      "brief": "只在LinkedIn搜索10位币安的BD人员，followers至少2000或者connections至少500，满足其中一个就行。",
+      "opencli_version": "1.8.8",
+      "criteria": {
+        "category": "BD人员",
+        "region": "",
+        "language": "",
+        "min_subscribers": 0,
+        "requires_ai_tool_demo": false,
+        "requires_public_tool_url": false,
+        "min_subscribers_source": "requirements",
+        "requirements": [
+          {
+            "description": "候选人须任职于币安（Binance），从事BD工作。",
+            "excerpt": "币安的BD人员"
+          },
+          {
+            "description": "每位候选人须满足以下任一条件：LinkedIn followers >= 2000，或者LinkedIn connections >= 500。两个分支为OR关系，达到任一分支即可；followers和connections分别核实。",
+            "excerpt": "followers至少2000或者connections至少500，满足其中一个就行。"
+          }
+        ],
+        "contact_preference": "public_email_first",
+        "contact_search_terms": [
+          "email",
+          "business cooperation",
+          "contact",
+          "official website"
+        ],
+        "automatic_query_expansion": true,
+        "table_subject": "币安（Binance）的BD人员"
+      },
+      "scopes": [
+        {
+          "platform": "linkedin",
+          "profile_ref": "d5pskwub",
+          "keywords": [
+            "Binance BD",
+            "Binance business development",
+            "币安 商务拓展",
+            "Binance business developer",
+            "币安 业务发展",
+            "Binance 商务开发"
+          ]
+        }
+      ],
+      "target_count": 10,
+      "max_calls": null
+    }
+  },
+  {
+    "index": 4,
+    "input": {
+      "id": "linkedin-intent-real-4",
+      "brief": "只在LinkedIn搜索10位币安的BD人员，followers至少2000，同时connections至少500，两项都要满足。",
+      "profile_ref": "d5pskwub",
+      "opencli_version": "1.8.8"
+    },
+    "sources": [
+      {
+        "platform": "youtube",
+        "command": "onecrew-search-youtube/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "tiktok",
+        "command": "onecrew-tiktok/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "instagram",
+        "command": "onecrew-search-instagram/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "twitter",
+        "command": "onecrew-search-twitter/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "linkedin",
+        "command": "onecrew-search-linkedin/people-search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "facebook",
+        "command": "onecrew-search-facebook/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "pinterest",
+        "command": "onecrew-pinterest-reader/search-pins",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "reddit",
+        "command": "onecrew-search-reddit/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "bilibili",
+        "command": "onecrew-bilibili/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "douyin",
+        "command": "onecrew-search-douyin/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "weibo",
+        "command": "onecrew-search-weibo/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "google",
+        "command": "onecrew-search-google/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "yahoo",
+        "command": "onecrew-search-yahoo/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      }
+    ],
+    "elapsed_ms": 46055,
+    "trace": [
+      {
+        "understanding": {
+          "product_or_topic": "币安的商务拓展（BD）人员",
+          "purpose": "仅通过LinkedIn寻找10位币安BD人员，每人同时满足followers至少2000和connections至少500。",
+          "desired_creators": "任职于币安的BD人员；客户未要求其具备内容创作者身份。",
+          "explicit_requirements_with_quotes": [
+            "平台限制：“只在LinkedIn搜索”",
+            "目标人数：“10位”",
+            "雇主及岗位：“币安的BD人员”",
+            "关注者下限，包含2000：“followers至少2000”",
+            "人脉连接下限，包含500：“connections至少500”",
+            "两项指标必须同时满足：“followers至少2000，同时connections至少500，两项都要满足。”"
+          ],
+          "relevant_content_angles": [
+            "LinkedIn个人资料中的币安任职信息",
+            "个人资料中的BD或business development岗位信息",
+            "分别核实followers和connections，两项均须达到要求"
+          ],
+          "misleading_matches_to_avoid": [
+            "仅讨论币安、未任职于币安的人员",
+            "任职币安但岗位不属于BD的人员",
+            "把connections当作followers",
+            "仅满足followers或connections其中一项的人员",
+            "将BD人员额外限定为博主、测评者或其他内容创作者"
+          ]
+        },
+        "plan": {
+          "target_count": {
+            "state": "specified",
+            "value": 10,
+            "excerpt": "10位"
+          },
+          "max_calls": {
+            "state": "unspecified",
+            "value": null,
+            "excerpt": null
+          },
+          "intent": {
+            "original_request": "只在LinkedIn搜索10位币安的BD人员，followers至少2000，同时connections至少500，两项都要满足。",
+            "goal": "仅在LinkedIn寻找10位任职于币安的BD人员，每人必须同时拥有至少2000名followers和至少500个connections。",
+            "category": {
+              "state": "specified",
+              "value": "商务拓展（BD）人员",
+              "excerpt": "BD人员"
+            },
+            "region": {
+              "state": "unspecified",
+              "value": null,
+              "excerpt": null
+            },
+            "language": {
+              "state": "unspecified",
+              "value": null,
+              "excerpt": null
+            },
+            "min_subscribers": {
+              "state": "specified",
+              "value": 2000,
+              "excerpt": "followers至少2000"
+            },
+            "other_hard_conditions": [
+              {
+                "description": "候选人须任职于币安并从事BD工作。",
+                "excerpt": "币安的BD人员"
+              },
+              {
+                "description": "每位候选人的connections须至少为500；该条件与followers至少2000的条件必须同时满足。",
+                "excerpt": "followers至少2000，同时connections至少500，两项都要满足。"
+              }
+            ],
+            "soft_preferences": [],
+            "suggested_keywords": [
+              "Binance BD",
+              "Binance business development",
+              "币安 商务拓展",
+              "Binance partnerships business development",
+              "Binance institutional business development",
+              "Binance regional business development"
+            ],
+            "min_subscribers_exclusive": false,
+            "min_subscribers_in_requirements": false,
+            "exclusion_groups": [
+              {
+                "platforms": [
+                  "youtube",
+                  "tiktok",
+                  "instagram",
+                  "twitter",
+                  "facebook",
+                  "pinterest",
+                  "reddit",
+                  "bilibili",
+                  "douyin",
+                  "weibo",
+                  "google",
+                  "yahoo"
+                ],
+                "excerpt": "只在LinkedIn搜索"
+              }
+            ]
+          },
+          "scopes": [
+            {
+              "platform": "linkedin",
+              "keywords": [
+                "Binance BD",
+                "Binance business development",
+                "币安 商务拓展",
+                "Binance partnerships business development",
+                "Binance institutional business development",
+                "Binance regional business development"
+              ]
+            }
+          ],
+          "contact_search_terms": [
+            "email",
+            "business cooperation",
+            "contact",
+            "official website"
+          ]
+        }
+      },
+      {
+        "requirements_preserved": true,
+        "requirement_reason": "最终方案保留仅LinkedIn、10位币安BD人员、followers≥2000且connections≥500的全部条件，两项门槛均含等号并要求同时满足。followers以explicit来源记录为结构化门槛，connections保留在完整引用的要求中，未混同指标。未指定内容语言或预算，使用中英文查询及不限预算符合请求；execution_settings未提供新的明确覆盖，manual_scopes为空。联系偏好未列为人员资格要求。查询结果仍须核实当前任职、BD职责及两项真实人数，姓名或搜索命中不能证明合格。",
+        "queries": [
+          {
+            "platform": "linkedin",
+            "keyword": "Binance BD",
+            "suitable": true,
+            "reason": "适合people-search，以币安品牌和明确BD职位缩写定位人员；须进一步核实任职及职责。"
+          },
+          {
+            "platform": "linkedin",
+            "keyword": "Binance business development",
+            "suitable": true,
+            "reason": "品牌与完整职位名称直接对应币安BD人员，适合匹配个人资料，未添加资格条件或不支持的语法。"
+          },
+          {
+            "platform": "linkedin",
+            "keyword": "币安 商务拓展",
+            "suitable": true,
+            "reason": "以中文品牌和BD对应职位补充中文资料检索；客户未限制语言，该查询未改变人员范围。"
+          },
+          {
+            "platform": "linkedin",
+            "keyword": "Binance partnerships business development",
+            "suitable": true,
+            "reason": "保留币安及BD职位锚点，补充合作伙伴方向的人员发现；该方向仅是检索路线，不构成额外资格要求。"
+          },
+          {
+            "platform": "linkedin",
+            "keyword": "Binance institutional business development",
+            "suitable": true,
+            "reason": "适合发现机构业务方向的币安BD资料，主题与目标一致；不能仅凭institutional或搜索命中认定符合全部条件。"
+          },
+          {
+            "platform": "linkedin",
+            "keyword": "Binance regional business development",
+            "suitable": true,
+            "reason": "以币安及BD职位为核心，补充区域业务方向的人员资料；未指定地区，也未将区域职责设为必需条件。"
+          }
+        ]
+      }
+    ],
+    "draft": {
+      "id": "linkedin-intent-real-4",
+      "brief": "只在LinkedIn搜索10位币安的BD人员，followers至少2000，同时connections至少500，两项都要满足。",
+      "opencli_version": "1.8.8",
+      "criteria": {
+        "category": "商务拓展（BD）人员",
+        "region": "",
+        "language": "",
+        "min_subscribers": 2000,
+        "requires_ai_tool_demo": false,
+        "requires_public_tool_url": false,
+        "min_subscribers_source": "explicit",
+        "requirements": [
+          {
+            "description": "候选人须任职于币安并从事BD工作。",
+            "excerpt": "币安的BD人员"
+          },
+          {
+            "description": "每位候选人的connections须至少为500；该条件与followers至少2000的条件必须同时满足。",
+            "excerpt": "followers至少2000，同时connections至少500，两项都要满足。"
+          }
+        ],
+        "contact_preference": "public_email_first",
+        "contact_search_terms": [
+          "email",
+          "business cooperation",
+          "contact",
+          "official website"
+        ],
+        "automatic_query_expansion": true,
+        "table_subject": "币安的商务拓展（BD）人员"
+      },
+      "scopes": [
+        {
+          "platform": "linkedin",
+          "profile_ref": "d5pskwub",
+          "keywords": [
+            "Binance BD",
+            "Binance business development",
+            "币安 商务拓展",
+            "Binance partnerships business development",
+            "Binance institutional business development",
+            "Binance regional business development"
+          ]
+        }
+      ],
+      "target_count": 10,
+      "max_calls": null
+    }
+  },
+  {
+    "index": 5,
+    "input": {
+      "id": "linkedin-intent-real-5",
+      "brief": "只在LinkedIn和YouTube搜索10位人工智能创作者。",
+      "profile_ref": "d5pskwub",
+      "opencli_version": "1.8.8"
+    },
+    "sources": [
+      {
+        "platform": "youtube",
+        "command": "onecrew-search-youtube/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "tiktok",
+        "command": "onecrew-tiktok/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "instagram",
+        "command": "onecrew-search-instagram/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "twitter",
+        "command": "onecrew-search-twitter/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "linkedin",
+        "command": "onecrew-search-linkedin/people-search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "facebook",
+        "command": "onecrew-search-facebook/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "pinterest",
+        "command": "onecrew-pinterest-reader/search-pins",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "reddit",
+        "command": "onecrew-search-reddit/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "bilibili",
+        "command": "onecrew-bilibili/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "douyin",
+        "command": "onecrew-search-douyin/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "weibo",
+        "command": "onecrew-search-weibo/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "google",
+        "command": "onecrew-search-google/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "yahoo",
+        "command": "onecrew-search-yahoo/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      }
+    ],
+    "elapsed_ms": 52095,
+    "trace": [
+      {
+        "understanding": {
+          "product_or_topic": "人工智能",
+          "purpose": "仅在LinkedIn和YouTube寻找10位人工智能创作者。",
+          "desired_creators": "发布人工智能相关内容的创作者。",
+          "explicit_requirements_with_quotes": [
+            "平台限制：“只在LinkedIn和YouTube搜索”",
+            "目标人数：“10位”",
+            "内容类别：“人工智能创作者”",
+            "创作者身份：“创作者”"
+          ],
+          "relevant_content_angles": [
+            "人工智能知识讲解",
+            "人工智能使用教程",
+            "人工智能创意项目展示",
+            "人工智能研究解读",
+            "人工智能应用经验",
+            "人工智能行业分析"
+          ],
+          "misleading_matches_to_avoid": [
+            "仅凭人工智能从业职位认定创作者身份",
+            "仅介绍人工智能产品或服务、缺少创作者身份依据的账户",
+            "把教学机构或企业账户直接认定为个人创作者",
+            "把搜索结果的主题匹配直接视为创作者资格证据"
+          ]
+        },
+        "plan": {
+          "target_count": {
+            "state": "specified",
+            "value": 10,
+            "excerpt": "10位"
+          },
+          "max_calls": {
+            "state": "unspecified",
+            "value": null,
+            "excerpt": null
+          },
+          "intent": {
+            "original_request": "只在LinkedIn和YouTube搜索10位人工智能创作者。",
+            "goal": "仅在LinkedIn和YouTube寻找10位发布人工智能相关内容的创作者。",
+            "category": {
+              "state": "specified",
+              "value": "人工智能创作者",
+              "excerpt": "人工智能创作者"
+            },
+            "region": {
+              "state": "unspecified",
+              "value": null,
+              "excerpt": null
+            },
+            "language": {
+              "state": "unspecified",
+              "value": null,
+              "excerpt": null
+            },
+            "min_subscribers": {
+              "state": "unspecified",
+              "value": null,
+              "excerpt": null
+            },
+            "other_hard_conditions": [
+              {
+                "description": "需要有证据支持其创作者身份；结合发布或署名整理的人工智能内容审核，职位名称本身不能证明该身份。",
+                "excerpt": "创作者"
+              }
+            ],
+            "soft_preferences": [],
+            "suggested_keywords": [
+              "人工智能知识讲解",
+              "人工智能教程",
+              "人工智能项目展示",
+              "AI educator",
+              "artificial intelligence writer",
+              "artificial intelligence journalist"
+            ],
+            "min_subscribers_exclusive": false,
+            "min_subscribers_in_requirements": false,
+            "exclusion_groups": [
+              {
+                "platforms": [
+                  "tiktok",
+                  "instagram",
+                  "twitter",
+                  "facebook",
+                  "pinterest",
+                  "reddit",
+                  "bilibili",
+                  "douyin",
+                  "weibo",
+                  "google",
+                  "yahoo"
+                ],
+                "excerpt": "只在LinkedIn和YouTube搜索"
+              }
+            ]
+          },
+          "scopes": [
+            {
+              "platform": "youtube",
+              "keywords": [
+                "人工智能 知识讲解",
+                "artificial intelligence tutorial",
+                "人工智能 创意项目展示",
+                "artificial intelligence research explained",
+                "人工智能 应用经验分享",
+                "artificial intelligence industry analysis"
+              ]
+            },
+            {
+              "platform": "linkedin",
+              "keywords": [
+                "artificial intelligence content creator",
+                "人工智能 科普作者",
+                "artificial intelligence educator",
+                "artificial intelligence journalist",
+                "artificial intelligence newsletter writer",
+                "人工智能 技术博主"
+              ]
+            }
+          ],
+          "contact_search_terms": [
+            "email",
+            "business cooperation",
+            "contact",
+            "official website"
+          ]
+        }
+      },
+      {
+        "requirements_preserved": true,
+        "requirement_reason": "最终计划仅覆盖LinkedIn和YouTube，目标为10位人工智能创作者，保留了创作者身份的证据审核要求。未指定内容语言，中英文查询均可使用。2000人的最低关注数来源为default，因此仅适用于YouTube，LinkedIn没有关注数或连接数门槛；不能将其执行为全平台门槛。execution_settings没有明确覆盖，预算保持不限，manual_scopes为空。联系偏好和自动扩展设置未被列为创作者资格条件，亦未新增工具演示、公开工具链接等要求。",
+        "queries": [
+          {
+            "platform": "youtube",
+            "keyword": "人工智能 知识讲解",
+            "suitable": true,
+            "reason": "适合视频内容搜索，以人工智能为主题并指定知识讲解角度，可发现教育内容创作者。"
+          },
+          {
+            "platform": "youtube",
+            "keyword": "artificial intelligence tutorial",
+            "suitable": true,
+            "reason": "主题明确，教程是适合视频检索的内容角度；客户未限制内容语言，英文可用。"
+          },
+          {
+            "platform": "youtube",
+            "keyword": "人工智能 创意项目展示",
+            "suitable": true,
+            "reason": "以人工智能项目展示寻找创作内容，为广义创作者发现提供互补路线，不要求所有候选人都展示项目。"
+          },
+          {
+            "platform": "youtube",
+            "keyword": "artificial intelligence research explained",
+            "suitable": true,
+            "reason": "人工智能研究解读属于相关视频内容，主题与讲解意图清楚，没有附加研究资质要求。"
+          },
+          {
+            "platform": "youtube",
+            "keyword": "人工智能 应用经验分享",
+            "suitable": true,
+            "reason": "适合检索人工智能应用经验视频，提供实践分享角度；仍需核实发布者的创作者身份。"
+          },
+          {
+            "platform": "youtube",
+            "keyword": "artificial intelligence industry analysis",
+            "suitable": true,
+            "reason": "人工智能行业分析属于相关内容路线，适合视频搜索；命中机构内容或新闻本身不能证明创作者资格。"
+          },
+          {
+            "platform": "linkedin",
+            "keyword": "artificial intelligence content creator",
+            "suitable": true,
+            "reason": "适合people-search，以人工智能领域加创作者角色检索资料。没有提供该路线反复偏离的实际证据；职位名称仍需相关发布内容佐证。"
+          },
+          {
+            "platform": "linkedin",
+            "keyword": "人工智能 科普作者",
+            "suitable": true,
+            "reason": "简短的主题加写作角色符合人员资料检索，可发现人工智能科普作者，后续需核实其发布或署名整理的内容。"
+          },
+          {
+            "platform": "linkedin",
+            "keyword": "artificial intelligence educator",
+            "suitable": true,
+            "reason": "人工智能教育角色适合人员搜索，可作为教育内容创作者线索；教育职位本身不证明创作者身份，且未提供反复命中学校的拒绝证据。"
+          },
+          {
+            "platform": "linkedin",
+            "keyword": "artificial intelligence journalist",
+            "suitable": true,
+            "reason": "主题加记者角色适合人员资料搜索，可发现人工智能报道作者；须用相关署名内容验证身份。"
+          },
+          {
+            "platform": "linkedin",
+            "keyword": "artificial intelligence newsletter writer",
+            "suitable": true,
+            "reason": "明确人工智能主题和通讯写作角色，符合人员搜索表面，可发现持续发布相关内容的作者线索。"
+          },
+          {
+            "platform": "linkedin",
+            "keyword": "人工智能 技术博主",
+            "suitable": true,
+            "reason": "简短的领域加博主角色适合人员资料检索，保留人工智能主题；资料命中后仍需核实相关内容证据。"
+          }
+        ]
+      }
+    ],
+    "draft": {
+      "id": "linkedin-intent-real-5",
+      "brief": "只在LinkedIn和YouTube搜索10位人工智能创作者。",
+      "opencli_version": "1.8.8",
+      "criteria": {
+        "category": "人工智能创作者",
+        "region": "",
+        "language": "",
+        "min_subscribers": 2000,
+        "requires_ai_tool_demo": false,
+        "requires_public_tool_url": false,
+        "min_subscribers_source": "default",
+        "requirements": [
+          {
+            "description": "需要有证据支持其创作者身份；结合发布或署名整理的人工智能内容审核，职位名称本身不能证明该身份。",
+            "excerpt": "创作者"
+          }
+        ],
+        "contact_preference": "public_email_first",
+        "contact_search_terms": [
+          "email",
+          "business cooperation",
+          "contact",
+          "official website"
+        ],
+        "automatic_query_expansion": true,
+        "table_subject": "人工智能"
+      },
+      "scopes": [
+        {
+          "platform": "youtube",
+          "profile_ref": "d5pskwub",
+          "keywords": [
+            "人工智能 知识讲解",
+            "artificial intelligence tutorial",
+            "人工智能 创意项目展示",
+            "artificial intelligence research explained",
+            "人工智能 应用经验分享",
+            "artificial intelligence industry analysis"
+          ]
+        },
+        {
+          "platform": "linkedin",
+          "profile_ref": "d5pskwub",
+          "keywords": [
+            "artificial intelligence content creator",
+            "人工智能 科普作者",
+            "artificial intelligence educator",
+            "artificial intelligence journalist",
+            "artificial intelligence newsletter writer",
+            "人工智能 技术博主"
+          ]
+        }
+      ],
+      "target_count": 10,
+      "max_calls": null
+    }
+  },
+  {
+    "index": 6,
+    "input": {
+      "id": "linkedin-intent-real-6",
+      "brief": "只在LinkedIn搜索10位目前在币安或者OKX任职的BD人员，同时满足connections至少500或者followers至少2000。",
+      "profile_ref": "d5pskwub",
+      "opencli_version": "1.8.8"
+    },
+    "sources": [
+      {
+        "platform": "youtube",
+        "command": "onecrew-search-youtube/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "tiktok",
+        "command": "onecrew-tiktok/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "instagram",
+        "command": "onecrew-search-instagram/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "twitter",
+        "command": "onecrew-search-twitter/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "linkedin",
+        "command": "onecrew-search-linkedin/people-search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "facebook",
+        "command": "onecrew-search-facebook/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "pinterest",
+        "command": "onecrew-pinterest-reader/search-pins",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "reddit",
+        "command": "onecrew-search-reddit/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "bilibili",
+        "command": "onecrew-bilibili/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "douyin",
+        "command": "onecrew-search-douyin/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "weibo",
+        "command": "onecrew-search-weibo/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "google",
+        "command": "onecrew-search-google/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      },
+      {
+        "platform": "yahoo",
+        "command": "onecrew-search-yahoo/search",
+        "browser_required": true,
+        "registered": true,
+        "scope_kind": "query",
+        "allowed_values": []
+      }
+    ],
+    "elapsed_ms": 50248,
+    "trace": [
+      {
+        "understanding": {
+          "product_or_topic": "币安或OKX的现任BD人员",
+          "purpose": "在LinkedIn寻找10位符合当前任职要求及人脉或关注者数量条件的BD人员。",
+          "desired_creators": "目前在币安或者OKX任职，且connections至少500或者followers至少2000的BD人员。",
+          "explicit_requirements_with_quotes": [
+            "平台限制：“只在LinkedIn搜索”",
+            "目标人数：“10位”",
+            "职位类别：“BD人员”",
+            "当前雇主二选一：“目前在币安或者OKX任职”",
+            "同时满足数量条件的完整二选一组：“同时满足connections至少500或者followers至少2000”"
+          ],
+          "relevant_content_angles": [
+            "LinkedIn个人资料中的币安BD职位与当前任职信息",
+            "LinkedIn个人资料中的OKX BD职位与当前任职信息",
+            "BD对应的Business Development或商务拓展职位表述",
+            "个人资料中的connections或followers数量证据"
+          ],
+          "misleading_matches_to_avoid": [
+            "仅曾经在币安或OKX任职的人员",
+            "仅提及币安或OKX而没有当前任职证据的人员",
+            "当前职位不属于BD的人员",
+            "将connections和followers混为同一指标",
+            "将两项数量条件误设为必须同时满足",
+            "要求每个人同时在币安和OKX任职",
+            "将BD人员额外限定为内容创作者"
+          ]
+        },
+        "plan": {
+          "target_count": {
+            "state": "specified",
+            "value": 10,
+            "excerpt": "10位"
+          },
+          "max_calls": {
+            "state": "unspecified",
+            "value": null,
+            "excerpt": null
+          },
+          "intent": {
+            "original_request": "只在LinkedIn搜索10位目前在币安或者OKX任职的BD人员，同时满足connections至少500或者followers至少2000。",
+            "goal": "仅在LinkedIn寻找10位目前在币安或者OKX任职的BD人员，每人须满足connections至少500或者followers至少2000。",
+            "category": {
+              "state": "specified",
+              "value": "BD人员",
+              "excerpt": "BD人员"
+            },
+            "region": {
+              "state": "unspecified",
+              "value": null,
+              "excerpt": null
+            },
+            "language": {
+              "state": "unspecified",
+              "value": null,
+              "excerpt": null
+            },
+            "min_subscribers": {
+              "state": "unspecified",
+              "value": null,
+              "excerpt": null
+            },
+            "other_hard_conditions": [
+              {
+                "description": "当前雇主满足以下任一条件：目前在币安任职，或者目前在OKX任职。历史任职不能单独满足该条件。",
+                "excerpt": "目前在币安或者OKX任职"
+              },
+              {
+                "description": "满足以下任一数量条件：LinkedIn connections至少500（含500），或者LinkedIn followers至少2000（含2000）。两项指标分别核验，任一分支满足即可。",
+                "excerpt": "同时满足connections至少500或者followers至少2000"
+              }
+            ],
+            "soft_preferences": [],
+            "suggested_keywords": [
+              "Binance BD",
+              "OKX BD",
+              "Binance Business Development",
+              "OKX Business Development",
+              "币安 商务拓展",
+              "OKX 商务拓展"
+            ],
+            "min_subscribers_exclusive": false,
+            "min_subscribers_in_requirements": true,
+            "exclusion_groups": [
+              {
+                "platforms": [
+                  "youtube",
+                  "tiktok",
+                  "instagram",
+                  "twitter",
+                  "facebook",
+                  "pinterest",
+                  "reddit",
+                  "bilibili",
+                  "douyin",
+                  "weibo",
+                  "google",
+                  "yahoo"
+                ],
+                "excerpt": "只在LinkedIn搜索"
+              }
+            ]
+          },
+          "scopes": [
+            {
+              "platform": "linkedin",
+              "keywords": [
+                "Binance BD",
+                "OKX BD",
+                "Binance Business Development",
+                "OKX Business Development",
+                "币安 商务拓展",
+                "OKX 商务拓展"
+              ]
+            }
+          ],
+          "contact_search_terms": [
+            "email",
+            "business cooperation",
+            "contact",
+            "official website"
+          ]
+        }
+      },
+      {
+        "requirements_preserved": true,
+        "requirement_reason": "最终计划仅在LinkedIn寻找10位现任币安或OKX的BD人员。雇主条件保留为币安或OKX，另一个完整条件保留为connections≥500或followers≥2000，两个条件之间为AND；阈值均含边界值。min_subscribers=0且source=requirements，没有额外设置独立粉丝门槛，也没有将connections混入粉丝数或人数。用户未指定语言和预算，未限制语言及max_calls=null符合要求；execution_settings没有明确覆盖，manual_scopes为空。联系偏好和自动扩展设置未被列为人员资格。实际任职、职责及两项数量指标仍须逐人核验。",
+        "queries": [
+          {
+            "platform": "linkedin",
+            "keyword": "Binance BD",
+            "suitable": true,
+            "reason": "适用于已注册的LinkedIn people-search，以雇主和目标岗位缩写检索人员，符合寻找现任币安BD人员的目的。命中仍须核验当前任职、BD职责及数量条件。"
+          },
+          {
+            "platform": "linkedin",
+            "keyword": "OKX BD",
+            "suitable": true,
+            "reason": "以OKX和BD岗位缩写进行简短人员检索，符合目标雇主与岗位范围，没有添加语言或资格限制。搜索命中不能证明现任关系或数量达标。"
+          },
+          {
+            "platform": "linkedin",
+            "keyword": "Binance Business Development",
+            "suitable": true,
+            "reason": "使用币安英文品牌名与BD完整岗位名称，适合匹配人员资料中的实际职位表述，可补充缩写检索；仍须核验当前任职及数量条件。"
+          },
+          {
+            "platform": "linkedin",
+            "keyword": "OKX Business Development",
+            "suitable": true,
+            "reason": "保留OKX雇主范围并使用完整岗位名称，适合LinkedIn人员检索。历史任职或仅提及该公司的资料不能直接满足现任要求。"
+          },
+          {
+            "platform": "linkedin",
+            "keyword": "币安 商务拓展",
+            "suitable": true,
+            "reason": "使用币安中文名称与常见BD岗位表达，适合发现中文人员资料。用户未指定内容语言，采用中文检索不会新增语言资格；职责、现任关系及数量条件仍须核验。"
+          },
+          {
+            "platform": "linkedin",
+            "keyword": "OKX 商务拓展",
+            "suitable": true,
+            "reason": "以准确雇主名称和中文BD岗位表达匹配人员资料，符合实际检索入口与客户目的，未使用不支持的运算符。命中仍需核验当前任职及connections或followers门槛。"
+          }
+        ]
+      }
+    ],
+    "draft": {
+      "id": "linkedin-intent-real-6",
+      "brief": "只在LinkedIn搜索10位目前在币安或者OKX任职的BD人员，同时满足connections至少500或者followers至少2000。",
+      "opencli_version": "1.8.8",
+      "criteria": {
+        "category": "BD人员",
+        "region": "",
+        "language": "",
+        "min_subscribers": 0,
+        "requires_ai_tool_demo": false,
+        "requires_public_tool_url": false,
+        "min_subscribers_source": "requirements",
+        "requirements": [
+          {
+            "description": "当前雇主满足以下任一条件：目前在币安任职，或者目前在OKX任职。历史任职不能单独满足该条件。",
+            "excerpt": "目前在币安或者OKX任职"
+          },
+          {
+            "description": "满足以下任一数量条件：LinkedIn connections至少500（含500），或者LinkedIn followers至少2000（含2000）。两项指标分别核验，任一分支满足即可。",
+            "excerpt": "同时满足connections至少500或者followers至少2000"
+          }
+        ],
+        "contact_preference": "public_email_first",
+        "contact_search_terms": [
+          "email",
+          "business cooperation",
+          "contact",
+          "official website"
+        ],
+        "automatic_query_expansion": true,
+        "table_subject": "币安或OKX的现任BD人员"
+      },
+      "scopes": [
+        {
+          "platform": "linkedin",
+          "profile_ref": "d5pskwub",
+          "keywords": [
+            "Binance BD",
+            "OKX BD",
+            "Binance Business Development",
+            "OKX Business Development",
+            "币安 商务拓展",
+            "OKX 商务拓展"
+          ]
+        }
+      ],
+      "target_count": 10,
+      "max_calls": null
+    }
+  }
+]

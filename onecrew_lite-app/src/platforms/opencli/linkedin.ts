@@ -17,9 +17,24 @@ function followers(value: string) {
   const match = /^(0|[1-9]\d*|[1-9]\d{0,2}(?:,\d{3})+) followers?$/u.exec(value.trim().toLowerCase());
   if (!match) return null; const count = Number(match[1]!.replace(/,/gu, "")); return Number.isSafeInteger(count) ? count : null;
 }
+export const linkedinConnectionObservation = z.strictObject({ raw: bounded(100), lower: z.number().int().nonnegative().safe().nullable(), upper: z.number().int().nonnegative().safe().nullable() }).nullable();
+export function linkedinConnections(raw: string) {
+  raw = bounded(100).parse(raw).trim();
+  if (!raw) return null;
+  const match = /^(0|[1-9]\d*|[1-9]\d{0,2}(?:,\d{3})+)(\+)?\s*(?:connections?|位好友|位联系人|位人脉)$/iu.exec(raw);
+  if (!match) return { raw, lower: null, upper: null };
+  const lower = Number(match[1]!.replaceAll(",", ""));
+  if (!Number.isSafeInteger(lower)) throw new OpenCliError("opencli_invalid_output");
+  return { raw, lower, upper: match[2] ? null : lower };
+}
 export function linkedinProfilePlan(handle: string) {
   target(handle); const source = `https://www.linkedin.com/in/${handle}/`;
-  const schema = z.strictObject({ adapter_version: z.literal("1.0.0"), author_handle: z.literal(handle), account_id: text.refine(accountValid), author_label: label, profile_url: z.literal(source), follower_count: z.number().int().nonnegative().safe().nullable().optional().transform(value => value ?? null), follower_text: bounded(100), headline: bounded(2000), bio: bounded(8000), public_links: z.array(publicLink).max(10), contact_links: z.array(z.literal(`${source}overlay/contact-info/`)).max(1), evidence_source: z.literal("visible_profile_header"), bio_truncated: z.boolean() }).refine(row => row.follower_count === followers(row.follower_text));
+  const schema = z.strictObject({ adapter_version: z.literal("1.0.0"), author_handle: z.literal(handle), account_id: text.refine(accountValid), author_label: label, profile_url: z.literal(source), follower_count: z.number().int().nonnegative().safe().nullable().optional().transform(value => value ?? null), follower_text: bounded(100), connections: linkedinConnectionObservation.optional(), headline: bounded(2000), bio: bounded(8000), public_links: z.array(publicLink).max(10), contact_links: z.array(z.literal(`${source}overlay/contact-info/`)).max(1), evidence_source: z.literal("visible_profile_header"), bio_truncated: z.boolean() }).refine(row => {
+    const connection = row.connections;
+    if (connection == null) return row.follower_count === followers(row.follower_text);
+    const expected = linkedinConnections(connection.raw);
+    return row.follower_count === followers(row.follower_text) && expected !== null && expected.lower === connection.lower && expected.upper === connection.upper && expected.raw === connection.raw;
+  });
   return { site: "onecrew-linkedin-reader", name: "profile", args: ["-f", "json", "--", handle], addons: ["onecrew-browser-search"], foregroundBrowser: true, maximumBytes: 32000, decode: (value: unknown) => one(schema, value) } satisfies ReviewedOpenCliRead<unknown>;
 }
 export function linkedinContentPlan(handle: string, account: string) {

@@ -26,7 +26,7 @@ interface SchedulerConfiguration {
 type ScoreOutcome = { ok: true; saved: boolean; refresh?: boolean } | { ok: false; error: unknown };
 interface ScoreJob { hit: string; deferred: string[]; prepared: PreparedSemanticDiscoveryMatch; state: "queued" | "running" | "settled"; task?: Promise<ScoreOutcome>; outcome?: ScoreOutcome; preparedAt: number }
 const terminal = (kind: string): { stage: DiscoveryExecutionStage; reason: string } => kind === "target_reached" ? { stage: "finished", reason: kind } : kind === "budget_exhausted" ? { stage: "budget_exhausted", reason: kind } : ["needs_evidence", "search_exhausted"].includes(kind) ? { stage: "needs_evidence", reason: kind } : { stage: "paused", reason: "busy" };
-async function queueWork<T>(work: () => Promise<T>): Promise<T> { return work().then(value => value, error => { throw new Error("score_queue_unavailable", { cause: error }); }); }
+async function queueWork<T>(work: () => Promise<T>): Promise<T> { return work().then(value => value, error => { throw new Error(error instanceof Error && ["score_queue_exceeds_capacity", "score_queue_file_invalid", "score_queue_write_and_cleanup_failed"].includes(error.message) ? error.message : "score_queue_unavailable", { cause: error }); }); }
 
 export class DiscoveryScheduler {
   readonly #configuration: SchedulerConfiguration; readonly #recovered = new WeakSet<object>();
@@ -55,7 +55,8 @@ export class DiscoveryScheduler {
   async #run(owner: DiscoveryExecutionOwner): Promise<void> {
     const configuration = this.#configuration, { context, input } = owner, owned = await configuration.repositories.resolve(context); owned.assertOwned();
     const directory = await resolveDiscoveryScoreDirectory(configuration.directories, context), queue = new SavedDiscoveryScores(directory, input.campaign_id, input.expected_revision), metrics = await configuration.metrics(context);
-    const restored = await queueWork(() => queue.load()), jobs: ScoreJob[] = [], attempted = new Set<string>(), lane = new DiscoveryProjectionLane(), failures: unknown[] = [];
+    const restored = [...await queueWork(() => queue.load()), ...await queueWork(() => queue.loadDeferred())], jobs: ScoreJob[] = [], attempted = new Set<string>(), lane = new DiscoveryProjectionLane(), failures: unknown[] = [];
+    owned.repository.reprojectCompletedContacts(input.campaign_id, input.expected_revision);
     const restoredHits = new Set(restored.map(item => item.hit));
     for (const hit of owned.repository.pendingScoreHits(input.campaign_id, input.expected_revision, [...input.excluded_platforms, ...RETIRED_CREATOR_SOURCES])) {
       if (!restoredHits.has(hit)) { restored.push({ hit, deferred_platforms: [] }); restoredHits.add(hit); }
@@ -106,7 +107,10 @@ export class DiscoveryScheduler {
           const matcher = await configuration.matcher(context), receipt = await matcher.evaluate(context, job.prepared);
           if (receipt !== null) await queueWork(() => queue.remove(job.hit));
           return { ok: true, saved: receipt !== null, refresh: receipt === null };
-        })().then(value => value, error => ({ ok: false as const, error: error as unknown })).then(outcome => { metrics.enqueue(input.campaign_id, "score", elapsed(job.preparedAt)); job.outcome = outcome; job.state = "settled"; return outcome; });
+        })().then(value => value, error => ({ ok: false as const, error: error as unknown })).then(async outcome => {
+          if (!outcome.ok) await queueWork(() => queue.defer({ hit: job.hit, deferred_platforms: job.deferred }, discoveryExecutionFailureCode(outcome.error)));
+          return outcome;
+        }).then(value => value, error => ({ ok: false as const, error: error as unknown })).then(outcome => { metrics.enqueue(input.campaign_id, "score", elapsed(job.preparedAt)); job.outcome = outcome; job.state = "settled"; return outcome; });
       }
     };
     const finishOne = async (): Promise<boolean> => {
@@ -126,7 +130,7 @@ export class DiscoveryScheduler {
       await queueWork(() => queue.add({ hit, deferred_platforms: deferred })); const preparedAt = performance.now();
       const prepared = await (async () => (await configuration.matcher(context)).prepare(context, { campaign_id: input.campaign_id, expected_revision: input.expected_revision, search_hit_id: hit }))().then(value => ({ ok: true as const, value }), error => ({ ok: false as const, error: error as unknown }));
       metrics.enqueue(input.campaign_id, "score.prepare", elapsed(preparedAt));
-      if (!prepared.ok) return recordScore(hit, prepared);
+      if (!prepared.ok) { await queueWork(() => queue.defer({ hit, deferred_platforms: deferred }, discoveryExecutionFailureCode(prepared.error))); return recordScore(hit, prepared); }
       if (prepared.value.state !== "model") { await queueWork(() => queue.remove(hit)); return recordScore(hit, { ok: true, saved: prepared.value.state === "cached" }); }
       if (owner.signal.aborted) return true;
       if (attempted.has(prepared.value.prepared.evidenceKey)) { await queueWork(() => queue.remove(hit)); return true; }
@@ -170,7 +174,7 @@ export class DiscoveryScheduler {
       }
     })().then(() => ({ ok: true as const }), error => ({ ok: false as const, error: error as unknown }));
     const deliberateStop = !work.ok && owner.signal.aborted && (work.error === owner.signal.reason || work.error === context.signal.reason || work.error instanceof DOMException && work.error.name === "AbortError");
-    if (!work.ok && !deliberateStop) { finalStage = "error"; finalReason = "request_failed"; failures.push(work.error); owner.change(status => { status.failure_phase = "read"; status.failure_code = discoveryExecutionFailureCode(work.error); }); }
+    if (!work.ok && !deliberateStop) { finalStage = "error"; finalReason = "request_failed"; failures.push(work.error); owner.change(status => { status.failure_code = discoveryExecutionFailureCode(work.error); status.failure_phase = status.failure_code.startsWith("score_queue_") ? "score" : "read"; }); }
     owner.change(status => { status.stage = "pausing"; });
     // 暂停只留下未启动队列；已经接纳的模型和本地投影完整排空。
     const scores = await Promise.allSettled(jobs.filter(job => job.state !== "queued").map(async job => { const outcome = await job.task!; recordScore(job.hit, outcome); }));

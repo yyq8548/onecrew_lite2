@@ -20,6 +20,7 @@ export { DISCOVERY_SCORE_CONCURRENCY } from "./score-gate.ts";
 const conciseFinding = discoveryReviewFinding.extend({ rationale: z.string().min(1).max(1000), citations: discoveryReviewFinding.shape.citations.max(8) });
 export const discoveryMatchProposal = z.strictObject({ finding: conciseFinding, language_only_pending: z.boolean(), requirement_findings: z.array(conciseFinding).max(32).default([]) });
 const RUBRIC_SHA256 = "4490c5a30b0c9fb5859b91ea8ac452237c74c5ad3b0876677e18f4f192751729";
+const LINKEDIN_EVIDENCE_POLICY = "linkedin-profile-or-post-v2";
 const object = (value: unknown): Record<string, unknown> => value !== null && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
 const u64 = (value: unknown): bigint | null => typeof value === "bigint" && value >= 0n && value <= 18446744073709551615n ? value : typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? BigInt(value) : null;
 export async function loadOriginalDiscoveryMatchRubric(path: string): Promise<string> {
@@ -82,6 +83,7 @@ export function buildDiscoveryMatchPrompt(objective: string, material: Discovery
   if (typeof language === "string" && language.trim()) selected += rubric.slice(languageStart, instagramStart);
   else { selected += "No content-language condition is approved. Return language_only_pending=false. Do not request language evidence or comments.\n"; if (Array.isArray(value.language_samples)) for (const sample of value.language_samples) delete object(sample).comments; }
   if ((material.native_platform ?? material.hit.platform) === "instagram") selected += rubric.slice(instagramStart);
+  if ((material.native_platform ?? material.hit.platform) === "linkedin") selected += "\nLinkedIn evidence sources are alternatives: the identity-bound profile/About, visible current job headline (native_profile.web_text), or attributed posts may establish fit and requirements. Any sufficient source can support the complete approved conditions; recent posts are optional when the profile or current job already suffices. A missing/truncated About does not invalidate a saved job headline. Do not invent creator, original-post or posting-frequency requirements for a requested employee/BD/Marketing role. Preserve all approved role, employer, region, language and other requirements. When current employment is required, former/past employment alone is insufficient; conflicts or ambiguity must remain unresolved. Request posts only to resolve a named missing condition.\n";
   for (const key of ["approved_scopes", "approved_at", "campaign_id", "criteria_revision", "candidate_id", "format_version"]) delete value[key];
   // 评分只传证据和来源，调度信息仍完整保存在原始材料中。
   for (const read of [value.transcript, value.native_content, ...(Array.isArray(value.public_pages) ? value.public_pages : [])]) {
@@ -93,12 +95,16 @@ export function buildDiscoveryMatchPrompt(objective: string, material: Discovery
     if (entry.language_sample !== undefined && Array.isArray(value.language_samples) && value.language_samples.some(sample => stringifyApplicationJson(sample) === stringifyApplicationJson(entry.language_sample))) delete entry.language_sample;
   }
   selected += "\nEvidence budget: assess the saved profile, matched content and available recent content together. Use the smallest sufficient set of exact citations. If the approved conditions are supported, score immediately; do not request more posts, engagement or comments for corroboration alone. When insufficient, name only the missing approved conditions so collection can target that gap.\n";
+  selected += "\nPreserve each frozen requirement's Boolean structure and platform scope. Separate requirement array items are AND. Within an OR/either/或者 group, one fully supported alternative suffices; contradicted requires every alternative to be contradicted, otherwise unresolved alternatives remain insufficient. Within AND/both/同时 groups, all branches must be supported; one confirmed violation contradicts the group. Preserve nested groups and exclusions. Never turn employer/job-type alternatives into a requirement to work for every employer or hold every role. LinkedIn connections and followers are different metrics: use the named one only. A connections lower bound of 500 with unknown upper bound supports at least 500 but cannot establish at least 1000. Missing metrics remain unknown; do not invent a LinkedIn cutoff.\n";
   selected += "Keep each rationale under 1000 characters and 4000 UTF-8 bytes. Copy citations exactly from saved fields; never add ellipses, reformat or translate quotations.\n";
   return `${selected}\nUNTRUSTED_SAVED_DATA:\n${stringifyApplicationJson(discoveryJsonValue({ objective, material: value }))}`;
 }
 export function discoveryMatchEvidenceKey(material: DiscoveryReviewMaterial, count: number | bigint | null, rubric: string, reassess: boolean): string {
   const value = discoveryMatchPromptMaterial(material, count);
-  return `initial-v2-${createHash("sha256").update(`${rubric}:${stringifyApplicationJson(discoveryJsonValue(value))}:${reassess ? material.material_hash : "automatic"}`).digest("hex")}`;
+  const requirements = object(material.criteria).requirements;
+  const rubricPolicy = Array.isArray(requirements) && requirements.length ? `boolean-requirements-v1:${rubric}` : rubric;
+  const policy = (material.native_platform ?? material.hit.platform) === "linkedin" ? `${LINKEDIN_EVIDENCE_POLICY}:${rubricPolicy}` : rubricPolicy;
+  return `initial-v2-${createHash("sha256").update(`${policy}:${stringifyApplicationJson(discoveryJsonValue(value))}:${reassess ? material.material_hash : "automatic"}`).digest("hex")}`;
 }
 export interface PreparedSemanticDiscoveryMatch { readonly evidenceKey: string }
 export type DiscoveryMatchPreparation = { state: "skipped" } | { state: "cached"; receipt: DiscoveryReviewReceipt } | { state: "model"; prepared: PreparedSemanticDiscoveryMatch };
@@ -163,8 +169,8 @@ export class DiscoverySemanticMatcher {
       const result = await this.#commit(context, payload.owned, { ...payload.input, material_hash: current.material.material_hash, request_id: prepared.evidenceKey, reviewer: { kind: "agent", label: INITIAL_MATCH_REVIEWER }, findings }).then(receipt => ({ ok: true as const, receipt }), error => ({ ok: false as const, error: error as unknown }));
       if (result.ok) return result.receipt;
       const code = discoveryExecutionFailureCode(result.error);
-      if (attempt !== 0 || !discoveryFindingFailureCodes.some(failure => failure === code)) throw result.error;
-      correction = `\nCORRECTION_REQUIRED: The previous proposal failed validation: ${code}. Return one corrected proposal using only the saved evidence. match_fit must use supported with a match_level or insufficient with null match_level. tool and country_code must be null. Use at most 8 exact saved quotations; keep each rationale within 1000 characters and 4000 UTF-8 bytes. Previous proposal: ${stringifyApplicationJson(proposal)}`;
+      if (attempt !== 0 || ![...discoveryFindingFailureCodes, "review_requirements_incomplete", "review_requirements_mismatch", "review_requirement_citation_invalid"].some(failure => failure === code)) throw result.error;
+      correction = `\nCORRECTION_REQUIRED: The previous proposal failed validation: ${code}. Return one corrected proposal using only the saved evidence. match_fit must use supported with a match_level or insufficient with null match_level. Return exactly one requirement_findings item for each criteria.requirements[index], with criterion={"requirement":index}. For each requirement finding, tool, country_code and match_level must all be null; supported or contradicted requires at least one exact saved citation. Use at most 8 exact saved quotations per finding; keep each rationale within 1000 characters and 4000 UTF-8 bytes. Preserve citation kind and the exact profile_url/requested_url for that saved field. Previous proposal: ${stringifyApplicationJson(proposal)}`;
       }
       throw new Error("initial_match_correction_exhausted");
     } finally { permit.release(); }

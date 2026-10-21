@@ -11,6 +11,9 @@ import type { AccountContext } from "../identity/account-context.ts";
 const text = z.string().refine(value => value.isWellFormed());
 export const savedDiscoveryScore = z.object({ hit: text, deferred_platforms: z.array(text) });
 export type SavedDiscoveryScore = z.infer<typeof savedDiscoveryScore>;
+const deferredScore = savedDiscoveryScore.extend({ reason: text.min(1) });
+const scoreState = z.strictObject({ version: z.literal(2), active: z.array(savedDiscoveryScore).max(5), deferred: z.array(deferredScore) });
+type ScoreState = z.infer<typeof scoreState>;
 export interface OwnedDiscoveryQueueDirectory { readonly directory: string; readonly owner: Readonly<{ accountId: string; tenantId: string; baseId: string }>; assertOwned(): void }
 export async function resolveDiscoveryScoreDirectory(databases: AccountDatabases, context: AccountContext): Promise<OwnedDiscoveryQueueDirectory> {
   const directory = await databases.accountDirectory(context), original = await databases.discoveryResolver().resolve(context);
@@ -34,27 +37,33 @@ export class SavedDiscoveryScores {
     this.#path = join(this.#directory, `${createHash("sha256").update(stringifyApplicationJson([owned.owner.accountId, campaign, revision])).digest("hex")}.json`);
   }
   get path(): string { this.#owned.assertOwned(); return this.#path; }
-  async #read(): Promise<SavedDiscoveryScore[]> {
+  async #read(): Promise<ScoreState> {
     this.#owned.assertOwned(); await verifyPrivateDirectory(this.#owned.directory); this.#owned.assertOwned();
     const metadata = await lstat(this.#path).then(value => value, error => { if ((error as NodeJS.ErrnoException).code === "ENOENT") return null; throw error; });
-    if (metadata === null) return [];
+    if (metadata === null) return { version: 2, active: [], deferred: [] };
     await verifyPrivateDirectory(this.#directory); await verifyPrivateFile(this.#path); this.#owned.assertOwned();
     if (!metadata.isFile() || metadata.isSymbolicLink() || metadata.nlink !== 1) throw new Error("score_queue_file_invalid");
     const bytes = await readFile(this.#path); this.#owned.assertOwned();
-    const rows = z.array(savedDiscoveryScore).parse(parseApplicationJson(bytes)); if (rows.length > 5) throw new Error("score_queue_exceeds_capacity"); return rows;
+    const value = parseApplicationJson(bytes);
+    const state = Array.isArray(value) ? { version: 2 as const, active: z.array(savedDiscoveryScore).parse(value), deferred: [] } : scoreState.parse(value);
+    if (state.active.length > 5) throw new Error("score_queue_exceeds_capacity");
+    const hits = [...state.active, ...state.deferred].map(row => row.hit);
+    if (new Set(hits).size !== hits.length) throw new Error("score_queue_file_invalid");
+    return state;
   }
-  load(): Promise<SavedDiscoveryScore[]> { return serialized(() => this.#read()); }
-  async #update(edit: (rows: SavedDiscoveryScore[]) => SavedDiscoveryScore[]): Promise<void> {
-    const before = await this.#read(), rows = edit(before);
-    if (isDeepStrictEqual(before, rows)) return;
-    if (rows.length > 5) throw new Error("score_queue_exceeds_capacity");
+  load(): Promise<SavedDiscoveryScore[]> { return serialized(async () => (await this.#read()).active); }
+  loadDeferred(): Promise<z.infer<typeof deferredScore>[]> { return serialized(async () => (await this.#read()).deferred); }
+  async #update(edit: (state: ScoreState) => ScoreState): Promise<void> {
+    const before = await this.#read(), state = edit(before);
+    if (isDeepStrictEqual(before, state)) return;
+    if (state.active.length > 5) throw new Error("score_queue_exceeds_capacity");
     const metadata = await lstat(this.#directory).then(value => value, error => { if ((error as NodeJS.ErrnoException).code === "ENOENT") return null; throw error; });
     if (metadata === null) await createPrivateDirectory(this.#directory); else await verifyPrivateDirectory(this.#directory);
     this.#owned.assertOwned();
     const temporary = join(this.#directory, `.score-${randomUUID()}.json`); let created = false, installed = false;
     const outcome = await (async () => {
       const file = await open(temporary, "wx", 0o600); created = true;
-      try { await verifyPrivateFile(temporary); await file.writeFile(stringifyApplicationJson(rows), "utf8"); await file.sync(); }
+      try { await verifyPrivateFile(temporary); await file.writeFile(stringifyApplicationJson(state), "utf8"); await file.sync(); }
       finally { await file.close(); }
       this.#owned.assertOwned(); await rename(temporary, this.#path); installed = true;
       await verifyPrivateFile(this.#path); this.#owned.assertOwned();
@@ -63,6 +72,7 @@ export class SavedDiscoveryScores {
     if (!outcome.ok && !cleanup.ok) throw new AggregateError([outcome.error, cleanup.error], "score_queue_write_and_cleanup_failed");
     if (!outcome.ok) throw outcome.error; if (!cleanup.ok) throw cleanup.error;
   }
-  add(raw: unknown): Promise<void> { const row = savedDiscoveryScore.parse(raw); return serialized(() => this.#update(rows => [...rows.filter(previous => previous.hit !== row.hit), row])); }
-  remove(hit: string): Promise<void> { text.parse(hit); return serialized(() => this.#update(rows => rows.filter(row => row.hit !== hit))); }
+  add(raw: unknown): Promise<void> { const row = savedDiscoveryScore.parse(raw); return serialized(() => this.#update(state => ({ ...state, active: [...state.active.filter(previous => previous.hit !== row.hit), row], deferred: state.deferred.filter(previous => previous.hit !== row.hit) }))); }
+  defer(raw: unknown, reason: string): Promise<void> { const row = deferredScore.parse({ ...savedDiscoveryScore.parse(raw), reason }); return serialized(() => this.#update(state => ({ ...state, active: state.active.filter(previous => previous.hit !== row.hit), deferred: [...state.deferred.filter(previous => previous.hit !== row.hit), row] }))); }
+  remove(hit: string): Promise<void> { text.parse(hit); return serialized(() => this.#update(state => ({ ...state, active: state.active.filter(row => row.hit !== hit), deferred: state.deferred.filter(row => row.hit !== hit) }))); }
 }

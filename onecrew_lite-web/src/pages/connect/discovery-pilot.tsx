@@ -382,6 +382,10 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
       requires_ai_tool_demo: requireDemo, requires_public_tool_url: requireToolLink } });
   };
   const current = campaign.data;
+  const followerThresholdSummary = (plan: DiscoveryCampaign) => t(plan.criteria.min_subscribers_source === "requirements" ? "opencliPilot.groupedFollowerThreshold"
+    : plan.criteria.min_subscribers_source === "default" && plan.scopes.some(scope => scope.platform === "linkedin")
+      ? plan.scopes.every(scope => scope.platform === "linkedin") ? "opencliPilot.linkedinDefaultFollowers" : "opencliPilot.mixedDefaultFollowers"
+      : "opencliPilot.frozenThreshold", { value: String(plan.criteria.min_subscribers ?? plan.criteria.min_followers ?? 0) });
   const currentExecution = activeExecution?.revision === current?.revision ? activeExecution : null;
   useEffect(() => {
     if (!currentExecution) return;
@@ -475,7 +479,7 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
     setLanguage(typeof criterion("language") === "string" ? criterion("language") as string : "");
     setCategory(typeof criterion("category") === "string" ? criterion("category") as string : "");
     const threshold = criterion("min_subscribers") ?? criterion("min_followers");
-    if (isU64(threshold)) { setMinSubscribers(threshold); setFollowersEdited(true); }
+    if (isU64(threshold)) { setMinSubscribers(threshold); setFollowersEdited(!["default", "requirements"].includes(String(criterion("min_subscribers_source")))); }
     setRequireDemo(criterion("requires_ai_tool_demo") === true);
     setRequireToolLink(criterion("requires_public_tool_url") === true);
     setTargetCount(current.target_count);
@@ -617,7 +621,7 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
         <p className="text-xs text-muted-foreground">{t(expandedFrom ? "opencliPilot.criteriaGuideReview" : "opencliPilot.criteriaGuide")}</p>
         <div className="grid gap-1"><Label htmlFor="discovery-language">{t("opencliPilot.language")}</Label><Input id="discovery-language" placeholder={t("opencliPilot.any")} value={language} onChange={event => setLanguage(event.target.value)} /></div>
         <div className="grid gap-1"><Label htmlFor="discovery-category">{t("opencliPilot.category")}</Label><p className="text-xs text-muted-foreground">{t("opencliPilot.categoryHelp")}</p><Input id="discovery-category" placeholder={t("opencliPilot.autoCategory")} value={category} maxLength={160} onChange={event => setCategory(event.target.value)} /></div>
-        <div className="grid gap-1 sm:grid-cols-2 sm:gap-3"><div><Label htmlFor="discovery-followers">{t("opencliPilot.minSubscribers")}</Label><Input id="discovery-followers" type="number" min={0} placeholder="2000" value={String(followersInput)} onChange={event => { const value = event.target.value; const parsed = creatorU64.safeParse(/^\d+$/.test(value) ? BigInt(value) : Number(value)); setMinSubscribers(value === "" ? "" : parsed.success ? parsed.data : NaN); setFollowersEdited(value !== ""); }} /></div><div><Label htmlFor="discovery-target">{t("opencliPilot.target")}</Label><Input id="discovery-target" type="number" min={1} value={targetInput} onChange={event => { setTargetEdited(true); setTargetCount(event.target.value === "" ? "" : Number(event.target.value)); }} /></div></div>
+        <div className="grid gap-1 sm:grid-cols-2 sm:gap-3"><div><Label htmlFor="discovery-followers">{t("opencliPilot.minSubscribers")}</Label><Input id="discovery-followers" type="number" min={0} placeholder={platforms.length > 0 && platforms.every(platform => platform === "linkedin") ? "0" : "2000"} value={String(followersInput)} onChange={event => { const value = event.target.value; const parsed = creatorU64.safeParse(/^\d+$/.test(value) ? BigInt(value) : Number(value)); setMinSubscribers(value === "" ? "" : parsed.success ? parsed.data : NaN); setFollowersEdited(value !== ""); }} /><p className="text-xs text-muted-foreground">{t("opencliPilot.followerDefaultsHelp")}</p></div><div><Label htmlFor="discovery-target">{t("opencliPilot.target")}</Label><Input id="discovery-target" type="number" min={1} value={targetInput} onChange={event => { setTargetEdited(true); setTargetCount(event.target.value === "" ? "" : Number(event.target.value)); }} /></div></div>
         <div><Label htmlFor="discovery-max-calls">{t("opencliPilot.maxCalls")}</Label><Input id="discovery-max-calls" type="number" min={Math.max(1, platforms.length)} max={10000} step={1} value={maxCalls ?? ""} aria-describedby="discovery-budget-help" onChange={event => { setBudgetEdited(true); setMaxCalls(event.target.value === "" ? null : Number(event.target.value)); }} /><p id="discovery-budget-help" className="text-xs text-muted-foreground">{t("opencliPilot.maxCallsHelp")}</p></div>
         <p className="text-xs text-muted-foreground">{t("opencliPilot.criteriaWarning")}</p>
         {platforms.some(platform => platform !== "v2ex-node" && platform !== "reddit-subreddit" && !TAG_SEARCH_PLATFORMS.some(source => source === platform) && !CATEGORY_SEARCH_PLATFORMS.some(source => source === platform)) && <div className="grid gap-1"><Label htmlFor="discovery-keywords">{t("opencliPilot.keywords")}</Label><p className="text-xs text-muted-foreground">{t("opencliPilot.keywordsHelp")}</p><Input id="discovery-keywords" value={keywords} onChange={event => setKeywords(event.target.value)} placeholder={t("opencliPilot.keywordExample")} /></div>}
@@ -706,7 +710,7 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
         </details>}
         {execution.isError && <Alert><AlertDescription>{t("opencliPilot.statusDisconnected")}</AlertDescription></Alert>}
         {counts.isError && <Alert variant="destructive"><AlertDescription>{t("opencliPilot.candidatesFailed")}</AlertDescription></Alert>}
-        {current.phase === "draft" && <div className="rounded-md border p-3 text-sm"><p className="font-medium">{t("opencliPilot.approvalBounds")}</p><p>{current.scopes.map(scope => platformDisplayName(scope.platform)).join(", ")}</p><p>{t("opencliPilot.frozenThreshold", { value: String(current.criteria.min_subscribers ?? current.criteria.min_followers ?? 0) })}</p>{current.criteria.region && <p>{t("opencliPilot.frozenRegion", { value: current.criteria.region })}</p>}<p>{t("opencliPilot.frozenLanguage", { value: current.criteria.language || t("opencliPilot.any") })}</p><p>{t("opencliPilot.frozenCategory", { value: current.criteria.category || t("opencliPilot.any") })}</p>{current.scopes.map(scope => <p key={`${scope.platform}:${scope.profile_ref}`}>{t("opencliPilot.frozenKeywords", { value: `${platformDisplayName(scope.platform)}: ${scope.keywords.join(", ")}` })}</p>)}<p>{t("opencliPilot.frozenBudget", { target: current.target_count, calls: current.max_calls ?? "∞", version: current.opencli_version })}</p></div>}
+        {current.phase === "draft" && <div className="rounded-md border p-3 text-sm"><p className="font-medium">{t("opencliPilot.approvalBounds")}</p><p>{current.scopes.map(scope => platformDisplayName(scope.platform)).join(", ")}</p><p>{followerThresholdSummary(current)}</p>{current.criteria.region && <p>{t("opencliPilot.frozenRegion", { value: current.criteria.region })}</p>}<p>{t("opencliPilot.frozenLanguage", { value: current.criteria.language || t("opencliPilot.any") })}</p><p>{t("opencliPilot.frozenCategory", { value: current.criteria.category || t("opencliPilot.any") })}</p>{current.scopes.map(scope => <p key={`${scope.platform}:${scope.profile_ref}`}>{t("opencliPilot.frozenKeywords", { value: `${platformDisplayName(scope.platform)}: ${scope.keywords.join(", ")}` })}</p>)}<p>{t("opencliPilot.frozenBudget", { target: current.target_count, calls: current.max_calls ?? "∞", version: current.opencli_version })}</p></div>}
         <DiscoveryPlanRequirements criteria={current.criteria} />
         {current.phase === "active" && <Button variant="secondary" className="h-11 border font-semibold" disabled={running || pausing || verify.isPending || recoverSearch.isPending || current.platform_runs.some(run => run.status === "searching")} onClick={editPlan}><Settings2 className="size-4" />{t("opencliPilot.editPlan")}</Button>}
         {current.phase === "active" && <Collapsible className="discovery-disclosure"><CollapsibleTrigger asChild><Button variant="ghost">{t("opencliPilot.adjustPlan")}</Button></CollapsibleTrigger>
@@ -750,7 +754,7 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
         <details className="discovery-disclosure">
           <summary>{t("opencliPilot.planDetails")}</summary>
           <div className="space-y-2 py-4 text-sm text-muted-foreground break-words">
-            <p>{t("opencliPilot.frozenThreshold", { value: String(current.criteria.min_subscribers ?? current.criteria.min_followers ?? 0) })}</p>
+            <p>{followerThresholdSummary(current)}</p>
 
 
             <p>{t("opencliPilot.frozenBudget", { target: current.target_count, calls: current.max_calls ?? "∞", version: current.opencli_version })}</p>

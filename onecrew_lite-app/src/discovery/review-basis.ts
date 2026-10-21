@@ -9,7 +9,8 @@ import { validateDiscoveryPinterestProfile, validateDiscoveryPinterestContent } 
 import { loadDiscoveryWebSourceReceipt } from "./web-receipt.ts";
 import { validateDiscoveryRetainedContent, validateDiscoveryRetainedProfile } from "./native-material.ts";
 import { validateDiscoveryContentResult } from "./content-result.ts";
-import { parseDiscoveryDouyinFollowers, parseDiscoveryFacebookFollowers, parseDiscoveryInstagramFollowers } from "./qualification.ts";
+import { linkedinConnectionObservation } from "../platforms/opencli/linkedin.ts";
+import { discoveryCriteriaForPlatform, parseDiscoveryDouyinFollowers, parseDiscoveryFacebookFollowers, parseDiscoveryInstagramFollowers } from "./qualification.ts";
 
 const scopesSchema = z.array(z.strictObject({ platform: z.string(), profile_ref: z.string(), keywords: z.array(z.string()) }));
 const object = (value: unknown): Record<string, unknown> => value !== null && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
@@ -73,8 +74,18 @@ export function loadDiscoveryReviewBasis(database: DatabaseSync, campaign: strin
         AND v.source_url=h.source_url AND v.status='completed' AND v.stop_code IS NULL`;
     candidateJoin = `JOIN discovery_candidates c ON c.discovery_campaign_id=d.id AND c.criteria_revision=d.current_revision
       AND c.platform=h.platform AND c.source_profile_ref=h.profile_ref AND c.platform_account_id=s.author_id AND h.source_url=json_extract(c.evidence_json,'$.source_urls[0]')`;
-  } else if (["reddit", "facebook", "weibo", "bluesky", "linkedin", "douyin", "zhihu", "hackernews", "pixiv"].includes(platform)) {
-    const authorKey = platform === "linkedin" ? "author_handle" : ["douyin", "zhihu", "hackernews", "pixiv"].includes(platform) ? "author_id" : platform === "bluesky" ? "did" : "id";
+  } else if (platform === "linkedin") {
+    sourceJoin = `JOIN discovery_search_authors s ON s.search_hit_id=h.id
+      JOIN discovery_profile_reads p ON p.search_hit_id=h.id AND p.discovery_campaign_id=d.id AND p.expected_revision=d.current_revision
+        AND p.platform=h.platform AND p.profile_ref=h.profile_ref AND p.author_id=s.author_id AND p.status='completed' AND p.stop_code IS NULL
+        AND json_extract(p.native_profile_json,'$.author_handle')=s.author_id
+        AND json_extract(p.native_profile_json,'$.profile_url')=s.author_url AND s.author_url=h.source_url`;
+    candidateJoin = `JOIN discovery_candidates c ON c.discovery_campaign_id=d.id AND c.criteria_revision=d.current_revision
+      AND c.platform=h.platform AND c.source_platform=h.platform AND c.source_profile_ref=h.profile_ref
+      AND c.platform_account_id=json_extract(p.native_profile_json,'$.account_id')
+      AND h.source_url=json_extract(c.evidence_json,'$.source_urls[0]')`;
+  } else if (["reddit", "facebook", "weibo", "bluesky", "douyin", "zhihu", "hackernews", "pixiv"].includes(platform)) {
+    const authorKey = ["douyin", "zhihu", "hackernews", "pixiv"].includes(platform) ? "author_id" : platform === "bluesky" ? "did" : "id";
     const joint = platform === "douyin" ? `JOIN discovery_douyin_author_reads joint ON joint.search_hit_id=h.id AND joint.discovery_campaign_id=d.id
       AND joint.expected_revision=d.current_revision AND joint.platform=h.platform AND joint.profile_ref=h.profile_ref AND joint.source_url=h.source_url
       AND joint.status='completed' AND joint.stop_code IS NULL AND joint.duplicate_of IS NULL AND joint.author_id=s.author_id AND joint.profile_url=s.author_url` : "";
@@ -83,7 +94,6 @@ export function loadDiscoveryReviewBasis(database: DatabaseSync, campaign: strin
         AND p.platform=h.platform AND p.profile_ref=h.profile_ref AND p.author_id=s.author_id AND p.status='completed' AND p.stop_code IS NULL
         AND json_extract(p.native_profile_json,'$.${authorKey}')=s.author_id
         ${platform === "douyin" ? "AND p.call_number=joint.call_number AND json_extract(p.native_profile_json,'$.profile_url')=s.author_url" : ""}
-        ${platform === "linkedin" ? "AND json_extract(p.native_profile_json,'$.profile_url')=s.author_url AND s.author_url=h.source_url" : ""}
       JOIN discovery_content_reads v ON v.search_hit_id=h.id AND v.discovery_campaign_id=d.id AND v.expected_revision=d.current_revision
         AND v.platform=h.platform AND v.profile_ref=h.profile_ref AND v.author_id=s.author_id
         AND (v.source_url=h.source_url OR (h.platform='facebook' AND EXISTS(
@@ -92,11 +102,10 @@ export function loadDiscoveryReviewBasis(database: DatabaseSync, campaign: strin
             AND t.status='completed' AND t.stop_code IS NULL AND t.call_number<v.call_number
             AND EXISTS(SELECT 1 FROM json_each(t.source_urls_json) l WHERE l.value=v.source_url))))
         AND v.status='completed' AND v.stop_code IS NULL
-        ${platform === "douyin" ? "AND v.call_number=joint.call_number" : ""}
-        ${platform === "linkedin" ? "AND json_extract(v.native_content_json,'$.account_id')=json_extract(p.native_profile_json,'$.account_id')" : ""}`;
+        ${platform === "douyin" ? "AND v.call_number=joint.call_number" : ""}`;
     candidateJoin = `JOIN discovery_candidates c ON c.discovery_campaign_id=d.id AND c.criteria_revision=d.current_revision
       AND c.platform=h.platform AND c.source_profile_ref=h.profile_ref
-      AND c.platform_account_id=${platform === "linkedin" ? "json_extract(p.native_profile_json,'$.account_id')" : "s.author_id"}
+      AND c.platform_account_id=s.author_id
       AND h.source_url=json_extract(c.evidence_json,'$.source_urls[0]')`;
   } else throw new Error("review_platform_unsupported");
   const row = database.prepare(`SELECT a.criteria_json,a.scope_json,a.approved_at,h.profile_ref,h.search_keyword,h.source_url,
@@ -169,18 +178,42 @@ export function loadDiscoveryReviewBasis(database: DatabaseSync, campaign: strin
     basis.native_profile = { web_text: null, profile_url: profileUrl, observed_at: z.number().int().safe().parse(stored.updated_at), bio: bounded(profile.signature, 16000), self_declared_location: null, bio_status: profile.bio_truncated === true ? "truncated" : typeof profile.signature === "string" && profile.signature ? "complete" : "missing" };
     basis.hit.author_id = z.string().parse(stored.author_id); basis.hit.author_url = z.string().parse(stored.author_url); basis.hit.author_observed_at = z.number().int().safe().parse(stored.observed_at);
   }
-  if (["reddit", "facebook", "weibo", "bluesky", "linkedin", "douyin", "zhihu", "hackernews", "pixiv"].includes(platform)) {
+  if (platform === "linkedin") {
+    basis.criteria_json = stringifyApplicationJson(discoveryCriteriaForPlatform(parse(basis.criteria_json), platform));
+    const profile = loadDiscoveryProfileReceipt(database, campaign, hit), sources = object(parse(basis.evidence_json)).source_urls;
+    const authorUrl = profile.claim.author_url;
+    if (profile.status !== "completed" || profile.stop_code !== null || profile.claim.expected_revision !== revision || profile.claim.platform !== platform || profile.claim.profile_ref !== basis.hit.profile_ref || profile.claim.source_url !== basis.hit.source_url || authorUrl !== basis.hit.source_url || !Array.isArray(sources) || sources[0] !== basis.hit.source_url || sources[1] !== authorUrl) throw new Error("review_native_profile_binding_unavailable");
+    const native = validateDiscoveryRetainedProfile(platform, profile.claim.author_id, authorUrl, profile.claim.source_url, profile.native_profile);
+    if (native.account_id !== basis.native_author_id) throw new Error("review_native_profile_binding_unavailable");
+    basis.native_followers = typeof native.follower_count === "number" || typeof native.follower_count === "bigint" ? native.follower_count : null;
+    basis.native_profile = { web_text: bounded(native.headline, 2000), profile_url: authorUrl, observed_at: profile.captured_at, bio: bounded(native.bio, 8000), bio_status: native.bio_truncated === true ? "truncated" : native.bio_truncated === false ? native.bio ? "complete" : "missing" : "unknown", self_declared_location: null };
+    if (native.connections !== undefined) {
+      basis.native_profile.connections = linkedinConnectionObservation.parse(native.connections);
+      basis.native_profile.web_text = [basis.native_profile.web_text, bounded(native.follower_text, 100), basis.native_profile.connections?.raw].filter(Boolean).join("\n") || null;
+    }
+    basis.hit.author_id = basis.native_author_id; basis.hit.author_url = authorUrl; basis.hit.author_observed_at = profile.captured_at;
+    if (database.prepare("SELECT 1 FROM discovery_content_reads WHERE discovery_campaign_id=? AND search_hit_id=?").get(campaign, hit)) {
+      const content = loadDiscoveryContentReceipt(database, campaign, hit);
+      if (content.status === "completed" && content.stop_code === null) {
+        if (content.claim.expected_revision !== revision || content.claim.platform !== platform || content.claim.profile_ref !== basis.hit.profile_ref || content.claim.author_id !== profile.claim.author_id || content.claim.source_url !== basis.hit.source_url || content.claim.call_number <= profile.claim.call_number) throw new Error("review_native_content_binding_unavailable");
+        const value = validateDiscoveryRetainedContent(platform, content.claim.author_id, content.claim.source_url, content.native_content);
+        if (value.account_id !== basis.native_author_id) throw new Error("review_native_content_binding_unavailable");
+        basis.native_content = content;
+      }
+    }
+  }
+  if (["reddit", "facebook", "weibo", "bluesky", "douyin", "zhihu", "hackernews", "pixiv"].includes(platform)) {
     const profile = loadDiscoveryProfileReceipt(database, campaign, hit), content = loadDiscoveryContentReceipt(database, campaign, hit), sources = object(parse(basis.evidence_json)).source_urls;
-    const profileNative = object(profile.native_profile), authorUrl = profile.claim.author_url;
-    if (profile.status !== "completed" || profile.stop_code !== null || content.status !== "completed" || content.stop_code !== null || profile.claim.expected_revision !== revision || content.claim.expected_revision !== revision || profile.claim.platform !== platform || content.claim.platform !== platform || profile.claim.profile_ref !== basis.hit.profile_ref || content.claim.profile_ref !== basis.hit.profile_ref || (platform === "linkedin" ? profileNative.account_id !== basis.native_author_id : profile.claim.author_id !== basis.native_author_id) || content.claim.author_id !== profile.claim.author_id || profile.claim.source_url !== basis.hit.source_url || platform !== "facebook" && content.claim.source_url !== basis.hit.source_url || (platform === "douyin" ? profile.claim.call_number !== content.claim.call_number : profile.claim.call_number >= content.claim.call_number) || !Array.isArray(sources) || sources[0] !== basis.hit.source_url || sources[1] !== authorUrl) throw new Error("review_native_content_binding_unavailable");
+    const authorUrl = profile.claim.author_url;
+    if (profile.status !== "completed" || profile.stop_code !== null || content.status !== "completed" || content.stop_code !== null || profile.claim.expected_revision !== revision || content.claim.expected_revision !== revision || profile.claim.platform !== platform || content.claim.platform !== platform || profile.claim.profile_ref !== basis.hit.profile_ref || content.claim.profile_ref !== basis.hit.profile_ref || profile.claim.author_id !== basis.native_author_id || content.claim.author_id !== profile.claim.author_id || profile.claim.source_url !== basis.hit.source_url || platform !== "facebook" && content.claim.source_url !== basis.hit.source_url || (platform === "douyin" ? profile.claim.call_number !== content.claim.call_number : profile.claim.call_number >= content.claim.call_number) || !Array.isArray(sources) || sources[0] !== basis.hit.source_url || sources[1] !== authorUrl) throw new Error("review_native_content_binding_unavailable");
     const native = validateDiscoveryRetainedProfile(platform, profile.claim.author_id, authorUrl, profile.claim.source_url, profile.native_profile);
     validateDiscoveryRetainedContent(platform, content.claim.author_id, content.claim.source_url, content.native_content);
     basis.native_followers = typeof native.follower_count === "number" || typeof native.follower_count === "bigint" ? native.follower_count : null;
     if (platform === "douyin" && typeof native.follower_text === "string") basis.native_follower_estimate = parseDiscoveryDouyinFollowers(native.follower_text);
     if (platform === "facebook" && basis.native_followers === null && typeof native.follower_text === "string") basis.native_follower_estimate = parseDiscoveryFacebookFollowers(native.follower_text);
-    basis.native_profile = { web_text: null, profile_url: authorUrl, observed_at: profile.captured_at, bio: bounded(native[["weibo", "linkedin", "douyin", "zhihu", "pixiv"].includes(platform) ? "bio" : "biography"], ["bluesky", "linkedin", "douyin", "zhihu", "hackernews", "pixiv"].includes(platform) ? 8000 : 2000), self_declared_location: null };
-    if (["facebook", "weibo", "linkedin", "douyin"].includes(platform)) basis.native_profile.bio_status = native.bio_status === "complete" || native.bio_status === "truncated" || native.bio_status === "missing" || native.bio_status === "unavailable" || native.bio_status === "unknown" ? native.bio_status : native.bio_truncated === true ? "truncated" : native.bio_truncated === false ? basis.native_profile.bio ? "complete" : "missing" : "unknown";
-    basis.hit.author_id = platform === "linkedin" ? basis.native_author_id : profile.claim.author_id; basis.hit.author_url = authorUrl; basis.native_content = content;
+    basis.native_profile = { web_text: null, profile_url: authorUrl, observed_at: profile.captured_at, bio: bounded(native[["weibo", "douyin", "zhihu", "pixiv"].includes(platform) ? "bio" : "biography"], ["bluesky", "douyin", "zhihu", "hackernews", "pixiv"].includes(platform) ? 8000 : 2000), self_declared_location: null };
+    if (["facebook", "weibo", "douyin"].includes(platform)) basis.native_profile.bio_status = native.bio_status === "complete" || native.bio_status === "truncated" || native.bio_status === "missing" || native.bio_status === "unavailable" || native.bio_status === "unknown" ? native.bio_status : native.bio_truncated === true ? "truncated" : native.bio_truncated === false ? basis.native_profile.bio ? "complete" : "missing" : "unknown";
+    basis.hit.author_id = profile.claim.author_id; basis.hit.author_url = authorUrl; basis.native_content = content;
   }
   if (platform === "bilibili") {
     const stored = database.prepare(`SELECT s.author_id,s.author_url,s.observed_at,p.native_profile_json,p.updated_at

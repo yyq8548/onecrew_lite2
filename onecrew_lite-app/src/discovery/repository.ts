@@ -131,6 +131,7 @@ export class DiscoveryRepository {
   nextPublicPage(campaign: string, excluded: readonly string[] = []) { return new DiscoveryPublicPageRepository(this.#db).next(campaign, excluded); }
   claimPublicPage(input: DiscoveryPublicPageInput) { return new DiscoveryPublicPageRepository(this.#db).claim(input); }
   finishPublicPage(input: FinishDiscoveryPublicPageInput) { return new DiscoveryPublicPageRepository(this.#db).settle(input); }
+  reprojectCompletedContacts(campaign: string, revision: number) { return new DiscoveryPublicPageRepository(this.#db).reprojectCompleted(campaign, revision); }
   interruptPublicPage(claim: DiscoveryPublicPageClaim) { return new DiscoveryPublicPageRepository(this.#db).interrupt(claim); }
   nextNativeContentHit(campaign: string, platform: string, held: readonly string[] = []) { return new DiscoveryContentRepository(this.#db).nextNative(campaign, platform, held); }
   claimContent(campaign: string, revision: number, hit: string) { return new DiscoveryContentRepository(this.#db).claim(campaign, revision, hit); }
@@ -215,7 +216,8 @@ export class DiscoveryRepository {
   prepareInitialMatchMaterial(campaign: string, revision: number, hit: string) {
     const basis = this.#transaction(() => loadDiscoveryReviewBasis(this.#db, campaign, revision, hit), true), evidence = z.record(z.string(), z.unknown()).parse(parseApplicationJson(Buffer.from(basis.evidence_json)));
     const reviewed = evidence.reviewed_match !== null && typeof evidence.reviewed_match === "object" && !Array.isArray(evidence.reviewed_match) ? evidence.reviewed_match as Record<string, unknown> : {};
-    return { material: buildDiscoveryReviewMaterial(basis), count: basis.native_followers ?? assessDiscoveryYoutube(parseApplicationJson(Buffer.from(basis.criteria_json)), evidence, basis.native_author_id).subscribers, preserve: reviewed.policy_version === "initial-match-evaluation-v1" && reviewed.outcome === "supported" };
+    const assessment = assessDiscoveryYoutube(parseApplicationJson(Buffer.from(basis.criteria_json)), evidence, basis.native_author_id);
+    return { material: buildDiscoveryReviewMaterial(basis), count: basis.native_followers ?? assessment.subscribers, preserve: reviewed.policy_version === "initial-match-evaluation-v1" && reviewed.outcome === "supported" && (basis.hit.platform !== "linkedin" || assessment.verdict !== "pending") };
   }
   submitReview(account: string, input: unknown) { return new DiscoveryReviewRepository(this.#db).submit(account, input); }
   getReview(account: string, campaign: string, request: string) { return new DiscoveryReviewRepository(this.#db).get(account, campaign, request); }
