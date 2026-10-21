@@ -9,6 +9,8 @@ import { extractCreatorHistory } from "./creator-history.ts";
 import { creatorSchemaSnapshot, initializeNewCreatorDatabase, normalizeCreatorSchemaSql, validateCreatorSchema, validateCreatorSchema90 } from "../src/storage/creator-schema.ts";
 import { inspectLegacyDatabase } from "../src/storage/legacy-sqlite.ts";
 import { createPrivateDirectory } from "../src/storage/private-backup.ts";
+import { GmailBulkRepository } from "../src/mail/gmail-bulk-repository.ts";
+import { GmailMailboxRepository } from "../src/mail/gmail-mailbox-repository.ts";
 
 const schema = ["creator-schema90.sql", "creator-indexes90.sql", "creator-triggers90.sql"]
   .map((file) => readFileSync(new URL(`../src/storage/${file}`, import.meta.url), "utf8")).join("\n");
@@ -24,6 +26,9 @@ test("new Creator SQLite matches the frozen schema contract across every schema 
     try {
       validateCreatorSchema90(original);
       validateCreatorSchema(created);
+      created.exec("PRAGMA foreign_keys=ON");
+      assert.doesNotThrow(()=>new GmailBulkRepository(created));
+      assert.doesNotThrow(()=>new GmailMailboxRepository(created));
       assert.equal(created.prepare("PRAGMA user_version").get()!.user_version, 92);
       const changed = new Set(["discovery_contact_observations", "discovery_web_source_reads", "discovery_linkedin_experience_reads"]);
       const previous = creatorSchemaSnapshot(original);
