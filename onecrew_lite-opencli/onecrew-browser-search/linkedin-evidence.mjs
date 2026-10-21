@@ -157,7 +157,7 @@ export function observeLinkedinProfile(source, handle, contactOverlay = false) {
 export async function readLinkedinProfile(page, handle, ownedPage) {
   const source = linkedinProfileTarget(handle);
   return ownedPage(page, async owned => {
-    await owned.goto(source, {settleMs:2000});
+    await owned.goto(source, {settleMs:0});
     let latest;
     for (let attempt = 0; attempt < 12; attempt++) {
       const raw = await owned.evaluate(`(${observeLinkedinProfile.toString()})(${JSON.stringify(source)},${JSON.stringify(handle)})`);
@@ -165,11 +165,13 @@ export async function readLinkedinProfile(page, handle, ownedPage) {
       if (data) {
         latest = projectLinkedinProfile(data, handle);
         if (!data.about_pending) return latest;
+      } else {
+        latest=undefined;
       }
       if (attempt < 11) await owned.sleep(0.5);
     }
     if (latest) return latest;
-    throw new Error('ONECREW_LINKEDIN_INVALID');
+    throw new Error('ONECREW_LINKEDIN_PROFILE_TIMEOUT');
   });
 }
 
@@ -246,7 +248,7 @@ export async function readLinkedinContent(page,handle,account,ownedPage) {
   const source=linkedinProfileTarget(handle);
   if(typeof account!=='string'||!/^ACo[A-Za-z0-9_-]{16,125}$/.test(account)) throw new Error('ONECREW_LINKEDIN_INPUT');
   return ownedPage(page,async owned=>{
-    await owned.goto(source,{settleMs:2000});
+    await owned.goto(source,{settleMs:0});
     for(let attempt=0;attempt<12;attempt++) {
       const raw=await owned.evaluate(`(${observeLinkedinContent.toString()})(${JSON.stringify(source)},${JSON.stringify(handle)},${JSON.stringify(account)},(${observeLinkedinProfile.toString()}))`);
       const data=raw && 'session' in Object(raw) && 'data' in Object(raw) ? raw.data : raw;
@@ -346,7 +348,7 @@ export async function readLinkedinContact(page,handle,account,ownedPage) {
   const source=linkedinProfileTarget(handle);
   if(typeof account!=='string'||!/^ACo[A-Za-z0-9_-]{16,125}$/.test(account)) throw new Error('ONECREW_LINKEDIN_INPUT');
   return ownedPage(page,async owned=>{
-    await owned.goto(source,{settleMs:2000});
+    await owned.goto(source,{settleMs:0});
     let profile;
     for(let attempt=0;attempt<12;attempt++) {
       const raw=await owned.evaluate(`(${observeLinkedinProfile.toString()})(${JSON.stringify(source)},${JSON.stringify(handle)})`);
@@ -354,7 +356,8 @@ export async function readLinkedinContact(page,handle,account,ownedPage) {
       if(data) {profile=projectLinkedinProfile(data,handle);break;}
       if(attempt<11) await owned.sleep(0.5);
     }
-    const contact=profile?.contact_links[0];
+    if(!profile) throw new Error('ONECREW_LINKEDIN_PROFILE_TIMEOUT');
+    const contact=profile.contact_links[0];
     if(profile?.account_id!==account || contact!==`${source}overlay/contact-info/`) throw new Error('ONECREW_LINKEDIN_INVALID_CONTACT_BEFORE_CLICK');
     // LinkedIn redirects a newly opened overlay URL back to the profile.
     // Follow only the exact contact locator observed in this author's header,
@@ -372,6 +375,6 @@ export async function readLinkedinContact(page,handle,account,ownedPage) {
       }
       if(attempt<11) await owned.sleep(0.5);
     }
-    throw new Error('ONECREW_LINKEDIN_INVALID_CONTACT_UNAVAILABLE');
+    throw new Error('ONECREW_LINKEDIN_CONTACT_TIMEOUT');
   });
 }

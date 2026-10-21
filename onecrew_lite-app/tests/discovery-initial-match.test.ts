@@ -5,6 +5,7 @@ import { z } from "zod";
 import { parseApplicationJson } from "../src/contracts/application-json.ts";
 import { applyInitialDiscoveryMatch, type DiscoveryReviewFinding } from "../src/discovery/initial-match.ts";
 import { buildDiscoveryReviewMaterial } from "../src/discovery/review-material.ts";
+import { applyDiscoverySelectionQuality } from "../src/discovery/selection-quality.ts";
 
 function fixture() {
   const original = z.array(z.object({ basis: z.unknown() })).parse(parseApplicationJson(readFileSync(new URL("./fixtures/discovery-review-rust.json", import.meta.url))));
@@ -37,4 +38,16 @@ test("初次评分必需粉丝失败优先，未知计数不能产生非low已�
   material.native_follower_estimate = { display: "0.8万", nominal: 8000, lower: 7500, upper: 8500 };
   assert.throws(() => applyInitialDiscoveryMatch(material, [finding], {}, "review"), /required_count_unknown/);
   assert.throws(() => applyInitialDiscoveryMatch(material, [{ ...finding, citations: [{ kind: "native_content", quote: "invented" }] }], {}, "review"), /initial_match_citation_not_saved/);
+});
+
+test("独立匹配沿用评论数量和来源校验，评论语言通过不会指定质量分数", () => {
+  const { material, finding } = fixture();
+  const selection: DiscoveryReviewFinding = { ...finding, criterion: "selection_fit", match_level: null };
+  for (const level of ["excellent", "good", "medium", "low", null] as const) {
+    const quality: DiscoveryReviewFinding = { ...finding, criterion: "quality_rating", outcome: level === null ? "insufficient" : "supported", match_level: level, citations: level === null ? [] : [{ kind: "native_content", quote: material.language_samples![0]!.text }] };
+    const applied = applyDiscoverySelectionQuality(material, [selection, quality], {}, "separate-review");
+    assert.equal((applied.reviewed_selection as Record<string, unknown>).outcome, "supported");
+    assert.equal((applied.reviewed_quality as Record<string, unknown>).level, level);
+    assert.throws(() => applyDiscoverySelectionQuality(material, [{ ...selection, citations: selection.citations.slice(0, 2) }, quality], {}, "separate-review"), /audience_sample_insufficient/);
+  }
 });

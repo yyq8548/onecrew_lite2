@@ -139,11 +139,10 @@ export const discoveryIngestSchema = z
                 (value) =>
                   value !== null &&
                   typeof value === 'object' &&
-                  row.verdict !== 'qualified' &&
-                  !(row.verdict === 'rejected' && value.level === 'low'),
+                  (row.candidate_id === null || row.native_author_id === null),
               )
             )
-              ctx.addIssue({ code: 'custom', message: 'Score conflicts with source verdict' });
+              ctx.addIssue({ code: 'custom', message: 'Score requires a verified source identity' });
           }),
       )
       .min(1)

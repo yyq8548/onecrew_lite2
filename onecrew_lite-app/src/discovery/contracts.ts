@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { stringifyApplicationJson } from "../contracts/application-json.ts";
 import { CREATOR_SEARCH_SOURCES } from "../platforms/opencli/sources.ts";
+import { qualityFilter, qualityFilterNodes, proposedFilterFromRequirements, validateProposedQualityFilter } from "./quality-policy.ts";
 
 const text = z.string().refine(value => value.isWellFormed());
 const chars = (value: string) => [...value].length;
@@ -19,6 +20,14 @@ export const discoveryCriteria = z.record(z.string(), z.unknown()).superRefine((
   for (const key of ["requires_ai_tool_demo", "requires_public_tool_url"]) if (Object.hasOwn(value, key) && typeof value[key] !== "boolean") fail(key, "invalid_evidence_requirement");
   for (const key of ["region", "language"]) if (Object.hasOwn(value, key) && (typeof value[key] !== "string" || !value[key].isWellFormed() || chars(value[key]) > 160 || control(value[key]))) fail(key, "invalid_criteria_text");
   if (value.contact_preference !== undefined && value.contact_preference !== "public_email_first") fail("contact_preference", "invalid_contact_preference");
+  if (value.quality_filter != null) {
+    const parsed = qualityFilter.safeParse(value.quality_filter);
+    if (!parsed.success) fail("quality_filter", "invalid_quality_filter");
+    else {
+      const nodes = qualityFilterNodes(parsed.data);
+      if (!nodes.some(node => node.kind === "minimum") || nodes.some(node => node.kind === "requirement" && (!Array.isArray(value.requirements) || node.index >= value.requirements.length))) fail("quality_filter", "invalid_quality_filter");
+    }
+  }
   if (value.requirements !== undefined && !z.array(z.strictObject({ description: text.refine(value => !!value.trim() && Buffer.byteLength(value) <= 1000), excerpt: text.refine(value => !!value.trim()) })).max(32).safeParse(value.requirements).success) fail("requirements", "invalid_requirements");
   if (value.excluded_accounts !== undefined && !z.array(z.strictObject({ native_author_id: text.min(1).max(256), profile_url: z.url().startsWith("https://").max(2048), excerpt: text.min(1) })).max(1000).safeParse(value.excluded_accounts).success) fail("excluded_accounts", "invalid_excluded_accounts");
   if (value.refinement !== undefined && !z.strictObject({ campaign_id: text.min(1).max(128), expected_revision: z.number().int().positive().max(4294967295) }).safeParse(value.refinement).success) fail("refinement", "invalid_refinement");
@@ -37,6 +46,11 @@ export const discoveryPlanInput = z.strictObject({
     for (const key of ["requirements", "excluded_accounts"]) {
       const items = value.criteria[key];
       if (Array.isArray(items) && items.some(item => !value.brief.includes((item as { excerpt: string }).excerpt))) context.addIssue({ code: "custom", path: ["criteria", key], message: "customer_quotation_required" });
+    }
+    if (value.criteria.quality_filter != null) {
+      const filter = qualityFilter.safeParse(value.criteria.quality_filter);
+      const requirements = value.criteria.requirements as Array<{ description: string; excerpt: string }> | undefined;
+      if (filter.success && !qualityFilterNodes(filter.data).some(node => node.kind === "requirement" && (!requirements || node.index >= requirements.length)) && !validateProposedQualityFilter(value.brief, proposedFilterFromRequirements(filter.data, requirements ?? []))) context.addIssue({ code: "custom", path: ["criteria", "quality_filter"], message: "explicit_quality_minimum_required" });
     }
     const source = value.criteria.refinement as { campaign_id: string } | undefined;
     if (source?.campaign_id === value.id) context.addIssue({ code: "custom", path: ["criteria", "refinement"], message: "refinement_source_conflict" });

@@ -21,7 +21,7 @@ export function pendingReview(db: DatabaseSync, campaign: string, revision: numb
       AND h.source_url=json_extract(c.evidence_json,'$.source_urls[0]')
     WHERE c.id=?1 AND c.discovery_campaign_id=?2 AND c.criteria_revision=?3 AND c.verdict='pending'`).get(candidate, campaign, revision);
   if (!row) return null;
-  const evidence = object(parseApplicationJson(Buffer.from(z.string().parse(row.evidence_json)))), review = object(evidence.reviewed_match);
+  const evidence = object(parseApplicationJson(Buffer.from(z.string().parse(row.evidence_json)))), review = object(evidence.reviewed_selection ?? evidence.reviewed_match);
   let last = z.number().int().safe().parse(row.updated_at), state: PendingReviewState, action: string;
   const stopped = db.prepare(`SELECT stop_code,updated_at,kind FROM (
     SELECT stop_code,updated_at,'content' AS kind FROM discovery_content_reads WHERE discovery_campaign_id=?1 AND expected_revision=?2 AND search_hit_id=?3 AND status='failed'
@@ -33,7 +33,7 @@ export function pendingReview(db: DatabaseSync, campaign: string, revision: numb
   if (basis) last = Math.max(last, Number(basis.native_profile?.observed_at ?? 0), Number(basis.native_content?.captured_at ?? 0));
   const sampleTime = db.prepare("SELECT MAX(created_at) AS time FROM discovery_language_samples WHERE discovery_campaign_id=?1 AND criteria_revision=?2 AND candidate_id=?3").get(campaign, revision, candidate);
   last = Math.max(last, Number(sampleTime?.time ?? 0), Number(stopped?.updated_at ?? 0));
-  const needsScore = basis !== null && (!saved || discoveryObservationVersion(parseApplicationJson(Buffer.from(z.string().parse(saved.material_json)))) !== discoveryObservationVersion(buildDiscoveryReviewMaterial(basis)));
+  const needsScore = basis !== null && (!saved || review.policy_version !== "selection-quality-evaluation-v2" || discoveryObservationVersion(parseApplicationJson(Buffer.from(z.string().parse(saved.material_json)))) !== discoveryObservationVersion(buildDiscoveryReviewMaterial(basis)));
   const optionalContent = row.platform === "linkedin" && stopped?.kind === "content" && stopped.stop_code === "linkedin_content_unavailable" && needsScore;
   if (stopped && !optionalContent) { state = "read_blocked"; action = "处理读取错误后再核实，本轮不重复尝试"; }
   else if (!basis) { state = "needs_identity"; action = "完成原生账号与来源归属验证"; }

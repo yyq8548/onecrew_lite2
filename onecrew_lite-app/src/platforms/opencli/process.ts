@@ -37,6 +37,8 @@ function classifyNativeReadFailure(output: string): OpenCliError | null {
     ["onecrew_linkedin_invalid_contact_unavailable", "linkedin_contact_unavailable"],
     ["onecrew_linkedin_content_unavailable", "linkedin_content_unavailable"],
     ["onecrew_linkedin_profile_unavailable", "linkedin_profile_unavailable"],
+    ["onecrew_linkedin_profile_timeout", "linkedin_profile_timeout"],
+    ["onecrew_linkedin_contact_timeout", "linkedin_contact_timeout"],
     ["onecrew_fb_profile_timeout", "facebook_profile_timeout"],
     ["onecrew_fb_profile_invalid", "facebook_profile_layout_invalid"],
     ["onecrew_fb_contact_invalid", "facebook_contact_layout_invalid"],

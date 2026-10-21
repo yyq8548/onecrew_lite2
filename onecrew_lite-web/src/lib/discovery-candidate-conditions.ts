@@ -6,8 +6,8 @@ const proof = z.object({ verified: z.literal(true), native_author_id: z.string()
   language: z.string().optional(), category: z.string().optional(), country_code: z.string().optional() });
 
 function hasLanguageOnlyMatch(item: DiscoveryCandidate) {
-  const match = item.evidence.reviewed_match as Record<string, unknown> | undefined;
-  return match?.verified === true && match.policy_version === "initial-match-evaluation-v1"
+  const match = (item.evidence.reviewed_selection ?? item.evidence.reviewed_match) as Record<string, unknown> | undefined;
+  return match?.verified === true && ["initial-match-evaluation-v1", "selection-quality-evaluation-v2"].includes(String(match.policy_version))
     && match.native_author_id === item.platform_account_id && typeof match.review_id === "string" && match.review_id.length > 0
     && typeof match.source_url === "string" && item.evidence.source_urls.includes(match.source_url)
     && match.outcome === "insufficient" && match.language_only_pending === true;
@@ -30,6 +30,11 @@ export function candidateConditions(item: DiscoveryCandidate, criteria: Discover
   ] as const) {
     const required = criteria[criterion]?.trim();
     if (!required || ["不限", "any", "all"].includes(required.toLowerCase())) continue;
+    if (item.evidence.assessment?.selection?.state === "matched") {
+      met.push(label);
+      reasons.delete(`${criterion}_unverified`);
+      continue;
+    }
     if (criterion !== "language" && hasLanguageOnlyMatch(item) && !reasons.has(`${criterion}_mismatch`)) {
       met.push(label);
       reasons.delete(`${criterion}_unverified`);
@@ -49,6 +54,7 @@ export function candidateConditions(item: DiscoveryCandidate, criteria: Discover
 }
 
 export function candidateRequirementGaps(item: DiscoveryCandidate, criteria: DiscoveryCampaign["criteria"]) {
+  if (item.verdict === "qualified") return [];
   const requirement = z.object({ description: z.string(), excerpt: z.string() });
   const review = z.object({ index: z.number().int(), requirement, outcome: z.enum(["supported", "contradicted", "insufficient"]), reason: z.string(), native_author_id: z.string(), source_url: z.string() });
   const requirements = z.array(requirement).safeParse(criteria.requirements);

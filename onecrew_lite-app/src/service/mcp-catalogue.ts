@@ -56,7 +56,7 @@ export async function loadCurrentMcpRegistry(): Promise<McpCatalogueData> {
     const schema = raw as Record<string, unknown>;
     if (schema.properties !== null && typeof schema.properties === "object" && !Array.isArray(schema.properties)) {
       const properties = schema.properties as Record<string, Record<string, unknown>>;
-      if (properties.criterion?.type === "string" && Array.isArray(properties.criterion.enum) && properties.criterion.enum.includes("match_fit")) properties.criterion = { anyOf: [properties.criterion, structuredClone(requirementCriterion)] };
+      if (properties.criterion?.type === "string" && Array.isArray(properties.criterion.enum) && properties.criterion.enum.includes("match_fit")) properties.criterion = { anyOf: [{ ...properties.criterion, enum: [...properties.criterion.enum, "selection_fit", "quality_rating"] }, structuredClone(requirementCriterion)] };
       if (properties.findings?.type === "array" && properties.findings.maxItems === 6) properties.findings.maxItems = 40;
       if (properties.native_author_id && properties.normalized_value && properties.attribution && Array.isArray(properties.kind?.enum)) properties.kind.enum = [...discoveryContact.shape.kind.options];
     }

@@ -7,6 +7,8 @@ import { applyInitialDiscoveryMatch, discoveryReviewFinding, INITIAL_MATCH_POLIC
 import { applyDiscoveryReviewFindings } from "./review-findings.ts";
 import { buildDiscoveryReviewMaterial, type DiscoveryReviewBasis } from "./review-material.ts";
 import { assessDiscoveryDouyin, assessDiscoveryFacebook, assessDiscoveryInstagram, assessDiscoveryProfile, assessDiscoveryYoutube, assessedDiscoveryEvidence } from "./qualification.ts";
+import { applyDiscoverySelectionQuality } from "./selection-quality.ts";
+import { SELECTION_QUALITY_POLICY, SELECTION_QUALITY_REVIEWER } from "./quality-policy.ts";
 
 const text = z.string().refine(value => value.isWellFormed());
 const bounded = (maximum: number) => text.refine(value => !!value.trim() && Buffer.byteLength(value) <= maximum);
@@ -31,7 +33,9 @@ export function prepareDiscoveryReview(account: string, raw: unknown, basis: Dis
   const input = submitDiscoveryReviewInput.parse(raw), requestHash = discoveryReviewRequestHash(account, input), material = buildDiscoveryReviewMaterial(basis);
   if (input.campaign_id !== basis.campaign_id || input.expected_revision !== basis.revision || input.search_hit_id !== basis.hit.id || input.material_hash !== material.material_hash) throw new Error("review_material_changed");
   const reviewId = randomUUID(), initial = input.reviewer.kind === "agent" && input.reviewer.label === INITIAL_MATCH_REVIEWER;
-  const saved = parseApplicationJson(Buffer.from(basis.evidence_json)), evidence = initial ? applyInitialDiscoveryMatch(material, input.findings, saved, reviewId) : applyDiscoveryReviewFindings(material, input.findings, saved, reviewId);
+  const separated = input.reviewer.kind === "agent" && input.reviewer.label === SELECTION_QUALITY_REVIEWER;
+  if (!separated && input.findings.some(finding => finding.criterion === "selection_fit" || finding.criterion === "quality_rating")) throw new Error("selection_quality_reviewer_required");
+  const saved = parseApplicationJson(Buffer.from(basis.evidence_json)), evidence = separated ? applyDiscoverySelectionQuality(material, input.findings, saved, reviewId) : initial ? applyInitialDiscoveryMatch(material, input.findings, saved, reviewId) : applyDiscoveryReviewFindings(material, input.findings, saved, reviewId);
   applyDiscoveryRequirements(material, input.findings, evidence, reviewId, input.expected_revision);
   if (basis.native_profile?.bio_status !== undefined) Object.assign(evidence, { profile_bio_status: basis.native_profile.bio_status, profile_bio_status_source_url: basis.native_profile.profile_url });
   const platform = material.native_platform ?? material.hit.platform;
@@ -43,7 +47,7 @@ export function prepareDiscoveryReview(account: string, raw: unknown, basis: Dis
   else if (["twitter", "tiktok", "bilibili"].includes(platform)) { if (material.native_followers === undefined) throw new Error("review_native_followers_unavailable"); assessment = assessDiscoveryProfile(material.criteria, evidence, material.native_author_id, material.native_followers); }
   else assessment = assessDiscoveryYoutube(material.criteria, evidence, material.native_author_id);
   const criteria = material.criteria !== null && typeof material.criteria === "object" && !Array.isArray(material.criteria) ? material.criteria as Record<string, unknown> : {};
-  const policy = initial ? INITIAL_MATCH_POLICY : input.findings.some(finding => typeof finding.criterion === "string" && ["content_language", "match_fit"].includes(finding.criterion)) ? "language-match-review-v1" : typeof criteria.category === "string" && !!criteria.category && criteria.category !== "服装" ? "category-content-review-v1" : criteria.category === "服装" || criteria.region === "中国大陆以外" ? ["twitter", "tiktok"].includes(material.hit.platform) ? "apparel-native-review-v2" : "apparel-residence-review-v1" : "youtube-text-review-v1";
+  const policy = separated ? SELECTION_QUALITY_POLICY : initial ? INITIAL_MATCH_POLICY : input.findings.some(finding => typeof finding.criterion === "string" && ["content_language", "match_fit"].includes(finding.criterion)) ? "language-match-review-v1" : typeof criteria.category === "string" && !!criteria.category && criteria.category !== "服装" ? "category-content-review-v1" : criteria.category === "服装" || criteria.region === "中国大陆以外" ? ["twitter", "tiktok"].includes(material.hit.platform) ? "apparel-native-review-v2" : "apparel-residence-review-v1" : "youtube-text-review-v1";
   const now = Math.floor(Date.now() / 1000); if (!Number.isSafeInteger(now) || now < 0) throw new Error("review_clock_invalid");
   const receipt = discoveryReviewReceipt.parse({ review_id: reviewId, operator_account_id: account, campaign_id: basis.campaign_id, criteria_revision: basis.revision, search_hit_id: basis.hit.id, candidate_id: basis.candidate_id, native_author_id: basis.native_author_id, profile_ref: basis.hit.profile_ref, request_id: input.request_id, material_hash: material.material_hash, policy_version: policy, judgments: input.findings.map(finding => ({ criterion: finding.criterion, outcome: finding.outcome })), verdict: assessment.verdict, reasons: assessment.reasons, subscribers: assessment.subscribers, created_at: now });
   return { basis, request_hash: requestHash, material_json: encoded(material, 1048576), reviewer_json: encoded(input.reviewer, 2048), findings_json: encoded(input.findings.map(findingValue), 65536), receipt_json: encoded(receipt, 16384), evidence_json: encoded(discoveryJsonValue(assessedDiscoveryEvidence(evidence, assessment)), 1048576), receipt };

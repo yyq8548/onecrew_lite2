@@ -38,6 +38,8 @@ const candidateSchema = z.object({
     assessment: z.object({ reasons: z.array(z.string()), subscribers_normalized: u64.nullable(),
       pinterest_scale: z.object({ state: z.enum(["passed", "failed", "unknown"]), passed_by: z.array(z.enum(["followers", "monthly_views"])).optional() }).optional(),
       match_rating: z.object({ level: z.enum(["excellent", "good", "medium", "low"]), reason: z.string(), source_url: z.string().url() }).nullable().optional(),
+      selection: z.object({ state: z.enum(["matched", "unmatched", "unverified"]), reason: z.string(), source_url: z.string().url() }).optional(),
+      quality_rating: z.object({ level: z.enum(["excellent", "good", "medium", "low"]), score: z.union([z.literal(95), z.literal(85), z.literal(70), z.literal(40)]), reason: z.string(), source_url: z.string().url() }).nullable().optional(),
     }).optional(),
   }).passthrough(),
 });

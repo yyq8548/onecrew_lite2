@@ -2,6 +2,8 @@ import { createHash } from "node:crypto";
 import { z } from "zod";
 import { parseApplicationJson, stringifyApplicationJson } from "../contracts/application-json.ts";
 import { discoveryScale, parseDiscoverySubscribers } from "./qualification.ts";
+import { SELECTION_QUALITY_POLICY } from "./quality-policy.ts";
+import { discoveryQualityScore, type DiscoveryQualityLevel } from "@onecrew/runtime-contracts/discovery";
 
 const text = z.string().refine(value => value.isWellFormed());
 const integer = z.union([z.number().int().safe(), z.bigint()]);
@@ -24,6 +26,8 @@ export function discoveryJsonValue(value: unknown): unknown {
 export function discoveryMaterialDigest(value: unknown): string { return createHash("sha256").update(stringifyApplicationJson(value)).digest("hex"); }
 export function discoveryScorePasses(verdict: string, evidence: unknown, author: string): boolean {
   const value = object(evidence), assessment = object(value.assessment), reviewed = object(value.reviewed_match), rating = object(assessment.match_rating);
+  const selection = object(value.reviewed_selection);
+  if (selection.policy_version === SELECTION_QUALITY_POLICY) return verdict === "qualified" && Array.isArray(assessment.reasons) && assessment.reasons.length === 0 && selection.verified === true && selection.native_author_id === author && selection.outcome === "supported" && typeof selection.review_id === "string" && !!selection.review_id && typeof selection.material_hash === "string" && Array.isArray(value.source_urls) && value.source_urls.includes(selection.source_url);
   return verdict === "qualified" && Array.isArray(assessment.reasons) && assessment.reasons.length === 0 && reviewed.verified === true && reviewed.native_author_id === author && reviewed.outcome === "supported" && reviewed.level === rating.level && ["excellent", "good", "medium"].includes(String(rating.level));
 }
 export function buildDiscoveryLibrarySnapshot(raw: unknown) {
@@ -62,13 +66,13 @@ export function buildDiscoveryLibrarySnapshot(raw: unknown) {
     const evidenceBasis = [1, basis.campaign_id, basis.revision, criteria, source.hit, candidateId, authorId, verdict, evidence, receipt, candidate?.manual_approved_at ?? null];
     const evidenceVersion = discoveryMaterialDigest(basis.contact_required ? [2, evidenceBasis, candidate?.contacts ?? null] : evidenceBasis);
     if (verdict === "pending" && candidate?.pending_details.length) reasons = [...reasons, ...candidate.pending_details];
-    const ratingValue = object(object(evidence).assessment).match_rating;
+    const assessment = object(object(evidence).assessment), ratingValue = Object.hasOwn(assessment, "quality_rating") ? assessment.quality_rating : assessment.match_rating;
     const rating = candidate !== null && candidate.manual_approved_at !== null && candidate.verdict !== "qualified" ? null : ratingValue !== null && typeof ratingValue === "object" && !Array.isArray(ratingValue) ? matchRating.parse(ratingValue) : null;
     const pinterest = (candidate?.native_platform ?? source.hit.platform) === "pinterest" && candidate !== null;
     const monthlyRaw = pinterest && typeof object(evidence).pinterest_monthly_views_raw === "string" ? object(evidence).pinterest_monthly_views_raw as string : null;
     const scale = pinterest ? discoveryScale(criteria, candidate.followers ? parseDiscoverySubscribers(candidate.followers) : null, monthlyRaw) : null;
     const bioStatus = object(evidence).profile_bio_status;
-    return { hit: source.hit, ...(candidate?.followers !== null && candidate?.followers !== undefined ? { followers: candidate.followers } : {}), ...(candidate?.native_platform !== null && candidate?.native_platform !== undefined ? { native_platform: candidate.native_platform } : {}), candidate_id: candidateId, native_author_id: authorId, verdict, reasons, evidence_version: evidenceVersion, ...(rating !== null ? { match_rating: rating } : {}), ...(typeof bioStatus === "string" && ["complete", "truncated", "missing", "unavailable", "unknown"].includes(bioStatus) ? { bio_status: bioStatus } : {}), ...(scale !== null ? { pinterest_monthly_views_raw: monthlyRaw, pinterest_scale_passed_by: scale.passed_by } : {}), ...(candidate !== null && candidate.contacts.length ? { contacts: candidate.contacts } : {}) };
+    return { hit: source.hit, ...(candidate?.followers !== null && candidate?.followers !== undefined ? { followers: candidate.followers } : {}), ...(candidate?.native_platform !== null && candidate?.native_platform !== undefined ? { native_platform: candidate.native_platform } : {}), candidate_id: candidateId, native_author_id: authorId, verdict, reasons, evidence_version: evidenceVersion, ...(Object.hasOwn(assessment, "selection") ? { selection: assessment.selection, quality_rating: rating === null ? null : { ...rating, score: discoveryQualityScore(rating.level as DiscoveryQualityLevel) } } : rating !== null ? { match_rating: rating } : {}), ...(typeof bioStatus === "string" && ["complete", "truncated", "missing", "unavailable", "unknown"].includes(bioStatus) ? { bio_status: bioStatus } : {}), ...(scale !== null ? { pinterest_monthly_views_raw: monthlyRaw, pinterest_scale_passed_by: scale.passed_by } : {}), ...(candidate !== null && candidate.contacts.length ? { contacts: candidate.contacts } : {}) };
   });
   if (object(criteria).contact_preference === "public_email_first") rows.sort((left, right) => Number(left.verdict !== "qualified") - Number(right.verdict !== "qualified") || Number(!left.contacts?.some(contact => contact.kind === "email")) - Number(!right.contacts?.some(contact => contact.kind === "email")));
   const snapshotBasis = [1, basis.campaign_id, basis.revision, criteria, scopes, rows];

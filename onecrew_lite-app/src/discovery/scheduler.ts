@@ -24,7 +24,7 @@ interface SchedulerConfiguration {
   onStarted?(context: AccountContext, campaign: string): void;
 }
 type ScoreOutcome = { ok: true; saved: boolean; refresh?: boolean } | { ok: false; error: unknown };
-interface ScoreJob { hit: string; deferred: string[]; prepared: PreparedSemanticDiscoveryMatch; state: "queued" | "running" | "settled"; task?: Promise<ScoreOutcome>; outcome?: ScoreOutcome; preparedAt: number }
+interface ScoreJob { hit: string; deferred: string[]; prepared: PreparedSemanticDiscoveryMatch; state: "queued" | "running" | "settled"; task?: Promise<ScoreOutcome>; outcome?: ScoreOutcome; preparedAt: number; queuedAt: number }
 const terminal = (kind: string): { stage: DiscoveryExecutionStage; reason: string } => kind === "target_reached" ? { stage: "finished", reason: kind } : kind === "budget_exhausted" ? { stage: "budget_exhausted", reason: kind } : ["needs_evidence", "search_exhausted"].includes(kind) ? { stage: "needs_evidence", reason: kind } : { stage: "paused", reason: "busy" };
 async function queueWork<T>(work: () => Promise<T>): Promise<T> { return work().then(value => value, error => { throw new Error(error instanceof Error && ["score_queue_exceeds_capacity", "score_queue_file_invalid", "score_queue_write_and_cleanup_failed"].includes(error.message) ? error.message : "score_queue_unavailable", { cause: error }); }); }
 
@@ -103,8 +103,9 @@ export class DiscoveryScheduler {
       for (const job of jobs) {
         if (active >= DISCOVERY_SCORE_CONCURRENCY || owner.signal.aborted) break;
         if (job.state !== "queued") continue; active++; job.state = "running";
+        metrics.enqueue(input.campaign_id, "score.queue", elapsed(job.queuedAt), job.hit);
         job.task = (async (): Promise<ScoreOutcome> => {
-          const matcher = await configuration.matcher(context), receipt = await matcher.evaluate(context, job.prepared);
+          const matcher = await configuration.matcher(context), receipt = await matcher.evaluate(context, job.prepared, (phase, duration) => metrics.enqueue(input.campaign_id, `score.semantic.${phase}`, duration, job.hit));
           if (receipt !== null) await queueWork(() => queue.remove(job.hit));
           return { ok: true, saved: receipt !== null, refresh: receipt === null };
         })().then(value => value, error => ({ ok: false as const, error: error as unknown })).then(async outcome => {
@@ -134,7 +135,7 @@ export class DiscoveryScheduler {
       if (prepared.value.state !== "model") { await queueWork(() => queue.remove(hit)); return recordScore(hit, { ok: true, saved: prepared.value.state === "cached" }); }
       if (owner.signal.aborted) return true;
       if (attempted.has(prepared.value.prepared.evidenceKey)) { await queueWork(() => queue.remove(hit)); return true; }
-      attempted.add(prepared.value.prepared.evidenceKey); jobs.push({ hit, deferred, prepared: prepared.value.prepared, preparedAt, state: "queued" }); launch(); return true;
+      attempted.add(prepared.value.prepared.evidenceKey); jobs.push({ hit, deferred, prepared: prepared.value.prepared, preparedAt, queuedAt: performance.now(), state: "queued" }); launch(); return true;
     };
     const work = await (async () => {
       while (!fatal) {

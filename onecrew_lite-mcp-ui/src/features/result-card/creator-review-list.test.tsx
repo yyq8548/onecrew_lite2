@@ -100,7 +100,7 @@ describe("Creator list review", () => {
     }));
     const html = renderToStaticMarkup(createElement(AppLocaleProvider, { locale: "zh-CN", children: createElement(CreatorReviewList, { rows, selectedIds: [], optionalIds: {}, onSelect() {}, onRoute() {}, disabled: false }) }));
     const buttons = (label: string) => html.match(new RegExp(`<button[^>]*aria-label="${label}"[^>]*>([^<]*)</button>`, "g")) ?? [];
-    for (const [label, text] of [["评分等级：良好", "良好"], ["评分等级：较低", "较低"], ["评分等级：未评级", "未评级"]]) {
+    for (const [label, text] of [["评分等级：87 · 良好", "87 · 良好"], ["评分等级：0 · 较低", "0 · 较低"], ["评分等级：未评级", "未评级"]]) {
       const [button] = buttons(label);
       expect(button, label).toBeDefined();
       expect(button).toContain(`>${text}</button>`);
@@ -115,7 +115,7 @@ describe("Creator list review", () => {
     expect(creatorScoreTooltipText(false, rows[0]!.preview.assessment, t)).toBe(translate("zh-CN", "scoreScaleHelp"));
   });
   it("preserves zero score and distinguishes missing score", () => {
-    expect(renderToStaticMarkup(createElement(CreatorScore, { score: 0 }))).toContain(">Low<");
+    expect(renderToStaticMarkup(createElement(CreatorScore, { score: 0 }))).toContain(">0 · Low<");
     expect(renderToStaticMarkup(createElement(CreatorScore, { score: null }))).toContain(">Unrated<");
   });
 

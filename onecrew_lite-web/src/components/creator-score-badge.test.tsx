@@ -17,7 +17,9 @@ describe("Creator score badge", () => {
       )).join("\n");
 
       for (const label of Object.values(catalog.scoreGrades)) expect(markup).toContain(label);
-      expect(markup).toContain(i18n.t("scoreGradeLabel", { grade: catalog.scoreGrades.good }));
+      expect(markup).toContain(i18n.t("scoreGradeLabel", { grade: `87 · ${catalog.scoreGrades.good}` }));
+      expect(markup).toContain(`87 · ${catalog.scoreGrades.good}`);
+      expect(markup).toContain(`90 · ${catalog.scoreGrades.excellent}`);
       expect(markup).not.toContain(">87<");
       expect(markup).not.toContain(">90<");
     });

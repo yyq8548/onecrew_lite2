@@ -25,7 +25,8 @@ test("真实自然语言规划未要求粉丝时，LinkedIn新草稿不附加200
 const cases = z.array(z.object({ index: z.number(), input: prepareDiscoveryDraftInput, sources: z.array(source), trace: z.array(z.unknown()), draft: z.object({ criteria: z.record(z.string(), z.unknown()), target_count: z.number(), scopes: z.array(z.object({ platform: z.string() })) }) })).parse(parseApplicationJson(readFileSync(new URL("./fixtures/linkedin-intent-results-20261020.json", import.meta.url))));
 for (const actual of cases) test(`真实自然语言规划与独立审查回归${actual.index}：${actual.input.brief}`, () => {
   const draft = buildDiscoveryDraft(actual.input, proposal(actual.trace[0]), actual.sources);
-  assert.deepEqual(draft.criteria, actual.draft.criteria);
+  const expectedCriteria: Record<string, unknown> = { ...actual.draft.criteria, quality_filter: null };
+  assert.deepEqual(draft.criteria, expectedCriteria);
   assert.equal(draft.target_count, 10);
   assert.deepEqual(draft.scopes.map(scope => scope.platform), actual.draft.scopes.map(scope => scope.platform));
   if ([0, 2, 3, 6].includes(actual.index)) assert.equal(draft.criteria.min_subscribers, 0);

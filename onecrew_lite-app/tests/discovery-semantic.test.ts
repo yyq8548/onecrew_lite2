@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
-import { codexStructuredArguments } from "../src/discovery/semantic-client.ts";
+import { codexStructuredArguments, SemanticEventTimings, type SemanticTimingPhase } from "../src/discovery/semantic-client.ts";
 import { decodeFlatSemanticPlan, flatSemanticPlan, structuredSemanticSchema, loadOriginalDiscoveryQueryGuidance, loadBundledDiscoveryQueryGuidance, discoveryPlanningPrompt } from "../src/discovery/semantic-planner.ts";
 import { loadBundledDiscoveryMatchRubric } from "../src/discovery/semantic-match.ts";
 
@@ -30,4 +30,21 @@ test("实际Codex传输参数仅允许工具关闭的原结构任务，提示通
   assert.equal(args[0], "exec"); assert.equal(args.at(-1), "-");
   for (const feature of ["shell_tool", "unified_exec", "apps", "plugins", "browser_use", "computer_use", "multi_agent", "memories"]) assert.ok(args.some((value, index) => value === "--disable" && args[index + 1] === feature));
   assert.ok(args.includes("--ignore-user-config")); assert.ok(args.includes("--ignore-rules")); assert.ok(args.includes("read-only"));
+  assert.ok(args.includes("--json")); assert.ok(args.includes("--ephemeral"));
+});
+
+test("模型事件只投影阶段耗时，缺少、重复或乱序事件不能报告成功", () => {
+  const timings: Array<{ phase: SemanticTimingPhase; elapsed: number }> = [];
+  const events = new SemanticEventTimings(performance.now(), (phase, elapsed) => timings.push({ phase, elapsed }));
+  events.accept({ type: "thread.started" });
+  events.accept({ type: "turn.started" });
+  events.accept({ type: "turn.completed" }); events.finish(0);
+  assert.deepEqual(timings.map(item => item.phase), ["until_thread_started", "until_turn_started", "turn"]);
+  assert.ok(timings.every(item => Number.isSafeInteger(item.elapsed) && item.elapsed >= 0));
+  assert.throws(() => events.accept({ type: "turn.completed" }), /semantic_invalid_output/);
+  assert.throws(() => new SemanticEventTimings(performance.now()).accept({ type: "turn.started" }), /semantic_invalid_output/);
+  assert.throws(() => new SemanticEventTimings(performance.now()).finish(0), /semantic_invalid_output/);
+  const unavailable = new SemanticEventTimings(performance.now());
+  unavailable.accept({ type: "error", message: "401 unauthorized" });
+  assert.throws(() => unavailable.finish(1), /semantic_login_required/);
 });

@@ -133,7 +133,7 @@ export function createDiscoveryLibraryProjection(accounts: AccountContextService
             "Author label": hit.author_label, "Followers": row.followers ?? null, "Author ID": hit.author_id,
             "Author URL": hit.author_url, "Content title": hit.title, "Source URL": hit.source_url,
             "Search keyword": hit.search_keyword, "Status": row.verdict === "qualified" ? "Recommended candidate" : row.verdict === "rejected" ? "Does not meet requirements" : row.verdict === "pending" ? "Awaiting required evidence" : "Awaiting account read", "Captured at (Unix s)": String(hit.captured_at),
-            "Match evaluation": row.verdict === "qualified" || row.verdict === "pending" && row.reasons.includes("related_alternative") && row.match_rating?.level === "medium" || row.verdict === "rejected" && row.match_rating?.level === "low" ? row.match_rating ?? null : null,
+            "Match evaluation": "quality_rating" in row ? row.quality_rating == null ? null : { level: row.quality_rating.level, reason: row.quality_rating.reason } : "match_rating" in row ? row.match_rating ?? null : null,
             "Content category": typeof plan.criteria.category === "string" ? plan.criteria.category : "",
             "Pinterest monthly views": row.pinterest_monthly_views_raw ?? null,
             "Pinterest scale passed by": row.pinterest_scale_passed_by?.join(",") ?? null,

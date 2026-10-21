@@ -24,7 +24,7 @@ export class DiscoveryCandidateRepository {
   list(raw: DiscoveryCandidatePageInput) {
     const input = discoveryCandidatePageInput.parse(raw);
     return this.#read(() => {
-      const statement = this.#db.prepare(`WITH ranked AS (SELECT *,CASE WHEN verdict='pending' THEN 4 ELSE CASE json_extract(evidence_json,'$.assessment.match_rating.level') WHEN 'excellent' THEN 0 WHEN 'good' THEN 1 WHEN 'medium' THEN 2 WHEN 'low' THEN 3 ELSE 4 END END AS match_rank
+      const statement = this.#db.prepare(`WITH ranked AS (SELECT *,CASE COALESCE(json_extract(evidence_json,'$.assessment.quality_rating.level'),json_extract(evidence_json,'$.assessment.match_rating.level')) WHEN 'excellent' THEN 0 WHEN 'good' THEN 1 WHEN 'medium' THEN 2 WHEN 'low' THEN 3 ELSE 4 END AS match_rank
         FROM discovery_candidates WHERE discovery_campaign_id=?1)
         SELECT id,discovery_campaign_id AS campaign_id,criteria_revision,platform,source_profile_ref,platform_account_id,display_name,profile_url,verdict,
         CASE WHEN EXISTS(SELECT 1 FROM discovery_manual_approvals m WHERE m.discovery_campaign_id=ranked.discovery_campaign_id AND m.criteria_revision=ranked.criteria_revision AND m.candidate_id=ranked.id)

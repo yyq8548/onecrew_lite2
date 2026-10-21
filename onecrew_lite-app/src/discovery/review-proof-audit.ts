@@ -2,6 +2,8 @@ import type { DatabaseSync } from "node:sqlite";
 import { isDeepStrictEqual } from "node:util";
 import { parseApplicationJson } from "../contracts/application-json.ts";
 import { mergePendingDiscoveryEvidence } from "./qualification.ts";
+import { SELECTION_QUALITY_POLICY } from "./quality-policy.ts";
+import { discoveryQualityScore, type DiscoveryQualityLevel } from "@onecrew/runtime-contracts/discovery";
 const object = (value: unknown): Record<string, unknown> => value !== null && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
 const text = (value: unknown): string | null => typeof value === "string" ? value : null;
 const webProfileProof = `(h.platform IN ('google','yahoo') AND json_extract(r.material_json,'$.format_version')=2
@@ -48,10 +50,11 @@ export function stripUnauditedDiscoveryProofs(database: DatabaseSync, raw: unkno
     ) AS valid`).get(text(proof.review_id) ?? "", candidateId, planId, revision, author, text(proof.material_hash) ?? "", source, criterion!, code, text(proof.category))?.valid === 1;
     if (!audited) delete evidence[key!];
   }
-  for (const [key, criterion] of [["reviewed_language", "content_language"], ["reviewed_match", "match_fit"]]) {
+  for (const [key, criterion] of [["reviewed_language", "content_language"], ["reviewed_match", "match_fit"], ["reviewed_selection", "selection_fit"], ["reviewed_quality", "quality_rating"]]) {
     if (!Object.hasOwn(evidence, key!)) continue;
     const proof = object(evidence[key!]), source = text(proof.source_url) ?? "";
-    const locallyValid = proof.verified === true && (proof.policy_version === "language-match-review-v1" || key === "reviewed_match" && proof.policy_version === "initial-match-evaluation-v1") && proof.native_author_id === author && sources.includes(source);
+    const separated = key === "reviewed_selection" || key === "reviewed_quality";
+    const locallyValid = proof.verified === true && (separated ? proof.policy_version === SELECTION_QUALITY_POLICY : proof.policy_version === "language-match-review-v1" || key === "reviewed_match" && proof.policy_version === "initial-match-evaluation-v1") && proof.native_author_id === author && sources.includes(source);
     const audited = locallyValid && database.prepare(`SELECT EXISTS(SELECT 1 FROM discovery_evidence_reviews r
       JOIN discovery_search_hits h ON h.id=r.search_hit_id JOIN json_each(r.findings_json) f
       WHERE r.id=?1 AND r.candidate_id=?2 AND r.discovery_campaign_id=?3
@@ -67,15 +70,25 @@ export function stripUnauditedDiscoveryProofs(database: DatabaseSync, raw: unkno
                 AND web.status='completed' AND web.stop_code IS NULL AND web.target_platform=json_extract(r.material_json,'$.native_platform')
                 AND web.native_author_id=r.native_author_id
                 AND json_extract(web.native_material_json,CASE WHEN web.target_platform IN ('twitter','douyin') THEN '$.content.text' ELSE '$.description' END)=json_extract(r.material_json,'$.video_description')))
-          OR (?8='match_fit' AND ${webProfileProof}))
+          OR (?8 IN ('match_fit','selection_fit','quality_rating') AND ${webProfileProof}))
         AND json_extract(f.value,'$.criterion')=?8
         AND json_extract(f.value,'$.outcome')=?9
         AND json_extract(f.value,'$.rationale')=?10
         AND (?8!='content_language' OR json_extract(r.material_json,'$.criteria.language')=?11)
+        AND (?8!='selection_fit' OR json_extract(f.value,'$.match_level') IS NULL)
+        AND (?8!='quality_rating' OR json_extract(f.value,'$.match_level') IS ?12)
         AND (?8!='match_fit' OR (json_extract(f.value,'$.outcome')='supported' AND json_extract(f.value,'$.match_level')=?12)
           OR (r.policy_version='initial-match-evaluation-v1' AND json_extract(f.value,'$.outcome')='insufficient'
               AND json_extract(f.value,'$.match_level') IS NULL AND ?12 IS NULL))) AS valid`).get(text(proof.review_id) ?? "", candidateId, planId, revision, author, text(proof.material_hash) ?? "", source, criterion!, text(proof.outcome), text(proof.reason), text(proof.language), text(proof.level), text(proof.policy_version))?.valid === 1;
     if (!audited) delete evidence[key!];
+  }
+  if (Object.hasOwn(evidence, "reviewed_selection") || Object.hasOwn(evidence, "reviewed_quality")) {
+    const selected = object(evidence.reviewed_selection), quality = object(evidence.reviewed_quality);
+    const level = quality.level;
+    const valid = selected.review_id === quality.review_id && selected.material_hash === quality.material_hash && selected.native_author_id === quality.native_author_id
+      && selected.policy_version === SELECTION_QUALITY_POLICY && quality.policy_version === SELECTION_QUALITY_POLICY
+      && (quality.outcome === "insufficient" && level == null && quality.score == null || quality.outcome === "supported" && ["excellent", "good", "medium", "low"].includes(String(level)) && quality.score === discoveryQualityScore(level as DiscoveryQualityLevel));
+    if (!valid) { delete evidence.reviewed_selection; delete evidence.reviewed_quality; }
   }
   if (Object.hasOwn(evidence, "reviewed_requirements")) {
     const proofs = evidence.reviewed_requirements;
@@ -95,7 +108,7 @@ export function mergeAuditedDiscoveryProofs(database: DatabaseSync, current: unk
   const retained = stripUnauditedDiscoveryProofs(database, previous, candidate, campaign, revision, author), merged = mergePendingDiscoveryEvidence(current, retained);
   if (!merged || typeof merged !== "object" || Array.isArray(merged)) throw new Error("discovery_candidate_evidence_invalid");
   const result = merged as Record<string, unknown>;
-  for (const key of ["reviewed_apparel_content", "reviewed_category_content", "reviewed_language", "reviewed_match", "reviewed_residence"]) {
+  for (const key of ["reviewed_apparel_content", "reviewed_category_content", "reviewed_language", "reviewed_match", "reviewed_selection", "reviewed_quality", "reviewed_residence"]) {
     if (!Object.hasOwn(retained, key)) continue;
     const source = object(retained[key]).source_url, sources = result.source_urls;
     if (typeof source !== "string" || !Array.isArray(sources)) throw new Error("discovery_reviewed_source_invalid");

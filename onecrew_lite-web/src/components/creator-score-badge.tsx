@@ -26,14 +26,15 @@ export function CreatorScoreBadge({ score, assessment }: { score?: number | null
   const { t } = useTranslation("leads");
   const grade = scoreGrade(score);
   const label = t(SCORE_GRADE_KEYS[grade]);
-  const accessibleLabel = t("scoreGradeLabel", { grade: label });
+  const display = score == null ? label : `${score} · ${label}`;
+  const accessibleLabel = t("scoreGradeLabel", { grade: display });
   const badge = (
     <Badge
       variant="secondary"
       aria-label={accessibleLabel}
       className={cn("border-transparent font-semibold", SCORE_GRADE_TONE[grade])}
     >
-      {label}
+      {display}
     </Badge>
   );
   if (!assessment) return badge;

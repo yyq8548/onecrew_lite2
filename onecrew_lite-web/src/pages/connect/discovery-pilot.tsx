@@ -407,8 +407,10 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
   const fitOrder = { excellent: 0, good: 1, medium: 2, low: 3 };
   const visibleCandidates = [...(candidates.data?.pages.flat() ?? [])].sort((a, b) => {
     const verdictOrder = { qualified: 0, pending: 1, rejected: 2 };
-    const fit = (item: typeof a) => item.verdict !== "pending" && item.evidence.assessment?.match_rating
-      ? fitOrder[item.evidence.assessment.match_rating.level] : 4;
+    const fit = (item: typeof a) => {
+      const assessment = item.evidence.assessment, rating = assessment && Object.hasOwn(assessment, "quality_rating") ? assessment.quality_rating : assessment?.match_rating;
+      return rating ? fitOrder[rating.level] : 4;
+    };
     return verdictOrder[a.verdict] - verdictOrder[b.verdict] || fit(a) - fit(b);
   });
   const identityRequest = { campaignId: current?.id ?? "", revision: current?.revision ?? 0 };

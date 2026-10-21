@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import type { DataType, ScoreValue } from '@onecrew/contracts/tables';
+import { scoreValuePoints } from '@onecrew/contracts/tables';
 import type { Column } from '@/features/tables/model';
 import { DATA_TYPES } from '@/features/tables/model';
 
@@ -154,7 +155,7 @@ export function TableDialogs(props: TableDialogsProps) {
                   <SelectContent>
                     {(['excellent', 'good', 'medium', 'low'] as const).map((level) => (
                       <SelectItem key={level} value={t(`scores.${level}`)}>
-                        {t(`scores.${level}`)}
+                        {scoreValuePoints({ level })} · {t(`scores.${level}`)}
                       </SelectItem>
                     ))}
                   </SelectContent>

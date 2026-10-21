@@ -104,7 +104,7 @@ export function TelegramSaveReview({ snapshot, onSnapshot, onClose, onSaved }: {
           <p className="text-xs text-muted-foreground">{preview.identity_creator_ids.length ? t("outreach.telegram.reviewExisting") : t("outreach.telegram.reviewNew")}</p>
           {preview.notes && <p className="whitespace-pre-wrap text-sm">{preview.notes}</p>}
           {preview.assessment && <p className="whitespace-pre-wrap text-sm">{preview.assessment}</p>}
-          <p className="text-sm">{t("outreach.telegram.reviewScore", { grade: t(TELEGRAM_SCORE_GRADE_KEYS[scoreGrade(preview.score)]) })}</p>
+          <p className="text-sm">{t("outreach.telegram.reviewScore", { grade: `${preview.score == null ? "" : `${preview.score} · `}${t(TELEGRAM_SCORE_GRADE_KEYS[scoreGrade(preview.score)])}` })}</p>
           <div className="space-y-2"><p className="text-sm font-medium">{t("outreach.telegram.reviewRoutes")}</p>{preview.routes.map((route) => <label key={route.route_id} className="flex items-start gap-2 rounded-md border p-2">
             <Checkbox checked={route.collision.status === "none" && (route.required || (selectedRoutes[row_id] ?? []).includes(route.route_id))} disabled={route.required || route.collision.status !== "none" || busy}
               onCheckedChange={(checked) => setSelectedRoutes((current) => ({ ...current, [row_id]: checked === true ? [...(current[row_id] ?? []), route.route_id] : (current[row_id] ?? []).filter((id) => id !== route.route_id) }))} />

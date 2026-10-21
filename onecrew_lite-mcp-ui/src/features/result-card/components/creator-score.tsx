@@ -27,7 +27,8 @@ export function CreatorScore({ score, labelOnly = false, valueOnly = false, subj
   const [panel,setPanel] = useState(false);
   const effectiveScore = subjectId && api?.applied && Object.hasOwn(api.applied.scores, subjectId) ? api.applied.scores[subjectId] : score;
   const grade = scoreGrade(effectiveScore);
-  const gradeLabel = t(SCORE_GRADE_KEYS[grade]);
+  const gradeName = t(SCORE_GRADE_KEYS[grade]);
+  const gradeLabel = effectiveScore == null ? gradeName : `${effectiveScore} · ${gradeName}`;
   const accessibleGradeLabel = t("creatorScoreGrade", { grade: gradeLabel });
   const id = useId();
   const trigger = useRef<HTMLButtonElement>(null);

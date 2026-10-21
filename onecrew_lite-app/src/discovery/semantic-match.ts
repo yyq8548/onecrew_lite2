@@ -6,11 +6,12 @@ import { z } from "zod";
 import { parseApplicationJson, stringifyApplicationJson } from "../contracts/application-json.ts";
 import type { AccountContext, AccountContextService } from "../identity/account-context.ts";
 import { discoveryJsonValue } from "./library-material.ts";
-import { discoveryReviewFinding, INITIAL_MATCH_REVIEWER } from "./initial-match.ts";
+import { discoveryReviewFinding } from "./initial-match.ts";
+import { SELECTION_QUALITY_REVIEWER, SELECTION_QUALITY_POLICY } from "./quality-policy.ts";
 import type { DiscoveryReviewMaterial } from "./review-material.ts";
 import type { DiscoveryReviewReceipt, SubmitDiscoveryReviewInput } from "./review-submission.ts";
 import type { DiscoveryRepositoryResolver, OwnedDiscoveryRepository } from "./search-execution.ts";
-import type { SemanticStructuredClient } from "./semantic-client.ts";
+import type { SemanticStructuredClient, SemanticTimingPhase } from "./semantic-client.ts";
 import { structuredSemanticSchema } from "./semantic-planner.ts";
 import { DiscoveryScoreGate } from "./score-gate.ts";
 import { discoveryExecutionFailureCode, discoveryFindingFailureCodes } from "./execution-failure.ts";
@@ -18,8 +19,8 @@ import { discoveryScale } from "./qualification.ts";
 export { DISCOVERY_SCORE_CONCURRENCY } from "./score-gate.ts";
 
 const conciseFinding = discoveryReviewFinding.extend({ rationale: z.string().min(1).max(1000), citations: discoveryReviewFinding.shape.citations.max(8) });
-export const discoveryMatchProposal = z.strictObject({ finding: conciseFinding, language_only_pending: z.boolean(), requirement_findings: z.array(conciseFinding).max(32).default([]) });
-const RUBRIC_SHA256 = "4490c5a30b0c9fb5859b91ea8ac452237c74c5ad3b0876677e18f4f192751729";
+export const discoveryMatchProposal = z.strictObject({ selection: conciseFinding.extend({ criterion: z.literal("selection_fit"), match_level: z.null() }), quality_rating: conciseFinding.extend({ criterion: z.literal("quality_rating") }), language_only_pending: z.boolean(), requirement_findings: z.array(conciseFinding).max(32).default([]) });
+const RUBRIC_SHA256 = "7e8a0a14761c9ea86f5e9083dc68daa82cf9b504b86d39433ad7150cf2d2ae81";
 const LINKEDIN_EVIDENCE_POLICY = "linkedin-profile-or-post-v2";
 const object = (value: unknown): Record<string, unknown> => value !== null && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
 const u64 = (value: unknown): bigint | null => typeof value === "bigint" && value >= 0n && value <= 18446744073709551615n ? value : typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? BigInt(value) : null;
@@ -76,8 +77,8 @@ export function buildDiscoveryMatchPrompt(objective: string, material: Discovery
     const scale = discoveryScale(criteria, estimate ? { nominal: BigInt(estimate.nominal), lower: BigInt(estimate.lower), upper: BigInt(estimate.upper) } : observed === null ? null : { nominal: observed, lower: observed, upper: observed }, material.native_profile?.monthly_views_raw ?? null);
     selected += `\nPinterest scale is OR: followers >= min_subscribers OR account monthly views > pinterest_min_monthly_views_exclusive. The application verified scale state is ${scale.state}. This replaces the follower-only hard gate above for Pinterest. When passed, do not reject or lower the match because followers are below the minimum. All other approved conditions remain required. When unknown, return insufficient unless a separate confirmed condition fails. Monthly views are rounded public displays; missing means unknown.\n`;
   }
-  if (Array.isArray(criteria.requirements) && criteria.requirements.length > 0) selected += '\nReturn requirement_findings as an array. For EACH frozen criteria.requirements[index], return exactly one finding with criterion={"requirement":index}, outcome supported/contradicted/insufficient, rationale and exact saved citations. Supported means the candidate satisfies the complete condition; contradicted requires positive evidence of violation. Missing evidence or no mention cannot prove absence of a forbidden partnership, an all-time guarantee or an unknown private fact: return insufficient. Preserve exclusions. tool, country_code and match_level must be null. These findings supplement match_fit, which evaluates core topic, followers, language and relevance. A positive match_fit never overrides an unresolved requirement.\n';
-  selected += "\nJudge only the approved conditions. Missing engagement counts, publication dates, transcripts, or comments do not block basic category and follower matching when those extra conditions were not requested. A verified author-bound video_title is native content evidence and can be cited with kind=native_content. Distinguish a clear out-of-category sample (low fit) from missing evidence. Request additional evidence only to resolve a specific approved condition. Native observations belong only to their bound source; never treat absent metrics as zero or a complete publishing history.\n";
+  if (Array.isArray(criteria.requirements) && criteria.requirements.length > 0) selected += '\nReturn requirement_findings as an array. For EACH frozen criteria.requirements[index], return exactly one finding with criterion={"requirement":index}, outcome supported/contradicted/insufficient, rationale and exact saved citations. Supported means the candidate satisfies the complete condition; contradicted requires positive evidence of violation. Missing evidence or no mention cannot prove absence of a forbidden partnership, an all-time guarantee or an unknown private fact: return insufficient. Preserve exclusions. tool, country_code and match_level must be null. These findings supplement selection_fit, which evaluates core topic, followers, language and relevance. The application evaluates independent hard requirements and conditional quality_filter branches.\n';
+  selected += "\nJudge only the approved conditions. Missing engagement counts, publication dates, transcripts, or comments do not block basic category and follower matching when those extra conditions were not requested. A verified author-bound video_title is native content evidence and can be cited with kind=native_content. Distinguish a confirmed selection mismatch from missing evidence and from a matched candidate's quality limitation. Request additional evidence only to resolve a specific approved condition. Native observations belong only to their bound source; never treat absent metrics as zero or a complete publishing history.\n";
   if (material.native_follower_estimate) selected += "\nThe native_follower_estimate is a rounded public display, not an exact count. Report its display as approximate (约). Use lower >= required minimum to confirm the follower condition; upper < minimum to confirm failure. If the interval crosses the minimum, the condition is unknown. A null observed_followers does not erase this bound native estimate.\n";
   const language = object(material.criteria).language;
   if (typeof language === "string" && language.trim()) selected += rubric.slice(languageStart, instagramStart);
@@ -95,7 +96,8 @@ export function buildDiscoveryMatchPrompt(objective: string, material: Discovery
     if (entry.language_sample !== undefined && Array.isArray(value.language_samples) && value.language_samples.some(sample => stringifyApplicationJson(sample) === stringifyApplicationJson(entry.language_sample))) delete entry.language_sample;
   }
   selected += "\nEvidence budget: assess the saved profile, matched content and available recent content together. Use the smallest sufficient set of exact citations. If the approved conditions are supported, score immediately; do not request more posts, engagement or comments for corroboration alone. When insufficient, name only the missing approved conditions so collection can target that gap.\n";
-  selected += "\nPreserve each frozen requirement's Boolean structure and platform scope. Separate requirement array items are AND. Within an OR/either/或者 group, one fully supported alternative suffices; contradicted requires every alternative to be contradicted, otherwise unresolved alternatives remain insufficient. Within AND/both/同时 groups, all branches must be supported; one confirmed violation contradicts the group. Preserve nested groups and exclusions. Never turn employer/job-type alternatives into a requirement to work for every employer or hold every role. LinkedIn connections and followers are different metrics: use the named one only. A connections lower bound of 500 with unknown upper bound supports at least 500 but cannot establish at least 1000. Missing metrics remain unknown; do not invent a LinkedIn cutoff.\n";
+  selected += "\nPreserve each frozen requirement's Boolean structure and platform scope. Separate requirement array items are AND, EXCEPT requirement indexes referenced by criteria.quality_filter: those are conditional branches, evaluated by the application together with quality score leaves. For each requirement finding, judge the saved factual condition only; never fold a conditional branch failure into selection_fit or turn an OR quality branch into a global minimum. selection_fit judges core topic, role and other unconditional profile criteria independently of quality_filter and requirement_findings; the application combines these results. Within an OR/either/或者 group, one fully supported alternative suffices; contradicted requires every alternative to be contradicted, otherwise unresolved alternatives remain insufficient. Within AND/both/同时 groups, all branches must be supported; one confirmed violation contradicts the group. Preserve nested groups and exclusions. Never turn employer/job-type alternatives into a requirement to work for every employer or hold every role. LinkedIn connections and followers are different metrics: use the named one only. A connections lower bound of 500 with unknown upper bound supports at least 500 but cannot establish at least 1000. Missing metrics remain unknown; do not invent a LinkedIn cutoff.\n";
+  selected += "\nReturn separate selection_fit and quality_rating findings as defined above. A matched candidate with low quality or unrated quality is still matched. Only the application applies an explicitly approved quality_filter. Do not request transcripts, comments or additional posts solely to improve or distinguish a quality tier.\n";
   selected += "Keep each rationale under 1000 characters and 4000 UTF-8 bytes. Copy citations exactly from saved fields; never add ellipses, reformat or translate quotations.\n";
   return `${selected}\nUNTRUSTED_SAVED_DATA:\n${stringifyApplicationJson(discoveryJsonValue({ objective, material: value }))}`;
 }
@@ -104,7 +106,7 @@ export function discoveryMatchEvidenceKey(material: DiscoveryReviewMaterial, cou
   const requirements = object(material.criteria).requirements;
   const rubricPolicy = Array.isArray(requirements) && requirements.length ? `boolean-requirements-v1:${rubric}` : rubric;
   const policy = (material.native_platform ?? material.hit.platform) === "linkedin" ? `${LINKEDIN_EVIDENCE_POLICY}:${rubricPolicy}` : rubricPolicy;
-  return `initial-v2-${createHash("sha256").update(`${policy}:${stringifyApplicationJson(discoveryJsonValue(value))}:${reassess ? material.material_hash : "automatic"}`).digest("hex")}`;
+  return `quality-v2-${createHash("sha256").update(`${SELECTION_QUALITY_POLICY}:${policy}:${stringifyApplicationJson(discoveryJsonValue(value))}:${reassess ? material.material_hash : "automatic"}`).digest("hex")}`;
 }
 export interface PreparedSemanticDiscoveryMatch { readonly evidenceKey: string }
 export type DiscoveryMatchPreparation = { state: "skipped" } | { state: "cached"; receipt: DiscoveryReviewReceipt } | { state: "model"; prepared: PreparedSemanticDiscoveryMatch };
@@ -143,14 +145,14 @@ export class DiscoverySemanticMatcher {
     if (minimum !== null && minimum > 0n && observed !== null && observed < minimum && !Array.isArray(criteria.requirements) && !(material.hit.platform === "pinterest" && criteria.pinterest_min_monthly_views_exclusive !== undefined)) {
       const rationale = /[\u4e00-\u9fff]/u.test(campaign.brief) ? `初步评估：已观察到的原生粉丝数为 ${observed}，低于要求的 ${minimum}。此项必要条件已确定不符合；其他样本证据或未知信息不会抵消该门槛失败。` : `Initial assessment: the observed native follower count is ${observed}, below the required minimum of ${minimum}. This confirmed required failure takes precedence over other sample evidence or unknown information.`;
       this.#assert(context, owned);
-      return { state: "cached", receipt: await this.#commit(context, owned, { ...input, material_hash: material.material_hash, request_id: key, reviewer: { kind: "agent", label: INITIAL_MATCH_REVIEWER }, findings: [{ criterion: "match_fit", outcome: "supported", match_level: "low", rationale, citations: [], tool: null, country_code: null }] }) };
+      return { state: "cached", receipt: await this.#commit(context, owned, { ...input, material_hash: material.material_hash, request_id: key, reviewer: { kind: "agent", label: SELECTION_QUALITY_REVIEWER }, findings: [{ criterion: "selection_fit", outcome: "contradicted", match_level: null, rationale, citations: [], tool: null, country_code: null }, { criterion: "quality_rating", outcome: "insufficient", match_level: null, rationale, citations: [], tool: null, country_code: null }] }) };
     }
     if (!reassess && discoveryNeedsInstagramContent(material, count)) return { state: "skipped" };
     const prepared = Object.freeze({ evidenceKey: key });
     this.#prepared.set(prepared, { context, owned, input, material, observationKey: discoveryMatchEvidenceKey(material, count, this.#rubric, false), prompt: buildDiscoveryMatchPrompt(campaign.brief, material, discoveryMatchPromptMaterial(material, count), this.#rubric) });
     return { state: "model", prepared };
   }
-  async evaluate(context: AccountContext, prepared: PreparedSemanticDiscoveryMatch): Promise<DiscoveryReviewReceipt | null> {
+  async evaluate(context: AccountContext, prepared: PreparedSemanticDiscoveryMatch, onTiming?: (phase: SemanticTimingPhase | "commit", elapsedMs: number) => void): Promise<DiscoveryReviewReceipt | null> {
     const payload = this.#prepared.get(prepared); if (!payload || payload.context !== context) throw new Error("initial_match_preparation_not_owned");
     this.#assert(context, payload.owned);
     this.#prepared.delete(prepared);
@@ -159,18 +161,20 @@ export class DiscoverySemanticMatcher {
     try {
       let correction = "";
       for (let attempt = 0; attempt < 2; attempt++) {
-      const proposal = await this.#client.structured({ prompt: payload.prompt + correction, schema: structuredSemanticSchema(discoveryMatchProposal), decode: discoveryMatchProposal, planning: false, signal: context.signal, assertCurrent: async () => { this.#assert(context, payload.owned); } });
+      const proposal = await this.#client.structured({ prompt: payload.prompt + correction, schema: structuredSemanticSchema(discoveryMatchProposal), decode: discoveryMatchProposal, planning: false, signal: context.signal, ...(onTiming ? { onTiming } : {}), assertCurrent: async () => { this.#assert(context, payload.owned); } });
       this.#assert(context, payload.owned);
       const current = payload.owned.repository.prepareInitialMatchMaterial(payload.input.campaign_id, payload.input.expected_revision, payload.input.search_hit_id);
       if (discoveryMatchEvidenceKey(current.material, current.count, this.#rubric, false) !== payload.observationKey) return null;
-      const findings = [proposal.finding];
-      if (proposal.language_only_pending && proposal.finding.outcome === "insufficient") findings.push({ ...proposal.finding, criterion: "content_language", outcome: "insufficient", match_level: null, tool: null, country_code: null });
+      const findings = [proposal.selection, proposal.quality_rating] as z.infer<typeof conciseFinding>[];
+      if (proposal.language_only_pending && proposal.selection.outcome === "insufficient") findings.push({ ...proposal.selection, criterion: "content_language", outcome: "insufficient", match_level: null, tool: null, country_code: null });
       findings.push(...proposal.requirement_findings);
-      const result = await this.#commit(context, payload.owned, { ...payload.input, material_hash: current.material.material_hash, request_id: prepared.evidenceKey, reviewer: { kind: "agent", label: INITIAL_MATCH_REVIEWER }, findings }).then(receipt => ({ ok: true as const, receipt }), error => ({ ok: false as const, error: error as unknown }));
+      const committing = performance.now();
+      const result = await this.#commit(context, payload.owned, { ...payload.input, material_hash: current.material.material_hash, request_id: prepared.evidenceKey, reviewer: { kind: "agent", label: SELECTION_QUALITY_REVIEWER }, findings }).then(receipt => ({ ok: true as const, receipt }), error => ({ ok: false as const, error: error as unknown }));
+      onTiming?.("commit", Math.floor(performance.now() - committing));
       if (result.ok) return result.receipt;
       const code = discoveryExecutionFailureCode(result.error);
       if (attempt !== 0 || ![...discoveryFindingFailureCodes, "review_requirements_incomplete", "review_requirements_mismatch", "review_requirement_citation_invalid"].some(failure => failure === code)) throw result.error;
-      correction = `\nCORRECTION_REQUIRED: The previous proposal failed validation: ${code}. Return one corrected proposal using only the saved evidence. match_fit must use supported with a match_level or insufficient with null match_level. Return exactly one requirement_findings item for each criteria.requirements[index], with criterion={"requirement":index}. For each requirement finding, tool, country_code and match_level must all be null; supported or contradicted requires at least one exact saved citation. Use at most 8 exact saved quotations per finding; keep each rationale within 1000 characters and 4000 UTF-8 bytes. Preserve citation kind and the exact profile_url/requested_url for that saved field. Previous proposal: ${stringifyApplicationJson(proposal)}`;
+      correction = `\nCORRECTION_REQUIRED: The previous proposal failed validation: ${code}. Return one corrected proposal using only saved evidence. selection must use criterion=selection_fit, outcome supported/contradicted/insufficient and null match_level. quality_rating must use criterion=quality_rating, supported with a four-level match_level or insufficient with null match_level. Return exactly one requirement_findings item for each criteria.requirements[index], with criterion={"requirement":index}. For each requirement finding, tool, country_code and match_level must all be null; supported or contradicted requires at least one exact saved citation. Use at most 8 exact saved quotations per finding; keep each rationale within 1000 characters and 4000 UTF-8 bytes. Preserve citation kind and exact profile_url/requested_url. Previous proposal: ${stringifyApplicationJson(proposal)}`;
       }
       throw new Error("initial_match_correction_exhausted");
     } finally { permit.release(); }

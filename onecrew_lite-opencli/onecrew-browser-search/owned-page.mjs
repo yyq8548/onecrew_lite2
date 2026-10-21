@@ -22,9 +22,9 @@ export async function withOwnedSearchPage(page, task) {
       target = next;
       await step(()=>object.setActivePage(next));
       if (previous) await step(async()=>{await object.closeTab(previous);targets.delete(previous);});
-      await step(()=>object.sleep(Math.max(1, (options.settleMs || 0) / 1000)));
+      if (options.settleMs !== 0) await step(()=>object.sleep(Math.max(1, (options.settleMs || 0) / 1000)));
       await step(()=>object.setActivePage(target));
-      await step(()=>object.evaluate('(' + waitForSearchDocument.toString() + ')()'));
+      await step(()=>object.evaluate('(' + waitForSearchDocument.toString() + ')(' + JSON.stringify(options.settleMs === 0) + ')'));
       const destination = new URL(url);
       if (destination.hostname === 'www.youtube.com' && destination.pathname === '/results') {
         await step(()=>object.evaluate('(' + waitForYoutubeSearch.toString() + ')(' + JSON.stringify(destination.searchParams.get('search_query')) + ')'));
@@ -38,6 +38,10 @@ export async function withOwnedSearchPage(page, task) {
       if (target) await step(()=>object.setActivePage(target));
       await step(()=>object.evaluate('(' + restoreOriginalLanguage.toString() + ')()'));
       return step(()=>object.evaluate(...args));
+    };
+    if (key === 'click') return async (...args) => {
+      if (target) await step(()=>object.setActivePage(target));
+      return step(()=>object.click(...args));
     };
     const value = Reflect.get(object, key);
     return typeof value === 'function' ? (...args)=>step(()=>value.apply(object,args)) : value;
@@ -53,9 +57,9 @@ export async function withOwnedSearchPage(page, task) {
 
 // newTab can return before a document exists. Native extractors attach DOM
 // observers immediately; fixed sleep alone is not a readiness signal.
-export async function waitForSearchDocument() {
+export async function waitForSearchDocument(waitForNavigation = false) {
   for (let poll = 0; poll < 40; poll++) {
-    if (document.body && document.readyState !== 'loading') return;
+    if (document.body && document.readyState !== 'loading' && (!waitForNavigation || location.href !== 'about:blank')) return;
     if (poll < 39) await new Promise(resolve => setTimeout(resolve, 250));
   }
   throw new Error('ONECREW_SEARCH_DOCUMENT_TIMEOUT');

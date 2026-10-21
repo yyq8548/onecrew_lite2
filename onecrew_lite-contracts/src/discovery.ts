@@ -2,6 +2,16 @@ import { z } from "zod";
 export const PINTEREST_MIN_MONTHLY_VIEWS_EXCLUSIVE = 50000;
 import { creatorU64 } from "./creators.ts";
 
+export const DISCOVERY_QUALITY_SCORES = Object.freeze({ excellent: 95, good: 85, medium: 70, low: 40 } as const);
+export type DiscoveryQualityLevel = keyof typeof DISCOVERY_QUALITY_SCORES;
+export function discoveryQualityScore(level: DiscoveryQualityLevel): 95 | 85 | 70 | 40 { return DISCOVERY_QUALITY_SCORES[level]; }
+export const discoveryQualityMinimum = z.strictObject({ kind: z.literal("minimum"), operator: z.enum(["gte", "gt"]), score: z.number().int().min(0).max(100), excerpt: z.string().min(1).max(1000) });
+export type DiscoveryQualityFilter = z.infer<typeof discoveryQualityMinimum> | { kind: "requirement"; index: number } | { kind: "all" | "any"; items: DiscoveryQualityFilter[] };
+export const discoveryQualityFilter: z.ZodType<DiscoveryQualityFilter> = z.lazy(() => z.union([
+  discoveryQualityMinimum, z.strictObject({ kind: z.literal("requirement"), index: z.number().int().min(0).max(31) }),
+  z.strictObject({ kind: z.enum(["all", "any"]), items: z.array(discoveryQualityFilter).min(1).max(32) }),
+]));
+
 const text = z.string();
 const strings = z.array(text);
 const signedTimestamp = z.number().int().safe();
@@ -25,7 +35,7 @@ export const discoveryReviewMaterial = z.object({
   native_followers: creatorU64.nullish(), native_platform: nullableText.optional(),
   native_profile: z.object({ profile_url: text, observed_at: signedTimestamp, bio: nullableText.optional(), self_declared_location: nullableText.optional(), web_text: nullableText.optional(), monthly_views_raw: nullableText.optional(), bio_status: z.enum(["complete", "truncated", "missing", "unknown", "unavailable"]).optional() }).passthrough().nullish(),
 }).passthrough().refine(value => Object.hasOwn(value, "criteria"));
-export const discoveryReviewCriterion = z.union([z.enum(["own_ai_tool_demo", "public_tool_url", "apparel_business_content", "category_content", "creator_residence_outside_mainland", "content_language", "match_fit"]), z.object({ requirement: z.number().int().min(0).max(31) }).strict()]);
+export const discoveryReviewCriterion = z.union([z.enum(["own_ai_tool_demo", "public_tool_url", "apparel_business_content", "category_content", "creator_residence_outside_mainland", "content_language", "match_fit", "selection_fit", "quality_rating"]), z.object({ requirement: z.number().int().min(0).max(31) }).strict()]);
 export type DiscoveryReviewCriterion = z.infer<typeof discoveryReviewCriterion>;
 export const discoveryReviewReceipt = z.object({
   review_id: text, operator_account_id: text, campaign_id: text, criteria_revision: u32, search_hit_id: text,

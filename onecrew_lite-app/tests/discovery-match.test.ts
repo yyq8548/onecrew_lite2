@@ -16,7 +16,7 @@ test("真实旧评分材料使用GitHub新创作者规则，幂等键与旧规�
   assert.notEqual(reassess, fixture.reassess_request_id);
   assert.notEqual(automatic, reassess);
   assert.equal(discoveryMatchEvidenceKey(material, fixture.count, rubric, false), automatic);
-  assert.equal(createHash("sha256").update(rubric).digest("hex"), "4490c5a30b0c9fb5859b91ea8ac452237c74c5ad3b0876677e18f4f192751729");
+  assert.equal(createHash("sha256").update(rubric).digest("hex"), "7e8a0a14761c9ea86f5e9083dc68daa82cf9b504b86d39433ad7150cf2d2ae81");
   const projection = discoveryMatchPromptMaterial(material, fixture.count);
   assert.equal(projection.language_samples, null);
   const prompt = buildDiscoveryMatchPrompt(fixture.objective, material, projection, rubric);

@@ -1,5 +1,7 @@
 import { isDeepStrictEqual } from "node:util";
 import { z } from "zod";
+import { discoveryQualityScore, type DiscoveryQualityLevel } from "@onecrew/runtime-contracts/discovery";
+import { SELECTION_QUALITY_POLICY, qualityFilter, qualityFilterNodes, evaluateQualityFilter, type SelectionTruth } from "./quality-policy.ts";
 export interface SubscriberEstimate { nominal: bigint; lower: bigint; upper: bigint }
 export type PinterestScaleBranch = "followers" | "monthly_views";
 export interface DiscoveryAssessment { verdict: "qualified" | "pending" | "rejected"; reasons: string[]; subscribers: bigint | null; pinterest_scale?: { state: "passed" | "failed" | "unknown"; passed_by: PinterestScaleBranch[] } }
@@ -79,7 +81,9 @@ export function parseDiscoveryFacebookFollowers(raw: string): (SubscriberEstimat
 export function assessDiscoveryWithCount(rawCriteria: unknown, rawEvidence: unknown, author: string, estimate: SubscriberEstimate | null, youtubeContentSupported: boolean, pinterestMonthlyRaw?: string | null): DiscoveryAssessment {
   const criteria = object(rawCriteria), evidence = object(rawEvidence), sources = Array.isArray(evidence.source_urls) ? evidence.source_urls : [];
   const observed = (value: unknown) => typeof value === "string" && sources.some(source => source === value);
-  const proof = object(evidence.reviewed_match), count = estimate?.nominal ?? null;
+  const proof = object(evidence.reviewed_match), selection = object(evidence.reviewed_selection), quality = object(evidence.reviewed_quality), count = estimate?.nominal ?? null;
+  const validProof = (value: Record<string, unknown>) => value.verified === true && value.policy_version === SELECTION_QUALITY_POLICY && value.native_author_id === author && nonempty(value.review_id) && nonempty(value.material_hash) && typeof value.reason === "string" && !!value.reason.trim() && Buffer.byteLength(value.reason) <= 4000 && observed(value.source_url);
+  const separated = validProof(selection);
   if (criteria.excluded_accounts !== undefined) {
     const excluded = z.array(z.strictObject({ native_author_id: z.string().min(1).max(256), profile_url: z.url().startsWith("https://").max(2048), excerpt: z.string().min(1) })).max(1000).safeParse(criteria.excluded_accounts);
     if (!excluded.success) return { verdict: "pending", reasons: ["excluded_accounts_invalid"], subscribers: count };
@@ -90,7 +94,11 @@ export function assessDiscoveryWithCount(rawCriteria: unknown, rawEvidence: unkn
     }
   }
   let initial: DiscoveryAssessment | null = null;
-  if (proof.verified === true && proof.policy_version === "initial-match-evaluation-v1" && proof.native_author_id === author && nonempty(proof.review_id) && typeof proof.reason === "string" && proof.reason.trim() && Buffer.byteLength(proof.reason) <= 4000 && observed(proof.source_url)) {
+  if (separated) {
+    if (selection.outcome === "supported") initial = { verdict: "qualified", reasons: [], subscribers: count };
+    if (selection.outcome === "contradicted") initial = { verdict: "rejected", reasons: ["selection_mismatch"], subscribers: count };
+    if (selection.outcome === "insufficient") initial = { verdict: "pending", reasons: ["selection_unverified"], subscribers: count };
+  } else if (proof.verified === true && proof.policy_version === "initial-match-evaluation-v1" && proof.native_author_id === author && nonempty(proof.review_id) && typeof proof.reason === "string" && proof.reason.trim() && Buffer.byteLength(proof.reason) <= 4000 && observed(proof.source_url)) {
     if (proof.outcome === "supported" && ["excellent", "good", "medium"].includes(String(proof.level))) initial = { verdict: "qualified", reasons: [], subscribers: count };
     if (proof.outcome === "supported" && proof.level === "low") initial = { verdict: "rejected", reasons: ["initial_match_low"], subscribers: count };
     if (proof.outcome === "insufficient" && proof.level == null) initial = { verdict: "pending", reasons: ["initial_match_unrated"], subscribers: count };
@@ -119,17 +127,30 @@ export function assessDiscoveryWithCount(rawCriteria: unknown, rawEvidence: unkn
     if (!(content.verified === true && content.native_author_id === author && (apparel || content.category === criteria.category) && observed(content.source_url) && nonempty(content.review_id) && (apparel ? ["apparel-residence-review-v1", "apparel-native-review-v2"].includes(String(content.policy_version)) : content.policy_version === "category-content-review-v1"))) reasons.push("category_unverified");
   }
   const requirementReasons: string[] = []; let requirementConflict = false;
+  const rule = criteria.quality_filter == null ? null : qualityFilter.parse(criteria.quality_filter);
+  const grouped = new Set(rule === null ? [] : qualityFilterNodes(rule).filter(node => node.kind === "requirement").map(node => node.kind === "requirement" ? node.index : -1));
+  const requirementOutcomes: SelectionTruth[] = [];
   if (criteria.requirements !== undefined) {
     if (!Array.isArray(criteria.requirements) || criteria.requirements.length > 32) requirementReasons.push("requirements_invalid");
     else for (const [index, requirement] of criteria.requirements.entries()) {
       const reviewed = Array.isArray(evidence.reviewed_requirements) ? object(evidence.reviewed_requirements[index]) : {};
       const bound = isDeepStrictEqual(reviewed.requirement, requirement, { skipPrototype: true }) && u64(reviewed.index) === BigInt(index) && reviewed.native_author_id === author && nonempty(reviewed.review_id) && observed(reviewed.source_url);
-      if (bound && reviewed.outcome === "contradicted") { requirementConflict = true; requirementReasons.push("requirement_contradicted"); }
-      else if (!bound || reviewed.outcome !== "supported") requirementReasons.push("requirement_unverified");
+      const outcome: SelectionTruth = bound && reviewed.outcome === "contradicted" ? "contradicted" : bound && reviewed.outcome === "supported" ? "supported" : "insufficient";
+      requirementOutcomes.push(outcome);
+      if (!grouped.has(index)) {
+        if (outcome === "contradicted") { requirementConflict = true; requirementReasons.push("requirement_contradicted"); }
+        else if (outcome !== "supported") requirementReasons.push("requirement_unverified");
+      }
     }
   }
-  if (Object.keys(criteria).some(key => !["min_subscribers", "min_subscribers_source", "min_followers", "pinterest_min_monthly_views_exclusive", "requires_ai_tool_demo", "requires_public_tool_url", "region", "language", "category", "table_subject", "contact_search_terms", "automatic_query_expansion", "requirements", "contact_preference", "refinement", "excluded_accounts"].includes(key))) reasons.push("unsupported_criterion");
-  if (initial !== null) return { ...initial, verdict: requirementConflict || pinterestMonthlyRaw !== undefined && below ? "rejected" : (requirementReasons.length || pinterestMonthlyRaw !== undefined && scale.state === "unknown") && initial.verdict === "qualified" ? "pending" : initial.verdict, reasons: [...initial.reasons, ...(pinterestMonthlyRaw !== undefined ? scale.reasons : []), ...requirementReasons] };
+  if (rule !== null) {
+    const level = validProof(quality) && quality.review_id === selection.review_id && quality.material_hash === selection.material_hash && quality.outcome === "supported" && ["excellent", "good", "medium", "low"].includes(String(quality.level)) && quality.score === discoveryQualityScore(quality.level as DiscoveryQualityLevel) ? quality.level as DiscoveryQualityLevel : null;
+    const result = evaluateQualityFilter(rule, level, requirementOutcomes);
+    if (result === "contradicted") { requirementConflict = true; requirementReasons.push("below_minimum_quality"); }
+    else if (result === "insufficient") requirementReasons.push("quality_filter_unverified");
+  }
+  if (Object.keys(criteria).some(key => !["min_subscribers", "min_subscribers_source", "min_followers", "pinterest_min_monthly_views_exclusive", "requires_ai_tool_demo", "requires_public_tool_url", "region", "language", "category", "table_subject", "contact_search_terms", "automatic_query_expansion", "requirements", "quality_filter", "contact_preference", "refinement", "excluded_accounts"].includes(key))) reasons.push("unsupported_criterion");
+  if (initial !== null) return { ...initial, verdict: requirementConflict || (separated || pinterestMonthlyRaw !== undefined) && below ? "rejected" : (requirementReasons.length || (separated || pinterestMonthlyRaw !== undefined) && scale.state === "unknown") && initial.verdict === "qualified" ? "pending" : initial.verdict, reasons: [...initial.reasons, ...(separated || pinterestMonthlyRaw !== undefined ? scale.reasons : []), ...requirementReasons] };
   reasons.push(...requirementReasons);
   return { verdict: below || languageConflict || requirementConflict ? "rejected" : reasons.length ? "pending" : "qualified", reasons, subscribers: count };
 }
@@ -160,8 +181,12 @@ export function assessDiscoveryFacebook(criteria: unknown, evidence: unknown, au
 export function assessedDiscoveryEvidence(raw: unknown, assessment: DiscoveryAssessment): unknown {
   if (raw === null || typeof raw !== "object" || Array.isArray(raw)) return raw;
   const evidence = object(raw), fit = object(evidence.reviewed_match), sources = Array.isArray(evidence.source_urls) ? evidence.source_urls : [];
-  const rated = (assessment.verdict === "qualified" || assessment.reasons.includes("related_alternative") || assessment.verdict === "rejected" && fit.policy_version === "initial-match-evaluation-v1" && fit.level === "low") && fit.verified === true && ["language-match-review-v1", "initial-match-evaluation-v1"].includes(String(fit.policy_version)) && fit.outcome === "supported" && typeof fit.reason === "string" && !!fit.reason.trim() && Buffer.byteLength(fit.reason) <= 4000 && typeof fit.source_url === "string" && sources.includes(fit.source_url) && ["excellent", "good", "medium", "low"].includes(String(fit.level));
-  return { ...evidence, assessment: { reasons: assessment.reasons, subscribers_normalized: assessment.subscribers, ...(assessment.pinterest_scale ? { pinterest_scale: assessment.pinterest_scale } : {}), match_rating: rated ? { level: fit.level, reason: fit.reason, source_url: fit.source_url } : null } };
+  const selected = object(evidence.reviewed_selection), quality = object(evidence.reviewed_quality);
+  const selectionValid = selected.verified === true && selected.policy_version === SELECTION_QUALITY_POLICY && nonempty(selected.native_author_id) && nonempty(selected.review_id) && nonempty(selected.material_hash) && typeof selected.reason === "string" && !!selected.reason.trim() && sources.includes(selected.source_url);
+  const qualityValid = selectionValid && quality.verified === true && quality.policy_version === SELECTION_QUALITY_POLICY && quality.native_author_id === selected.native_author_id && quality.review_id === selected.review_id && quality.material_hash === selected.material_hash && sources.includes(quality.source_url) && typeof quality.reason === "string" && !!quality.reason.trim() && quality.outcome === "supported" && ["excellent", "good", "medium", "low"].includes(String(quality.level)) && quality.score === discoveryQualityScore(quality.level as DiscoveryQualityLevel);
+  const rated = !selectionValid && (assessment.verdict === "qualified" || assessment.reasons.includes("related_alternative") || assessment.verdict === "rejected" && fit.policy_version === "initial-match-evaluation-v1" && fit.level === "low") && fit.verified === true && ["language-match-review-v1", "initial-match-evaluation-v1"].includes(String(fit.policy_version)) && fit.outcome === "supported" && typeof fit.reason === "string" && !!fit.reason.trim() && Buffer.byteLength(fit.reason) <= 4000 && typeof fit.source_url === "string" && sources.includes(fit.source_url) && ["excellent", "good", "medium", "low"].includes(String(fit.level));
+  const rating = qualityValid ? { level: quality.level, score: quality.score, reason: quality.reason, source_url: quality.source_url } : null;
+  return { ...evidence, assessment: { reasons: assessment.reasons, subscribers_normalized: assessment.subscribers, ...(assessment.pinterest_scale ? { pinterest_scale: assessment.pinterest_scale } : {}), ...(selectionValid ? { selection: { state: selected.outcome === "supported" ? "matched" : selected.outcome === "contradicted" ? "unmatched" : "unverified", reason: selected.reason, source_url: selected.source_url }, quality_rating: rating } : {}), match_rating: selectionValid ? null : rated ? { level: fit.level, reason: fit.reason, source_url: fit.source_url } : null } };
 }
 
 export function mergePendingDiscoveryEvidence(current: unknown, previous: unknown): unknown {

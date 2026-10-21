@@ -94,13 +94,13 @@ test("真实LinkedIn帖子继续参与审核，已经推荐的原生账号不再
   assert.throws(() => repository.prepareReviewMaterial(campaign, 1, postHit), /content_binding_unavailable/);
 });
 
-test("真实模型仅引用Ray当前职位即通过全部要求，审核入库后不再读取帖子", async t => {
+test("真实历史匹配回执保留推荐，独立评分规则重新评估已存材料且不再读取帖子", async t => {
   const { db, repository } = await replay(t, true);
   const real = z.object({ operator_account_id: z.string(), input: z.unknown() }).parse(parseApplicationJson(readFileSync(new URL("./fixtures/linkedin-profile-review-20261020.json", import.meta.url))));
   const receipt = repository.submitReview(real.operator_account_id, real.input);
   assert.equal(receipt.verdict, "qualified");
   assert.equal(db.prepare("SELECT verdict FROM discovery_candidates WHERE id=?").get(candidate)?.verdict, "qualified");
-  assert.equal(repository.prepareInitialMatchMaterial(campaign, 1, hit).preserve, true);
+  assert.equal(repository.prepareInitialMatchMaterial(campaign, 1, hit).preserve, false);
   assert.equal(new DiscoveryContentRepository(db).nextNative(campaign, "linkedin"), null);
   assert.equal(repository.getPlan(campaign).used_calls, 0);
 });
@@ -132,7 +132,7 @@ test("真实模型对Ex-Binance保留现任雇主缺口，仅此时安排帖子�
   assert.equal(repository.prepareInitialMatchMaterial(campaign, 1, gapHit).preserve, false);
   assert.equal(new DiscoveryContentRepository(db).nextNative(campaign, "linkedin"), gapHit);
   db.exec("BEGIN DEFERRED");
-  assert.equal(pendingReview(db, campaign, 1, String(gap.candidate.id))?.state, "needs_content");
+  assert.equal(pendingReview(db, campaign, 1, String(gap.candidate.id))?.state, "awaiting_score");
   db.exec("COMMIT");
   assert.equal(repository.getPlan(campaign).used_calls, 0);
 });

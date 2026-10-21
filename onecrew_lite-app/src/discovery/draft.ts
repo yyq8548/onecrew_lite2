@@ -3,6 +3,7 @@ import { PINTEREST_MIN_MONTHLY_VIEWS_EXCLUSIVE } from "@onecrew/runtime-contract
 import { discoveryIntentProposal, proposedDiscoveryConstraint, validateDiscoveryIntent } from "./intent.ts";
 import type { DiscoveryIntentProposal } from "./intent.ts";
 import { discoveryPlanInput, type DiscoveryPlanInput } from "./contracts.ts";
+import { freezeQualityFilter, rebaseQualityFilter, qualityFilter, qualityFilterNodes } from "./quality-policy.ts";
 const text = z.string().refine(value => value.isWellFormed());
 const boundedText = text.refine(value => Buffer.byteLength(value) <= 4000 && !/\p{Cc}/u.test(value));
 const keyword = text.refine(value => !!value.trim() && Buffer.byteLength(value) <= 160 && !/\p{Cc}/u.test(value));
@@ -88,13 +89,18 @@ export function buildDiscoveryDraft(raw: unknown, rawPlan: unknown, sources: rea
   if (registered.some(source => !seen.has(source.platform) && !plan.intent.excluded_platforms.some(value => value.platform === source.platform))) invalid("coverage_incomplete");
   if (plan.contact_search_terms.length > 6 || plan.contact_search_terms.some(term => !term.trim() || [...term].length > 50 || /["():|<>\\/@\p{Cc}]/u.test(term))) invalid("plan_invalid");
   const min = plan.intent.min_subscribers;
-  if (plan.min_subscribers_in_requirements && (min.state !== "unspecified" || !plan.intent.other_hard_conditions.length)) invalid("intent_invalid");
+  if (plan.min_subscribers_in_requirements && (min.state !== "unspecified" || !plan.intent.other_hard_conditions.length && !(plan.intent.quality_filter?.state === "specified" && qualityFilterNodes(plan.intent.quality_filter.value).some(node => node.kind === "condition")))) invalid("intent_invalid");
   const thresholdSource = input.min_followers_override !== null || min.state !== "unspecified" ? "explicit" : plan.min_subscribers_in_requirements ? "requirements" : previous ? previous.criteria.min_subscribers_source : "default";
   const threshold = input.min_followers_override ?? (plan.min_subscribers_in_requirements ? 0 : min.state === "specified" ? min.value : min.state === "unrestricted" ? 0 : previous ? previous.criteria.min_subscribers ?? previous.criteria.min_followers ?? 0 : plan.scopes.every(scope => scope.platform === "linkedin") ? 0 : 2000);
   const criteria: Record<string, unknown> = { category: inheritedText("category"), region: "", language: inheritedText("language"), min_subscribers: threshold, requires_ai_tool_demo: false, requires_public_tool_url: false };
   if (thresholdSource !== undefined) criteria.min_subscribers_source = thresholdSource;
   if (plan.scopes.some(scope => scope.platform === "pinterest")) criteria.pinterest_min_monthly_views_exclusive = previous?.criteria.pinterest_min_monthly_views_exclusive ?? PINTEREST_MIN_MONTHLY_VIEWS_EXCLUSIVE;
-  if (plan.intent.other_hard_conditions.length) criteria.requirements = plan.intent.other_hard_conditions;
+  const requirements = [...plan.intent.other_hard_conditions];
+  const quality = plan.intent.quality_filter;
+  criteria.quality_filter = quality?.state === "specified" ? freezeQualityFilter(quality.value, requirements)
+    : quality?.state === "unrestricted" || previous?.criteria.quality_filter == null ? null
+      : rebaseQualityFilter(qualityFilter.parse(previous.criteria.quality_filter), (previous.criteria.requirements ?? []) as Array<{ description: string; excerpt: string }>, requirements);
+  if (requirements.length) criteria.requirements = requirements;
   criteria.contact_preference = "public_email_first";
   if (input.refinement !== null) criteria.refinement = input.refinement;
   if (input.criteria_overrides) { for (const key of ["language", "category"] as const) if (input.criteria_overrides[key] !== null) criteria[key] = input.criteria_overrides[key]; criteria.requires_ai_tool_demo = input.criteria_overrides.requires_ai_tool_demo; criteria.requires_public_tool_url = input.criteria_overrides.requires_public_tool_url; }

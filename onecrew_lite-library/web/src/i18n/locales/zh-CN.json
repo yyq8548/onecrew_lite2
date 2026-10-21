@@ -186,7 +186,7 @@
     "deleteRow": "删除行",
     "deleteRowTitle": "删除此行？",
     "deleteRowDescription": "此行将被永久删除。",
-    "matchEvaluation": "匹配评分",
+    "matchEvaluation": "质量评分",
     "contacts": "联系方式",
     "unrated": "尚未评分"
   },

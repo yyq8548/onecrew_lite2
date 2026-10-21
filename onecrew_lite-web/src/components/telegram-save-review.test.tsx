@@ -38,7 +38,7 @@ describe("Telegram candidate score presentation", () => {
       await i18n.init({ lng: locale, ns: ["inbox"], defaultNS: "inbox", resources: { [locale]: { inbox: catalog } }, interpolation: { escapeValue: false } });
       const html = renderToStaticMarkup(<I18nextProvider i18n={i18n}><TelegramSaveReview snapshot={snapshot()} onSnapshot={() => {}} onClose={() => {}} onSaved={() => {}} /></I18nextProvider>);
 
-      expect(html).toContain(i18n.t("outreach.telegram.reviewScore", { grade: i18n.t("outreach.telegram.reviewGradeGood") }));
+      expect(html).toContain(i18n.t("outreach.telegram.reviewScore", { grade: `87 · ${i18n.t("outreach.telegram.reviewGradeGood")}` }));
       expect(html).toContain("保留逐人评价原文，其中包含历史数字 87。");
       expect(html).not.toContain(i18n.t("outreach.telegram.reviewScore", { score: 87 }));
     });

@@ -2,16 +2,16 @@ SELECT EXISTS(
  SELECT 1 FROM discovery_candidates c JOIN discovery_campaigns d ON d.id=c.discovery_campaign_id
  JOIN discovery_search_hits h ON h.discovery_campaign_id=d.id AND h.source_url=json_extract(c.evidence_json,'$.source_urls[0]')
  JOIN discovery_campaign_revisions v ON v.discovery_campaign_id=d.id AND v.revision=d.current_revision
- JOIN discovery_evidence_reviews review ON review.id=json_extract(c.evidence_json,'$.reviewed_match.review_id') AND review.candidate_id=c.id AND review.criteria_revision=d.current_revision
+ JOIN discovery_evidence_reviews review ON review.id=COALESCE(json_extract(c.evidence_json,'$.reviewed_selection.review_id'),json_extract(c.evidence_json,'$.reviewed_match.review_id')) AND review.candidate_id=c.id AND review.criteria_revision=d.current_revision
    AND review.discovery_campaign_id=d.id AND review.search_hit_id=h.id
-   AND review.policy_version='initial-match-evaluation-v1'
-   AND review.material_hash=json_extract(c.evidence_json,'$.reviewed_match.material_hash')
-   AND review.native_author_id=json_extract(c.evidence_json,'$.reviewed_match.native_author_id')
+   AND review.policy_version IN ('initial-match-evaluation-v1','selection-quality-evaluation-v2')
+   AND review.material_hash=COALESCE(json_extract(c.evidence_json,'$.reviewed_selection.material_hash'),json_extract(c.evidence_json,'$.reviewed_match.material_hash'))
+   AND review.native_author_id=COALESCE(json_extract(c.evidence_json,'$.reviewed_selection.native_author_id'),json_extract(c.evidence_json,'$.reviewed_match.native_author_id'))
  WHERE d.id=?1 AND h.id=?2 AND h.platform IN ('twitter','youtube','bilibili','tiktok','reddit','facebook','instagram','weibo','bluesky','zhihu','hackernews','linkedin','douyin','google','yahoo') AND c.verdict='pending'
    AND c.criteria_revision=d.current_revision AND d.phase='active' AND v.approved_at IS NOT NULL
    AND NOT EXISTS(SELECT 1 FROM discovery_platform_runs busy WHERE busy.discovery_campaign_id=d.id AND busy.status='searching')
    AND (json_extract(v.criteria_json,'$.language') IS NOT NULL OR h.platform='tiktok')
-   AND json_extract(c.evidence_json,'$.reviewed_match.outcome')='insufficient'
+   AND COALESCE(json_extract(c.evidence_json,'$.reviewed_selection.outcome'),json_extract(c.evidence_json,'$.reviewed_match.outcome'))='insufficient'
    AND (
      (h.platform IN ('google','yahoo') AND c.platform IN ('youtube','twitter','douyin') AND c.source_platform=h.platform
        AND c.source_profile_ref=h.profile_ref AND c.platform_account_id=review.native_author_id
@@ -82,7 +82,7 @@ SELECT EXISTS(
    AND (d.max_calls IS NULL OR d.used_calls + 1 <= d.max_calls)
    AND EXISTS(SELECT 1 FROM json_each(review.findings_json) f WHERE
      (json_extract(f.value,'$.criterion')='content_language' AND json_extract(v.criteria_json,'$.language') IS NOT NULL
-       OR h.platform='tiktok' AND json_extract(f.value,'$.criterion')='match_fit')
+       OR h.platform='tiktok' AND json_extract(f.value,'$.criterion') IN ('match_fit','selection_fit'))
      AND json_extract(f.value,'$.outcome')='insufficient')
    AND coalesce(json_array_length(review.material_json,'$.language_samples'),0) = (SELECT COUNT(*) FROM discovery_language_samples s WHERE s.candidate_id=c.id AND s.criteria_revision=d.current_revision AND s.status='completed')
    AND (SELECT COUNT(*) FROM discovery_language_samples s WHERE s.candidate_id=c.id AND s.criteria_revision=d.current_revision)<1

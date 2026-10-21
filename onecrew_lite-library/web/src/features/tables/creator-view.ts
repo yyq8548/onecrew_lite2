@@ -137,11 +137,7 @@ export function groupedCreators(table: Table, material: CreatorMaterial) {
               (column) => column.name === 'Match evaluation' && column.data_type === 'score',
             );
             const score = scoreValueSchema.safeParse(field ? source.row.values[field.id] : null);
-            return score.success &&
-              score.data.reason?.trim() &&
-              (source.verdict === 'qualified' ||
-                (source.verdict === 'pending' && source.reasons.includes('related_alternative') && score.data.level === 'medium') ||
-                (source.verdict === 'rejected' && score.data.level === 'low'))
+            return score.success
               ? [score.data]
               : [];
           })

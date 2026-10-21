@@ -87,6 +87,10 @@ export const cellValueSchema = z
   .describe('A scalar, fixed people/company object, fixed score object, or null');
 export type PeopleValue = z.infer<typeof peopleValueSchema>;
 export type ScoreValue = z.infer<typeof scoreValueSchema>;
+export const QUALITY_LEVEL_POINTS = Object.freeze({ excellent: 95, good: 85, medium: 70, low: 40 } as const);
+export function scoreValuePoints(value: Pick<ScoreValue, 'level'> | null): number | null {
+  return value === null ? null : QUALITY_LEVEL_POINTS[value.level];
+}
 export type CellValue = z.infer<typeof cellValueSchema>;
 
 export const columnSchema = z

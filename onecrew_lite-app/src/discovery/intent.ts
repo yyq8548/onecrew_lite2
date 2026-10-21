@@ -1,9 +1,11 @@
 import { z } from "zod";
+import { proposedQualityFilter, validateProposedQualityFilter } from "./quality-policy.ts";
 const text = z.string().refine(value => value.isWellFormed());
 export function proposedDiscoveryConstraint<T extends z.ZodType>(value: T) { return z.discriminatedUnion("state", [z.strictObject({ state: z.literal("specified"), value, excerpt: text }), z.strictObject({ state: z.literal("unrestricted"), excerpt: text }), z.strictObject({ state: z.literal("unspecified") })]); }
 export const discoveryIntentProposal = z.strictObject({
   original_request: text, goal: text, category: proposedDiscoveryConstraint(text), region: proposedDiscoveryConstraint(text), language: proposedDiscoveryConstraint(text),
   min_subscribers: proposedDiscoveryConstraint(z.union([z.number().int().safe().nonnegative(), z.bigint().min(0n).max(18446744073709551615n)])),
+  quality_filter: proposedDiscoveryConstraint(proposedQualityFilter).optional(),
   excluded_platforms: z.array(z.strictObject({ platform: text, excerpt: text })),
   other_hard_conditions: z.array(z.strictObject({ description: text, excerpt: text })),
   soft_preferences: z.array(z.strictObject({ description: text, excerpt: text.nullable() })), suggested_keywords: z.array(text),
@@ -39,6 +41,11 @@ export function validateDiscoveryIntent(request: string, raw: unknown, registere
     if (value.state !== "unspecified" && !excerptValid(value.excerpt)) issue(field, "excerpt_not_in_request");
   }
   const count = proposal.min_subscribers;
+  const quality = proposal.quality_filter;
+  if (quality && quality.state !== "unspecified") {
+    if (!excerptValid(quality.excerpt)) issue("quality_filter", "excerpt_not_in_request");
+    if (quality.state === "specified" && !validateProposedQualityFilter(request, quality.value)) issue("quality_filter", "invalid_quality_requirement");
+  }
   if (count.state === "specified") {
     if (BigInt(count.value) > 1000000000n) issue("min_subscribers", "invalid_value");
     if (!excerptValid(count.excerpt)) issue("min_subscribers", "excerpt_not_in_request");

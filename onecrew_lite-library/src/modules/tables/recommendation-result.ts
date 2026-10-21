@@ -13,7 +13,7 @@ export const recommendationFields = [
 
 export type RecommendationRow = {
   id: string;
-  values: { name: PeopleValue; category: string | null; platform: string; score: ScoreValue; contacts: string };
+  values: { name: PeopleValue; category: string | null; platform: string; score: ScoreValue | null; contacts: string };
 };
 
 /** Consume only the owner's current identity and qualification projection. */
@@ -28,11 +28,10 @@ export function recommendationRows(table: TableDto, material: DiscoveryCreatorVi
     const qualified = group.members.flatMap(member => member.source_hit_ids.flatMap(id => {
       const source = sources.get(id);
       if (!source || source.verdict !== 'qualified') return [];
-      const score = scoreValueSchema.safeParse(scoreId ? source.row.values[scoreId] : null);
-      if (!score.success || score.data.level === 'low' || !score.data.reason?.trim()) return [];
-      return [{ member, source, score: score.data }];
+      const score = scoreValueSchema.nullable().parse(scoreId ? source.row.values[scoreId] ?? null : null);
+      return [{ member, source, score }];
     }));
-    qualified.sort((a, b) => rank[a.score.level] - rank[b.score.level]
+    qualified.sort((a, b) => (a.score === null ? 4 : rank[a.score.level]) - (b.score === null ? 4 : rank[b.score.level])
       || a.source.search_hit_id.localeCompare(b.source.search_hit_id));
     const selected = qualified[0];
     if (!selected) return [];

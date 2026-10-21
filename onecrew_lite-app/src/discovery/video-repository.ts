@@ -15,7 +15,7 @@ export type DiscoveryVideoCandidate = z.infer<typeof candidateSchema>;
 function validateCandidate(raw: unknown): DiscoveryVideoCandidate {
   const candidate = candidateSchema.parse(raw), url = URL.parse(candidate.profile_url), evidence = candidate.evidence;
   if (!url || url.protocol !== "https:" || !["youtube.com", "www.youtube.com"].includes(url.hostname) || url.pathname !== `/channel/${candidate.platform_account_id}`) throw new Error("discovery_video_candidate_profile_invalid");
-    if (["manual_approval", "reviewed_residence", "reviewed_requirements", "reviewed_apparel_content", "reviewed_category_content"].some(key => Object.hasOwn(evidence, key))) throw new Error("discovery_video_review_owner_required");
+    if (["manual_approval", "reviewed_residence", "reviewed_requirements", "reviewed_apparel_content", "reviewed_category_content", "reviewed_selection", "reviewed_quality"].some(key => Object.hasOwn(evidence, key))) throw new Error("discovery_video_review_owner_required");
   const sources = z.array(text.refine(value => Buffer.byteLength(value) <= 2048 && URL.parse(value)?.protocol === "https:")).min(1).max(20).parse(evidence.source_urls);
   if (!sources.length || Buffer.byteLength(stringifyApplicationJson(evidence)) > 16384) throw new Error("discovery_video_evidence_invalid");
   return candidate;
@@ -37,7 +37,8 @@ export class DiscoveryVideoRepository {
       AND NOT EXISTS(SELECT 1 FROM discovery_video_completions v WHERE v.search_hit_id=h.id) AND NOT EXISTS(SELECT 1 FROM discovery_video_read_failures f WHERE f.search_hit_id=h.id)
       AND NOT EXISTS(SELECT 1 FROM discovery_candidates known WHERE known.discovery_campaign_id=h.discovery_campaign_id AND known.criteria_revision=(SELECT current_revision FROM discovery_campaigns WHERE id=h.discovery_campaign_id)
         AND known.platform=h.platform AND known.source_profile_ref=h.profile_ref AND r.status='completed' AND known.platform_account_id=p.author_id AND known.verdict='qualified'
-        AND json_extract(known.evidence_json,'$.reviewed_match.verified')=1 AND json_extract(known.evidence_json,'$.reviewed_match.native_author_id')=p.author_id AND json_extract(known.evidence_json,'$.reviewed_match.level') IN('medium','good','excellent') AND json_extract(known.evidence_json,'$.reviewed_match.outcome')='supported')
+        AND ((json_extract(known.evidence_json,'$.reviewed_selection.verified')=1 AND json_extract(known.evidence_json,'$.reviewed_selection.native_author_id')=p.author_id AND json_extract(known.evidence_json,'$.reviewed_selection.outcome')='supported')
+          OR(json_extract(known.evidence_json,'$.reviewed_match.verified')=1 AND json_extract(known.evidence_json,'$.reviewed_match.native_author_id')=p.author_id AND json_extract(known.evidence_json,'$.reviewed_match.level') IN('medium','good','excellent') AND json_extract(known.evidence_json,'$.reviewed_match.outcome')='supported')))
       AND NOT EXISTS(SELECT 1 FROM discovery_candidates c,json_each(c.evidence_json,'$.source_urls') s WHERE c.discovery_campaign_id=h.discovery_campaign_id AND c.platform=h.platform AND s.value=h.source_url)
       ORDER BY CASE WHEN r.status='technical_stop' THEN 0 ELSE 1 END,EXISTS(SELECT 1 FROM discovery_candidates known WHERE known.discovery_campaign_id=h.discovery_campaign_id AND known.platform=h.platform AND known.source_profile_ref=h.profile_ref AND known.display_name=h.author_label),h.captured_at,COALESCE((SELECT position FROM discovery_search_positions WHERE search_hit_id=h.id),9223372036854775807),h.id LIMIT 1`).get(campaign);
     return row === undefined ? null : z.object({ id: text, profile_ref: text }).parse(row);

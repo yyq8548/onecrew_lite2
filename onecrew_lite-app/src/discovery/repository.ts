@@ -26,6 +26,7 @@ import { pendingReview, pendingReviewLabels, type PendingReviewState } from "./p
 import type { DiscoveryContentClaim } from "./content-result.ts";
 import { DiscoveryPublicPageRepository, type DiscoveryPublicPageClaim, type FinishDiscoveryPublicPageInput } from "./public-page-repository.ts";
 import type { DiscoveryPublicPageInput } from "./contact-native.ts";
+import { loadDiscoveryNativeContactMaterial } from "./contact-native.ts";
 import { recordYoutubeContactObservation, youtubeContactObservation } from "./youtube-contact-observation.ts";
 import { DiscoveryLanguageRepository } from "./language-repository.ts";
 import type { DiscoveryLanguageClaim, DiscoveryLanguageSample } from "./language-contracts.ts";
@@ -69,9 +70,27 @@ export class DiscoveryRepository {
   interruptFacebookTargets(claim: DiscoveryProfileClaim) { return new DiscoveryFacebookTargetsRepository(this.#db).interrupt(claim); }
   planStep(campaign: string, revision: number, excluded: readonly string[] = [], deferred: readonly string[] = []): DiscoveryStep { return planDiscoveryStep(this, campaign, revision, excluded, deferred); }
   planStepScoring(campaign: string, revision: number, excluded: readonly string[], deferred: readonly string[], scoring: readonly string[]): DiscoveryStep {
-    const fallback = this.planStep(campaign, revision, excluded, deferred);
+    const held = scoring.map(hit => this.#transaction(() => buildDiscoveryReviewMaterial(loadDiscoveryReviewBasis(this.#db, campaign, revision, hit)), true));
+    const blocked = new Set(deferred);
+    for (const material of held) {
+      for (const platform of ["google", "yahoo"]) blocked.add(platform);
+      if (["google", "yahoo"].includes(material.hit.platform)) for (const scope of this.getPlan(campaign).scopes) blocked.add(scope.platform);
+      else blocked.add(material.hit.platform);
+    }
+    const fallback = this.planStep(campaign, revision, excluded, [...blocked]);
     if (fallback.kind === "target_reached" || fallback.kind === "budget_exhausted") return fallback;
     if (this.getPlan(campaign).platform_runs.some(run => run.status === "searching")) return { kind: "busy" };
+    const page = scoring.length > 0 ? this.nextPublicPage(campaign, excluded) : null;
+    if (page !== null) {
+      const independent = this.#transaction(() => {
+        const contact = loadDiscoveryNativeContactMaterial(this.#db, page);
+        if (contact === null) return false;
+        return !held.some(material => {
+          return (material.native_platform ?? material.hit.platform) === (contact.native_platform ?? contact.hit.platform) && material.native_author_id === contact.native_author_id;
+        });
+      }, true);
+      if (independent) return { kind: "read_public_page", profile_ref: page.profile_ref, candidate_id: page.candidate_id, requested_url: page.requested_url };
+    }
     for (const hit of scoring) {
       const basis = this.#transaction(() => loadDiscoveryReviewBasis(this.#db, campaign, revision, hit), true);
       if (!excluded.includes(basis.hit.platform)) { const independent = this.nextIndependentRead(campaign, revision, hit, scoring); if (independent) return independent; }
@@ -215,9 +234,9 @@ export class DiscoveryRepository {
   prepareReviewMaterial(campaign: string, revision: number, hit: string) { return buildDiscoveryReviewMaterial(this.#transaction(() => loadDiscoveryReviewBasis(this.#db, campaign, revision, hit), true)); }
   prepareInitialMatchMaterial(campaign: string, revision: number, hit: string) {
     const basis = this.#transaction(() => loadDiscoveryReviewBasis(this.#db, campaign, revision, hit), true), evidence = z.record(z.string(), z.unknown()).parse(parseApplicationJson(Buffer.from(basis.evidence_json)));
-    const reviewed = evidence.reviewed_match !== null && typeof evidence.reviewed_match === "object" && !Array.isArray(evidence.reviewed_match) ? evidence.reviewed_match as Record<string, unknown> : {};
+    const reviewed = evidence.reviewed_selection !== null && typeof evidence.reviewed_selection === "object" && !Array.isArray(evidence.reviewed_selection) ? evidence.reviewed_selection as Record<string, unknown> : {};
     const assessment = assessDiscoveryYoutube(parseApplicationJson(Buffer.from(basis.criteria_json)), evidence, basis.native_author_id);
-    return { material: buildDiscoveryReviewMaterial(basis), count: basis.native_followers ?? assessment.subscribers, preserve: reviewed.policy_version === "initial-match-evaluation-v1" && reviewed.outcome === "supported" && (basis.hit.platform !== "linkedin" || assessment.verdict !== "pending") };
+    return { material: buildDiscoveryReviewMaterial(basis), count: basis.native_followers ?? assessment.subscribers, preserve: reviewed.policy_version === "selection-quality-evaluation-v2" && reviewed.outcome === "supported" && assessment.verdict === "qualified" };
   }
   submitReview(account: string, input: unknown) { return new DiscoveryReviewRepository(this.#db).submit(account, input); }
   getReview(account: string, campaign: string, request: string) { return new DiscoveryReviewRepository(this.#db).get(account, campaign, request); }
