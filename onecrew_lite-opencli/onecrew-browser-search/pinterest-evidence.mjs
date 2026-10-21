@@ -1,3 +1,5 @@
+import {equivalentSourceUrl,sourceUrlScript} from './source-url.mjs';
+
 // Project a native UserResource response. Search summaries cannot certify identity.
 const fail = (profileField) => {
   const stage=['OWNER','ID','FOLLOWERS','BIO','NAME','WEBSITE','WEBSITE_FORMAT','WEBSITE_PROTOCOL','WEBSITE_PRIVATE','WEBSITE_TYPE'].includes(profileField) ? `_PROFILE_${profileField}` : '';
@@ -70,9 +72,9 @@ export async function fetchNativeResource(kind, target, searchLimit = 20) {
   // Pinterest redirects a numeric Pin URL to a title slug ending in the same
   // native ID. The slug supplies no identity; PinResource and its projection
   // must still bind the reserved Pin and its actually observed pinner.
-  const pagePin = isPin ? location.pathname.match(/^\/pin\/(?:[^/]+--)?([1-9][0-9]{0,19})\/$/) : null;
-  const samePage = isPin ? pagePin?.[1] === target : location.pathname === (isSearch ? searchPath : source);
-  if (location.origin !== 'https://www.pinterest.com') return {stop:'read',stage:'source'};
+  const pagePin = isPin ? location.pathname.match(/^\/pin\/(?:[^/]+--)?([1-9][0-9]{0,19})\/?$/) : null;
+  const samePage = isPin ? pagePin?.[1] === target : isSearch ? equivalentSourceUrl(`${location.origin}${location.pathname}`,`https://www.pinterest.com${searchPath}`) : equivalentSourceUrl(location.href,`https://www.pinterest.com${source}`);
+  if (!equivalentSourceUrl(location.origin,'https://www.pinterest.com')) return {stop:'read',stage:'source'};
   const text = document.body?.innerText || '';
   if (/verify you are human|security check|captcha|安全验证|人机验证/i.test(text)) return {stop:'risk'};
   if (/^\/login\/?$/.test(location.pathname)) return {stop:'auth'};
@@ -110,7 +112,7 @@ export async function readProfile(page, username, ownPage) {
   nativeUsername(username);
   return ownPage(page, async owned => {
     await owned.goto(`https://www.pinterest.com/${username}/`);
-    const raw = await owned.evaluate(`(async function(kind,target){const native=await (${fetchNativeResource.toString()})(kind,target);if(native?.stop)return native;return {...native,onecrew_public_monthly_views_raw:(${readVisibleMonthlyViews.toString()})(target)};})("profile",${JSON.stringify(username)})`);
+    const raw = await owned.evaluate(sourceUrlScript(`(async function(kind,target){const native=await (${fetchNativeResource.toString()})(kind,target);if(native?.stop)return native;return {...native,onecrew_public_monthly_views_raw:(${readVisibleMonthlyViews.toString()})(target)};})("profile",${JSON.stringify(username)})`));
     const result = raw && 'session' in Object(raw) && 'data' in Object(raw) ? raw.data : raw;
     throwResourceStop(result);
     const profile = projectProfile(result, username);
@@ -121,7 +123,7 @@ export async function readProfile(page, username, ownPage) {
 
 // 月浏览量只读取当前作者主页的公开标签，保留圆整显示值。
 export function readVisibleMonthlyViews(username) {
-  if (location.origin !== 'https://www.pinterest.com' || location.pathname !== `/${username}/`) throw new Error('ONECREW_PINTEREST_READ_SOURCE');
+  if (!equivalentSourceUrl(location.href,`https://www.pinterest.com/${username}/`)) throw new Error('ONECREW_PINTEREST_READ_SOURCE');
   const header = document.querySelector('[data-test-id="profile-header"]');
   if (!header || !header.innerText.split('\n').some(line => line.trim() === username)) return null;
   const labels = [...header.querySelectorAll('span')].filter(el => el.getClientRects().length && /^(?:[0-9][0-9,.]*\s*[KMB万亿千]?\s*)(?:月浏览量|monthly views)$/iu.test(el.innerText.trim())).map(el => el.innerText.trim());
@@ -159,7 +161,7 @@ async function readSearchKind(page, query, limit, ownPage, kind) {
   return ownPage(page,async owned => {
     const path=kind==='search-pins'?'pins':'users';
     await owned.goto(`https://www.pinterest.com/search/${path}/?q=${encodeURIComponent(query)}`);
-    const raw = await owned.evaluate(`(${fetchNativeResource.toString()})(${JSON.stringify(kind)},${JSON.stringify(query)},${limit})`);
+    const raw = await owned.evaluate(sourceUrlScript(`(${fetchNativeResource.toString()})(${JSON.stringify(kind)},${JSON.stringify(query)},${limit})`));
     const result = raw && 'session' in Object(raw) && 'data' in Object(raw) ? raw.data : raw;
     throwResourceStop(result);
     return kind==='search-pins'?projectPinSearch(result,limit):projectSearch(result,limit);
@@ -250,7 +252,7 @@ export async function readContent(page, authorId, username, ownPage, pinId) {
     } else {
       await owned.goto(`https://www.pinterest.com/${username}/`);
       const targetScript=`(async()=>{const data=await (${fetchNativeResource.toString()})("pins",${JSON.stringify(username)});if(data?.stop)return data;return (${projectPinTarget.toString()})(data,${JSON.stringify(authorId)},${JSON.stringify(username)});})()`;
-      target=unwrap(await owned.evaluate(targetScript));
+      target=unwrap(await owned.evaluate(sourceUrlScript(targetScript)));
     }
     throwResourceStop(target);
     if (target?.author_id!==authorId || target?.author_username!==username || !/^[1-9][0-9]{0,19}$/.test(target?.pin_id ?? '')
@@ -258,7 +260,7 @@ export async function readContent(page, authorId, username, ownPage, pinId) {
         || target.profile_url!==`https://www.pinterest.com/${username}/`) return fail();
     await owned.goto(target.source_url);
     const script=`(async()=>{const data=await (${fetchNativeResource.toString()})("pin",${JSON.stringify(target.pin_id)});if(data?.stop)return data;return (${projectPinContent.toString()})(data,${JSON.stringify(target.pin_id)},${JSON.stringify(authorId)},${JSON.stringify(username)});})()`;
-    const content=unwrap(await owned.evaluate(script));
+    const content=unwrap(await owned.evaluate(sourceUrlScript(script)));
     throwResourceStop(content);
     // Check the projection again outside the page before returning a receipt.
     if(content?.pin_id!==target.pin_id || content?.author_id!==authorId || content?.author_username!==username

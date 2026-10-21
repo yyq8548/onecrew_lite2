@@ -1,10 +1,11 @@
 import { discoveryNonContact } from "./contacts.ts";
+import { equivalentSourceUrl } from "../../../onecrew_lite-opencli/onecrew-browser-search/source-url.mjs";
 
 const contactPaths = new Set(["contact", "contact-us", "contacts", "business", "cooperation", "collaboration", "partnerships", "kontakt", "contacto", "contato", "contatti", "kontaktieren", "contacter"]);
 const words = (value: string) => value.split(/[^\p{Alphabetic}\p{Number}]+/u).filter(Boolean).map(value => value.toLowerCase());
 export const trimDiscoveryLink = (value: string) => value.replace(/^[()[\]<>,.;!"']+|[()[\]<>,.;!"']+$/gu, "");
 export function discoveryObservesLink(description: string, link: string): boolean {
-  return Buffer.byteLength(description) <= 16000 && description.split(/\p{White_Space}+/u).some(token => !token.includes("...") && !token.includes("…") && trimDiscoveryLink(token) === link);
+  return Buffer.byteLength(description) <= 16000 && description.split(/\p{White_Space}+/u).some(token => !token.includes("...") && !token.includes("…") && (trimDiscoveryLink(token) === link || equivalentSourceUrl(trimDiscoveryLink(token), link)));
 }
 export function discoveryCommunityInvite(link: string): boolean {
   const url = URL.parse(link);

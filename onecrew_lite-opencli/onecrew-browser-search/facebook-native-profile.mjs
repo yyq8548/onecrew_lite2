@@ -1,5 +1,6 @@
 import {facebookVanitySource,facebookHeaderNodes} from './facebook-identity.mjs';
 import {facebookProfileTarget,observeFacebookAbout} from './facebook-profile.mjs';
+import {equivalentSourceUrl,sourceUrlScript} from './source-url.mjs';
 
 export function facebookNativeContactTarget(base,source) {
   const profile=facebookVanitySource(base);
@@ -11,10 +12,10 @@ export function facebookNativeContactTarget(base,source) {
 // must agree. Never use a feed actor or the signed-in viewer as the profile ID.
 export async function readFacebookNativeHeader(expected,id,base,collect) {
   for(let attempt=0;attempt<12;attempt++) {
-    if(location.origin!=='https://www.facebook.com') throw new Error('ONECREW_FB_PROFILE_INVALID');
+    if(!equivalentSourceUrl(location.origin,'https://www.facebook.com')) throw new Error('ONECREW_FB_PROFILE_INVALID');
     if(/^\/(?:login|recover)(?:\/|\.php|$)/.test(location.pathname)) throw new Error('ONECREW_FB_PROFILE_AUTH');
     if(/^\/(?:checkpoint|challenge|two_step_verification)(?:\/|$)/.test(location.pathname)) throw new Error('ONECREW_FB_PROFILE_RISK');
-    if(location.href!==expected) throw new Error('ONECREW_FB_PROFILE_INVALID');
+    if(!equivalentSourceUrl(location.href,expected)) throw new Error('ONECREW_FB_PROFILE_INVALID');
     const mains=[...document.querySelectorAll('[role="main"]')].filter(n=>n.getClientRects().length);
     if(mains.length>1) throw new Error('ONECREW_FB_PROFILE_INVALID');
     const scripts=[...document.querySelectorAll('script[type="application/json"][data-sjs]')];
@@ -60,11 +61,11 @@ export async function readFacebookNativeProfile(page,args,ownPage) {
   const base=facebookVanitySource(args.url),canonical=facebookProfileTarget(args.id),source=`${base}/about`;
   return ownPage(page,async owned=>{
     await owned.goto(source,{settleMs:3000});
-    const raw=await owned.evaluate(String.raw`(async()=>{const owner=await (${readFacebookNativeHeader.toString()})(${JSON.stringify(source)},${JSON.stringify(args.id)},${JSON.stringify(base)},${facebookHeaderNodes.toString()});
+    const raw=await owned.evaluate(sourceUrlScript(String.raw`(async()=>{const owner=await (${readFacebookNativeHeader.toString()})(${JSON.stringify(source)},${JSON.stringify(args.id)},${JSON.stringify(base)},${facebookHeaderNodes.toString()});
       const main=[...document.querySelectorAll('[role="main"]')].find(n=>n.getClientRects().length);
       const links=[...main.querySelectorAll('a[role="tab"][href]')].filter(n=>n.getClientRects().length && !n.closest('[role="article"],[role="feed"]')).map(n=>n.href);
       const about=await (${observeFacebookAbout.toString()})(${JSON.stringify(source)},${JSON.stringify(base)});
-      return {...owner,...about,profile_url:${JSON.stringify(canonical)},observed_profile_url:${JSON.stringify(base)},contact_links:[...new Set(links.filter(url=>[${JSON.stringify(`${base}/directory_contact_info`)},${JSON.stringify(`${base}/directory_links`)}].includes(url)))]};})()`);
+      return {...owner,...about,profile_url:${JSON.stringify(canonical)},observed_profile_url:${JSON.stringify(base)},contact_links:[${JSON.stringify(`${base}/directory_contact_info`)},${JSON.stringify(`${base}/directory_links`)}].filter(target=>links.some(url=>equivalentSourceUrl(url,target)))};})()`));
     const data=raw&&'session' in Object(raw)&&'data' in Object(raw)?raw.data:raw;
     return projectFacebookNativeProfile(data,args.id,base);
   });
@@ -87,10 +88,10 @@ export async function readFacebookNativeContact(page,args,ownPage) {
   const base=facebookVanitySource(args.url),source=facebookNativeContactTarget(base,args.source);facebookProfileTarget(args.id);
   return ownPage(page,async owned=>{
     await owned.goto(source,{settleMs:3000});
-    const raw=await owned.evaluate(String.raw`(async()=>{const owner=await (${readFacebookNativeHeader.toString()})(${JSON.stringify(source)},${JSON.stringify(args.id)},${JSON.stringify(base)},${facebookHeaderNodes.toString()});
+    const raw=await owned.evaluate(sourceUrlScript(String.raw`(async()=>{const owner=await (${readFacebookNativeHeader.toString()})(${JSON.stringify(source)},${JSON.stringify(args.id)},${JSON.stringify(base)},${facebookHeaderNodes.toString()});
       const main=[...document.querySelectorAll('[role="main"]')].find(n=>n.getClientRects().length);
       const visible=n=>n.getClientRects().length && !n.closest('[role="article"],[role="feed"],[role="navigation"],nav,script,style,[aria-hidden="true"]');
-      const selected=[...main.querySelectorAll('a[role="tab"][aria-selected="true"]')].filter(n=>visible(n)&&n.href===${JSON.stringify(source)});
+      const selected=[...main.querySelectorAll('a[role="tab"][aria-selected="true"]')].filter(n=>visible(n)&&equivalentSourceUrl(n.href,${JSON.stringify(source)}));
       if(selected.length!==1||[...main.querySelectorAll('[aria-busy="true"],[role="progressbar"]')].some(visible)) throw new Error('ONECREW_FB_CONTACT_INVALID');
       const sections=[...main.querySelectorAll('section')].filter(n=>visible(n)&&!n.querySelector('section')&&!n.closest('[role="article"],[role="feed"]'));
       const parts=[],links=[];
@@ -114,7 +115,7 @@ export async function readFacebookNativeContact(page,args,ownPage) {
           }catch{}
         }
       }
-      return {id:owner.id,source_url:${JSON.stringify(source)},observed_profile_url:${JSON.stringify(base)},title:owner.display_name,contact_text:[...new Set(parts)].join('\n'),contact_links:links};})()`);
+      return {id:owner.id,source_url:${JSON.stringify(source)},observed_profile_url:${JSON.stringify(base)},title:owner.display_name,contact_text:[...new Set(parts)].join('\n'),contact_links:links};})()`));
     const data=raw&&'session' in Object(raw)&&'data' in Object(raw)?raw.data:raw;
     return projectFacebookNativeContact(data,args.id,base,source);
   });

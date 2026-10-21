@@ -13,7 +13,7 @@ export function discoveryObservationVersion(raw: unknown): string {
   return discoveryMaterialDigest(discoveryJsonValue(value));
 }
 
-export const pendingReviewLabels = { awaiting_score: "等待最新证据评分", needs_content: "缺少正文证据", needs_identity: "缺少账号身份依据", read_blocked: "读取受阻", insufficient_after_read: "补读后证据仍不足", needs_requirement: "缺少公开联系方式" } as const;
+export const pendingReviewLabels = { awaiting_score: "等待最新证据评分", needs_content: "缺少正文证据", needs_identity: "缺少账号身份依据", read_blocked: "读取受阻", insufficient_after_read: "现有证据仍不足", needs_requirement: "缺少公开联系方式" } as const;
 export type PendingReviewState = keyof typeof pendingReviewLabels;
 export function pendingReview(db: DatabaseSync, campaign: string, revision: number, candidate: string): { state: PendingReviewState; next_action: string; last_processed_at: number; stop_code: string | null; gap: string | null } | null {
   const row = db.prepare(`SELECT c.updated_at,c.evidence_json,h.id AS hit_id,h.platform,h.profile_ref FROM discovery_candidates c
@@ -41,6 +41,8 @@ export function pendingReview(db: DatabaseSync, campaign: string, revision: numb
     state = "awaiting_score"; action = "使用当前已保存材料评分，无须重复读取";
   } else if (object(evidence.assessment).reasons instanceof Array && (object(evidence.assessment).reasons as unknown[]).includes("contact_unavailable")) {
     state = "needs_requirement"; action = "按原任务联系信息要求核实";
+  } else if (row.platform === "linkedin" && typeof review.reason === "string") {
+    state = "insufficient_after_read"; action = `核实原任务尚缺的条件：${[...review.reason].slice(0, 500).join("")}。当前岗位足够时无需帖子`;
   } else if (basis.native_content === null && !basis.language_samples.length && !basis.source_description) {
     state = "needs_content"; action = "按缺口补读账号发布或转载的相关内容，取得证据后评分";
   } else {

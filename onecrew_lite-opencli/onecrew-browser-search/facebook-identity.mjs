@@ -1,5 +1,7 @@
 // Resolve a saved vanity profile from the native public header response.
 // Names, feed actors, image URLs and viewer IDs never supply the identity.
+import {equivalentSourceUrl,sourceUrlScript} from './source-url.mjs';
+
 export function facebookVanitySource(source) {
   if (typeof source !== 'string' || !source.startsWith('https://www.facebook.com/')) throw new Error('ONECREW_FB_IDENTITY_INPUT');
   let url;
@@ -44,10 +46,10 @@ export function facebookHeaderNodes(payload) {
 
 export async function readFacebookIdentityPage(requested, source, collect) {
   for (let attempt=0;attempt<16;attempt++) {
-    if (location.origin!=='https://www.facebook.com') throw new Error('ONECREW_FB_IDENTITY_INVALID');
+    if (!equivalentSourceUrl(location.origin,'https://www.facebook.com')) throw new Error('ONECREW_FB_IDENTITY_INVALID');
     if (/^\/(?:login|recover)(?:\/|\.php|$)/.test(location.pathname)) throw new Error('ONECREW_FB_IDENTITY_AUTH');
     if (/^\/(?:checkpoint|challenge|two_step_verification)(?:\/|$)/.test(location.pathname)) throw new Error('ONECREW_FB_IDENTITY_RISK');
-    if (location.href.replace(/\/$/,'').toLowerCase()!==source.toLowerCase()) throw new Error('ONECREW_FB_IDENTITY_INVALID');
+    if (!equivalentSourceUrl(location.href,source)) throw new Error('ONECREW_FB_IDENTITY_INVALID');
     const mains=[...document.querySelectorAll('[role="main"]')].filter(n=>n.getClientRects().length);
     if (mains.length>1) throw new Error('ONECREW_FB_IDENTITY_INVALID');
     const candidates=[];
@@ -85,7 +87,7 @@ export async function readFacebookIdentity(page,args,ownedPage) {
   const source=facebookVanitySource(args.url);
   return ownedPage(page,async owned=>{
     await owned.goto(args.url,{settleMs:3000});
-    const raw=await owned.evaluate(`(${readFacebookIdentityPage.toString()})(${JSON.stringify(args.url)},${JSON.stringify(source)},${facebookHeaderNodes.toString()})`);
+    const raw=await owned.evaluate(sourceUrlScript(`(${readFacebookIdentityPage.toString()})(${JSON.stringify(args.url)},${JSON.stringify(source)},${facebookHeaderNodes.toString()})`));
     const data=raw && 'session' in Object(raw) && 'data' in Object(raw) ? raw.data : raw;
     return projectFacebookIdentity(data,args.url);
   });

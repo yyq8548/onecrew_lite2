@@ -2,6 +2,7 @@ import {facebookVanitySource,facebookHeaderNodes} from './facebook-identity.mjs'
 import {readFacebookNativeHeader} from './facebook-native-profile.mjs';
 import {facebookProfileTarget} from './facebook-profile.mjs';
 import {facebookReelTarget} from './facebook-reel-comments.mjs';
+import {sourceUrlScript} from './source-url.mjs';
 
 // Only the public story at an exact native response boundary binds caption to
 // its video and actor. Feed actors, viewers and translated messages are excluded.
@@ -65,7 +66,7 @@ export async function readFacebookNativeOriginal(page,args,ownPage) {
 export async function readFacebookNativeTargets(page,args,ownPage) {
   facebookProfileTarget(args.id);const base=facebookVanitySource(args.url),source=`${base}/reels_tab`;
   return ownPage(page,async owned=>{await owned.goto(source,{settleMs:3000});
-    const raw=await owned.evaluate(String.raw`(async()=>{const allowed=[${JSON.stringify(source)},${JSON.stringify(base+'/reels/')},${JSON.stringify(base+'/reels')}];
+    const raw=await owned.evaluate(sourceUrlScript(String.raw`(async()=>{const allowed=[${JSON.stringify(source)},${JSON.stringify(base+'/reels/')},${JSON.stringify(base+'/reels')}];
       if(!allowed.includes(location.href))throw new Error('ONECREW_FB_RECENT_INVALID');
       await (${readFacebookNativeHeader.toString()})(location.href,${JSON.stringify(args.id)},${JSON.stringify(base)},${facebookHeaderNodes.toString()});
       const main=[...document.querySelectorAll('[role="main"]')].find(n=>n.getClientRects().length);
@@ -77,7 +78,7 @@ export async function readFacebookNativeTargets(page,args,ownPage) {
       const urls=[];for(const a of [...main.querySelectorAll('a[href]')].slice(0,500)){if(!a.getClientRects().length)continue;const u=new URL(a.href);
         const m=/^\/reel\/([1-9][0-9]{0,24})\/$/.exec(u.pathname);if(u.origin!=='https://www.facebook.com'||!m||u.searchParams.get('s')!=='fb_shorts_profile')continue;
         const url='https://www.facebook.com/reel/'+m[1];if(!urls.includes(url))urls.push(url);if(urls.length===3)break;}
-      if(!urls.length)throw new Error('ONECREW_FB_RECENT_UNAVAILABLE');return urls.map(source_url=>({author_id:${JSON.stringify(args.id)},source_url}));})()`);
+      if(!urls.length)throw new Error('ONECREW_FB_RECENT_UNAVAILABLE');return urls.map(source_url=>({author_id:${JSON.stringify(args.id)},source_url}));})()`));
     return raw&&'session' in Object(raw)&&'data' in Object(raw)?raw.data:raw;
   });
 }

@@ -1,3 +1,5 @@
+import { equivalentSourceUrl, sourceUrlScript } from './source-url.mjs';
+
 // Read only the observed profile's own sections. Never inspect the operator's
 // session, send a message, open an editor or return surrounding recommendation data.
 export function linkedinProfileTarget(handle) {
@@ -54,11 +56,11 @@ export function projectLinkedinProfile(data, handle) {
 // This function is serialized into one owned provider page. All filtering and
 // byte bounds run there before any result crosses the browser bridge.
 export function observeLinkedinProfile(source, handle, contactOverlay = false) {
-  if (location.origin !== 'https://www.linkedin.com') throw new Error('ONECREW_LINKEDIN_INVALID');
+  if (!equivalentSourceUrl(location.origin, 'https://www.linkedin.com')) throw new Error('ONECREW_LINKEDIN_INVALID');
   if (/^\/(?:checkpoint|challenge|security)/.test(location.pathname)) throw new Error('ONECREW_LINKEDIN_RISK');
   if (/^\/(?:login|uas\/login|authwall)/.test(location.pathname)) throw new Error('ONECREW_LINKEDIN_AUTH');
-  const sameProfile = href => href === source || href === `${source}?isSelfProfile=false`;
-  if (!sameProfile(location.href) && !(contactOverlay && location.href === `${source}overlay/contact-info/`)) throw new Error('ONECREW_LINKEDIN_INVALID');
+  const sameProfile = href => equivalentSourceUrl(href, source);
+  if (!sameProfile(location.href) && !(contactOverlay && equivalentSourceUrl(location.href, `${source}overlay/contact-info/`))) throw new Error('ONECREW_LINKEDIN_INVALID');
   const visible = node => node.getClientRects().length && !node.closest('aside, [role="complementary"], nav, [role="navigation"], [aria-hidden="true"]');
   if ([...document.querySelectorAll('iframe[src*="captcha"], .captcha-container, #challenge-running')].some(visible)) throw new Error('ONECREW_LINKEDIN_RISK');
   const main = document.querySelector('main');
@@ -70,7 +72,7 @@ export function observeLinkedinProfile(source, handle, contactOverlay = false) {
     const section = node.closest('section');
     return section?.querySelectorAll('h1,h2,h3').length === 1
       && [...section.querySelectorAll('a[href]')].some(link => visible(link)
-        && link.href === `${source}overlay/contact-info/`);
+        && equivalentSourceUrl(link.href, `${source}overlay/contact-info/`));
   });
   if (headings.length !== 1) return null;
   const name = headings[0];
@@ -98,7 +100,7 @@ export function observeLinkedinProfile(source, handle, contactOverlay = false) {
       if (!id || url.searchParams.get('recipient') !== id) throw new Error('ONECREW_LINKEDIN_INVALID');
       ids.add(id);
     }
-    if (anchor.href === `${source}overlay/contact-info/`) contact.push(anchor.href);
+    if (equivalentSourceUrl(anchor.href, `${source}overlay/contact-info/`)) contact.push(`${source}overlay/contact-info/`);
     if (url.origin === location.origin && url.pathname === '/safety/go/') {
       const target = url.searchParams.get('url');
       if (!target) continue;
@@ -160,7 +162,7 @@ export async function readLinkedinProfile(page, handle, ownedPage) {
     await owned.goto(source, {settleMs:0});
     let latest;
     for (let attempt = 0; attempt < 12; attempt++) {
-      const raw = await owned.evaluate(`(${observeLinkedinProfile.toString()})(${JSON.stringify(source)},${JSON.stringify(handle)})`);
+      const raw = await owned.evaluate(sourceUrlScript(`(${observeLinkedinProfile.toString()})(${JSON.stringify(source)},${JSON.stringify(handle)})`));
       const data = raw && 'session' in Object(raw) && 'data' in Object(raw) ? raw.data : raw;
       if (data) {
         latest = projectLinkedinProfile(data, handle);
@@ -213,10 +215,10 @@ export function observeLinkedinContent(source, handle, account, readProfile) {
     const headerLinks=anchors.slice(0,anchors.indexOf(body));
     const authorLinks=headerLinks.filter(node=>{
       if(node.closest('[data-testid="expandable-text-box"]')) return false;
-      try {const url=new URL(node.href);return url.origin===location.origin && url.pathname.startsWith('/in/');}
+      try {const url=new URL(node.href);return equivalentSourceUrl(url.origin,location.origin) && url.pathname.startsWith('/in/');}
       catch{return false;}
     });
-    if(!authorLinks.length || authorLinks.some(node=>node.href!==source && node.href!==`${source}?isSelfProfile=false`)) continue;
+    if(!authorLinks.length || authorLinks.some(node=>!equivalentSourceUrl(node.href,source))) continue;
     if(headerLinks.some(node=>new URL(node.href).pathname.startsWith('/company/'))) continue;
     const texts=[];
     for(const paragraph of body.querySelectorAll(bodySelector)) {
@@ -250,7 +252,7 @@ export async function readLinkedinContent(page,handle,account,ownedPage) {
   return ownedPage(page,async owned=>{
     await owned.goto(source,{settleMs:0});
     for(let attempt=0;attempt<12;attempt++) {
-      const raw=await owned.evaluate(`(${observeLinkedinContent.toString()})(${JSON.stringify(source)},${JSON.stringify(handle)},${JSON.stringify(account)},(${observeLinkedinProfile.toString()}))`);
+      const raw=await owned.evaluate(sourceUrlScript(`(${observeLinkedinContent.toString()})(${JSON.stringify(source)},${JSON.stringify(handle)},${JSON.stringify(account)},(${observeLinkedinProfile.toString()}))`));
       const data=raw && 'session' in Object(raw) && 'data' in Object(raw) ? raw.data : raw;
       if(data) return projectLinkedinContent(data,handle,account);
       if(attempt<11) await owned.sleep(0.5);
@@ -281,7 +283,7 @@ export function projectLinkedinContact(data,handle,account) {
 // author. Extract published contact links; birthday, premium controls,
 // recommendations and the operator's account information are excluded.
 export function observeLinkedinContact(source,handle,account,readProfile) {
-  if (location.origin !== 'https://www.linkedin.com') throw new Error('ONECREW_LINKEDIN_INVALID_CONTACT_PROFILE_ROUTE');
+  if (!equivalentSourceUrl(location.origin,'https://www.linkedin.com')) throw new Error('ONECREW_LINKEDIN_INVALID_CONTACT_PROFILE_ROUTE');
   if (/^\/(?:checkpoint|challenge|security)/.test(location.pathname)) throw new Error('ONECREW_LINKEDIN_RISK');
   if (/^\/(?:login|uas\/login|authwall)/.test(location.pathname)) throw new Error('ONECREW_LINKEDIN_AUTH');
   let profile;
@@ -294,7 +296,7 @@ export function observeLinkedinContact(source,handle,account,readProfile) {
   if(profile.account_id!==account) throw new Error('ONECREW_LINKEDIN_INVALID_CONTACT_OWNER');
   // The observed link opens asynchronously. Only the already validated same
   // profile can remain pending; any other route is rejected by readProfile.
-  if(location.href!==`${source}overlay/contact-info/`) return null;
+  if(!equivalentSourceUrl(location.href,`${source}overlay/contact-info/`)) return null;
   const visible=node=>node.getClientRects().length && !node.closest('[aria-hidden="true"]');
   const dialogs=[...document.querySelectorAll('dialog[open], [role="dialog"][aria-modal="true"]')].filter(visible);
   if(dialogs.length!==1) return null;
@@ -306,11 +308,11 @@ export function observeLinkedinContact(source,handle,account,readProfile) {
   const anchors=[...scope.querySelectorAll('a[href]')].filter(node=>visible(node)
     && !node.closest('button, [role="button"], nav, [role="navigation"], aside'));
   const authorLinks=anchors.filter(node=>{
-    try {const url=new URL(node.href);return url.origin===location.origin && url.pathname.startsWith('/in/');}
+    try {const url=new URL(node.href);return equivalentSourceUrl(url.origin,location.origin) && url.pathname.startsWith('/in/');}
     catch{return false;}
   });
   if(!authorLinks.length) return null;
-  if(authorLinks.some(node=>node.href!==source)) throw new Error('ONECREW_LINKEDIN_INVALID_CONTACT_DIALOG_OWNER');
+  if(authorLinks.some(node=>!equivalentSourceUrl(node.href,source))) throw new Error('ONECREW_LINKEDIN_INVALID_CONTACT_DIALOG_OWNER');
   const emails=[],links=[],published=[];
   let linkBytes=0;
   for(const anchor of anchors) {
@@ -340,7 +342,7 @@ export function observeLinkedinContact(source,handle,account,readProfile) {
     if(linkBytes+size>6000) continue;
     links.push(url.href);linkBytes+=size;
   }
-  return {author_handle:handle,account_id:account,source_url:location.href,title:[...profile.author_label].slice(0,200).join(''),
+  return {author_handle:handle,account_id:account,source_url:`${source}overlay/contact-info/`,title:[...profile.author_label].slice(0,200).join(''),
     contact_text:[...emails,...published].join('\n'),contact_links:links};
 }
 
@@ -351,7 +353,7 @@ export async function readLinkedinContact(page,handle,account,ownedPage) {
     await owned.goto(source,{settleMs:0});
     let profile;
     for(let attempt=0;attempt<12;attempt++) {
-      const raw=await owned.evaluate(`(${observeLinkedinProfile.toString()})(${JSON.stringify(source)},${JSON.stringify(handle)})`);
+      const raw=await owned.evaluate(sourceUrlScript(`(${observeLinkedinProfile.toString()})(${JSON.stringify(source)},${JSON.stringify(handle)})`));
       const data=raw && 'session' in Object(raw) && 'data' in Object(raw) ? raw.data : raw;
       if(data) {profile=projectLinkedinProfile(data,handle);break;}
       if(attempt<11) await owned.sleep(0.5);
@@ -364,7 +366,7 @@ export async function readLinkedinContact(page,handle,account,ownedPage) {
     // retaining the owned page and its native background identity.
     await owned.click(`main a[href="${contact}"]`);
     for(let attempt=0;attempt<12;attempt++) {
-      const raw=await owned.evaluate(`(${observeLinkedinContact.toString()})(${JSON.stringify(source)},${JSON.stringify(handle)},${JSON.stringify(account)},()=>(${JSON.stringify(profile)}))`);
+      const raw=await owned.evaluate(sourceUrlScript(`(${observeLinkedinContact.toString()})(${JSON.stringify(source)},${JSON.stringify(handle)},${JSON.stringify(account)},()=>(${JSON.stringify(profile)}))`));
       const data=raw && 'session' in Object(raw) && 'data' in Object(raw) ? raw.data : raw;
       if(data) {
         try {return projectLinkedinContact(data,handle,account);}

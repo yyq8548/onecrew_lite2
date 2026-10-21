@@ -1,11 +1,13 @@
+import {equivalentSourceUrl} from './source-url.mjs';
+
 // 只读取正常网页显示的资料，不调用 Instagram 数据接口。
 export async function observeInstagramVisibleProfile(username, authorId) {
   const visible = node => node.getClientRects().length > 0;
   for (let poll = 0; poll < 32; poll++) {
-    if (location.origin !== 'https://www.instagram.com') return {stop:'source'};
+    if (!equivalentSourceUrl(location.origin,'https://www.instagram.com')) return {stop:'source'};
     if (/^\/accounts\/login/.test(location.pathname)) return {stop:'auth'};
     if (/^\/(challenge|checkpoint)\//.test(location.pathname)) return {stop:'risk'};
-    if (location.pathname.toLowerCase() !== `/${username}/`) return {stop:'identity'};
+    if (!equivalentSourceUrl(location.href,`https://www.instagram.com/${username}/`)) return {stop:'identity'};
     const main = document.querySelector('main');
     const lines = (main?.innerText || '').split('\n').map(s => s.trim()).filter(Boolean);
     if (/Try again later|请求太频繁|稍后重试|操作过于频繁/i.test(lines.join('\n'))) return {stop:'risk'};
@@ -49,7 +51,7 @@ export async function observeInstagramVisibleProfile(username, authorId) {
 }
 
 export async function observeInstagramVisiblePosts(username) {
-  if (location.origin !== 'https://www.instagram.com' || location.pathname.toLowerCase() !== `/${username}/`) return {stop:'source'};
+  if (!equivalentSourceUrl(location.href,`https://www.instagram.com/${username}/`)) return {stop:'source'};
   const main = document.querySelector('main');
   if (!main) return {stop:'read'};
   if (/This (?:profile|account) is private|这是私密账户|此帐户是私密帐户/.test(main.innerText)) return {stop:'private'};

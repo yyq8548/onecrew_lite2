@@ -1,4 +1,5 @@
 import {observeInstagramVisibleProfile,observeInstagramVisiblePosts} from './instagram-visible.mjs';
+import {equivalentSourceUrl,sourceUrlScript} from './source-url.mjs';
 
 export function instagramProfileTarget(username) {
   if (typeof username !== 'string' || !/^[A-Za-z0-9_.]{1,30}$/.test(username)) throw new Error('ONECREW_PROFILE_INPUT');
@@ -103,10 +104,10 @@ export async function readInstagramProfile(page,args,ownPage) {
 
 // Public DOM only. Account ID comes from the saved search binding, not this page.
 export function observeInstagramProfile(username, authorId) {
-  if (location.origin !== 'https://www.instagram.com') return {stop:'source'};
+  if (!equivalentSourceUrl(location.origin,'https://www.instagram.com')) return {stop:'source'};
   if (/^\/accounts\/login/.test(location.pathname)) return {stop:'auth'};
   if (/^\/(challenge|checkpoint)\//.test(location.pathname)) return {stop:'risk'};
-  if (location.pathname.toLowerCase() !== `/${username}/`) return {stop:'identity'};
+  if (!equivalentSourceUrl(location.href,`https://www.instagram.com/${username}/`)) return {stop:'identity'};
   const main = document.querySelector('main');
   const lines = (main?.innerText || '').split('\n').map(s=>s.trim()).filter(Boolean);
   if (lines[0]?.toLowerCase() !== username) return {stop:'identity'};
@@ -170,18 +171,18 @@ export async function readInstagramWebProfile(page,args,ownPage) {
   return ownPage(page,async owned=>{
     await owned.goto(`https://www.instagram.com/${username}/`,{settleMs:3000});
     await owned.snapshot({source:'dom',interactive:true,compact:true});
-    const rawTarget=await owned.evaluate(`(${instagramVisibleExpansion.toString()})(${JSON.stringify(username)})`);
+    const rawTarget=await owned.evaluate(sourceUrlScript(`(${instagramVisibleExpansion.toString()})(${JSON.stringify(username)})`));
     const expansion=rawTarget&&'session' in Object(rawTarget)&&'data' in Object(rawTarget)?rawTarget.data:rawTarget;
     if(expansion?.stop) throw new Error('ONECREW_PROFILE_'+expansion.stop.toUpperCase());
     if(expansion?.selector) {
       await owned.click(expansion.selector);
       await owned.snapshot({source:'dom',interactive:true,compact:true});
     }
-    const raw=await owned.evaluate(`(${observeInstagramVisibleProfile.toString()})(${JSON.stringify(username)},${JSON.stringify(args.author_id)})`);
+    const raw=await owned.evaluate(sourceUrlScript(`(${observeInstagramVisibleProfile.toString()})(${JSON.stringify(username)},${JSON.stringify(args.author_id)})`));
     const data=raw && 'session' in Object(raw) && 'data' in Object(raw)?raw.data:raw;
     if (!data?.profile) throw new Error('ONECREW_PROFILE_'+(data?.stop || 'read').toUpperCase());
     if (data.profile.private_account !== true) {
-      const observed = await owned.evaluate(`(${observeInstagramVisiblePosts.toString()})(${JSON.stringify(username)})`);
+      const observed = await owned.evaluate(sourceUrlScript(`(${observeInstagramVisiblePosts.toString()})(${JSON.stringify(username)})`));
       const posts = observed && 'session' in Object(observed) && 'data' in Object(observed) ? observed.data : observed;
       if (posts?.stop) throw new Error('ONECREW_PROFILE_'+posts.stop.toUpperCase());
       if (!Array.isArray(posts?.posts)) throw new Error('ONECREW_INSTAGRAM_PROFILE_INVALID');
@@ -200,7 +201,7 @@ export async function readInstagramWebProfile(page,args,ownPage) {
 }
 
 export function instagramVisibleExpansion(username) {
-  if(location.origin!=='https://www.instagram.com'||location.pathname.toLowerCase()!==`/${username}/`) return {stop:'identity'};
+  if(!equivalentSourceUrl(location.href,`https://www.instagram.com/${username}/`)) return {stop:'identity'};
   const main=document.querySelector('main');
   if(!main) return {stop:'read'};
   const buttons=[...main.querySelectorAll('button,[role="button"]')].filter(node=>node.getClientRects().length&&/^(更多|more)$/i.test(node.innerText.trim()));

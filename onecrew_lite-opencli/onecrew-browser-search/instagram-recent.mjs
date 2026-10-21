@@ -1,4 +1,5 @@
 import {observeInstagramVisibleProfile,observeInstagramVisiblePosts,observeInstagramVisibleCaption} from './instagram-visible.mjs';
+import {sourceUrlScript} from './source-url.mjs';
 
 export function selectInstagramVisiblePost(posts, query = '') {
   const terms = [...new Set(query.normalize('NFKC').toLowerCase().match(/[\p{L}\p{N}]{3,}/gu) || [])].filter(term => !['blogger','creator','influencer','account','official'].includes(term));
@@ -86,12 +87,12 @@ export async function readInstagramRecent(page,args,ownPage) {
       post = {url:args.source_url,kind:match[2],code:match[3]};
     } else {
     await owned.goto(`https://www.instagram.com/${args.username}/`);
-    const profile = unwrap(await owned.evaluate(`(${observeInstagramVisibleProfile.toString()})(${JSON.stringify(args.username)},${JSON.stringify(args.author_id)})`));
+    const profile = unwrap(await owned.evaluate(sourceUrlScript(`(${observeInstagramVisibleProfile.toString()})(${JSON.stringify(args.username)},${JSON.stringify(args.author_id)})`)));
     if (profile?.stop) throw new Error('ONECREW_INSTAGRAM_RECENT_' + profile.stop.toUpperCase());
     if (profile?.profile?.private_account === true) return [];
     let observed;
     for (let poll = 0; poll < 24; poll++) {
-      observed = unwrap(await owned.evaluate(`(${observeInstagramVisiblePosts.toString()})(${JSON.stringify(args.username)})`));
+      observed = unwrap(await owned.evaluate(sourceUrlScript(`(${observeInstagramVisiblePosts.toString()})(${JSON.stringify(args.username)})`)));
       if (observed?.stop) throw new Error('ONECREW_INSTAGRAM_RECENT_' + observed.stop.toUpperCase());
       if (observed?.posts?.length) break;
       if (poll < 23) await owned.sleep(0.25);

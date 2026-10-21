@@ -1,3 +1,5 @@
+import { equivalentSourceUrl, sourceUrlScript } from './source-url.mjs';
+
 export function facebookProfileTarget(id) {
   if (typeof id !== 'string' || !/^[1-9][0-9]{0,19}$/.test(id)) throw new Error('ONECREW_FB_PROFILE_INPUT');
   return `https://www.facebook.com/profile.php?id=${id}`;
@@ -26,15 +28,15 @@ export function projectFacebookProfile(data, id) {
 export async function readFacebookProfileHeader(source, id) {
   const profileSource=`https://www.facebook.com/profile.php?id=${id}`;
   for (let attempt = 0; attempt < 16; attempt++) {
-    if (location.origin !== 'https://www.facebook.com') throw new Error('ONECREW_FB_PROFILE_INVALID');
+    if (!equivalentSourceUrl(location.origin,'https://www.facebook.com')) throw new Error('ONECREW_FB_PROFILE_INVALID');
     if (/^\/(?:login|recover)(?:\/|\.php|$)/.test(location.pathname)) throw new Error('ONECREW_FB_PROFILE_AUTH');
     if (/^\/(?:checkpoint|challenge|two_step_verification)(?:\/|$)/.test(location.pathname)) throw new Error('ONECREW_FB_PROFILE_RISK');
-    if (location.href !== source) throw new Error('ONECREW_FB_PROFILE_INVALID');
+    if (!equivalentSourceUrl(location.href,source)) throw new Error('ONECREW_FB_PROFILE_INVALID');
     const mains = [...document.querySelectorAll('[role="main"]')].filter(n => n.getClientRects().length);
     if (mains.length > 1) throw new Error('ONECREW_FB_PROFILE_INVALID');
     if (mains.length === 1) {
       const links = [...mains[0].querySelectorAll('a[href]')].filter(a => a.getClientRects().length
-        && a.getAttribute('role') !== 'tab' && a.href === `${profileSource}&sk=followers` && /^[0-9][0-9,.]*\s*[KMB]? followers?$/i.test(a.innerText.trim()));
+        && a.getAttribute('role') !== 'tab' && equivalentSourceUrl(a.href,`${profileSource}&sk=followers`) && /^[0-9][0-9,.]*\s*[KMB]? followers?$/i.test(a.innerText.trim()));
       if (links.length > 1) throw new Error('ONECREW_FB_PROFILE_INVALID');
       if (links.length === 1) {
         let header = links[0];
@@ -45,7 +47,7 @@ export async function readFacebookProfileHeader(source, id) {
             // Only an exact, observed contact tab belongs to this profile.
             // Do not treat links or mailboxes from the timeline as author contacts.
             const contactUrl=`${source}&sk=about_contact_and_basic_info`;
-            const observed=[...mains[0].querySelectorAll('a[href]')].some(a=>a.getClientRects().length && a.getAttribute('role')==='tab' && a.href===contactUrl);
+            const observed=[...mains[0].querySelectorAll('a[href]')].some(a=>a.getClientRects().length && a.getAttribute('role')==='tab' && equivalentSourceUrl(a.href,contactUrl));
             return {id,profile_url:profileSource,display_name:names[0].innerText.trim(),follower_text:links[0].innerText.trim(),...(observed?{contact_links:[contactUrl]}:{})};
           }
         }
@@ -60,14 +62,14 @@ export async function readFacebookProfile(page, args, ownedPage) {
   const source = facebookProfileTarget(args.id);
   return ownedPage(page, async owned => {
     await owned.goto(source, {settleMs:3000});
-    const raw = await owned.evaluate(`(${readFacebookProfileHeader.toString()})(${JSON.stringify(source)},${JSON.stringify(args.id)})`);
+    const raw = await owned.evaluate(sourceUrlScript(`(${readFacebookProfileHeader.toString()})(${JSON.stringify(source)},${JSON.stringify(args.id)})`));
     const data = raw && 'session' in Object(raw) && 'data' in Object(raw) ? raw.data : raw;
-    const aboutRaw=await owned.evaluate(`(()=>{const links=[...document.querySelectorAll('[role="main"] a[role="tab"][href]')].filter(a=>a.getClientRects().length&&a.href===${JSON.stringify(`${source}&sk=about`)});return links.length===1?links[0].href:null;})()`);
+    const aboutRaw=await owned.evaluate(sourceUrlScript(`(()=>{const links=[...document.querySelectorAll('[role="main"] a[role="tab"][href]')].filter(a=>a.getClientRects().length&&equivalentSourceUrl(a.href,${JSON.stringify(`${source}&sk=about`)}));return links.length===1?links[0].href:null;})()`));
     const about=aboutRaw&&'session' in Object(aboutRaw)&&'data' in Object(aboutRaw)?aboutRaw.data:aboutRaw;
-    if(about!==null && about!==`${source}&sk=about`) throw new Error('ONECREW_FB_PROFILE_INVALID');
+    if(about!==null && !equivalentSourceUrl(about,`${source}&sk=about`)) throw new Error('ONECREW_FB_PROFILE_INVALID');
     if (about) {
       await owned.click(`a[role="tab"][href="${about}"]`);
-      const detailsRaw=await owned.evaluate(`(${observeFacebookAbout.toString()})(${JSON.stringify(about)},${JSON.stringify(source)})`);
+      const detailsRaw=await owned.evaluate(sourceUrlScript(`(${observeFacebookAbout.toString()})(${JSON.stringify(about)},${JSON.stringify(source)})`));
       const details=detailsRaw&&'session' in Object(detailsRaw)&&'data' in Object(detailsRaw)?detailsRaw.data:detailsRaw;
       return projectFacebookProfile({...data,...details},args.id);
     }
@@ -77,11 +79,12 @@ export async function readFacebookProfile(page, args, ownedPage) {
 
 export async function observeFacebookAbout(expected, profile) {
   for(let attempt=0;attempt<12;attempt++) {
-    if(location.href!==expected) throw new Error('ONECREW_FB_PROFILE_INVALID');
+    if(!equivalentSourceUrl(location.href,expected)) throw new Error('ONECREW_FB_PROFILE_INVALID');
     const visible=n=>n.getClientRects().length&&!n.closest('[role="article"],[role="feed"],[aria-hidden="true"]');
     const main=[...document.querySelectorAll('[role="main"]')].find(visible);
     const tabs=main?[...main.querySelectorAll('a[role="tab"][href]')].filter(visible):[];
-    const contact_links=tabs.map(a=>a.href).filter(href=>profile.includes('/profile.php?')?[`${profile}&sk=directory_contact_info`,`${profile}&sk=directory_links`,`${profile}&sk=about_contact_and_basic_info`].includes(href):[`${profile}/directory_contact_info`,`${profile}/directory_links`].includes(href));
+    const targets=profile.includes('/profile.php?')?[`${profile}&sk=directory_contact_info`,`${profile}&sk=directory_links`,`${profile}&sk=about_contact_and_basic_info`]:[`${profile}/directory_contact_info`,`${profile}/directory_links`];
+    const contact_links=targets.filter(target=>tabs.some(a=>equivalentSourceUrl(a.href,target)));
     const sections=main?[...main.querySelectorAll('section')].filter(n=>visible(n)&&!n.querySelector('section')):[];
     if(sections.length && ![...main.querySelectorAll('[role="progressbar"],[aria-busy="true"]')].some(visible)) {
       const bio=sections.filter(section=>{const h=section.querySelector('h1,h2,h3,[role="heading"]');return h&&/^(?:Bio|Intro|Description|简介|簡介|介紹|介绍)$/i.test(h.innerText.trim());});
@@ -118,10 +121,10 @@ export function projectFacebookContact(data,id,requested) {
 
 export async function readFacebookContactPanel(source,id,ownerName) {
   for(let attempt=0;attempt<12;attempt++) {
-    if(location.origin!=='https://www.facebook.com') throw new Error('ONECREW_FB_CONTACT_INVALID');
+    if(!equivalentSourceUrl(location.origin,'https://www.facebook.com')) throw new Error('ONECREW_FB_CONTACT_INVALID');
     if(/^\/(?:login|recover)(?:\/|\.php|$)/.test(location.pathname)) throw new Error('ONECREW_FB_PROFILE_AUTH');
     if(/^\/(?:checkpoint|challenge|two_step_verification)(?:\/|$)/.test(location.pathname)) throw new Error('ONECREW_FB_PROFILE_RISK');
-    if(location.href!==source) throw new Error('ONECREW_FB_CONTACT_INVALID');
+    if(!equivalentSourceUrl(location.href,source)) throw new Error('ONECREW_FB_CONTACT_INVALID');
     const mains=[...document.querySelectorAll('[role="main"]')].filter(node=>node.getClientRects().length);
     if(mains.length>1) throw new Error('ONECREW_FB_CONTACT_INVALID');
     if(mains.length===1) {
@@ -130,7 +133,7 @@ export async function readFacebookContactPanel(source,id,ownerName) {
       const visible=node=>node.getClientRects().length && !node.closest(excluded);
       const headings=[...main.querySelectorAll('h1')].filter(visible);
       if(headings.length>1) throw new Error('ONECREW_FB_CONTACT_INVALID');
-      const selected=[...main.querySelectorAll('a[role="tab"][aria-selected="true"]')].filter(anchor=>visible(anchor)&&anchor.href===source);
+      const selected=[...main.querySelectorAll('a[role="tab"][aria-selected="true"]')].filter(anchor=>visible(anchor)&&equivalentSourceUrl(anchor.href,source));
       const loading=[...main.querySelectorAll('[aria-busy="true"],[role="progressbar"]')].some(visible);
       if((headings.length===1||ownerName) && selected.length===1 && !loading) {
         const scope=selected[0].closest('[role="tablist"]')?.parentElement;
@@ -177,7 +180,7 @@ export async function readFacebookContact(page,args,ownedPage) {
   const source=facebookContactTarget(args.id,args.source);
   return ownedPage(page,async owned=>{
     await owned.goto(source,{settleMs:3000});
-    const raw=await owned.evaluate(`(async()=>{const owner=await (${readFacebookProfileHeader.toString()})(${JSON.stringify(source)},${JSON.stringify(args.id)});return (${readFacebookContactPanel.toString()})(${JSON.stringify(source)},${JSON.stringify(args.id)},owner.display_name);})()`);
+    const raw=await owned.evaluate(sourceUrlScript(`(async()=>{const owner=await (${readFacebookProfileHeader.toString()})(${JSON.stringify(source)},${JSON.stringify(args.id)});return (${readFacebookContactPanel.toString()})(${JSON.stringify(source)},${JSON.stringify(args.id)},owner.display_name);})()`));
     const data=raw && 'session' in Object(raw) && 'data' in Object(raw)?raw.data:raw;
     return projectFacebookContact(data,args.id,source);
   });

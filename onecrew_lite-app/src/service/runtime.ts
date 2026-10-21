@@ -138,10 +138,19 @@ export async function readRuntimeDescriptor(dataDirectory: string): Promise<Runt
 
 export async function readVerifiedRuntime(dataDirectory: string): Promise<RuntimeDescriptor> {
   const descriptor = await readRuntimeDescriptor(dataDirectory);
-  const response = await fetch(`${descriptor.url}/_local/status`, {
-    headers: { authorization: `Bearer ${descriptor.control_token}` },
-    redirect: "error", signal: AbortSignal.timeout(2000),
-  });
+  const probe = async (timeout: number) => {
+    const signal = AbortSignal.timeout(timeout);
+    return fetch(`${descriptor.url}/_local/status`, { headers: { authorization: `Bearer ${descriptor.control_token}` }, redirect: "error", signal })
+      .then(response => ({ ok: true as const, response }), error => ({ ok: false as const, error: error as unknown, timedOut: signal.aborted }));
+  };
+  let observed = await probe(2000);
+  if (!observed.ok && observed.timedOut) {
+    const current = await readRuntimeDescriptor(dataDirectory);
+    if (current.instance_id !== descriptor.instance_id || current.url !== descriptor.url || current.control_token !== descriptor.control_token) throw new Error("Runtime instance identity mismatch");
+    observed = await probe(8000);
+  }
+  if (!observed.ok) throw observed.error;
+  const response = observed.response;
   if (!response.ok) throw new Error(`Runtime identity verification returned HTTP ${response.status}`);
   const status = z.object({ service: z.literal("onecrew_lite"), protocol_version: z.literal(1), instance_id: z.uuid() }).parse(await response.json());
   if (status.instance_id !== descriptor.instance_id) throw new Error("Runtime instance identity mismatch");

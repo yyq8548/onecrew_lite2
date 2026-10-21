@@ -76,7 +76,7 @@ export class DiscoveryPublicPageExecutor {
       return receipt;
     };
     if (observed.ok) return complete({ hidden_email_available: observed.value.hidden, claim, document_url: observed.value.document_url, title: observed.value.title, markdown_excerpt: observed.value.markdown_excerpt, truncated: observed.value.truncated, stop_code: null });
-    if (observed.error instanceof OpenCliError && observed.error.code !== "opencli_cancelled") return complete({ hidden_email_available: false, claim, document_url: null, title: "", markdown_excerpt: "", truncated: false, stop_code: observed.error.code === "opencli_read_command_unavailable" ? "opencli_command_unavailable" : observed.error.code });
+    if (observed.error instanceof OpenCliError && !["opencli_cancelled", "opencli_cancel_pending"].includes(observed.error.code)) return complete({ hidden_email_available: false, claim, document_url: null, title: "", markdown_excerpt: "", truncated: false, stop_code: observed.error.code === "opencli_read_command_unavailable" ? "opencli_command_unavailable" : observed.error.code });
     const interrupted = await Promise.resolve().then(() => owned.repository.interruptPublicPage(claim)).then(() => ({ ok: true as const }), error => ({ ok: false as const, error: error as unknown }));
     if (!interrupted.ok) throw new AggregateError([observed.error, interrupted.error], "discovery_public_page_read_and_interrupt_failed");
     throw observed.error;

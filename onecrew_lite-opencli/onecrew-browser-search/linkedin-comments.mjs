@@ -1,4 +1,5 @@
 import {linkedinProfileTarget, observeLinkedinProfile, projectLinkedinProfile} from './linkedin-evidence.mjs';
+import {sourceUrlScript} from './source-url.mjs';
 
 export function linkedinActivityId(source) {
   const id=typeof source==='string' && source.match(/^https:\/\/www\.linkedin\.com\/feed\/update\/urn:li:activity:([1-9]\d{0,19})\/$/)?.[1];
@@ -98,7 +99,7 @@ export async function readLinkedinComments(page,handle,account,source,ownedPage)
     await owned.goto(profileUrl,{settleMs:2000});
     let profile;
     for(let attempt=0;attempt<12;attempt++) {
-      const raw=await owned.evaluate(`(${observeLinkedinProfile.toString()})(${JSON.stringify(profileUrl)},${JSON.stringify(handle)})`);
+      const raw=await owned.evaluate(sourceUrlScript(`(${observeLinkedinProfile.toString()})(${JSON.stringify(profileUrl)},${JSON.stringify(handle)})`));
       const data=raw && 'session' in Object(raw) && 'data' in Object(raw)?raw.data:raw;
       if(data) {profile=projectLinkedinProfile(data,handle);break;}
       if(attempt<11) await owned.sleep(0.5);
