@@ -22,12 +22,14 @@ const row = z.record(z.string(), z.union([z.string(), z.number(), z.null()]));
 const captured = z.object({ plan: row, hit: row, author: row, profile: row, content: row, candidate: row }).parse(parseApplicationJson(readFileSync(new URL("./fixtures/linkedin-profile-or-post-20261020.json", import.meta.url))));
 const campaign = z.string().parse(captured.plan.discovery_campaign_id), hit = z.string().parse(captured.hit.id), candidate = z.string().parse(captured.candidate.id);
 
-async function replay(t: TestContext, failedContent: boolean, observations = captured) {
+async function replay(t: TestContext, failedContent: boolean, observations = captured, excludedAccounts?: Array<{ native_author_id: string; profile_url: string; excerpt: string }>) {
   const directory = await mkdtemp(fileURLToPath(new URL("../../.scratch/linkedin-profile-", import.meta.url))), path = join(directory, "creator.sqlite");
   await initializeNewCreatorDatabase(path);
   const db = new DatabaseSync(path); t.after(() => db.close());
   const repository = new DiscoveryRepository(db);
-  repository.create({ id: campaign, brief: parseApplicationJson(Buffer.from(String(captured.plan.brief_json))), opencli_version: "1.8.8", criteria: parseApplicationJson(Buffer.from(String(captured.plan.criteria_json))), scopes: parseApplicationJson(Buffer.from(String(captured.plan.scope_json))), target_count: 30, max_calls: null });
+  const originalBrief = z.string().parse(parseApplicationJson(Buffer.from(String(captured.plan.brief_json))));
+  const criteria = z.record(z.string(), z.unknown()).parse(parseApplicationJson(Buffer.from(String(captured.plan.criteria_json))));
+  repository.create({ id: campaign, brief: excludedAccounts ? `${originalBrief}\n不要重复读取已经成功的账号。` : originalBrief, opencli_version: "1.8.8", criteria: { ...criteria, ...(excludedAccounts ? { excluded_accounts: excludedAccounts } : {}) }, scopes: parseApplicationJson(Buffer.from(String(captured.plan.scope_json))), target_count: 30, max_calls: null });
   repository.approve(campaign, 1);
   db.prepare("UPDATE discovery_campaign_revisions SET approved_at=? WHERE discovery_campaign_id=?").run(captured.plan.approved_at!, campaign);
   db.prepare("UPDATE discovery_platform_runs SET status='completed' WHERE discovery_campaign_id=?").run(campaign);
@@ -38,6 +40,30 @@ async function replay(t: TestContext, failedContent: boolean, observations = cap
   }
   return { db, repository };
 }
+
+test("真实LinkedIn已读账号在读取前按已观察主页排除，直接claim不扣预算且不阻断其他作者", async t => {
+  const exclusions = [{ native_author_id: String(captured.candidate.platform_account_id), profile_url: String(captured.author.author_url), excerpt: "不要重复读取已经成功的账号。" }];
+  const { db, repository } = await replay(t, false, captured, exclusions);
+  db.prepare("DELETE FROM discovery_profile_reads WHERE search_hit_id=?").run(hit);
+  db.prepare("DELETE FROM discovery_candidates WHERE id=?").run(candidate);
+  assert.notEqual(captured.author.author_id, exclusions[0]!.native_author_id);
+  const before = repository.getPlan(campaign);
+  assert.equal(repository.nextProfileHit(campaign), null);
+  assert.throws(() => repository.claimProfile(campaign, 1, hit), /discovery_profile_account_excluded/u);
+  assert.deepEqual(repository.getPlan(campaign), before);
+  assert.equal(db.prepare("SELECT COUNT(*) AS count FROM discovery_profile_reads").get()!.count, 0);
+  const post = z.object({ hit: row, author: row, profile: row }).parse(parseApplicationJson(readFileSync(new URL("./fixtures/linkedin-post-control-20261020.json", import.meta.url))));
+  for (const [table, value] of Object.entries({ discovery_search_hits: post.hit, discovery_search_authors: post.author })) {
+    const columns = Object.keys(value);
+    db.prepare(`INSERT INTO ${table}(${columns.join(",")}) VALUES(${columns.map(() => "?").join(",")})`).run(...Object.values(value));
+  }
+  const otherHit = String(post.hit.id);
+  assert.equal(repository.nextProfileHit(campaign), otherHit);
+  const claim = repository.claimProfile(campaign, 1, otherHit);
+  assert.equal(claim.call_number, before.used_calls + 1);
+  repository.finishProfile(claim, parseApplicationJson(String(post.profile.native_profile_json)), null);
+  assert.equal(repository.nextProfileHit(campaign), null);
+});
 
 test("真实Ray主页职位可独立审核，空简介和没有近期帖子不阻断评分", async t => {
   const { db, repository } = await replay(t, true);

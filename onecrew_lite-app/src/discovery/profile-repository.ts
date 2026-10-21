@@ -63,6 +63,7 @@ export class DiscoveryProfileRepository {
       WHERE c.id=?1 AND c.phase='active' AND v.approved_at IS NOT NULL AND (c.max_calls IS NULL OR c.used_calls<c.max_calls)
         AND h.platform IN ('bilibili','tiktok','twitter','reddit','facebook','instagram','weibo','bluesky','zhihu','hackernews','pinterest','pixiv','linkedin')
         AND h.platform NOT IN(SELECT value FROM json_each(?2)) AND h.id NOT IN(SELECT value FROM json_each(?3))
+        AND NOT EXISTS(SELECT 1 FROM json_each(v.criteria_json,'$.excluded_accounts') excluded WHERE json_extract(excluded.value,'$.profile_url')=a.author_url)
         AND NOT EXISTS(SELECT 1 FROM discovery_identity_reads i WHERE i.search_hit_id=h.id AND i.status!='completed')
         AND NOT EXISTS(SELECT 1 FROM discovery_platform_runs b WHERE b.discovery_campaign_id=c.id AND b.status='searching')
         AND ((r.status='completed' AND p.search_hit_id IS NULL) OR (r.status='technical_stop' AND r.stop_code='interrupted_profile_read' AND p.status='reading' AND p.search_hit_id=h.id AND p.expected_revision=c.current_revision AND r.active_query='profile:'||h.id||':'||p.call_number))
@@ -102,6 +103,7 @@ export class DiscoveryProfileRepository {
       if (this.#db.prepare("SELECT EXISTS(SELECT 1 FROM discovery_platform_runs WHERE discovery_campaign_id=? AND status='searching') AS active").get(campaign)!.active === 1) throw new Error("discovery_read_active");
       const source = this.#db.prepare("SELECT h.platform,h.profile_ref,a.author_id,a.author_url,h.source_url FROM discovery_search_hits h JOIN discovery_search_authors a ON a.search_hit_id=h.id WHERE h.id=? AND h.discovery_campaign_id=?").get(hit, campaign);
       if (!source || !sourcePlatforms.includes(text.parse(source.platform))) throw new Error("discovery_profile_source_unobserved");
+      if (this.#db.prepare("SELECT EXISTS(SELECT 1 FROM json_each(v.criteria_json,'$.excluded_accounts') excluded WHERE json_extract(excluded.value,'$.profile_url')=?) AS excluded FROM discovery_campaign_revisions v WHERE v.discovery_campaign_id=? AND v.revision=? AND v.approved_at IS NOT NULL").get(source.author_url!, campaign, revision)!.excluded === 1) throw new Error("discovery_profile_account_excluded");
       const claim = discoveryProfileClaim.parse({ ...source, campaign_id: campaign, expected_revision: revision, search_hit_id: hit, call_number: head.used_calls + 1 });
       const run = z.object({ status: text, stop_code: text.nullable(), active_query: text.nullable() }).parse(this.#db.prepare("SELECT status,stop_code,active_query FROM discovery_platform_runs WHERE discovery_campaign_id=? AND platform=? AND profile_ref=?").get(campaign, claim.platform, claim.profile_ref));
       const prior = this.#db.prepare("SELECT search_hit_id,call_number,status,expected_revision FROM discovery_profile_reads WHERE discovery_campaign_id=? AND platform=? AND profile_ref=? AND author_id=?").get(campaign, claim.platform, claim.profile_ref, claim.author_id);
