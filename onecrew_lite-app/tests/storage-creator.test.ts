@@ -24,17 +24,17 @@ test("new Creator SQLite matches the frozen schema contract across every schema 
     try {
       validateCreatorSchema90(original);
       validateCreatorSchema(created);
-      assert.equal(created.prepare("PRAGMA user_version").get()!.user_version, 91);
-      const changed = new Set(["discovery_contact_observations", "discovery_web_source_reads"]);
+      assert.equal(created.prepare("PRAGMA user_version").get()!.user_version, 92);
+      const changed = new Set(["discovery_contact_observations", "discovery_web_source_reads", "discovery_linkedin_experience_reads"]);
       const previous = creatorSchemaSnapshot(original);
-      assert.deepEqual(creatorSchemaSnapshot(created).tables, previous.tables);
+      assert.deepEqual(creatorSchemaSnapshot(created).tables.filter(table=>table.name!=="discovery_linkedin_experience_reads"), previous.tables);
       assert.deepEqual(creatorSchemaSnapshot(created).objects.filter(item => !changed.has(String(item.name))), previous.objects.filter(item => !changed.has(String(item.name))));
       assert.match(String(created.prepare("SELECT sql FROM sqlite_schema WHERE name='discovery_contact_observations'").get()!.sql), /'website','messenger','phone'/);
       const snapshot = creatorSchemaSnapshot(created);
-      assert.equal(snapshot.tables.length, 79);
-      assert.equal(snapshot.tables.reduce((count, table) => count + table.columns.length, 0), 661);
-      assert.equal(snapshot.tables.reduce((count, table) => count + table.foreignKeys.length, 0), 196);
-      assert.equal(snapshot.tables.reduce((count, table) => count + table.indexes.length, 0), 143);
+      assert.equal(snapshot.tables.length, 80);
+      assert.equal(snapshot.tables.reduce((count, table) => count + table.columns.length, 0), 673);
+      assert.equal(snapshot.tables.reduce((count, table) => count + table.foreignKeys.length, 0), 200);
+      assert.equal(snapshot.tables.reduce((count, table) => count + table.indexes.length, 0), 144);
       assert.equal(snapshot.objects.filter((object) => object.type === "index").length, 44);
       assert.equal(snapshot.objects.filter((object) => object.type === "trigger").length, 13);
       assert.equal(inspectLegacyDatabase(path, "creator").schemaValidated, true);

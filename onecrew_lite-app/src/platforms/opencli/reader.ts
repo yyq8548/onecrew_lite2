@@ -27,7 +27,7 @@ import { pinterestProfilePlan, pinterestContentPlan } from "./pinterest.ts";
 import { redditProfilePlan, redditRecentPlan, redditLanguagePlan, redditPostPlan } from "./reddit.ts";
 import { douyinProfilePlan, douyinContentPlan, douyinCommentsPlan } from "./douyin.ts";
 import { blueskyProfilePlan, blueskyPostPlan, blueskyUriFromSource } from "./bluesky.ts";
-import { linkedinProfilePlan, linkedinContentPlan, linkedinContactPlan, linkedinCommentsPlan } from "./linkedin.ts";
+import { linkedinProfilePlan, linkedinContentPlan, linkedinExperiencePlan, linkedinContactPlan, linkedinCommentsPlan } from "./linkedin.ts";
 import { facebookIdentityPlan, facebookProfilePlan, facebookContactPlan } from "./facebook-profile.ts";
 import { facebookRecentPlan, facebookReelPlan, facebookLanguagePlan, facebookNativeOriginalPlan } from "./facebook-language.ts";
 import { creatorProfileSource } from "./profile-source.ts";
@@ -245,6 +245,7 @@ export class OpenCliReader {
   blueskyOriginalComments(binding: VerifiedOpenCliBrowserBinding, uri: string) { return this.#native(binding, blueskyPostPlan(uri, true)); }
   linkedinPublicProfile(binding: VerifiedOpenCliBrowserBinding, handle: string) { return this.#native(binding, linkedinProfilePlan(handle)); }
   linkedinOriginalContent(binding: VerifiedOpenCliBrowserBinding, handle: string, accountId: string) { return this.#native(binding, linkedinContentPlan(handle, accountId)); }
+  linkedinCurrentExperience(binding: VerifiedOpenCliBrowserBinding, handle: string, accountId: string) { return this.#native(binding, linkedinExperiencePlan(handle, accountId)); }
   linkedinContactPage(binding: VerifiedOpenCliBrowserBinding, handle: string, accountId: string) { return this.#native(binding, linkedinContactPlan(handle, accountId)); }
   linkedinOriginalComments(binding: VerifiedOpenCliBrowserBinding, handle: string, accountId: string, source: string) { return this.#native(binding, linkedinCommentsPlan(handle, accountId, source)); }
   facebookSourceIdentity(binding: VerifiedOpenCliBrowserBinding, source: string) { return this.#native(binding, facebookIdentityPlan(source)); }

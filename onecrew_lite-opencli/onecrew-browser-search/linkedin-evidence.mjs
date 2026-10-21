@@ -177,6 +177,88 @@ export async function readLinkedinProfile(page, handle, ownedPage) {
   });
 }
 
+export function observeLinkedinExperience(source, handle, account, readProfile) {
+  const profile = readProfile(source, handle);
+  if (!profile) return null;
+  if (profile.account_id !== account) throw new Error('ONECREW_LINKEDIN_INVALID');
+  const main = document.querySelector('main');
+  const labels = new Set(['Experience','工作经历','工作經歷','经历','經歷','Expérience','Experiencia','Berufserfahrung','Esperienza','Experiência','Ervaring']);
+  const sections = [...main.querySelectorAll('section')].filter(section => {
+    const headings = [...section.querySelectorAll('h2')];
+    return headings.length === 1 && (section.querySelector('[id="experience"]') || labels.has(headings[0].textContent.trim()));
+  });
+  if (sections.length > 1) throw new Error('ONECREW_LINKEDIN_INVALID');
+  if (!sections.length) return {author_handle:handle,account_id:account,profile_url:source,evidence_source:'visible_current_experience',section_found:false,entries:[]};
+  const section = sections[0];
+  const visible = node => node.getClientRects().length && !node.closest('[aria-hidden="true"],aside,nav');
+  section.scrollIntoView({block:'center'});
+  // 保留同一经历条目的完整原文，交由评分识别公司、职位和任职期间。
+  const cards = [...section.querySelectorAll('li,[role="listitem"],[data-view-name="profile-component-entity"]')]
+    .filter(visible).filter(node => !node.parentElement?.closest('li,[role="listitem"],[data-view-name="profile-component-entity"]'));
+  const companyPath=link=>/^https:\/\/www\.linkedin\.com\/company\/[^/?#]+\/?(?:\?.*)?$/.test(link.href)?new URL(link.href).pathname:null;
+  for(const link of [...section.querySelectorAll('a[href]')].filter(node=>visible(node)&&companyPath(node))) {
+    let block=link;
+    while(block.parentElement&&block.parentElement!==section) {
+      const parent=block.parentElement;
+      const companies=new Set([...parent.querySelectorAll('a[href]')].map(companyPath).filter(Boolean));
+      if(parent.querySelector('h2')||companies.size!==1) break;
+      block=parent;
+    }
+    if(!block.querySelector('li,[role="listitem"],[data-view-name="profile-component-entity"]')&&!cards.includes(block)) cards.push(block);
+  }
+  const entries = [];
+  for (const card of cards.slice(0,12)) {
+    let original = card.innerText.trim();
+    if (!/(?:\bPresent\b|至今|现在|現在)/i.test(original)) continue;
+    // 同公司晋升经历的公司标题位于职位列表外，只绑定最近且唯一的公司分组。
+    for(let group=card.parentElement;group&&group!==section;group=group.parentElement) {
+      const links=[...group.querySelectorAll('a[href]')].filter(link=>visible(link)
+        && /^https:\/\/www\.linkedin\.com\/company\/[^/?#]+\/?(?:\?.*)?$/.test(link.href)
+        && !link.closest('li,[role="listitem"],[data-view-name="profile-component-entity"]'));
+      const companies=new Set(links.map(link=>new URL(link.href).pathname));
+      if(companies.size>1) break;
+      if(companies.size===1) {
+        const label=links.map(link=>link.innerText.trim().split('\n').map(line=>line.trim()).find(Boolean)).find(Boolean);
+        if(label) original=label+'\n'+original;
+        break;
+      }
+    }
+    if (new TextEncoder().encode(original).length > 4000) throw new Error('ONECREW_LINKEDIN_INVALID');
+    if (original && !entries.some(entry => entry.text === original)) entries.push({text:original});
+    if (entries.length === 3) break;
+  }
+  return {author_handle:handle,account_id:account,profile_url:source,evidence_source:'visible_current_experience',section_found:true,entries};
+}
+
+export async function readLinkedinExperience(page, handle, account, ownedPage) {
+  const source = linkedinProfileTarget(handle);
+  if (typeof account !== 'string' || !/^ACo[A-Za-z0-9_-]{16,125}$/.test(account)) throw new Error('ONECREW_LINKEDIN_INPUT');
+  return ownedPage(page, async owned => {
+    await owned.goto(source,{settleMs:0});
+    let latest;
+    for (let attempt=0;attempt<8;attempt++) {
+      const raw = await owned.evaluate(sourceUrlScript(`(${observeLinkedinExperience.toString()})(${JSON.stringify(source)},${JSON.stringify(handle)},${JSON.stringify(account)},(${observeLinkedinProfile.toString()}))`));
+      const value = raw && 'session' in Object(raw) && 'data' in Object(raw) ? raw.data : raw;
+      if (value) {
+        latest=value;
+        if (value.section_found && value.entries.length) return value;
+        await owned.evaluate(`(() => {
+          const main=document.querySelector('main');
+          for(let node=main;node;node=node.parentElement) {
+            if(node.scrollHeight>node.clientHeight+100&&/auto|scroll/.test(getComputedStyle(node).overflowY)) {
+              node.scrollBy(0,Math.max(400,node.clientHeight*.8)); return;
+            }
+          }
+          window.scrollBy(0,window.innerHeight*.8);
+        })()`);
+      }
+      if (attempt<7) await owned.sleep(0.5);
+    }
+    if (latest) return latest;
+    throw new Error('ONECREW_LINKEDIN_PROFILE_TIMEOUT');
+  });
+}
+
 export function projectLinkedinContent(data, handle, account) {
   const source = linkedinProfileTarget(handle);
   if (typeof account !== 'string' || !/^ACo[A-Za-z0-9_-]{16,125}$/.test(account)) throw new Error('ONECREW_LINKEDIN_INPUT');

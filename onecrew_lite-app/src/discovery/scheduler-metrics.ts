@@ -3,7 +3,8 @@ import type { FileDiscoveryExecutionMetrics } from "./execution-metrics.ts";
 
 export function recordDiscoveryReadTiming(metrics: FileDiscoveryExecutionMetrics, campaign: string, result: DiscoveryAdvanceResult, elapsed: number): void {
   const kind = result.step.kind;
-  const phase = kind === "search" ? "platform_search" : kind === "read_content" && result.content && (result.content.language_sample != null || ["google", "yahoo"].includes(result.content.claim.platform)) ? "language" : kind.startsWith("read_") ? kind.slice(5) : null;
+  const experience = result.content?.native_content !== null && typeof result.content?.native_content === "object" && "evidence_source" in result.content.native_content && result.content.native_content.evidence_source === "visible_current_experience";
+  const phase = experience ? "experience" : kind === "search" ? "platform_search" : kind === "read_content" && result.content && (result.content.language_sample != null || ["google", "yahoo"].includes(result.content.claim.platform)) ? "language" : kind.startsWith("read_") ? kind.slice(5) : null;
   if (phase === null) return;
   const targeted = new Set(["read_profile", "read_content", "read_source_author", "read_web_source", "read_identity", "read_transcript", "read_content_targets"]);
   const target = targeted.has(kind) && "search_hit_id" in result.step ? result.step.search_hit_id : null;

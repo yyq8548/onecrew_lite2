@@ -13,7 +13,11 @@ export function discoveryScoreHit(result: DiscoveryAdvanceResult): string | null
     case "read_web_source": return result.web_source?.status === "completed" && result.web_source.is_primary_source && result.web_source.candidate_id !== null ? step.search_hit_id : null;
     case "read_source_author": return result.source_author?.status === "completed" && result.source_author.duplicate_of === null ? step.search_hit_id : null;
     case "read_profile": return result.profile?.status === "completed" ? step.search_hit_id : null;
-    case "read_content": return result.content?.status === "completed" ? step.search_hit_id : null;
+    case "read_content": {
+      const native=result.content?.native_content;
+      if(native!==null&&typeof native==="object"&&"evidence_source" in native&&native.evidence_source==="visible_current_experience"&&"entries" in native&&Array.isArray(native.entries)&&native.entries.length===0) return null;
+      return result.content?.status === "completed" ? step.search_hit_id : null;
+    }
     case "read_transcript": {
       const read = result.transcript, campaign = result.campaign;
       return read && campaign.phase === "active" && read.search_hit_id === step.search_hit_id && ["completed", "unavailable", "failed"].includes(read.status) && read.call_number > 0 && read.call_number <= campaign.used_calls && campaign.platform_runs.some(run => run.platform === "youtube" && run.profile_ref === read.profile_ref && run.status === "completed" && run.stop_code === null) ? step.search_hit_id : null;

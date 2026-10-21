@@ -15,6 +15,7 @@ export function DiscoveryCandidateCard({ item, campaign, reasonLabels }: {
     below_pinterest_scale: t("opencliPilot.pinterestScaleFailed"), pinterest_scale_unverified: t("opencliPilot.pinterestScaleUnknown"),
     related_alternative: t("opencliPilot.relatedAlternative"),
     requirement_unverified: t("opencliPilot.reason.requirement"), requirement_contradicted: t("opencliPilot.reason.requirementConflict"),
+    linkedin_current_employment_evidence_exhausted: t("opencliPilot.reason.experienceExhausted"),
     excluded_by_customer: t("opencliPilot.reason.excludedAccount"), excluded_account_identity_unverified: t("opencliPilot.reason.requirement"),
     requirements_invalid: t("opencliPilot.reason.unsupported"), excluded_accounts_invalid: t("opencliPilot.reason.unsupported"),
   };

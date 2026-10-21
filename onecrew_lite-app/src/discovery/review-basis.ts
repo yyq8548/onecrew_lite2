@@ -1,5 +1,6 @@
 import type { DatabaseSync } from "node:sqlite";
 import { z } from "zod";
+import { retainedLinkedinExperience } from "./linkedin-experience.ts";
 import { parseApplicationJson, stringifyApplicationJson } from "../contracts/application-json.ts";
 import { discoveryReviewBasis, type DiscoveryReviewBasis } from "./review-material.ts";
 import { stripUnauditedDiscoveryProofs } from "./review-proof-audit.ts";
@@ -190,6 +191,12 @@ export function loadDiscoveryReviewBasis(database: DatabaseSync, campaign: strin
     if (native.connections !== undefined) {
       basis.native_profile.connections = linkedinConnectionObservation.parse(native.connections);
       basis.native_profile.web_text = [basis.native_profile.web_text, bounded(native.follower_text, 100), basis.native_profile.connections?.raw].filter(Boolean).join("\n") || null;
+    }
+    const experience = retainedLinkedinExperience(database,{...profile.claim,source_url:authorUrl},basis.native_author_id);
+    if (experience) {
+      basis.native_profile.web_text = [basis.native_profile.web_text,"Experience",...experience.native.entries.map(entry=>entry.text)].filter(Boolean).join("\n");
+      basis.native_profile.observed_at = Math.max(Number(profile.captured_at),experience.captured_at);
+      basis.native_profile.experience_checked = true;
     }
     basis.hit.author_id = basis.native_author_id; basis.hit.author_url = authorUrl; basis.hit.author_observed_at = profile.captured_at;
     if (database.prepare("SELECT 1 FROM discovery_content_reads WHERE discovery_campaign_id=? AND search_hit_id=?").get(campaign, hit)) {

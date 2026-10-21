@@ -73,7 +73,7 @@ export function validateCreatorSchema90(db: DatabaseSync): void {
 }
 export function validateCreatorSchema(db: DatabaseSync): void {
   const version = Number(db.prepare("PRAGMA user_version").get()!.user_version);
-  if (version !== 90 && version !== 91) throw new Error(`Creator current schema is unsupported: ${version}`);
+  if (version !== 90 && version !== 91 && version !== 92) throw new Error(`Creator current schema is unsupported: ${version}`);
   validateCreatorSchemaVersion(db, version);
 }
 
@@ -98,7 +98,7 @@ export function rebuildCreatorTableChanges(db: DatabaseSync, table: string, repl
 }
 
 export function validateCreatorSchemaVersion(db: DatabaseSync, expectedVersion: number): void {
-  if (!Number.isInteger(expectedVersion) || expectedVersion < 27 || expectedVersion > 91) throw new Error(`Creator version ${expectedVersion} frozen validation is not implemented`);
+  if (!Number.isInteger(expectedVersion) || expectedVersion < 27 || expectedVersion > 92) throw new Error(`Creator version ${expectedVersion} frozen validation is not implemented`);
   const version = Number(db.prepare("PRAGMA user_version").get()!.user_version);
   if (version !== expectedVersion) throw new Error(`Creator schema validation requires version ${expectedVersion}; found ${version}`);
   const checks = db.prepare("PRAGMA integrity_check").all();
@@ -107,6 +107,7 @@ export function validateCreatorSchemaVersion(db: DatabaseSync, expectedVersion: 
   try {
     reference.exec(schemaSql());
     if (expectedVersion >= 91) migrateCreatorPublicContactEdge(reference);
+    if (expectedVersion >= 92) reference.exec(readStorageSql("creator-91-to-92.sql"));
     if (expectedVersion < 90) reference.exec("DROP TABLE discovery_query_rounds");
     if (expectedVersion < 89) rebuildCreatorTable(reference, "discovery_target_increases", "new_target_count != previous_target_count", "new_target_count > previous_target_count");
     if (expectedVersion < 88) {
@@ -207,7 +208,8 @@ export async function initializeNewCreatorDatabase(path: string): Promise<void> 
     db.exec("PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000; BEGIN IMMEDIATE");
     db.exec(schemaSql());
     migrateCreatorPublicContactEdge(db);
-    db.exec("PRAGMA user_version = 91");
+    db.exec(readStorageSql("creator-91-to-92.sql"));
+    db.exec("PRAGMA user_version = 92");
     validateCreatorSchema(db);
     await verifyPrivateFile(absolute);
     db.exec("COMMIT");

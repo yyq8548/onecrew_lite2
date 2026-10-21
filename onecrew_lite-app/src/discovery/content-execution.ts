@@ -12,7 +12,8 @@ export class DiscoveryContentExecutor {
   async readNativeOnce(context: AccountContext, input: { campaign_id: string; expected_revision: number; search_hit_id: string }) {
     this.accounts.assertCurrent(context); const owned = await this.repositories.resolve(context); owned.assertOwned(); this.accounts.assertCurrent(context);
     if (owned.owner.accountId !== context.principal.user.id || owned.owner.tenantId !== context.principal.tenantId || owned.owner.baseId !== context.principal.baseId) throw new Error("discovery_content_repository_owner_mismatch");
-    const campaign = owned.repository.getPlan(input.campaign_id), claim = owned.repository.claimContent(input.campaign_id, input.expected_revision, input.search_hit_id);
+    const experience = owned.repository.linkedinExperienceEligible(input.campaign_id,input.search_hit_id);
+    const campaign = owned.repository.getPlan(input.campaign_id), claim = experience ? owned.repository.claimLinkedinExperience(input.campaign_id,input.expected_revision,input.search_hit_id) : owned.repository.claimContent(input.campaign_id, input.expected_revision, input.search_hit_id);
     const observed = await (async () => {
       if (RETIRED_CREATOR_SOURCES.includes(claim.platform)) throw new OpenCliError("opencli_read_command_unavailable");
       this.accounts.assertCurrent(context); owned.assertOwned();
@@ -26,7 +27,9 @@ export class DiscoveryContentExecutor {
         if (saved.status !== "completed" || saved.claim.expected_revision !== claim.expected_revision || saved.claim.profile_ref !== claim.profile_ref || saved.claim.author_id !== claim.author_id || saved.claim.call_number >= claim.call_number) throw new OpenCliError("opencli_invalid_output");
         if (claim.platform === "linkedin") {
           if (saved.stop_code !== null || saved.claim.platform !== claim.platform || saved.claim.author_url !== claim.source_url) throw new OpenCliError("opencli_invalid_output");
-          value = await this.reader.linkedinOriginalContent(browser, claim.author_id, z.string().parse(native.account_id));
+          const account = z.string().parse(native.account_id);
+          if (experience && owned.repository.linkedinExperienceAccount(claim) !== account) throw new OpenCliError("opencli_invalid_output");
+          value = experience ? await this.reader.linkedinCurrentExperience(browser,claim.author_id,account) : await this.reader.linkedinOriginalContent(browser, claim.author_id, account);
         } else if (claim.platform === "pinterest") {
           if (saved.stop_code !== null || saved.claim.platform !== claim.platform || saved.claim.source_url !== claim.source_url) throw new OpenCliError("opencli_invalid_output");
           const username = /^https:\/\/www\.pinterest\.com\/([^/]+)\/$/u.exec(saved.claim.author_url)?.[1]; if (!username) throw new OpenCliError("opencli_invalid_input");
@@ -57,9 +60,12 @@ export class DiscoveryContentExecutor {
       if (Buffer.byteLength(stringifyApplicationJson(value)) > 16000) throw new OpenCliError("opencli_output_too_large"); return value;
     })().then(value => ({ ok: true as const, value }), error => ({ ok: false as const, error: error as unknown }));
     owned.assertOwned();
-    if (observed.ok) return owned.repository.finishContent(claim, observed.value, null);
-    if (observed.error instanceof OpenCliError && observed.error.code !== "opencli_cancelled") return owned.repository.finishContent(claim, null, observed.error.code === "opencli_read_command_unavailable" ? "opencli_command_unavailable" : observed.error.code);
-    const interrupted = await Promise.resolve().then(() => owned.repository.interruptContent(claim)).then(() => ({ ok: true as const }), error => ({ ok: false as const, error: error as unknown }));
+    if (observed.ok) return experience ? owned.repository.finishLinkedinExperience(claim,observed.value,null) : owned.repository.finishContent(claim, observed.value, null);
+    if (observed.error instanceof OpenCliError && !["opencli_cancelled","opencli_cancel_pending"].includes(observed.error.code)) {
+      const code = observed.error.code === "opencli_read_command_unavailable" ? "opencli_command_unavailable" : observed.error.code;
+      return experience ? owned.repository.finishLinkedinExperience(claim,null,code) : owned.repository.finishContent(claim,null,code);
+    }
+    const interrupted = await Promise.resolve().then(() => experience ? owned.repository.finishLinkedinExperience(claim,null,"interrupted_experience_read") : owned.repository.interruptContent(claim)).then(() => ({ ok: true as const }), error => ({ ok: false as const, error: error as unknown }));
     if (!interrupted.ok) throw new AggregateError([observed.error, interrupted.error], "discovery_content_read_and_interrupt_failed"); throw observed.error;
   }
 }

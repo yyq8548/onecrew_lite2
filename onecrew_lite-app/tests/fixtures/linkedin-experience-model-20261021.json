@@ -1,0 +1,345 @@
+{
+  "results": [
+    {
+      "name": "Liu Zhengyang",
+      "elapsed_ms": 31670,
+      "native": {
+        "author_handle": "liu-zhengyang-009325285",
+        "account_id": "ACoAAEVH98kBNx6gVWKsFcdzImo-FdIKwo3ngGs",
+        "profile_url": "https://www.linkedin.com/in/liu-zhengyang-009325285/",
+        "evidence_source": "visible_current_experience",
+        "section_found": true,
+        "entries": [
+          {
+            "text": "OPERATION SPECIALIST\n\nBinance · Permanent\n\nMar 2024 - Present · 2 yrs 8 mos\n\nPresent\n\nDrove the Binance Wallet from under 5% market share to #1 in 2 months, hitting $5B+ daily trading volume (95% dominance) and 670% growth in active users (159k addresses). \n\nGrew social media followers by 47% to 3M and community members by 280% to 74k through campaigns tailored for global audiences (including Southeast Asia). Built a Web3-focused KOL network that generated 25M+ campaign views without a dedicated budget, while addressing 4,800+ user feedback submissions to refine product workflows. \n\nCrisis Management: Handled 45+ high-stakes PR incidentsProduct Collaboration: Partnered with engineering teams to launch Binance Live/Audio Live, boosting live streamers by 500%+. \n\nLed the 0-1 launch and scaling of social platforms, hitting 6M daily active users (+43% vs. baseline) and 22M monthly actives. Recruited 5,000+ KOLs (3,000 with 100k+ followers), including top EU/MENA/SEA creators, driving a 58% transaction conversion rate. \n\nData & Campaign Execution: Cut complaints by 350% monthly through data analysis and SOP refinements. Organized viral campaigns like Token2049 events and trading contests, resulting in 25M+ engagements and stronger project partnerships.\n… more"
+          }
+        ]
+      },
+      "material_hash": "5a6a82dc33bf59f772211667f4843bd3371c37ac757b0766d6f2bac1b700773d",
+      "proposal": {
+        "selection": {
+          "criterion": "selection_fit",
+          "outcome": "supported",
+          "rationale": "保存的职业资料显示其目前在 Binance 任职，个人简介为 Marketing Specialist，职责包含全球营销活动、社交媒体及社区增长，符合目标公司的 Marketing 人员条件。本判断依据已保存的职业证据，无须额外帖子或语言证据。",
+          "citations": [
+            {
+              "kind": "native_profile",
+              "profile_url": "https://www.linkedin.com/in/liu-zhengyang-009325285/",
+              "quote": "Marketing Specialist"
+            },
+            {
+              "kind": "native_profile",
+              "profile_url": "https://www.linkedin.com/in/liu-zhengyang-009325285/",
+              "quote": "Binance · Permanent\n\nMar 2024 - Present · 2 yrs 8 mos"
+            }
+          ],
+          "tool": null,
+          "country_code": null,
+          "match_level": null
+        },
+        "quality_rating": {
+          "criterion": "quality_rating",
+          "outcome": "supported",
+          "rationale": "已保存的职业资料支持其当前 Binance Marketing 人员身份，并具体描述面向全球及东南亚受众的营销活动、社区增长和 Web3 KOL 网络建设，业务范围与寻找交易所营销人员的目标直接相关，具备明确推荐优势。该判断依据保存的职业资料，其中业绩数字属于个人资料陈述，尚未独立核实。",
+          "citations": [
+            {
+              "kind": "native_profile",
+              "profile_url": "https://www.linkedin.com/in/liu-zhengyang-009325285/",
+              "quote": "Grew social media followers by 47% to 3M and community members by 280% to 74k through campaigns tailored for global audiences (including Southeast Asia). Built a Web3-focused KOL network that generated 25M+ campaign views without a dedicated budget, while addressing 4,800+ user feedback submissions to refine product workflows."
+            }
+          ],
+          "tool": null,
+          "country_code": null,
+          "match_level": "excellent"
+        },
+        "language_only_pending": false,
+        "requirement_findings": [
+          {
+            "criterion": {
+              "requirement": 0
+            },
+            "outcome": "supported",
+            "rationale": "保存的任职经历明确列出 Binance 正式职位，时间为 Mar 2024 - Present，支持当前任职于允许公司之一。公司之间为 OR 关系，已满足 Binance 分支；本判断依据保存的职业资料。",
+            "citations": [
+              {
+                "kind": "native_profile",
+                "profile_url": "https://www.linkedin.com/in/liu-zhengyang-009325285/",
+                "quote": "Binance · Permanent\n\nMar 2024 - Present · 2 yrs 8 mos"
+              }
+            ],
+            "tool": null,
+            "country_code": null,
+            "match_level": null
+          }
+        ]
+      },
+      "audit": {
+        "applicable": true,
+        "checks": [
+          {
+            "criterion": "selection_fit",
+            "employment_required": true,
+            "role_required": true,
+            "time_requirement": "current",
+            "relationship": "current_staff",
+            "role_evidence": "explicit_duties",
+            "time_relation": "current",
+            "outcome": "supported",
+            "rationale": "当前 Binance 职位明确包含社交媒体增长、全球营销活动和 KOL 网络建设职责，符合 Marketing 人员类别。",
+            "citations": [
+              {
+                "kind": "native_profile",
+                "profile_url": "https://www.linkedin.com/in/liu-zhengyang-009325285/",
+                "quote": "OPERATION SPECIALIST\n\nBinance · Permanent\n\nMar 2024 - Present · 2 yrs 8 mos\n\nPresent"
+              },
+              {
+                "kind": "native_profile",
+                "profile_url": "https://www.linkedin.com/in/liu-zhengyang-009325285/",
+                "quote": "Grew social media followers by 47% to 3M and community members by 280% to 74k through campaigns tailored for global audiences (including Southeast Asia). Built a Web3-focused KOL network that generated 25M+ campaign views without a dedicated budget, while addressing 4,800+ user feedback submissions to refine product workflows."
+              }
+            ]
+          },
+          {
+            "criterion": {
+              "requirement": 0
+            },
+            "employment_required": true,
+            "role_required": false,
+            "time_requirement": "current",
+            "relationship": "current_staff",
+            "role_evidence": "position_title",
+            "time_relation": "current",
+            "outcome": "supported",
+            "rationale": "经历明确标注目前在 Binance 担任正式职位，满足公司 OR 条件中的 Binance 分支。",
+            "citations": [
+              {
+                "kind": "native_profile",
+                "profile_url": "https://www.linkedin.com/in/liu-zhengyang-009325285/",
+                "quote": "OPERATION SPECIALIST\n\nBinance · Permanent\n\nMar 2024 - Present · 2 yrs 8 mos\n\nPresent"
+              }
+            ]
+          }
+        ]
+      },
+      "checked": {
+        "selection": {
+          "criterion": "selection_fit",
+          "outcome": "supported",
+          "rationale": "当前 Binance 职位明确包含社交媒体增长、全球营销活动和 KOL 网络建设职责，符合 Marketing 人员类别。",
+          "citations": [
+            {
+              "kind": "native_profile",
+              "profile_url": "https://www.linkedin.com/in/liu-zhengyang-009325285/",
+              "quote": "OPERATION SPECIALIST\n\nBinance · Permanent\n\nMar 2024 - Present · 2 yrs 8 mos\n\nPresent"
+            },
+            {
+              "kind": "native_profile",
+              "profile_url": "https://www.linkedin.com/in/liu-zhengyang-009325285/",
+              "quote": "Grew social media followers by 47% to 3M and community members by 280% to 74k through campaigns tailored for global audiences (including Southeast Asia). Built a Web3-focused KOL network that generated 25M+ campaign views without a dedicated budget, while addressing 4,800+ user feedback submissions to refine product workflows."
+            }
+          ],
+          "tool": null,
+          "country_code": null,
+          "match_level": null
+        },
+        "quality_rating": {
+          "criterion": "quality_rating",
+          "outcome": "supported",
+          "rationale": "已保存的职业资料支持其当前 Binance Marketing 人员身份，并具体描述面向全球及东南亚受众的营销活动、社区增长和 Web3 KOL 网络建设，业务范围与寻找交易所营销人员的目标直接相关，具备明确推荐优势。该判断依据保存的职业资料，其中业绩数字属于个人资料陈述，尚未独立核实。",
+          "citations": [
+            {
+              "kind": "native_profile",
+              "profile_url": "https://www.linkedin.com/in/liu-zhengyang-009325285/",
+              "quote": "Grew social media followers by 47% to 3M and community members by 280% to 74k through campaigns tailored for global audiences (including Southeast Asia). Built a Web3-focused KOL network that generated 25M+ campaign views without a dedicated budget, while addressing 4,800+ user feedback submissions to refine product workflows."
+            }
+          ],
+          "tool": null,
+          "country_code": null,
+          "match_level": "excellent"
+        },
+        "language_only_pending": false,
+        "requirement_findings": [
+          {
+            "criterion": {
+              "requirement": 0
+            },
+            "outcome": "supported",
+            "rationale": "经历明确标注目前在 Binance 担任正式职位，满足公司 OR 条件中的 Binance 分支。",
+            "citations": [
+              {
+                "kind": "native_profile",
+                "profile_url": "https://www.linkedin.com/in/liu-zhengyang-009325285/",
+                "quote": "OPERATION SPECIALIST\n\nBinance · Permanent\n\nMar 2024 - Present · 2 yrs 8 mos\n\nPresent"
+              }
+            ],
+            "tool": null,
+            "country_code": null,
+            "match_level": null
+          }
+        ]
+      },
+      "verdict": "qualified",
+      "reasons": []
+    },
+    {
+      "name": "Dylan X",
+      "elapsed_ms": 27541,
+      "native": {
+        "author_handle": "dylan-x-043352267",
+        "account_id": "ACoAAEFedrMBtRLS16uhO63agJY8BvgV9m0V7GM",
+        "profile_url": "https://www.linkedin.com/in/dylan-x-043352267/",
+        "evidence_source": "visible_current_experience",
+        "section_found": true,
+        "entries": []
+      },
+      "material_hash": "10e6412c13d7561b1d0bb7be310f23d67e4e69195a0daeaacc37f098680b922a",
+      "proposal": {
+        "selection": {
+          "criterion": "selection_fit",
+          "outcome": "insufficient",
+          "rationale": "保存的职业简介提及 Web3 营销、用户增长和推广资源，但尚未证明此人当前担任商务、BD 或 Marketing 职位，也未证明当前任职于五家指定公司中的任一家。这是基于保存的职业资料所作的初步评估，上述现职职能与雇主条件仍待核实。",
+          "citations": [
+            {
+              "kind": "native_profile",
+              "profile_url": "https://www.linkedin.com/in/dylan-x-043352267/",
+              "quote": "blockchain crypto\n5 followers\n5connections\nExperience"
+            }
+          ],
+          "tool": null,
+          "country_code": null,
+          "match_level": null
+        },
+        "quality_rating": {
+          "criterion": "quality_rating",
+          "outcome": "insufficient",
+          "rationale": "保存的简介显示其自述具备 Web3 营销和运营相关能力，与目标职能有关；但缺少能够确认当前职位及指定雇主的职业证据，无法形成明确的人员匹配评价。本次仅评估保存的职业资料，质量暂不评级。",
+          "citations": [
+            {
+              "kind": "native_profile",
+              "profile_url": "https://www.linkedin.com/in/dylan-x-043352267/",
+              "quote": "blockchain crypto\n5 followers\n5connections\nExperience"
+            }
+          ],
+          "tool": null,
+          "country_code": null,
+          "match_level": null
+        },
+        "language_only_pending": false,
+        "requirement_findings": [
+          {
+            "criterion": {
+              "requirement": 0
+            },
+            "outcome": "insufficient",
+            "rationale": "保存的身份绑定职业资料仅显示区块链和加密领域信息，未确认当前任职于 Binance、OKX、Bitget、Bybit 或 Gate.io 中的任一家。五家公司的任职条件为 OR，但目前没有任何一个分支获得支持，也没有证据证明全部分支均不符合。",
+            "citations": [
+              {
+                "kind": "native_profile",
+                "profile_url": "https://www.linkedin.com/in/dylan-x-043352267/",
+                "quote": "blockchain crypto\n5 followers\n5connections\nExperience"
+              }
+            ],
+            "tool": null,
+            "country_code": null,
+            "match_level": null
+          }
+        ]
+      },
+      "audit": {
+        "applicable": true,
+        "checks": [
+          {
+            "criterion": "selection_fit",
+            "employment_required": true,
+            "role_required": true,
+            "time_requirement": "current",
+            "relationship": "unknown",
+            "role_evidence": "skills_only",
+            "time_relation": "unknown",
+            "outcome": "insufficient",
+            "rationale": "简介仅描述运营和营销技能，未提供当前商务、BD 或 Marketing 职位或明确的现职职责。",
+            "citations": [
+              {
+                "kind": "native_profile",
+                "profile_url": "https://www.linkedin.com/in/dylan-x-043352267/",
+                "quote": "2. 精通区块链相关工具和平台，熟悉行业内运营玩法和策略，会利用各类Web3营销工具进行用户的拉新、活跃与转化。"
+              }
+            ]
+          },
+          {
+            "criterion": {
+              "requirement": 0
+            },
+            "employment_required": true,
+            "role_required": false,
+            "time_requirement": "current",
+            "relationship": "unknown",
+            "role_evidence": "not_requested",
+            "time_relation": "unknown",
+            "outcome": "insufficient",
+            "rationale": "保存的资料未明确任职公司，无法确认当前任职于 Binance、OKX、Bitget、Bybit 或 Gate.io 中任一公司。",
+            "citations": []
+          }
+        ]
+      },
+      "checked": {
+        "selection": {
+          "criterion": "selection_fit",
+          "outcome": "insufficient",
+          "rationale": "保存的职业简介提及 Web3 营销、用户增长和推广资源，但尚未证明此人当前担任商务、BD 或 Marketing 职位，也未证明当前任职于五家指定公司中的任一家。这是基于保存的职业资料所作的初步评估，上述现职职能与雇主条件仍待核实。",
+          "citations": [
+            {
+              "kind": "native_profile",
+              "profile_url": "https://www.linkedin.com/in/dylan-x-043352267/",
+              "quote": "blockchain crypto\n5 followers\n5connections\nExperience"
+            }
+          ],
+          "tool": null,
+          "country_code": null,
+          "match_level": null
+        },
+        "quality_rating": {
+          "criterion": "quality_rating",
+          "outcome": "insufficient",
+          "rationale": "保存的简介显示其自述具备 Web3 营销和运营相关能力，与目标职能有关；但缺少能够确认当前职位及指定雇主的职业证据，无法形成明确的人员匹配评价。本次仅评估保存的职业资料，质量暂不评级。",
+          "citations": [
+            {
+              "kind": "native_profile",
+              "profile_url": "https://www.linkedin.com/in/dylan-x-043352267/",
+              "quote": "blockchain crypto\n5 followers\n5connections\nExperience"
+            }
+          ],
+          "tool": null,
+          "country_code": null,
+          "match_level": null
+        },
+        "language_only_pending": false,
+        "requirement_findings": [
+          {
+            "criterion": {
+              "requirement": 0
+            },
+            "outcome": "insufficient",
+            "rationale": "保存的身份绑定职业资料仅显示区块链和加密领域信息，未确认当前任职于 Binance、OKX、Bitget、Bybit 或 Gate.io 中的任一家。五家公司的任职条件为 OR，但目前没有任何一个分支获得支持，也没有证据证明全部分支均不符合。",
+            "citations": [
+              {
+                "kind": "native_profile",
+                "profile_url": "https://www.linkedin.com/in/dylan-x-043352267/",
+                "quote": "blockchain crypto\n5 followers\n5connections\nExperience"
+              }
+            ],
+            "tool": null,
+            "country_code": null,
+            "match_level": null
+          }
+        ]
+      },
+      "verdict": "rejected",
+      "reasons": [
+        "selection_unverified",
+        "requirement_unverified",
+        "linkedin_current_employment_evidence_exhausted"
+      ]
+    }
+  ]
+}

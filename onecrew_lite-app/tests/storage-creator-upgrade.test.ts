@@ -72,7 +72,7 @@ for (const legacyVersion of Array.from({ length: 11 }, (_, index) => 27 + index)
       }
     }
     finally { staged.close(); }
-    assert.deepEqual(await upgradeCreatorStagingCopy({ sourcePath, stagingPath }), { fromVersion: legacyVersion, toVersion: 91 });
+    assert.deepEqual(await upgradeCreatorStagingCopy({ sourcePath, stagingPath }), { fromVersion: legacyVersion, toVersion: 92 });
     const current = new DatabaseSync(stagingPath, { readOnly: true });
     try {
       validateCreatorSchema(current);
@@ -115,7 +115,7 @@ for (const legacyVersion of Array.from({ length: 11 }, (_, index) => 27 + index)
   } finally { await rm(directory, { recursive: true }); }
 });
 for (const version of Array.from({ length: 52 }, (_, index) => 38 + index)) {
-  test(`Creator v${version} isolated copy reaches v91 while preserving rows`, async () => {
+  test(`Creator v${version} isolated copy reaches v92 while preserving rows`, async () => {
     const directory = await mkdtemp(fileURLToPath(new URL("../../.scratch/storage-creator-upgrade-", import.meta.url)));
     try {
       const sourcePath = join(oracleDirectory, `creator-schema${version}-oracle.sqlite`);
@@ -208,7 +208,7 @@ for (const version of Array.from({ length: 52 }, (_, index) => 38 + index)) {
       validateCreatorSchemaVersion(staged, version);
       staged.close();
       stagedClosed = true;
-      assert.deepEqual(await upgradeCreatorStagingCopy({ sourcePath, stagingPath }), { fromVersion: version, toVersion: 91 });
+      assert.deepEqual(await upgradeCreatorStagingCopy({ sourcePath, stagingPath }), { fromVersion: version, toVersion: 92 });
       const current = new DatabaseSync(stagingPath, { readOnly: true });
       try {
         validateCreatorSchema(current);

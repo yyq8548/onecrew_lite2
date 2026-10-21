@@ -39,6 +39,7 @@ export class DiscoveryLanguageRepository {
     finally { if (!committed) this.#db.exec("ROLLBACK"); }
   }
   eligible(campaign: string, hit: string): boolean {
+    if (this.#db.prepare("SELECT 1 FROM discovery_content_reads WHERE discovery_campaign_id=? AND search_hit_id=? AND platform='linkedin' AND status='failed' AND stop_code='linkedin_content_unavailable'").get(campaign,hit)) return false;
     // 主页简介不能替代作者原帖的语言样本。
     if (this.#db.prepare("SELECT 1 FROM discovery_web_source_reads WHERE discovery_campaign_id=? AND search_hit_id=? AND target_platform IN ('instagram','tiktok')").get(campaign, hit)) return false;
     return this.#db.prepare(eligibleSql).get(campaign, hit)!.eligible === 1;

@@ -22,7 +22,7 @@ export { DISCOVERY_SCORE_CONCURRENCY } from "./score-gate.ts";
 const conciseFinding = discoveryReviewFinding.extend({ rationale: z.string().min(1).max(1000), citations: discoveryReviewFinding.shape.citations.max(8) });
 export const discoveryMatchProposal = z.strictObject({ selection: conciseFinding.extend({ criterion: z.literal("selection_fit"), match_level: z.null() }), quality_rating: conciseFinding.extend({ criterion: z.literal("quality_rating") }), language_only_pending: z.boolean(), requirement_findings: z.array(conciseFinding).max(32).default([]) });
 const RUBRIC_SHA256 = "7e8a0a14761c9ea86f5e9083dc68daa82cf9b504b86d39433ad7150cf2d2ae81";
-const LINKEDIN_EVIDENCE_POLICY = "linkedin-occupational-profile-v4";
+const LINKEDIN_EVIDENCE_POLICY = "linkedin-current-experience-v5";
 const object = (value: unknown): Record<string, unknown> => value !== null && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
 const u64 = (value: unknown): bigint | null => typeof value === "bigint" && value >= 0n && value <= 18446744073709551615n ? value : typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? BigInt(value) : null;
 export async function loadOriginalDiscoveryMatchRubric(path: string): Promise<string> {

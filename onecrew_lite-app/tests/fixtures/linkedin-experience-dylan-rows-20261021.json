@@ -1,0 +1,63 @@
+{
+  "rows": {
+    "discovery_search_hits": {
+      "id": "2d841293-99ce-4752-8edf-2387ec0791ef",
+      "discovery_campaign_id": "linkedin-test-20261021-9cb6836",
+      "platform": "linkedin",
+      "profile_ref": "d5pskwub",
+      "search_keyword": "\"Gate.io\" 社群营销",
+      "source_url": "https://www.linkedin.com/in/dylan-x-043352267/",
+      "title": "Dylan X",
+      "author_label": "Dylan X",
+      "captured_at": 1792574328
+    },
+    "discovery_search_authors": {
+      "search_hit_id": "2d841293-99ce-4752-8edf-2387ec0791ef",
+      "author_id": "dylan-x-043352267",
+      "author_url": "https://www.linkedin.com/in/dylan-x-043352267/",
+      "observed_at": 1792574328
+    },
+    "discovery_profile_reads": {
+      "search_hit_id": "2d841293-99ce-4752-8edf-2387ec0791ef",
+      "discovery_campaign_id": "linkedin-test-20261021-9cb6836",
+      "platform": "linkedin",
+      "profile_ref": "d5pskwub",
+      "author_id": "dylan-x-043352267",
+      "expected_revision": 1,
+      "call_number": 54,
+      "status": "completed",
+      "native_profile_json": "{\"adapter_version\":\"1.0.0\",\"author_handle\":\"dylan-x-043352267\",\"account_id\":\"ACoAAEFedrMBtRLS16uhO63agJY8BvgV9m0V7GM\",\"author_label\":\"Dylan X\",\"profile_url\":\"https://www.linkedin.com/in/dylan-x-043352267/\",\"follower_count\":5,\"follower_text\":\"5 followers\",\"connections\":{\"raw\":\"5connections\",\"lower\":5,\"upper\":5},\"headline\":\"blockchain crypto\",\"bio\":\"1. 具备完整体系的运营思维，能从用户画像分析，品牌形象建立，活动创办等各个维度去思考整个运营体系。2. 精通区块链相关工具和平台，熟悉行业内运营玩法和策略，会利用各类Web3营销工具进行用户的拉新、活跃与转化。3. 对Web3各个赛道和行业有全面深入的理解，具备敏锐的市场洞察力，能够迅速捕捉市场热点、交易所最新信息，进行热点追踪利用热点为项目提高知名度。4. 具有优质的海内外KOL资源、营销媒体推广资源和项目合作资源，能够为项目提供多元化、全方位的推广和合作机会。5. 具备出色的数据分析技巧，能够深入剖析各项数据，据此制定出科学合理的运营方案。6. 一直参与加密圈各个赛道的投资，对加密货币行业充满热情且为人憨厚老实，愿意投入时间和精力去研究和探索，以推动行业的发展。\\nTop skills\\n运营支持\",\"public_links\":[],\"contact_links\":[\"https://www.linkedin.com/in/dylan-x-043352267/overlay/contact-info/\"],\"evidence_source\":\"visible_profile_header\",\"bio_truncated\":false}",
+      "stop_code": null,
+      "updated_at": 1792574335
+    },
+    "discovery_content_reads": {
+      "search_hit_id": "2d841293-99ce-4752-8edf-2387ec0791ef",
+      "discovery_campaign_id": "linkedin-test-20261021-9cb6836",
+      "platform": "linkedin",
+      "profile_ref": "d5pskwub",
+      "author_id": "dylan-x-043352267",
+      "source_url": "https://www.linkedin.com/in/dylan-x-043352267/",
+      "expected_revision": 1,
+      "call_number": 56,
+      "status": "failed",
+      "native_content_json": null,
+      "stop_code": "linkedin_content_unavailable",
+      "updated_at": 1792574371
+    },
+    "discovery_candidates": {
+      "id": "7a2e61d6-e1ed-4ad9-8c07-78800495d8e2",
+      "discovery_campaign_id": "linkedin-test-20261021-9cb6836",
+      "criteria_revision": 1,
+      "platform": "linkedin",
+      "source_profile_ref": "d5pskwub",
+      "platform_account_id": "ACoAAEFedrMBtRLS16uhO63agJY8BvgV9m0V7GM",
+      "display_name": "Dylan X",
+      "profile_url": "https://www.linkedin.com/in/dylan-x-043352267/",
+      "verdict": "pending",
+      "evidence_json": "{\"assessment\":{\"match_rating\":null,\"quality_rating\":null,\"reasons\":[\"selection_unverified\",\"requirement_unverified\"],\"selection\":{\"reason\":\"已保存的职业简介描述了 Web3 营销、用户运营和推广合作能力，但未证明 Dylan X 当前任职于五家目标公司之一，也未证明其当前担任商务、BD 或 Marketing 岗位。这是基于已保存职业资料的初步评估；上述两项必要条件仍待确认，粉丝和 connections 数量不影响判断。\",\"source_url\":\"https://www.linkedin.com/in/dylan-x-043352267/\",\"state\":\"unverified\"},\"subscribers_normalized\":5},\"author_identity_kind\":\"native_id\",\"author_identity_search_hit_id\":null,\"captured_at\":1792574335,\"profile_bio_status\":\"complete\",\"profile_bio_status_source_url\":\"https://www.linkedin.com/in/dylan-x-043352267/\",\"reviewed_quality\":{\"level\":null,\"material_hash\":\"63aea0d139c10e155c97100ae5c487cfb0142bc5157f9e1c5205c154824f708a\",\"native_author_id\":\"ACoAAEFedrMBtRLS16uhO63agJY8BvgV9m0V7GM\",\"outcome\":\"insufficient\",\"policy_version\":\"selection-quality-evaluation-v2\",\"reason\":\"已保存简介中的 Web3 营销工具使用和用户拉新、活跃、转化能力与目标职能相关，但缺少当前雇主及岗位证据，尚不足以评定这次职业人员搜索的推荐质量。本判断仅依据已保存职业资料，质量暂不评级。\",\"review_id\":\"3ab08314-52f1-4e6e-8179-c67c159ffc53\",\"score\":null,\"source_url\":\"https://www.linkedin.com/in/dylan-x-043352267/\",\"verified\":true},\"reviewed_requirements\":[{\"criteria_revision\":1,\"index\":0,\"material_hash\":\"63aea0d139c10e155c97100ae5c487cfb0142bc5157f9e1c5205c154824f708a\",\"native_author_id\":\"ACoAAEFedrMBtRLS16uhO63agJY8BvgV9m0V7GM\",\"outcome\":\"insufficient\",\"reason\":\"已保存职业资料未提供当前任职公司的证据，无法确认其任职于 Binance、OKX、Bitget、Bybit 或 Gate.io 中任意一家。公司条件仍未核实，不能据此判定其违反该条件。\",\"requirement\":{\"description\":\"人员须任职于币安（Binance）、OKX、Bitget、Bybit 或 Gate.io 任一公司；公司之间为 OR 关系。\",\"excerpt\":\"币安（Binance）、OKX、Bitget、Bybit、Gate.io 的商务、BD 或 Marketing 人员\"},\"review_id\":\"3ab08314-52f1-4e6e-8179-c67c159ffc53\",\"source_url\":\"https://www.linkedin.com/in/dylan-x-043352267/\"}],\"reviewed_selection\":{\"language_only_pending\":false,\"material_hash\":\"63aea0d139c10e155c97100ae5c487cfb0142bc5157f9e1c5205c154824f708a\",\"native_author_id\":\"ACoAAEFedrMBtRLS16uhO63agJY8BvgV9m0V7GM\",\"outcome\":\"insufficient\",\"policy_version\":\"selection-quality-evaluation-v2\",\"reason\":\"已保存的职业简介描述了 Web3 营销、用户运营和推广合作能力，但未证明 Dylan X 当前任职于五家目标公司之一，也未证明其当前担任商务、BD 或 Marketing 岗位。这是基于已保存职业资料的初步评估；上述两项必要条件仍待确认，粉丝和 connections 数量不影响判断。\",\"review_id\":\"3ab08314-52f1-4e6e-8179-c67c159ffc53\",\"source_url\":\"https://www.linkedin.com/in/dylan-x-043352267/\",\"verified\":true},\"source_urls\":[\"https://www.linkedin.com/in/dylan-x-043352267/\",\"https://www.linkedin.com/in/dylan-x-043352267/\"],\"subscribers_raw\":\"5\",\"subscribers_source_url\":\"https://www.linkedin.com/in/dylan-x-043352267/\"}",
+      "created_at": 1792574335,
+      "updated_at": 1792574356,
+      "source_platform": "linkedin"
+    }
+  }
+}

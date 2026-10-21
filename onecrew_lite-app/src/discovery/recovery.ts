@@ -17,6 +17,7 @@ export function recoverDiscoveryReads(database: DatabaseSync): number {
       { table: "discovery_facebook_content_targets", platform: "'facebook'", prefix: "targets", code: "interrupted_read", release: false },
       { table: "discovery_identity_reads", platform: "'twitter'", prefix: "identity", code: "interrupted_identity_read", release: false },
       { table: "discovery_facebook_identity_reads", platform: "'facebook'", prefix: "facebook_identity", code: "interrupted_facebook_identity_read", release: true },
+      { table: "discovery_linkedin_experience_reads", platform: "'linkedin'", prefix: "experience", code: "interrupted_experience_read", release: false },
       { table: "discovery_douyin_author_reads", platform: "'douyin'", prefix: "source_author", code: "interrupted_source_author_read", release: true },
       { table: "discovery_web_source_reads", platform: "discovery_web_source_reads.origin_platform", prefix: "web_source", code: "interrupted_web_source_read", release: true },
     ] as const;

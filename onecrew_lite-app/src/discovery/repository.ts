@@ -40,6 +40,7 @@ import { DiscoveryFacebookIdentityRepository, type DiscoveryFacebookIdentityClai
 import { DiscoveryFacebookTargetsRepository } from "./facebook-targets.ts";
 import { planDiscoveryStep, type DiscoveryStep } from "./step.ts";
 import { loadDiscoveryReadStops } from "./read-health.ts";
+import { DiscoveryLinkedinExperienceRepository } from "./linkedin-experience.ts";
 
 export interface DiscoverySearchClaim { planId: string; expectedRevision: number; platform: string; profileRef: string; callNumber: number; query: string }
 const runSchema = z.object({ status: z.enum(["unsearched", "searching", "completed", "technical_stop", "risk_control_stop", "unauthorized", "budget_exhausted"]), stop_code: z.string().nullable(), active_query: z.string().nullable(), calls_used: z.number().int().nonnegative(), updated_at: z.number().int().safe() });
@@ -128,9 +129,15 @@ export class DiscoveryRepository {
   finishWebSource(claim: DiscoveryWebSourceClaim, native: unknown, stop: string | null) { return new DiscoveryWebSourceRepository(this.#db).finish(claim, native, stop); }
   getWebSource(campaign: string, hit: string) { return new DiscoveryWebSourceRepository(this.#db).get(campaign, hit); }
   nextContentHit(campaign: string, platform: string, held: readonly string[] = []) {
+    if (platform === "linkedin") { const experience = this.nextLinkedinExperience(campaign, held); if (experience) return experience; }
     if (["tiktok", "douyin", "google", "yahoo"].includes(platform)) return this.nextLanguage(campaign, platform, held);
     return this.nextNativeContentHit(campaign, platform, held) ?? this.nextLanguage(campaign, platform, held);
   }
+  nextLinkedinExperience(campaign: string, held: readonly string[] = []) { return new DiscoveryLinkedinExperienceRepository(this.#db).next(campaign,held); }
+  linkedinExperienceEligible(campaign: string, hit: string) { return new DiscoveryLinkedinExperienceRepository(this.#db).eligible(campaign,hit); }
+  claimLinkedinExperience(campaign: string, revision: number, hit: string) { return new DiscoveryLinkedinExperienceRepository(this.#db).claim(campaign,revision,hit); }
+  linkedinExperienceAccount(claim: DiscoveryContentClaim) { return new DiscoveryLinkedinExperienceRepository(this.#db).account(claim); }
+  finishLinkedinExperience(claim: DiscoveryContentClaim, native: unknown, stop: string | null) { return new DiscoveryLinkedinExperienceRepository(this.#db).finish(claim,native,stop); }
   nextSearchKeyword(campaign: string, scope: DiscoveryScope) { return this.#next(campaign, scope); }
   nextSourceAuthor(campaign: string, excluded: readonly string[] = []) { return new DiscoverySourceAuthorRepository(this.#db).next(campaign, excluded); }
   claimSourceAuthor(campaign: string, revision: number, hit: string) { return new DiscoverySourceAuthorRepository(this.#db).claim(campaign, revision, hit); }

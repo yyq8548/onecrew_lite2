@@ -497,7 +497,7 @@ const shell = {
     source: "证据 {{number}}",
     linkHints: "公开链接线索（未核实）",
     verdict: { pending: "证据不足，尚未评分", qualified: "推荐候选人", rejected: "未进入推荐名单" },
-    reason: { subscriberCount: "订阅数未核实", nearThreshold: "显示订阅数接近门槛，无法确认实际值", belowThreshold: "订阅数低于门槛", demo: "本人 AI 工具演示未核实", toolLink: "公开工具链接未核实", region: "创作者所在地未核实", category: "{{category}}内容未核实", language: "语言未核实", languageMismatch: "内容语言不符合要求", unsupported: "条件格式需要核实", requirement: "额外条件缺少证据", requirementConflict: "证据不符合额外条件", excludedAccount: "客户已排除此账号" },
+    reason: { subscriberCount: "订阅数未核实", nearThreshold: "显示订阅数接近门槛，无法确认实际值", belowThreshold: "订阅数低于门槛", demo: "本人 AI 工具演示未核实", toolLink: "公开工具链接未核实", region: "创作者所在地未核实", category: "{{category}}内容未核实", language: "语言未核实", languageMismatch: "内容语言不符合要求", unsupported: "条件格式需要核实", requirement: "额外条件缺少证据", requirementConflict: "证据不符合额外条件", excludedAccount: "客户已排除此账号", experienceExhausted: "已检查当前工作经历，任职证据不足，不推荐" },
     profileChanged: "当前浏览器身份与已批准计划不同。请切回原身份，或另建计划。",
   },
   opencli: {

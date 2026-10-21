@@ -42,6 +42,15 @@ export function linkedinContentPlan(handle: string, account: string) {
   const schema = z.strictObject({ account_id: z.literal(account), author_handle: z.literal(handle), profile_url: z.literal(`https://www.linkedin.com/in/${handle}/`), post_id: text.regex(numeric), source_url: text, text: bounded(16000).refine(value => !!value.trim()), text_truncated: z.boolean(), observations: nativeContentObservations.optional(), evidence_source: z.literal("visible_author_activity") }).refine(row => row.source_url === `https://www.linkedin.com/feed/update/urn:li:activity:${row.post_id}/`);
   return { site: "onecrew-linkedin-reader", name: "content", args: ["-f", "json", "--", handle, account], addons: ["onecrew-browser-search"], foregroundBrowser: true, maximumBytes: 24000, decode: (value: unknown) => one(schema, value) } satisfies ReviewedOpenCliRead<unknown>;
 }
+export function linkedinExperiencePlan(handle: string, account: string) {
+  target(handle, account);
+  const source = `https://www.linkedin.com/in/${handle}/`;
+  const schema = z.strictObject({ author_handle: z.literal(handle), account_id: z.literal(account), profile_url: z.literal(source),
+    evidence_source: z.literal("visible_current_experience"), section_found: z.boolean(),
+    entries: z.array(z.strictObject({ text: bounded(4000).refine(value => !!value.trim() && /(?:\bPresent\b|至今|现在|現在)/iu.test(value)) })).max(3)
+  }).refine(value => value.section_found || value.entries.length === 0);
+  return { site: "onecrew-linkedin-reader", name: "experience", args: ["-f", "json", "--", handle, account], addons: ["onecrew-browser-search"], foregroundBrowser: true, maximumBytes: 16000, decode: (value: unknown) => one(schema, value) } satisfies ReviewedOpenCliRead<unknown>;
+}
 export function linkedinContactPlan(handle: string, account: string) {
   target(handle, account); const source = `https://www.linkedin.com/in/${handle}/overlay/contact-info/`;
   const schema = z.strictObject({ adapter_version: z.literal("1.0.0"), author_handle: z.literal(handle), account_id: z.literal(account), source_url: z.literal(source), title: label.refine(value => [...value].length <= 200), contact_text: bounded(8000), contact_links: z.array(publicLink).max(10), truncated: z.literal(true), evidence_source: z.literal("visible_contact_dialog") });

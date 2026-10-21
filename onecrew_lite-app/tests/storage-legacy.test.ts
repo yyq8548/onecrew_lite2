@@ -23,7 +23,7 @@ test("read-only inspection rejects unsupported versions and missing/corrupt file
     assert.deepEqual(await readFile(path), before);
     assert.throws(() => inspectLegacyDatabase(path, "vault"), /Future/);
     const future = new DatabaseSync(path);
-    future.exec("PRAGMA user_version = 92");
+    future.exec("PRAGMA user_version = 93");
     future.close();
     assert.throws(() => inspectLegacyDatabase(path, "creator"), /Future/);
     assert.throws(() => inspectLegacyDatabase(join(directory, "missing"), "creator"));

@@ -46,6 +46,9 @@ export function prepareDiscoveryReview(account: string, raw: unknown, basis: Dis
   else if (["reddit", "facebook", "pinterest", "linkedin", "instagram", "weibo", "douyin"].includes(platform)) assessment = assessDiscoveryProfile(material.criteria, evidence, material.native_author_id, material.native_followers ?? null, platform === "pinterest" ? basis.native_profile?.monthly_views_raw ?? null : undefined);
   else if (["twitter", "tiktok", "bilibili"].includes(platform)) { if (material.native_followers === undefined) throw new Error("review_native_followers_unavailable"); assessment = assessDiscoveryProfile(material.criteria, evidence, material.native_author_id, material.native_followers); }
   else assessment = assessDiscoveryYoutube(material.criteria, evidence, material.native_author_id);
+  if (platform === "linkedin" && basis.native_profile?.experience_checked === true && assessment.verdict === "pending") {
+    assessment = { ...assessment, verdict: "rejected" as const, reasons: [...assessment.reasons,"linkedin_current_employment_evidence_exhausted"] };
+  }
   const criteria = material.criteria !== null && typeof material.criteria === "object" && !Array.isArray(material.criteria) ? material.criteria as Record<string, unknown> : {};
   const policy = separated ? SELECTION_QUALITY_POLICY : initial ? INITIAL_MATCH_POLICY : input.findings.some(finding => typeof finding.criterion === "string" && ["content_language", "match_fit"].includes(finding.criterion)) ? "language-match-review-v1" : typeof criteria.category === "string" && !!criteria.category && criteria.category !== "服装" ? "category-content-review-v1" : criteria.category === "服装" || criteria.region === "中国大陆以外" ? ["twitter", "tiktok"].includes(material.hit.platform) ? "apparel-native-review-v2" : "apparel-residence-review-v1" : "youtube-text-review-v1";
   const now = Math.floor(Date.now() / 1000); if (!Number.isSafeInteger(now) || now < 0) throw new Error("review_clock_invalid");
