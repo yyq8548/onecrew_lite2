@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { proposedQualityFilter, validateProposedQualityFilter } from "./quality-policy.ts";
 const text = z.string().refine(value => value.isWellFormed());
+export const DISCOVERY_GOAL_MAX_CHARACTERS = 400;
 export function proposedDiscoveryConstraint<T extends z.ZodType>(value: T) { return z.discriminatedUnion("state", [z.strictObject({ state: z.literal("specified"), value, excerpt: text }), z.strictObject({ state: z.literal("unrestricted"), excerpt: text }), z.strictObject({ state: z.literal("unspecified") })]); }
 export const discoveryIntentProposal = z.strictObject({
   original_request: text, goal: text, category: proposedDiscoveryConstraint(text), region: proposedDiscoveryConstraint(text), language: proposedDiscoveryConstraint(text),
@@ -34,7 +35,7 @@ export function validateDiscoveryIntent(request: string, raw: unknown, registere
   if (proposal.excluded_platforms.length > 64) issue("excluded_platforms", "too_many_values");
   if (proposal.other_hard_conditions.length > 32) issue("other_hard_conditions", "too_many_values");
   if (proposal.soft_preferences.length > 64) issue("soft_preferences", "too_many_values");
-  if (!proposal.goal.trim() || bytes(proposal.goal) > 400) issue("goal", "invalid_value");
+  if (!proposal.goal.trim() || [...proposal.goal].length > DISCOVERY_GOAL_MAX_CHARACTERS) issue("goal", "invalid_value");
   for (const field of ["category", "region", "language"] as const) {
     const value = proposal[field];
     if (value.state === "specified" && (!value.value.trim() || bytes(value.value) > 160)) issue(field, "invalid_value");

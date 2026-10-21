@@ -16,6 +16,22 @@ function proposal(raw: unknown) {
   return { ...decodeFlatSemanticPlan({ ...actual.plan, intent: { ...intent, excluded_platforms: exclusion_groups.flatMap(group => group.platforms.map(platform => ({ platform, excerpt: group.excerpt }))) } }, actual.understanding.product_or_topic), min_subscribers_exclusive, min_subscribers_in_requirements };
 }
 
+test("真实中文目标摘要按字符计长，保留公司岗位逻辑和明确不限设置", () => {
+  const actual = compact.parse(parseApplicationJson(readFileSync(new URL("./fixtures/linkedin-natural-goal-20261020.json", import.meta.url))));
+  const plan = proposal(actual);
+  assert.ok(Buffer.byteLength(plan.intent.goal) > 400);
+  assert.ok([...plan.intent.goal].length <= 400);
+  const input = prepareDiscoveryDraftInput.parse({ id: "linkedin-natural-goal", brief: plan.intent.original_request, profile_ref: "work", opencli_version: "1.8.8" });
+  const draft = buildDiscoveryDraft(input, plan, captured.sources);
+  assert.equal(draft.target_count, 30);
+  assert.equal(draft.criteria.min_subscribers, 0);
+  assert.equal(draft.criteria.quality_filter, null);
+  assert.deepEqual(draft.scopes.map(scope => scope.platform), ["linkedin"]);
+  assert.deepEqual(draft.criteria.requirements, plan.intent.other_hard_conditions);
+  assert.match(plan.intent.other_hard_conditions[0]!.description, /组内分别为 OR，组间为 AND/u);
+  assert.throws(() => buildDiscoveryDraft(input, { ...plan, intent: { ...plan.intent, goal: "a".repeat(401) } }, captured.sources), /discovery_draft_intent_invalid/u);
+});
+
 test("真实自然语言规划未要求粉丝时，LinkedIn新草稿不附加2000门槛", () => {
   const draft = buildDiscoveryDraft(captured.input, proposal(captured.trace[0]), captured.sources);
   assert.equal(draft.criteria.min_subscribers, 0);
