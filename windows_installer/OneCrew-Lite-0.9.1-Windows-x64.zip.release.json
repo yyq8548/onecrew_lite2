@@ -1,0 +1,51 @@
+{
+  "product": "onecrew_lite",
+  "version": "0.9.1",
+  "target": "win32-x64",
+  "archive": "OneCrew-Lite-0.9.1-Windows-x64.zip",
+  "bytes": 57327269,
+  "sha256": "c6db2eeb7c2cf62db457c363b48be7d8db012fe5d9d1d9278139340fafb7feae",
+  "executableSha256": "e119eb53bb66923a1b9e8fd989b9395d1c33ec52fded63a3389744b65f7f71cb",
+  "payloadSha256": "0db39fafd9a3e69169304529e22a4c185d614db7a9730e113dbfa4f04cde8e31",
+  "sourceTreeSha256": "802126fa10b3aa420679ef5bfe399595d6e99dc014046adaf049e53075e54ba5",
+  "dependencyLockSha256": "450a30d7ebf2d5fbaa8cb47e5f9f339f03bc40e22c0161d957637eaff6e90b84",
+  "acceptance": {
+    "checkedAt": "2026-10-23T04:17:38.931Z",
+    "executableSha256": "e119eb53bb66923a1b9e8fd989b9395d1c33ec52fded63a3389744b65f7f71cb",
+    "sourceTreeSha256": "802126fa10b3aa420679ef5bfe399595d6e99dc014046adaf049e53075e54ba5",
+    "dependencyLockSha256": "450a30d7ebf2d5fbaa8cb47e5f9f339f03bc40e22c0161d957637eaff6e90b84",
+    "appTests": true,
+    "adapterTests": true,
+    "typecheck": true,
+    "contracts": true,
+    "native": true,
+    "upgrade": true,
+    "dataPreserved": true,
+    "workbench": true,
+    "table": true,
+    "cardButtons": true,
+    "browserVisible": true,
+    "hostPluginActivated": false,
+    "cardResource": true,
+    "uiTests": true,
+    "counts": {
+      "appPassed": 657,
+      "appFailed": 0,
+      "appSkipped": 22,
+      "adapterPassed": 91,
+      "uiPassed": 411,
+      "nativePassed": 6,
+      "nativeSkipped": 0
+    },
+    "macAcceptance": "incomplete",
+    "pending": [
+      "Current Codex processes still use the previous companion executable; restart Codex to activate the installed update"
+    ],
+    "companionMcp": true,
+    "cardButtonEvidence": "User screenshot confirms card, queued open request and rendered new-build workbench; shared destination/error handling passed UI tests",
+    "browserVisibilityEvidence": "User-provided current Codex screenshot; visibility API returned a conflicting stale false",
+    "localCodexReloadPending": true
+  },
+  "macAcceptance": "incomplete",
+  "productionReady": false
+}
