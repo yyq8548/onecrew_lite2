@@ -9,6 +9,7 @@
     "build:tables": "pnpm --filter onecrew_lite_tables build:teable && pnpm --filter onecrew_lite_tables build:server && pnpm --filter onecrew_lite_tables build:web:unified",
     "build:ui": "pnpm --filter onecrew-web build && pnpm --filter onecrew-mcp-ui build",
     "build:candidate": "node onecrew_lite-app/src/packaging/build-candidate.ts",
+    "build:npm": "node development/build-npm.mjs",
     "check:contracts": "pnpm --filter onecrew-web contracts:check && pnpm --filter onecrew-mcp-ui contracts:check",
     "check:independence": "node development/check-independence.mts",
     "typecheck": "pnpm --filter onecrew_lite-app typecheck",
