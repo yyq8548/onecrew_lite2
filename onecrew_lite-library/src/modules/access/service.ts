@@ -78,9 +78,7 @@ export class AccessService {
     } catch (error) {
       const issue = error instanceof AccessError ? error.code : 'access.remote_unavailable';
       return {
-        state: ['access.unauthorized', 'access.forbidden', 'access.revoked'].includes(issue)
-          ? 'signed_out'
-          : 'unavailable',
+        state: ['access.unauthorized', 'access.forbidden', 'access.revoked'].includes(issue) ? 'signed_out' : 'unavailable',
         issue,
       } as const;
     }
@@ -156,13 +154,7 @@ export class AccessService {
     const status = credential ? await this.status() : undefined;
     return this.exclusive(async () => {
       if (this.credential !== credential) throw new AccessError('access.already_signed_in', 409);
-      if (credential && status?.state !== 'signed_out')
-        throw new AccessError(
-          status?.state === 'unavailable'
-            ? (status.issue ?? 'access.remote_unavailable')
-            : 'access.already_signed_in',
-          status?.state === 'unavailable' ? 503 : 409,
-        );
+      if (credential && status?.state !== 'signed_out') throw new AccessError(status?.state === 'unavailable' ? (status.issue ?? 'access.remote_unavailable') : 'access.already_signed_in', status?.state === 'unavailable' ? 503 : 409);
       if (this.platform !== 'darwin' && this.platform !== 'win32')
         throw new AccessError('access.unsupported_platform', 422);
       if (!Number.isInteger(port) || port < 1024 || port > 65535)

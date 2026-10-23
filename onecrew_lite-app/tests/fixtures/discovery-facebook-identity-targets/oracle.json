@@ -1,0 +1,64 @@
+{
+  "campaign": "facebook-native-identity",
+  "hit": "cb2422cb-b29c-441c-b5b6-5c3361ddb5e6",
+  "identity": {
+    "captured_at": 1792088524,
+    "claim": {
+      "call_number": 2,
+      "campaign_id": "facebook-native-identity",
+      "expected_revision": 1,
+      "profile_ref": "dedicated",
+      "search_hit_id": "cb2422cb-b29c-441c-b5b6-5c3361ddb5e6",
+      "source_url": "https://www.facebook.com/NativeCreator"
+    },
+    "native_identity": {
+      "adapter_version": "1.0.0",
+      "display_name": "Native creator",
+      "evidence_source": "native_profile_header_response",
+      "id": "100044572203205",
+      "profile_url": "https://www.facebook.com/NativeCreator",
+      "source_url": "https://www.facebook.com/NativeCreator"
+    },
+    "status": "completed",
+    "stop_code": null
+  },
+  "identity_claim": {
+    "call_number": 2,
+    "campaign_id": "facebook-native-identity",
+    "expected_revision": 1,
+    "profile_ref": "dedicated",
+    "search_hit_id": "cb2422cb-b29c-441c-b5b6-5c3361ddb5e6",
+    "source_url": "https://www.facebook.com/NativeCreator"
+  },
+  "targets": {
+    "captured_at": 1792088524,
+    "claim": {
+      "author_id": "100044572203205",
+      "author_url": "https://www.facebook.com/profile.php?id=100044572203205",
+      "call_number": 4,
+      "campaign_id": "facebook-native-identity",
+      "expected_revision": 1,
+      "platform": "facebook",
+      "profile_ref": "dedicated",
+      "search_hit_id": "cb2422cb-b29c-441c-b5b6-5c3361ddb5e6",
+      "source_url": "https://www.facebook.com/NativeCreator"
+    },
+    "source_urls": [
+      "https://www.facebook.com/reel/1075265928641482",
+      "https://www.facebook.com/reel/2542739356215319"
+    ],
+    "status": "completed",
+    "stop_code": null
+  },
+  "targets_claim": {
+    "author_id": "100044572203205",
+    "author_url": "https://www.facebook.com/profile.php?id=100044572203205",
+    "call_number": 4,
+    "campaign_id": "facebook-native-identity",
+    "expected_revision": 1,
+    "platform": "facebook",
+    "profile_ref": "dedicated",
+    "search_hit_id": "cb2422cb-b29c-441c-b5b6-5c3361ddb5e6",
+    "source_url": "https://www.facebook.com/NativeCreator"
+  }
+}

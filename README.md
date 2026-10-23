@@ -2,7 +2,9 @@
 
 从一句话需求出发，寻找合适的创作者，整理资料，再通过 Gmail 联系。
 
-**当前版本：0.7.1** · macOS Apple Silicon · 中文 / English
+**当前版本：0.9.1** · macOS Apple Silicon / Windows x64 · 中文 / English
+
+当前实现为 TypeScript，源码与构建入口位于仓库根目录，对应 GitHub 提交 `1ac72b654eaf823df6c14ce512e34c6c43ddd8f2`。旧 Lite Rust 实现已移除，Library 使用新版配套实现；公司独立 Access 目录保持原样。详见 [0.9.1 源码与成品记录](docs/verification/onecrew_lite-0.9.1-source-sync.md)。
 
 ## 从需求到合作
 
@@ -18,20 +20,19 @@
 
 ## 安装与使用
 
-当前 Mac 安装包适用于 **Apple 芯片、macOS 13.5 及以上**。
+使用 [Mac 安装指南](https://access.onecrewai.io/cli/install/lite?lng=zh-CN) 或 [Windows 安装指南](https://access.onecrewai.io/cli/install/lite/windows?lng=zh-CN)，由目标电脑上的 AI 客户端校验并安装预构建程序。已安装用户保留原账号、数据、密钥、端口、Chrome 身份和结果。
 
-1. 解压完整安装包，双击 `安装或更新.command`。
-2. 安装完成后重启 Codex，输入「使用 onecrew_lite」。
-3. 按工作台提示完成登录、Chrome 扩展连接和浏览器身份选择。
-4. 输入需求，确认计划，开始搜索并查看结果表格。
-
-之后可使用 `打开 onecrew_lite.command` 启动。当前测试包未经 Apple 签名和公证。
+程序与客户端配套插件分别核实。用户完成必要权限、登录、浏览器授权和客户端重启；最后确认状态卡、工作台与原结果表。Mac ARM64 成品使用 ad-hoc 签名，未经过 Apple 公证。安装验收保持搜索停止。
 
 ## 完整源码
 
 | 目录 | 内容 |
 | --- | --- |
-| [onecrew_lite-rust](onecrew_lite-rust/) | Rust CLI、本地服务、搜索与评分、平台适配器、React 工作台、Codex 插件 |
+| [onecrew_lite-app](onecrew_lite-app/) | CLI、本地服务、平台读取、当前对话模型规划与评分、配套插件与打包 |
+| [onecrew_lite-web](onecrew_lite-web/) | 工作台和浏览器授权界面 |
+| [onecrew_lite-mcp-ui](onecrew_lite-mcp-ui/) | 对话状态卡和操作卡 |
+| [onecrew_lite-opencli](onecrew_lite-opencli/) | 已审核的只读平台适配器 |
+| [onecrew_lite-contracts](onecrew_lite-contracts/) | 网页、MCP 与业务共享接口 |
 | [onecrew_lite-library](onecrew_lite-library/) | 动态表格服务、结果同步、创作者视图与导出 |
 | [onecrew_lite-access](onecrew_lite-access/) | 账号授权与发行服务 |
 
@@ -39,18 +40,19 @@
 
 ## 构建
 
-准备项目固定版本的 Rust 工具链、Node.js，以及 Library 使用的 pnpm。各子项目的环境和依赖要求见其 README。
-
-构建 Mac 主程序（包含工作台与插件资源）：
+使用 Node.js 26.7.0 和 pnpm 10.32.1，在仓库根目录执行：
 
 ```sh
-cd onecrew_lite-rust
-bash development/scripts/build.sh --release --target aarch64-apple-darwin
+pnpm install --frozen-lockfile
+pnpm build:tables
+pnpm typecheck
+pnpm check:contracts
+pnpm build:ui
 ```
 
-完整安装包还需包含 Library。其构建入口是 `onecrew_lite-library/scripts/build-release.mjs`，组合打包入口是 `onecrew_lite-rust/development/scripts/package-mac-trial.mjs`。打包脚本校验两个程序的清单、目标平台和文件摘要。
+原生程序使用 `pnpm build:candidate`，明确指定版本、目标架构、对应 Node 程序及两份网页资源。具体参数及验证要求见 [开发说明](development/README.md)。Mac 和 Windows 分别保留原生验收记录，成品从网站分发。
 
-进一步阅读：[主程序开发](onecrew_lite-rust/development/README.md) · [运行时架构](onecrew_lite-rust/ARCHITECTURE.md) · [动态表格](onecrew_lite-library/README.md) · [授权服务](onecrew_lite-access/README.md)
+进一步阅读：[动态表格](onecrew_lite-library/README.md) · [独立授权服务](onecrew_lite-access/README.md) · [合并与部署流程](docs/release/合并与部署流程.md)
 
 ## 项目状态
 

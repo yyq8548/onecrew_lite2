@@ -1,0 +1,23 @@
+{
+  "name": "onecrew_lite",
+  "version": "0.9.1",
+  "description": "OneCrew Lite creators, public research and local tables through the unified stdio MCP service.",
+  "homepage": "https://onecrewai.io",
+  "author": { "name": "onecrew_lite" },
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "OneCrew Lite",
+    "shortDescription": "Creator research, evidence and local tables.",
+    "longDescription": "Connect to the unified OneCrew service, discover its available typed operations, and review local Creator changes in authoritative result cards. Gmail bulk delivery is available only on the Mail page.",
+    "developerName": "onecrew_lite",
+    "category": "Productivity",
+    "websiteURL": "https://onecrewai.io",
+    "capabilities": ["Interactive", "Read", "Write"],
+    "defaultPrompt": [
+      "Find creators with OneCrew Lite using a search plan I can review first.",
+      "Show my saved Creators and their evidence in the workbench and Library.",
+      "Explain the current OneCrew capabilities and account connection status."
+    ]
+  }
+}

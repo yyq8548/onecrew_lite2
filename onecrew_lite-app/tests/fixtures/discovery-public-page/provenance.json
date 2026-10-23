@@ -1,0 +1,15 @@
+{
+  "source_commit": "efc3c6eb69507b9809bb30279d9af26156d075e3",
+  "source_test": "onecrew_lite-rust/crates/creator-runtime/src/discovery_public_pages/tests.rs::export_discovery_public_page_node_oracle",
+  "command": "cargo +1.98.0-x86_64-pc-windows-msvc test --locked -p onecrew-creator-runtime export_discovery_public_page_node_oracle --lib",
+  "environment": "ONECREW_PUBLIC_PAGE_ORACLE_DIRECTORY=<private output directory>",
+  "description": "Original repository setup/claim/finish/interruption calls; VACUUM INTO snapshots. Generated test-only accounts and public evidence, no user data or credentials. Raw original bytes retained.",
+  "sha256": {
+    "before.sqlite": "2a619a847bb7c0e75417b7f287cc2d36ef8afa37e14a135e228fa787369a9ca6",
+    "claimed.sqlite": "f1e75697d0ee1050c0406c61660ba400a135b6af3bfaf9bcc89ae2c26b943891",
+    "completed.sqlite": "d9594ce3032cd993b13d67ecf3f00799f1cac1011fff5d9693ebd43b102dd3c4",
+    "interrupted.sqlite": "8192fb45f5c745d1f588c517f3d9766add271ad6ec4f387a7a8ec9241895a9e0",
+    "failed.sqlite": "dce58a8fcbf322342a2fcef59e5b1b27f7eb609b0949574d76e754a27fb946ce",
+    "oracle.json": "7bd2451674c675442032da663cbaa4fd7010d15ba7012ef1d621ef2f13d58a4c"
+  }
+}

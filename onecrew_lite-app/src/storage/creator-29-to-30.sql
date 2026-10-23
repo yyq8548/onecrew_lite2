@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX creator_contact_routes_one_per_locator ON creator_contact_routes(locator_id);

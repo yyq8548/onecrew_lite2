@@ -1,0 +1,76 @@
+{
+  "captured_from": "2026-10-20 actual CodexSemanticClient result; exact saved profile replay in isolated SQLite, production campaign untouched",
+  "model_elapsed_ms": 16461,
+  "operator_account_id": "Ye7CHhx3OvrXP80JGxEJJVmabkhpM9Kn",
+  "input": {
+    "campaign_id": "602c0efd-6922-4999-9c99-79777b532150",
+    "expected_revision": 1,
+    "search_hit_id": "2ddf93d8-6cfb-4fa0-bd42-30e15119200d",
+    "material_hash": "0b36ef17d78de49b9beeb2e87be37ace0e73570c242ab2cb1b5c034d2cd77e2b",
+    "request_id": "b4504e5a-0bfb-4ac4-84bb-bf1d11fca1b5",
+    "reviewer": {
+      "kind": "agent",
+      "label": "onecrew-match-evaluation-0cebf122-initial-v1"
+    },
+    "findings": [
+      {
+        "criterion": "match_fit",
+        "outcome": "supported",
+        "rationale": "已保存的 LinkedIn 当前职位标题显示该人员在 Binance 从事全球商务拓展，直接符合目标公司及 BD 岗位要求，初步匹配为 good。本判断基于已保存的职业资料样本，不代表检查了完整发布历史；公开联系方式由后续环节核实。",
+        "citations": [
+          {
+            "kind": "native_profile",
+            "profile_url": "https://www.linkedin.com/in/ray-yee-liew/",
+            "quote": "Global Business Development at Binance | Payments"
+          }
+        ],
+        "tool": null,
+        "match_level": "good"
+      },
+      {
+        "criterion": {
+          "requirement": 0
+        },
+        "outcome": "supported",
+        "rationale": "已保存的当前职位标题明确标示 Binance 的 Global Business Development，支持其为目标公司的 BD 从业人员，满足公开职业资料核实公司关联的要求。",
+        "citations": [
+          {
+            "kind": "native_profile",
+            "profile_url": "https://www.linkedin.com/in/ray-yee-liew/",
+            "quote": "Global Business Development at Binance | Payments"
+          }
+        ],
+        "tool": null
+      }
+    ]
+  },
+  "receipt": {
+    "review_id": "c96eb080-6f30-4c69-9e05-42d6e803384b",
+    "operator_account_id": "Ye7CHhx3OvrXP80JGxEJJVmabkhpM9Kn",
+    "campaign_id": "602c0efd-6922-4999-9c99-79777b532150",
+    "criteria_revision": 1,
+    "search_hit_id": "2ddf93d8-6cfb-4fa0-bd42-30e15119200d",
+    "candidate_id": "f1bbc525-0b49-48ed-9213-4479c2b789bd",
+    "native_author_id": "ACoAADAaVKsB2hQuH6J34lsGqjmnEOgny6fgZnc",
+    "profile_ref": "d5pskwub",
+    "request_id": "b4504e5a-0bfb-4ac4-84bb-bf1d11fca1b5",
+    "material_hash": "0b36ef17d78de49b9beeb2e87be37ace0e73570c242ab2cb1b5c034d2cd77e2b",
+    "policy_version": "initial-match-evaluation-v1",
+    "judgments": [
+      {
+        "criterion": "match_fit",
+        "outcome": "supported"
+      },
+      {
+        "criterion": {
+          "requirement": 0
+        },
+        "outcome": "supported"
+      }
+    ],
+    "verdict": "qualified",
+    "reasons": [],
+    "subscribers": 1548,
+    "created_at": 1792543773
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "target": "mcp-app",
+  "manifest": "../onecrew_lite-contracts/schemas/mcp-app.json",
+  "output": "src/lib/generated/contracts"
+}

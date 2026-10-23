@@ -1,0 +1,20 @@
+{
+  "github_source_head": "efc3c6eb69507b9809bb30279d9af26156d075e3",
+  "source_version": "0.7.1",
+  "toolchain": "Rust 1.98.0 x86_64-pc-windows-msvc; original Cargo.lock --locked",
+  "data_boundary": "Only original Rust unit-test records. No user data, credentials, browser state, or external provider calls.",
+  "commands": [
+    "ONECREW_IDENTITY_ORACLE_DIRECTORY=<fresh-directory> cargo test --locked -p onecrew-creator-runtime export_discovery_identity_node_oracle -- --nocapture",
+    "ONECREW_CONTACT_ORACLE_DIRECTORY=<fresh-directory> cargo test --locked -p onecrew-creator-runtime export_discovery_contact_node_oracle -- --nocapture",
+    "ONECREW_CREATOR_CANDIDATE_ORACLE_DIRECTORY=<fresh-directory> cargo test --locked -p onecrew-creator-runtime export_creator_candidate_node_compatibility_fixture -- --nocapture",
+    "ONECREW_CREATOR_IMPORT_ORACLE_DIRECTORY=<fresh-directory> cargo test --locked -p onecrew-creator-runtime export_creator_import_node_compatibility_fixture -- --nocapture"
+  ],
+  "oracle_sources": [
+    "onecrew_lite-rust/crates/creator-runtime/src/discovery_identity_merge/groups/tests.rs",
+    "onecrew_lite-rust/crates/creator-runtime/src/discovery_review/instagram_tests.rs",
+    "onecrew_lite-rust/crates/creator-runtime/src/repository/sqlite/creator_save/tests.rs",
+    "onecrew_lite-rust/crates/creator-runtime/src/repository/sqlite/tests/creator_import.rs"
+  ],
+  "copy_rules": "SQLite VACUUM INTO snapshots and XLSX copied as binary artifacts. creator-candidate/creator.sqlite is a native SQLite VACUUM INTO copy of the original Rust WAL database. JSON retained with a final newline using apply_patch; candidate prepared/selected golden SHA256 tests cover original bytes before that final newline.",
+  "expiration": "Import snapshots retain original expiration timestamps. An expired original operation is verified expired, then a real fresh preparation must match the original Rust plan fingerprint before confirmation. No clock replacement or expiration extension."
+}

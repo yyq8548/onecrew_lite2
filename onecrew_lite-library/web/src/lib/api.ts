@@ -1,5 +1,6 @@
 import { hc, parseResponse } from 'hono/client';
 import type { AppType } from 'onecrew/rpc';
+import { clearUnifiedSession, connectUnifiedSession, unifiedRuntimeMode } from './unified-runtime.js';
 
 const signalAccessState = (status: number, body: unknown) => {
   if (!body || typeof body !== 'object' || !('error' in body)) return;
@@ -50,13 +51,37 @@ const customFetch: typeof fetch = async (input, init) => {
   const headers = new Headers(input instanceof Request ? input.headers : undefined);
   new Headers(init?.headers).forEach((value, key) => headers.set(key, value));
   if (businessRequest && accountId) headers.set('X-OneCrew-Account-Id', accountId);
-  const response = await fetch(input, { ...init, headers });
+  if (unifiedRuntimeMode) {
+    const session = await connectUnifiedSession();
+    if (businessRequest) assertCurrentBusinessScope(generation, accountId);
+    if (businessRequest && session.accountId !== accountId)
+      throw new Error('Response belongs to a previous account session');
+    headers.set('X-OneCrew-Account-Id', session.accountId);
+    headers.set('X-OneCrew-Auth-Epoch', session.epoch);
+    const method = init?.method ?? (input instanceof Request ? input.method : 'GET');
+    if (!['GET', 'HEAD'].includes(method.toUpperCase()))
+      headers.set('X-OneCrew-CSRF', session.csrf);
+  }
+  const response = await fetch(input, {
+    ...init,
+    headers,
+    ...(unifiedRuntimeMode ? { credentials: 'same-origin', cache: 'no-store' } : {}),
+  });
   if (businessRequest) assertCurrentBusinessScope(generation, accountId);
   if (!response.ok) {
     const body = await response
       .clone()
       .json()
       .catch(() => undefined);
+    const error = body && typeof body === 'object' && 'error' in body ? body.error : undefined;
+    const code = typeof error === 'string' ? error : error && typeof error === 'object' && 'code' in error ? error.code : undefined;
+    if (unifiedRuntimeMode && (
+      response.status === 401 && (code === 'local.invalid_session' || code === 'local.unauthorized' || code === undefined)
+      || response.status === 409 && code === 'access.account_changed'
+    )) {
+      clearUnifiedSession();
+      window.dispatchEvent(new Event('onecrew:access-changed'));
+    }
     if (businessRequest) assertCurrentBusinessScope(generation, accountId);
     signalAccessState(response.status, body);
     if (body && typeof body === 'object' && 'error' in body) {
@@ -75,6 +100,18 @@ export const client = hc<AppType>('/', { fetch: customFetch });
 export const api = client.api.v1;
 
 export const request = parseResponse;
+
+export async function readBrowserConnection(signal: AbortSignal): Promise<{ connected: boolean }> {
+  if (!unifiedRuntimeMode) return request(api.browser.status.$get({}, { init: { signal } }));
+  const response = await customFetch('/api/commands/onecrew_opencli_setup_status', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}',
+    signal: AbortSignal.any([signal, AbortSignal.timeout(30_000)]),
+  });
+  if (!response.ok) throw new Error('Browser connection status unavailable');
+  const envelope = await response.json();
+  if (envelope?.ok !== true || typeof envelope.result?.daemon_running !== 'boolean' || typeof envelope.result?.extension_connected !== 'boolean') throw new Error('Invalid browser connection status');
+  return { connected: envelope.result.daemon_running && envelope.result.extension_connected };
+}
 
 export const downloadFile = async (response: Promise<Response>) => {
   const generation = businessAccountGeneration;

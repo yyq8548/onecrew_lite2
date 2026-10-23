@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 import { api, request, setBusinessAccountId } from '@/lib/api';
+import { clearUnifiedSession, unifiedRuntimeMode } from '@/lib/unified-runtime';
 import type { InferResponseType } from 'hono/client';
 
 export type AccessStatus = InferResponseType<typeof api.access.status.$get, 200>;
@@ -137,6 +138,7 @@ export function AccessProvider({ children }: { children: ReactNode }) {
   }, [refresh, status?.state]);
   const login = useCallback(
     async (popup?: Window | null) => {
+      if (unifiedRuntimeMode) throw new Error('Sign in to onecrew_lite, then reopen Library');
       invalidateScope(false);
       const requestGeneration = ++generation.current;
       try {
@@ -160,6 +162,7 @@ export function AccessProvider({ children }: { children: ReactNode }) {
     const requestGeneration = ++generation.current;
     try {
       const next = await request(api.access.logout.$post({}, { headers: requestHeaders }));
+      if (unifiedRuntimeMode) clearUnifiedSession();
       if (generation.current === requestGeneration) {
         applyStatus(next, false);
         broadcastInvalidation();

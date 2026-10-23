@@ -1,0 +1,23 @@
+{
+  "captured_from": "Saved real Ray LinkedIn profile; current Codex CLI; no browser reads",
+  "model_elapsed_ms": 9942,
+  "selection": {
+    "criterion": "selection_fit", "outcome": "supported", "match_level": null,
+    "rationale": "已保存的 LinkedIn 当前职位标题为 Binance 全球商务拓展，符合指定公司的商务、BD 或 Marketing 人员条件；粉丝数、地区和语言均无限制。这是基于已保存职业资料的初步评估，公开联系方式由后续独立环节核实。",
+    "citations": [{ "kind": "native_profile", "profile_url": "https://www.linkedin.com/in/ray-yee-liew/", "quote": "Global Business Development at Binance | Payments" }],
+    "tool": null, "country_code": null
+  },
+  "quality_rating": {
+    "criterion": "quality_rating", "outcome": "supported", "match_level": "good",
+    "rationale": "当前职位标题直接表明其在 Binance 从事全球商务拓展，并注明 Payments 方向，足以支持本次人员搜索的初步推荐，评为 good。已保存资料未显示与任务相关的显著弱点，也未提供足以支持 excellent 的独特优势；本判断仅依据保存样本。",
+    "citations": [{ "kind": "native_profile", "profile_url": "https://www.linkedin.com/in/ray-yee-liew/", "quote": "Global Business Development at Binance | Payments" }],
+    "tool": null, "country_code": null
+  },
+  "language_only_pending": false,
+  "requirement_findings": [{
+    "criterion": { "requirement": 0 }, "outcome": "supported", "match_level": null,
+    "rationale": "身份绑定的 LinkedIn 当前职位标题明确显示其任职于 Binance，从事 Global Business Development，满足指定公司之一的任职要求。这是基于已保存公开职业资料的初步核实。",
+    "citations": [{ "kind": "native_profile", "profile_url": "https://www.linkedin.com/in/ray-yee-liew/", "quote": "Global Business Development at Binance | Payments" }],
+    "tool": null, "country_code": null
+  }]
+}

@@ -10,7 +10,7 @@ const id = z
 const revision = z.number().int().positive().max(Number.MAX_SAFE_INTEGER);
 export const discoveryContactSchema = z
   .strictObject({
-    kind: z.enum(['email', 'telegram', 'hidden_email', 'social_profile', 'whatsapp', 'wechat', 'wechat_official']),
+    kind: z.enum(['email', 'telegram', 'hidden_email', 'social_profile', 'whatsapp', 'wechat', 'wechat_official', 'website', 'messenger', 'phone']),
     original_value: z.string().min(1).max(2048),
     normalized_value: z.string().min(1).max(2048),
     source_url: z
@@ -39,13 +39,24 @@ export const discoveryContactSchema = z
                 ? /^[a-zA-Z][a-zA-Z0-9_-]{5,19}$/.test(contact.normalized_value)
                 : contact.kind === 'wechat_official'
                   ? contact.normalized_value.trim().length > 0 && contact.normalized_value.length <= 80
-                  : isSocialProfile(contact.normalized_value);
+                  : contact.kind === 'messenger'
+                    ? contact.normalized_value === `https://www.facebook.com/messages/t/${contact.native_author_id}/` && /^[1-9][0-9]{0,19}$/.test(contact.native_author_id) && new URL(contact.source_url).hostname === 'www.facebook.com'
+                    : contact.kind === 'phone'
+                      ? /^\+?[0-9]{7,15}$/.test(contact.normalized_value)
+                      : contact.kind === 'website'
+                        ? publishedWebsite(contact.normalized_value)
+                        : isSocialProfile(contact.normalized_value);
     if (!valid) ctx.addIssue({ code: 'custom', message: 'Invalid contact locator' });
-    if (['hidden_email', 'social_profile', 'whatsapp', 'wechat', 'wechat_official'].includes(contact.kind)
+    if (['hidden_email', 'social_profile', 'whatsapp', 'wechat', 'wechat_official', 'website', 'messenger', 'phone'].includes(contact.kind)
       && contact.attribution !== 'author_published')
       ctx.addIssue({ code: 'custom', message: 'Contact route requires author-published evidence' });
   });
 export type DiscoveryContact = z.infer<typeof discoveryContactSchema>;
+function publishedWebsite(value: string): boolean {
+  const url = URL.parse(value.startsWith('www.') ? `https://${value}` : value);
+  return url !== null && ['http:', 'https:'].includes(url.protocol) && !url.username && !url.password && !url.port
+    && url.hostname.includes('.') && !/^[\d.]+$|:|(?:^|\.)(?:localhost|local|internal|test)$/i.test(url.hostname);
+}
 const rowSchema = z
   .strictObject({
     row_id: id,
@@ -53,7 +64,7 @@ const rowSchema = z
     candidate_id: id.nullable(),
     native_author_id: id.nullable(),
     verdict: z.enum(['unverified', 'pending', 'qualified', 'rejected']),
-    reasons: z.array(z.string().min(1).max(2000)).max(50),
+    reasons: z.array(z.string().min(1).max(2000)).max(54),
     evidence_version: z.string().regex(/^[0-9a-f]{64}$/),
     // Older producers have no contacts. Default only this additive wire field.
     contacts: z.array(discoveryContactSchema).max(100).default([]),
@@ -128,11 +139,10 @@ export const discoveryIngestSchema = z
                 (value) =>
                   value !== null &&
                   typeof value === 'object' &&
-                  row.verdict !== 'qualified' &&
-                  !(row.verdict === 'rejected' && value.level === 'low'),
+                  (row.candidate_id === null || row.native_author_id === null),
               )
             )
-              ctx.addIssue({ code: 'custom', message: 'Score conflicts with source verdict' });
+              ctx.addIssue({ code: 'custom', message: 'Score requires a verified source identity' });
           }),
       )
       .min(1)

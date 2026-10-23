@@ -1,0 +1,18 @@
+{
+  "source_commit": "efc3c6eb69507b9809bb30279d9af26156d075e3",
+  "source_version": "0.7.1",
+  "registry": {
+    "path": "../../src/service/mcp-registry-data.json",
+    "sha256": "a63a789c4e0ec45ac7ec5ae0121ee1793f5c159551ab4c68258ab20117870d50",
+    "source": ".scratch/native-registry-oracle/registry.json",
+    "copy": "Original Rust registry oracle bytes, copied without filtering or rewriting. Runtime handler availability is checked separately."
+  },
+  "search": {
+    "path": "mcp-search-rust.json",
+    "sha256": "33129d61d2bd81d33f826a292fd7141fe21a60bc6169db62bafcaf2b733fa600",
+    "test": "operation_registry::search::tests::contracts::export_mcp_search_node_oracle",
+    "command": "cargo +1.98.0-x86_64-pc-windows-msvc test --locked -p onecrew-mcp-adapter export_mcp_search_node_oracle -- --nocapture",
+    "environment": "ONECREW_MCP_SEARCH_ORACLE points to a private output file; CARGO_INCREMENTAL=0; MSVC environment initialized.",
+    "copy": "Original Rust Tantivy search output for all 129 retained operation evaluation cases, copied without rewriting. No provider calls or account data."
+  }
+}

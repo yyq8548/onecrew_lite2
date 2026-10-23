@@ -1,0 +1,16 @@
+{
+  "source_commit": "efc3c6eb69507b9809bb30279d9af26156d075e3",
+  "source_test": "onecrew_lite-rust/crates/creator-runtime/src/discovery_facebook_identity/tests.rs::export_discovery_facebook_identity_targets_node_oracle",
+  "command": "cargo +1.98.0-x86_64-pc-windows-msvc test --locked -p onecrew-creator-runtime export_discovery_facebook_identity_targets_node_oracle --lib",
+  "environment": "ONECREW_FACEBOOK_IDENTITY_TARGETS_ORACLE_DIRECTORY=<private output directory>",
+  "description": "Original saved vanity search, governed native identity, v2 profile and bounded target reservation/finish. VACUUM INTO snapshots. Generated test data only, without user credentials; original bytes retained.",
+  "sha256": {
+    "before.sqlite": "5e19a7ed4fb4625766c29d7ae69e847e49642186966ad7ce81aec5fcd2cc2a64",
+    "identity-claimed.sqlite": "c88bffe82100ab69df9659fd6734e7e266dd71e1afb2e79b8afbb23d11c6caf5",
+    "identity-completed.sqlite": "66b11b23807a142c4b4799a4b5e2acabd3f1c43fe5a73ae506d74358e743d419",
+    "profile-completed.sqlite": "0ab3ecfa938f7d78f8e6ec2f075722f5aa868373ec49832170bb5629e5e572aa",
+    "targets-claimed.sqlite": "be99c956f42f36009f0503cc089ebbae4bf13f3c84485e0f1b9c78cf682e6bd7",
+    "targets-completed.sqlite": "681af669137d9fa72e24bda7264db7e27b352b7b0d91162bce21ecf6b65771fc",
+    "oracle.json": "ee31c49636d74e2ec49b28726be71d1e853d1c90479295f70782753befa5cdc4"
+  }
+}

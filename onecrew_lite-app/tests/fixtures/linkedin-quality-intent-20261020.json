@@ -1,0 +1,16 @@
+{
+  "captured_from": "Current Codex CLI, DiscoverySemanticPlanner.prepare and independent query audit; no browser reads",
+  "model_elapsed_ms": 50208,
+  "input": { "id": "real-quality-or-planning", "brief": "只在LinkedIn找5位BD人员，评分至少85或者目前任职币安，满足其中一项即可，粉丝不限。", "profile_ref": "work", "opencli_version": "1.8.8", "target_count": null, "max_calls": null, "min_followers_override": null, "criteria_overrides": null, "scope_overrides": [], "refinement": null },
+  "draft": {
+    "id": "real-quality-or-planning", "brief": "只在LinkedIn找5位BD人员，评分至少85或者目前任职币安，满足其中一项即可，粉丝不限。", "opencli_version": "1.8.8",
+    "criteria": {
+      "category": "BD人员", "region": "", "language": "", "min_subscribers": 0, "requires_ai_tool_demo": false, "requires_public_tool_url": false, "min_subscribers_source": "explicit",
+      "quality_filter": { "kind": "any", "items": [{ "kind": "minimum", "operator": "gte", "score": 85, "excerpt": "评分至少85" }, { "kind": "requirement", "index": 0 }] },
+      "requirements": [{ "description": "该人员目前任职币安。", "excerpt": "目前任职币安" }], "contact_preference": "public_email_first",
+      "contact_search_terms": ["email", "business cooperation", "contact", "official website"], "automatic_query_expansion": true, "table_subject": "BD人员"
+    },
+    "scopes": [{ "platform": "linkedin", "profile_ref": "work", "keywords": ["Business Development", "BD", "商务拓展", "商务发展", "Binance Business Development", "Binance BD", "币安 商务拓展"] }],
+    "target_count": 5, "max_calls": null
+  }
+}

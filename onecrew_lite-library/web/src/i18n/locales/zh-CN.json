@@ -15,6 +15,9 @@
   "account": {
     "login": "登录",
     "loginTitle": "登录 onecrew_lite",
+    "unifiedSignIn": "请先在 onecrew_lite 完成登录，再重新打开资料库。",
+    "connectionTitle": "动态表格连接待恢复",
+    "connectionUnavailable": "暂时无法核实本地会话或云端连接，正在重新检查。若服务已经重启，请从 OneCrew 状态卡同时重新打开工作台和动态表格。",
     "loginDescription": "登录后访问你的表格和连接。",
     "loginSuccess": "登录成功",
     "returningToApp": "即将返回应用…",
@@ -42,7 +45,7 @@
     "tryAgain": "重试",
     "openLogin": "打开登录",
     "unavailable": "账号服务不可用。",
-    "reauthorizationRequired": "此设备的登录授权已失效或无法使用，请重新授权。现有表格和数据会保留。",
+    "reauthorizationRequired": "账号授权已失效，请重新授权。现有表格和数据保留。",
     "reauthorize": "重新授权",
     "loginError": "无法开始登录。",
     "logoutError": "无法退出登录，请重试。",
@@ -153,7 +156,8 @@
     "editSourceDetails": "查看和编辑来源明细",
     "verdict": {
       "qualified": "推荐候选人",
-      "pending": "尚未评分",
+      "related": "相关备选（不计入推荐人数）",
+      "pending": "待核实",
       "rejected": "未进入推荐名单",
       "unverified": "尚未核实"
     },
@@ -163,18 +167,13 @@
       "subscriber_count_unverified": "粉丝数未核实",
       "subscriber_count_near_threshold": "粉丝数接近门槛，尚不确定",
       "below_min_subscribers": "粉丝数低于门槛",
+      "related_alternative": "相关备选，不计入推荐目标",
       "own_ai_tool_demo_unverified": "本人 AI 工具演示未核实",
       "public_tool_url_unverified": "公开工具链接未核实",
       "region_unverified": "创作者所在地未核实",
       "category_unverified": "品类内容未核实",
       "language_unverified": "内容语言未核实",
       "unsupported_criterion": "有尚未完成核实的硬条件",
-      "requirement_unverified": "客户要求仍需补充证据",
-      "requirement_contradicted": "已有证据违反客户要求",
-      "requirements_invalid": "条件格式需要检查",
-      "excluded_by_customer": "已按客户要求排除该账号",
-      "excluded_account_identity_unverified": "待确认是否为客户排除的账号",
-      "excluded_accounts_invalid": "排除账号的资料需要检查",
       "initial_match_low": "低匹配",
       "initial_match_unrated": "关键证据不足，未评分"
     },
@@ -185,7 +184,7 @@
     "deleteRow": "删除行",
     "deleteRowTitle": "删除此行？",
     "deleteRowDescription": "此行将被永久删除。",
-    "matchEvaluation": "匹配评分",
+    "matchEvaluation": "质量评分",
     "contacts": "联系方式",
     "unrated": "尚未评分"
   },
@@ -228,8 +227,8 @@
     "checking": "正在检查",
     "online": "已连接",
     "offline": "等待扩展连接",
-    "serviceOffline": "本地服务未启动",
-    "serviceHint": "启动本地 onecrew_lite 服务后，扩展会自动恢复连接。",
+    "serviceOffline": "暂时无法读取扩展连接状态",
+    "serviceHint": "请在工作台检查浏览器连接；如果页面授权已失效，请从 OneCrew 重新打开资料库。",
     "hint": "扩展启用后自动连接本机服务，无需手动配对。"
   }
 }

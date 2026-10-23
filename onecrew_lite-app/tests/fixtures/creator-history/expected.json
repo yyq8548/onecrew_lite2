@@ -1,0 +1,99 @@
+{
+  "before": {
+    "items": [
+      {
+        "channel": "x",
+        "contact_route_id": "route-1",
+        "conversation_id": "conv-1",
+        "creator_display_name": "受访者",
+        "creator_id": "creator-1",
+        "last_message": {
+          "direction": "inbound",
+          "preview": "有兴趣，报个价",
+          "sent_at": 10
+        },
+        "operator_account_label": "Operator",
+        "operator_account_ref_id": "account-1",
+        "provider_thread_id": "thread-1",
+        "resolved_target_id": "target-1",
+        "updated_at": 1
+      }
+    ]
+  },
+  "conversations": {
+    "items": [
+      {
+        "channel": "x",
+        "contact_route_id": "route-1",
+        "conversation_id": "conv-1",
+        "creator_display_name": "受访者",
+        "creator_id": "creator-1",
+        "last_message": {
+          "direction": "inbound",
+          "preview": "有兴趣，报个价",
+          "sent_at": 10
+        },
+        "operator_account_label": "Operator",
+        "operator_account_ref_id": "account-1",
+        "provider_thread_id": "thread-1",
+        "resolved_target_id": "target-1",
+        "triage": {
+          "acknowledged": false,
+          "created_at": 123,
+          "intent": "interested",
+          "suggested_reply": "建议文本",
+          "summary": "原始分类"
+        },
+        "updated_at": 1
+      }
+    ]
+  },
+  "debt": {
+    "items": [],
+    "total": 0
+  },
+  "last": {
+    "account_ref": {
+      "active": true,
+      "availability": "available",
+      "created_at": 1,
+      "id": "account-1",
+      "kind": "profile",
+      "label": "Operator",
+      "platform": "x",
+      "updated_at": 1
+    },
+    "channel": "x",
+    "contact_route_id": "route-1",
+    "last_contact_at": 5
+  },
+  "list": {
+    "items": [
+      {
+        "channel": "dm",
+        "conversation_id": "conv-1",
+        "created_at": 123,
+        "creator_id": "creator-1",
+        "creator_name": "受访者",
+        "excerpt": "有兴趣，报个价",
+        "id": "e726d506-8287-4f48-9f70-36e8a4940de7",
+        "intent": "interested",
+        "message_id": "msg-in",
+        "suggested_reply": "建议文本",
+        "summary": "原始分类"
+      }
+    ]
+  },
+  "pending": {
+    "items": [
+      {
+        "channel": "dm",
+        "excerpt": "有兴趣，报个价",
+        "from": "",
+        "message_id": "msg-in",
+        "occurred_at": 10
+      }
+    ],
+    "total": 1
+  }
+}

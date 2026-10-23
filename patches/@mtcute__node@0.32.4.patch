@@ -1,0 +1,12 @@
+diff --git a/utils/normalize-file.d.ts b/utils/normalize-file.d.ts
+index 79fb1bfe01ead46fa6cc0bffbcdf47a30b7bbd98..bc8d2fb7edf3869926748d29e66bd67d50d3e7f7 100644
+--- a/utils/normalize-file.d.ts
++++ b/utils/normalize-file.d.ts
+@@ -1,6 +1,6 @@
+ import { UploadFileLike } from '@mtcute/core';
+ export declare function normalizeFile(file: UploadFileLike): Promise<{
+     file: UploadFileLike;
+-    fileName?: string | undefined;
++    fileName?: string;
+     fileSize?: number;
+ } | null>;

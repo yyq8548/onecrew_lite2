@@ -1,0 +1,83 @@
+{
+  "captured_from": "2026-10-20 actual CodexSemanticClient profile-only assessment for Lauren; isolated SQLite, production untouched",
+  "captured_at": "2026-10-21T00:51:32.747Z",
+  "model_elapsed_ms": 17914,
+  "operator_account_id": "Ye7CHhx3OvrXP80JGxEJJVmabkhpM9Kn",
+  "input": {
+    "campaign_id": "602c0efd-6922-4999-9c99-79777b532150",
+    "expected_revision": 1,
+    "search_hit_id": "2c41fba8-477d-4a9e-90dc-2161689bc398",
+    "material_hash": "f91047019465565eb5122339ae9fd295c6b3e68cdb4287217e4e00673dbd8c18",
+    "request_id": "80c0b7fb-49e4-4cbc-8edc-ac898c9d16c4",
+    "reviewer": {
+      "kind": "agent",
+      "label": "onecrew-match-evaluation-0cebf122-initial-v1"
+    },
+    "findings": [
+      {
+        "criterion": "match_fit",
+        "outcome": "insufficient",
+        "rationale": "保存的职业简介显示其具备战略合作、市场拓展及 GTM 经验，与商务、BD 和 Marketing 职能相关；但简介仅提到 Binance 任职经历，当前职位标题标注 Ex-Binance，无法确认其目前任职于指定的五家公司之一。本次仅依据保存的资料作初步评估，未检查完整发布历史；现任雇主仍待核实，粉丝数和联系方式不影响本次判断。",
+        "citations": [
+          {
+            "kind": "native_profile",
+            "profile_url": "https://www.linkedin.com/in/eujin-lauren-lee-1022/",
+            "quote": "Crypto growth and ecosystem operator with experience at Binance, focused on building market expansion channels through strategic partnerships, ecosystem development, and GTM execution across Web3 infrastructure.ABD Ph.D. in Business, with international studies background. Fluent in Korean, Japanese, English, and Spanish"
+          }
+        ],
+        "tool": null,
+        "country_code": null,
+        "match_level": null
+      },
+      {
+        "criterion": {
+          "requirement": 0
+        },
+        "outcome": "insufficient",
+        "rationale": "资料显示该账号属于个人职业人员，其战略合作、市场拓展和 GTM 经历符合目标职能方向。Binance 经历及 Ex-Binance 职位标题不能证明当前任职关系，且保存资料未确认其现任职于 OKX、Bitget、Bybit 或 Gate.io，因此完整条件尚未得到支持。",
+        "citations": [
+          {
+            "kind": "native_profile",
+            "profile_url": "https://www.linkedin.com/in/eujin-lauren-lee-1022/",
+            "quote": "Crypto growth and ecosystem operator with experience at Binance, focused on building market expansion channels through strategic partnerships, ecosystem development, and GTM execution across Web3 infrastructure.ABD Ph.D. in Business, with international studies background. Fluent in Korean, Japanese, English, and Spanish"
+          }
+        ],
+        "tool": null,
+        "country_code": null,
+        "match_level": null
+      }
+    ]
+  },
+  "receipt": {
+    "review_id": "9431455f-2256-44f1-9619-45d6c097875d",
+    "operator_account_id": "Ye7CHhx3OvrXP80JGxEJJVmabkhpM9Kn",
+    "campaign_id": "602c0efd-6922-4999-9c99-79777b532150",
+    "criteria_revision": 1,
+    "search_hit_id": "2c41fba8-477d-4a9e-90dc-2161689bc398",
+    "candidate_id": "b4e21a5b-7f63-4954-a730-15cd3b44bdc5",
+    "native_author_id": "ACoAACjQtOEBVpWHOdCrD9JLJqA7XSZAdOzUkH8",
+    "profile_ref": "d5pskwub",
+    "request_id": "80c0b7fb-49e4-4cbc-8edc-ac898c9d16c4",
+    "material_hash": "f91047019465565eb5122339ae9fd295c6b3e68cdb4287217e4e00673dbd8c18",
+    "policy_version": "initial-match-evaluation-v1",
+    "judgments": [
+      {
+        "criterion": "match_fit",
+        "outcome": "insufficient"
+      },
+      {
+        "criterion": {
+          "requirement": 0
+        },
+        "outcome": "insufficient"
+      }
+    ],
+    "verdict": "pending",
+    "reasons": [
+      "initial_match_unrated",
+      "requirement_unverified"
+    ],
+    "subscribers": null,
+    "created_at": 1792543892
+  }
+}

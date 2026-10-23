@@ -1,0 +1,974 @@
+[
+  {
+    "assessed_evidence": {
+      "assessment": {
+        "match_rating": null,
+        "reasons": [
+          "subscriber_count_unverified"
+        ],
+        "subscribers_normalized": null
+      }
+    },
+    "author": "author",
+    "count": null,
+    "criteria": {
+      "language": "",
+      "min_followers": 8000,
+      "requires_ai_tool_demo": false,
+      "requires_public_tool_url": false
+    },
+    "evidence": {},
+    "expected": {
+      "reasons": [
+        "subscriber_count_unverified"
+      ],
+      "subscribers": null,
+      "verdict": "pending"
+    },
+    "mode": "profile"
+  },
+  {
+    "assessed_evidence": {
+      "assessment": {
+        "match_rating": null,
+        "reasons": [
+          "below_min_subscribers"
+        ],
+        "subscribers_normalized": 7999
+      }
+    },
+    "author": "author",
+    "count": 7999,
+    "criteria": {
+      "language": "",
+      "min_followers": 8000,
+      "requires_ai_tool_demo": false,
+      "requires_public_tool_url": false
+    },
+    "evidence": {},
+    "expected": {
+      "reasons": [
+        "below_min_subscribers"
+      ],
+      "subscribers": 7999,
+      "verdict": "rejected"
+    },
+    "mode": "profile"
+  },
+  {
+    "assessed_evidence": {
+      "assessment": {
+        "match_rating": null,
+        "reasons": [],
+        "subscribers_normalized": 8000
+      }
+    },
+    "author": "author",
+    "count": 8000,
+    "criteria": {
+      "language": "",
+      "min_followers": 8000,
+      "requires_ai_tool_demo": false,
+      "requires_public_tool_url": false
+    },
+    "evidence": {},
+    "expected": {
+      "reasons": [],
+      "subscribers": 8000,
+      "verdict": "qualified"
+    },
+    "mode": "profile"
+  },
+  {
+    "assessed_evidence": {
+      "assessment": {
+        "match_rating": null,
+        "reasons": [],
+        "subscribers_normalized": 9000
+      }
+    },
+    "author": "author",
+    "count": 9000,
+    "criteria": {
+      "language": "",
+      "min_followers": 8000,
+      "requires_ai_tool_demo": false,
+      "requires_public_tool_url": false
+    },
+    "evidence": {},
+    "expected": {
+      "reasons": [],
+      "subscribers": 9000,
+      "verdict": "qualified"
+    },
+    "mode": "profile"
+  },
+  {
+    "assessed_evidence": {
+      "assessment": {
+        "match_rating": null,
+        "reasons": [],
+        "subscribers_normalized": 18446744073709551615
+      }
+    },
+    "author": "author",
+    "count": 18446744073709551615,
+    "criteria": {
+      "language": "",
+      "min_followers": 8000,
+      "requires_ai_tool_demo": false,
+      "requires_public_tool_url": false
+    },
+    "evidence": {},
+    "expected": {
+      "reasons": [],
+      "subscribers": 18446744073709551615,
+      "verdict": "qualified"
+    },
+    "mode": "profile"
+  },
+  {
+    "assessed_evidence": {
+      "assessment": {
+        "match_rating": null,
+        "reasons": [
+          "subscriber_count_unverified"
+        ],
+        "subscribers_normalized": null
+      }
+    },
+    "author": "author",
+    "count": null,
+    "criteria": {
+      "language": "不限",
+      "min_followers": 8000,
+      "requires_ai_tool_demo": false,
+      "requires_public_tool_url": false
+    },
+    "evidence": {},
+    "expected": {
+      "reasons": [
+        "subscriber_count_unverified"
+      ],
+      "subscribers": null,
+      "verdict": "pending"
+    },
+    "mode": "profile"
+  },
+  {
+    "assessed_evidence": {
+      "assessment": {
+        "match_rating": null,
+        "reasons": [
+          "below_min_subscribers"
+        ],
+        "subscribers_normalized": 7999
+      }
+    },
+    "author": "author",
+    "count": 7999,
+    "criteria": {
+      "language": "不限",
+      "min_followers": 8000,
+      "requires_ai_tool_demo": false,
+      "requires_public_tool_url": false
+    },
+    "evidence": {},
+    "expected": {
+      "reasons": [
+        "below_min_subscribers"
+      ],
+      "subscribers": 7999,
+      "verdict": "rejected"
+    },
+    "mode": "profile"
+  },
+  {
+    "assessed_evidence": {
+      "assessment": {
+        "match_rating": null,
+        "reasons": [],
+        "subscribers_normalized": 8000
+      }
+    },
+    "author": "author",
+    "count": 8000,
+    "criteria": {
+      "language": "不限",
+      "min_followers": 8000,
+      "requires_ai_tool_demo": false,
+      "requires_public_tool_url": false
+    },
+    "evidence": {},
+    "expected": {
+      "reasons": [],
+      "subscribers": 8000,
+      "verdict": "qualified"
+    },
+    "mode": "profile"
+  },
+  {
+    "assessed_evidence": {
+      "assessment": {
+        "match_rating": null,
+        "reasons": [],
+        "subscribers_normalized": 9000
+      }
+    },
+    "author": "author",
+    "count": 9000,
+    "criteria": {
+      "language": "不限",
+      "min_followers": 8000,
+      "requires_ai_tool_demo": false,
+      "requires_public_tool_url": false
+    },
+    "evidence": {},
+    "expected": {
+      "reasons": [],
+      "subscribers": 9000,
+      "verdict": "qualified"
+    },
+    "mode": "profile"
+  },
+  {
+    "assessed_evidence": {
+      "assessment": {
+        "match_rating": null,
+        "reasons": [],
+        "subscribers_normalized": 18446744073709551615
+      }
+    },
+    "author": "author",
+    "count": 18446744073709551615,
+    "criteria": {
+      "language": "不限",
+      "min_followers": 8000,
+      "requires_ai_tool_demo": false,
+      "requires_public_tool_url": false
+    },
+    "evidence": {},
+    "expected": {
+      "reasons": [],
+      "subscribers": 18446744073709551615,
+      "verdict": "qualified"
+    },
+    "mode": "profile"
+  },
+  {
+    "assessed_evidence": {
+      "assessment": {
+        "match_rating": null,
+        "reasons": [
+          "subscriber_count_unverified"
+        ],
+        "subscribers_normalized": null
+      }
+    },
+    "author": "author",
+    "count": null,
+    "criteria": {
+      "language": "语言不限",
+      "min_followers": 8000,
+      "requires_ai_tool_demo": false,
+      "requires_public_tool_url": false
+    },
+    "evidence": {},
+    "expected": {
+      "reasons": [
+        "subscriber_count_unverified"
+      ],
+      "subscribers": null,
+      "verdict": "pending"
+    },
+    "mode": "profile"
+  },
+  {
+    "assessed_evidence": {
+      "assessment": {
+        "match_rating": null,
+        "reasons": [
+          "below_min_subscribers"
+        ],
+        "subscribers_normalized": 7999
+      }
+    },
+    "author": "author",
+    "count": 7999,
+    "criteria": {
+      "language": "语言不限",
+      "min_followers": 8000,
+      "requires_ai_tool_demo": false,
+      "requires_public_tool_url": false
+    },
+    "evidence": {},
+    "expected": {
+      "reasons": [
+        "below_min_subscribers"
+      ],
+      "subscribers": 7999,
+      "verdict": "rejected"
+    },
+    "mode": "profile"
+  },
+  {
+    "assessed_evidence": {
+      "assessment": {
+        "match_rating": null,
+        "reasons": [],
+        "subscribers_normalized": 8000
+      }
+    },
+    "author": "author",
+    "count": 8000,
+    "criteria": {
+      "language": "语言不限",
+      "min_followers": 8000,
+      "requires_ai_tool_demo": false,
+      "requires_public_tool_url": false
+    },
+    "evidence": {},
+    "expected": {
+      "reasons": [],
+      "subscribers": 8000,
+      "verdict": "qualified"
+    },
+    "mode": "profile"
+  },
+  {
+    "assessed_evidence": {
+      "assessment": {
+        "match_rating": null,
+        "reasons": [],
+        "subscribers_normalized": 9000
+      }
+    },
+    "author": "author",
+    "count": 9000,
+    "criteria": {
+      "language": "语言不限",
+      "min_followers": 8000,
+      "requires_ai_tool_demo": false,
+      "requires_public_tool_url": false
+    },
+    "evidence": {},
+    "expected": {
+      "reasons": [],
+      "subscribers": 9000,
+      "verdict": "qualified"
+    },
+    "mode": "profile"
+  },
+  {
+    "assessed_evidence": {
+      "assessment": {
+        "match_rating": null,
+        "reasons": [],
+        "subscribers_normalized": 18446744073709551615
+      }
+    },
+    "author": "author",
+    "count": 18446744073709551615,
+    "criteria": {
+      "language": "语言不限",
+      "min_followers": 8000,
+      "requires_ai_tool_demo": false,
+      "requires_public_tool_url": false
+    },
+    "evidence": {},
+    "expected": {
+      "reasons": [],
+      "subscribers": 18446744073709551615,
+      "verdict": "qualified"
+    },
+    "mode": "profile"
+  },
+  {
+    "assessed_evidence": {
+      "assessment": {
+        "match_rating": null,
+        "reasons": [
+          "subscriber_count_unverified"
+        ],
+        "subscribers_normalized": null
+      }
+    },
+    "author": "author",
+    "count": null,
+    "criteria": {
+      "language": "any",
+      "min_followers": 8000,
+      "requires_ai_tool_demo": false,
+      "requires_public_tool_url": false
+    },
+    "evidence": {},
+    "expected": {
+      "reasons": [
+        "subscriber_count_unverified"
+      ],
+      "subscribers": null,
+      "verdict": "pending"
+    },
+    "mode": "profile"
+  },
+  {
+    "assessed_evidence": {
+      "assessment": {
+        "match_rating": null,
+        "reasons": [
+          "below_min_subscribers"
+        ],
+        "subscribers_normalized": 7999
+      }
+    },
+    "author": "author",
+    "count": 7999,
+    "criteria": {
+      "language": "any",
+      "min_followers": 8000,
+      "requires_ai_tool_demo": false,
+      "requires_public_tool_url": false
+    },
+    "evidence": {},
+    "expected": {
+      "reasons": [
+        "below_min_subscribers"
+      ],
+      "subscribers": 7999,
+      "verdict": "rejected"
+    },
+    "mode": "profile"
+  },
+  {
+    "assessed_evidence": {
+      "assessment": {
+        "match_rating": null,
+        "reasons": [],
+        "subscribers_normalized": 8000
+      }
+    },
+    "author": "author",
+    "count": 8000,
+    "criteria": {
+      "language": "any",
+      "min_followers": 8000,
+      "requires_ai_tool_demo": false,
+      "requires_public_tool_url": false
+    },
+    "evidence": {},
+    "expected": {
+      "reasons": [],
+      "subscribers": 8000,
+      "verdict": "qualified"
+    },
+    "mode": "profile"
+  },
+  {
+    "assessed_evidence": {
+      "assessment": {
+        "match_rating": null,
+        "reasons": [],
+        "subscribers_normalized": 9000
+      }
+    },
+    "author": "author",
+    "count": 9000,
+    "criteria": {
+      "language": "any",
+      "min_followers": 8000,
+      "requires_ai_tool_demo": false,
+      "requires_public_tool_url": false
+    },
+    "evidence": {},
+    "expected": {
+      "reasons": [],
+      "subscribers": 9000,
+      "verdict": "qualified"
+    },
+    "mode": "profile"
+  },
+  {
+    "assessed_evidence": {
+      "assessment": {
+        "match_rating": null,
+        "reasons": [],
+        "subscribers_normalized": 18446744073709551615
+      }
+    },
+    "author": "author",
+    "count": 18446744073709551615,
+    "criteria": {
+      "language": "any",
+      "min_followers": 8000,
+      "requires_ai_tool_demo": false,
+      "requires_public_tool_url": false
+    },
+    "evidence": {},
+    "expected": {
+      "reasons": [],
+      "subscribers": 18446744073709551615,
+      "verdict": "qualified"
+    },
+    "mode": "profile"
+  },
+  {
+    "assessed_evidence": {
+      "assessment": {
+        "match_rating": null,
+        "reasons": [
+          "subscriber_count_unverified"
+        ],
+        "subscribers_normalized": null
+      }
+    },
+    "author": "author",
+    "count": null,
+    "criteria": {
+      "language": " Unrestricted ",
+      "min_followers": 8000,
+      "requires_ai_tool_demo": false,
+      "requires_public_tool_url": false
+    },
+    "evidence": {},
+    "expected": {
+      "reasons": [
+        "subscriber_count_unverified"
+      ],
+      "subscribers": null,
+      "verdict": "pending"
+    },
+    "mode": "profile"
+  },
+  {
+    "assessed_evidence": {
+      "assessment": {
+        "match_rating": null,
+        "reasons": [
+          "below_min_subscribers"
+        ],
+        "subscribers_normalized": 7999
+      }
+    },
+    "author": "author",
+    "count": 7999,
+    "criteria": {
+      "language": " Unrestricted ",
+      "min_followers": 8000,
+      "requires_ai_tool_demo": false,
+      "requires_public_tool_url": false
+    },
+    "evidence": {},
+    "expected": {
+      "reasons": [
+        "below_min_subscribers"
+      ],
+      "subscribers": 7999,
+      "verdict": "rejected"
+    },
+    "mode": "profile"
+  },
+  {
+    "assessed_evidence": {
+      "assessment": {
+        "match_rating": null,
+        "reasons": [],
+        "subscribers_normalized": 8000
+      }
+    },
+    "author": "author",
+    "count": 8000,
+    "criteria": {
+      "language": " Unrestricted ",
+      "min_followers": 8000,
+      "requires_ai_tool_demo": false,
+      "requires_public_tool_url": false
+    },
+    "evidence": {},
+    "expected": {
+      "reasons": [],
+      "subscribers": 8000,
+      "verdict": "qualified"
+    },
+    "mode": "profile"
+  },
+  {
+    "assessed_evidence": {
+      "assessment": {
+        "match_rating": null,
+        "reasons": [],
+        "subscribers_normalized": 9000
+      }
+    },
+    "author": "author",
+    "count": 9000,
+    "criteria": {
+      "language": " Unrestricted ",
+      "min_followers": 8000,
+      "requires_ai_tool_demo": false,
+      "requires_public_tool_url": false
+    },
+    "evidence": {},
+    "expected": {
+      "reasons": [],
+      "subscribers": 9000,
+      "verdict": "qualified"
+    },
+    "mode": "profile"
+  },
+  {
+    "assessed_evidence": {
+      "assessment": {
+        "match_rating": null,
+        "reasons": [],
+        "subscribers_normalized": 18446744073709551615
+      }
+    },
+    "author": "author",
+    "count": 18446744073709551615,
+    "criteria": {
+      "language": " Unrestricted ",
+      "min_followers": 8000,
+      "requires_ai_tool_demo": false,
+      "requires_public_tool_url": false
+    },
+    "evidence": {},
+    "expected": {
+      "reasons": [],
+      "subscribers": 18446744073709551615,
+      "verdict": "qualified"
+    },
+    "mode": "profile"
+  },
+  {
+    "assessed_evidence": {
+      "assessment": {
+        "match_rating": null,
+        "reasons": [
+          "subscriber_count_unverified",
+          "language_unverified"
+        ],
+        "subscribers_normalized": null
+      }
+    },
+    "author": "author",
+    "count": null,
+    "criteria": {
+      "language": "English",
+      "min_followers": 8000,
+      "requires_ai_tool_demo": false,
+      "requires_public_tool_url": false
+    },
+    "evidence": {},
+    "expected": {
+      "reasons": [
+        "subscriber_count_unverified",
+        "language_unverified"
+      ],
+      "subscribers": null,
+      "verdict": "pending"
+    },
+    "mode": "profile"
+  },
+  {
+    "assessed_evidence": {
+      "assessment": {
+        "match_rating": null,
+        "reasons": [
+          "below_min_subscribers",
+          "language_unverified"
+        ],
+        "subscribers_normalized": 7999
+      }
+    },
+    "author": "author",
+    "count": 7999,
+    "criteria": {
+      "language": "English",
+      "min_followers": 8000,
+      "requires_ai_tool_demo": false,
+      "requires_public_tool_url": false
+    },
+    "evidence": {},
+    "expected": {
+      "reasons": [
+        "below_min_subscribers",
+        "language_unverified"
+      ],
+      "subscribers": 7999,
+      "verdict": "rejected"
+    },
+    "mode": "profile"
+  },
+  {
+    "assessed_evidence": {
+      "assessment": {
+        "match_rating": null,
+        "reasons": [
+          "language_unverified"
+        ],
+        "subscribers_normalized": 8000
+      }
+    },
+    "author": "author",
+    "count": 8000,
+    "criteria": {
+      "language": "English",
+      "min_followers": 8000,
+      "requires_ai_tool_demo": false,
+      "requires_public_tool_url": false
+    },
+    "evidence": {},
+    "expected": {
+      "reasons": [
+        "language_unverified"
+      ],
+      "subscribers": 8000,
+      "verdict": "pending"
+    },
+    "mode": "profile"
+  },
+  {
+    "assessed_evidence": {
+      "assessment": {
+        "match_rating": null,
+        "reasons": [
+          "language_unverified"
+        ],
+        "subscribers_normalized": 9000
+      }
+    },
+    "author": "author",
+    "count": 9000,
+    "criteria": {
+      "language": "English",
+      "min_followers": 8000,
+      "requires_ai_tool_demo": false,
+      "requires_public_tool_url": false
+    },
+    "evidence": {},
+    "expected": {
+      "reasons": [
+        "language_unverified"
+      ],
+      "subscribers": 9000,
+      "verdict": "pending"
+    },
+    "mode": "profile"
+  },
+  {
+    "assessed_evidence": {
+      "assessment": {
+        "match_rating": null,
+        "reasons": [
+          "language_unverified"
+        ],
+        "subscribers_normalized": 18446744073709551615
+      }
+    },
+    "author": "author",
+    "count": 18446744073709551615,
+    "criteria": {
+      "language": "English",
+      "min_followers": 8000,
+      "requires_ai_tool_demo": false,
+      "requires_public_tool_url": false
+    },
+    "evidence": {},
+    "expected": {
+      "reasons": [
+        "language_unverified"
+      ],
+      "subscribers": 18446744073709551615,
+      "verdict": "pending"
+    },
+    "mode": "profile"
+  },
+  {
+    "assessed_evidence": {
+      "assessment": {
+        "match_rating": null,
+        "reasons": [
+          "subscriber_count_near_threshold"
+        ],
+        "subscribers_normalized": 12400
+      },
+      "captured_at": 100,
+      "source_urls": [
+        "https://www.youtube.com/watch?v=LR04bU_yV5k"
+      ],
+      "subscribers_raw": "12.4K subscribers",
+      "subscribers_source_url": "https://www.youtube.com/watch?v=LR04bU_yV5k"
+    },
+    "author": "author",
+    "count": null,
+    "criteria": {
+      "min_subscribers": 12400,
+      "requires_ai_tool_demo": false,
+      "requires_public_tool_url": false
+    },
+    "evidence": {
+      "captured_at": 100,
+      "source_urls": [
+        "https://www.youtube.com/watch?v=LR04bU_yV5k"
+      ],
+      "subscribers_raw": "12.4K subscribers",
+      "subscribers_source_url": "https://www.youtube.com/watch?v=LR04bU_yV5k"
+    },
+    "expected": {
+      "reasons": [
+        "subscriber_count_near_threshold"
+      ],
+      "subscribers": 12400,
+      "verdict": "pending"
+    },
+    "mode": "youtube"
+  },
+  {
+    "assessed_evidence": {
+      "assessment": {
+        "match_rating": null,
+        "reasons": [],
+        "subscribers_normalized": 12400
+      },
+      "captured_at": 100,
+      "source_urls": [
+        "https://www.youtube.com/watch?v=LR04bU_yV5k"
+      ],
+      "subscribers_raw": "12,400 subscribers",
+      "subscribers_source_url": "https://www.youtube.com/watch?v=LR04bU_yV5k"
+    },
+    "author": "author",
+    "count": null,
+    "criteria": {
+      "min_subscribers": 12400,
+      "requires_ai_tool_demo": false,
+      "requires_public_tool_url": false
+    },
+    "evidence": {
+      "captured_at": 100,
+      "source_urls": [
+        "https://www.youtube.com/watch?v=LR04bU_yV5k"
+      ],
+      "subscribers_raw": "12,400 subscribers",
+      "subscribers_source_url": "https://www.youtube.com/watch?v=LR04bU_yV5k"
+    },
+    "expected": {
+      "reasons": [],
+      "subscribers": 12400,
+      "verdict": "qualified"
+    },
+    "mode": "youtube"
+  },
+  {
+    "assessed_evidence": {
+      "assessment": {
+        "match_rating": null,
+        "reasons": [
+          "subscriber_count_unverified"
+        ],
+        "subscribers_normalized": null
+      },
+      "captured_at": 100,
+      "source_urls": [
+        "https://www.youtube.com/watch?v=LR04bU_yV5k"
+      ],
+      "subscribers_raw": "约1万",
+      "subscribers_source_url": "https://www.youtube.com/watch?v=LR04bU_yV5k"
+    },
+    "author": "author",
+    "count": null,
+    "criteria": {
+      "min_subscribers": 12400,
+      "requires_ai_tool_demo": false,
+      "requires_public_tool_url": false
+    },
+    "evidence": {
+      "captured_at": 100,
+      "source_urls": [
+        "https://www.youtube.com/watch?v=LR04bU_yV5k"
+      ],
+      "subscribers_raw": "约1万",
+      "subscribers_source_url": "https://www.youtube.com/watch?v=LR04bU_yV5k"
+    },
+    "expected": {
+      "reasons": [
+        "subscriber_count_unverified"
+      ],
+      "subscribers": null,
+      "verdict": "pending"
+    },
+    "mode": "youtube"
+  },
+  {
+    "assessed_evidence": {
+      "assessment": {
+        "match_rating": null,
+        "reasons": [],
+        "subscribers_normalized": 20000
+      },
+      "captured_at": 100,
+      "source_urls": [
+        "https://www.youtube.com/watch?v=LR04bU_yV5k"
+      ],
+      "subscribers_raw": "20000 subscribers",
+      "subscribers_source_url": "https://www.youtube.com/watch?v=LR04bU_yV5k"
+    },
+    "author": "author",
+    "count": null,
+    "criteria": {
+      "min_subscribers": 12400,
+      "requires_ai_tool_demo": false,
+      "requires_public_tool_url": false
+    },
+    "evidence": {
+      "captured_at": 100,
+      "source_urls": [
+        "https://www.youtube.com/watch?v=LR04bU_yV5k"
+      ],
+      "subscribers_raw": "20000 subscribers",
+      "subscribers_source_url": "https://www.youtube.com/watch?v=LR04bU_yV5k"
+    },
+    "expected": {
+      "reasons": [],
+      "subscribers": 20000,
+      "verdict": "qualified"
+    },
+    "mode": "youtube"
+  },
+  {
+    "assessed_evidence": {
+      "assessment": {
+        "match_rating": null,
+        "reasons": [],
+        "subscribers_normalized": 18446744073709551615
+      },
+      "captured_at": 100,
+      "source_urls": [
+        "https://www.youtube.com/watch?v=LR04bU_yV5k"
+      ],
+      "subscribers_raw": "18446744073709551615 subscribers",
+      "subscribers_source_url": "https://www.youtube.com/watch?v=LR04bU_yV5k"
+    },
+    "author": "author",
+    "count": null,
+    "criteria": {
+      "min_subscribers": 12400,
+      "requires_ai_tool_demo": false,
+      "requires_public_tool_url": false
+    },
+    "evidence": {
+      "captured_at": 100,
+      "source_urls": [
+        "https://www.youtube.com/watch?v=LR04bU_yV5k"
+      ],
+      "subscribers_raw": "18446744073709551615 subscribers",
+      "subscribers_source_url": "https://www.youtube.com/watch?v=LR04bU_yV5k"
+    },
+    "expected": {
+      "reasons": [],
+      "subscribers": 18446744073709551615,
+      "verdict": "qualified"
+    },
+    "mode": "youtube"
+  }
+]

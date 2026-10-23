@@ -1,0 +1,63 @@
+{
+  "rows": {
+    "discovery_search_hits": {
+      "id": "712ac154-4288-406e-9da9-f3046e1b56a5",
+      "discovery_campaign_id": "linkedin-test-20261021-9cb6836",
+      "platform": "linkedin",
+      "profile_ref": "d5pskwub",
+      "search_keyword": "Binance field marketing",
+      "source_url": "https://www.linkedin.com/in/liu-zhengyang-009325285/",
+      "title": "Liu Zhengyang",
+      "author_label": "Liu Zhengyang",
+      "captured_at": 1792574397
+    },
+    "discovery_search_authors": {
+      "search_hit_id": "712ac154-4288-406e-9da9-f3046e1b56a5",
+      "author_id": "liu-zhengyang-009325285",
+      "author_url": "https://www.linkedin.com/in/liu-zhengyang-009325285/",
+      "observed_at": 1792574397
+    },
+    "discovery_profile_reads": {
+      "search_hit_id": "712ac154-4288-406e-9da9-f3046e1b56a5",
+      "discovery_campaign_id": "linkedin-test-20261021-9cb6836",
+      "platform": "linkedin",
+      "profile_ref": "d5pskwub",
+      "author_id": "liu-zhengyang-009325285",
+      "expected_revision": 1,
+      "call_number": 60,
+      "status": "completed",
+      "native_profile_json": "{\"adapter_version\":\"1.0.0\",\"author_handle\":\"liu-zhengyang-009325285\",\"account_id\":\"ACoAAEVH98kBNx6gVWKsFcdzImo-FdIKwo3ngGs\",\"author_label\":\"Liu Zhengyang\",\"profile_url\":\"https://www.linkedin.com/in/liu-zhengyang-009325285/\",\"follower_count\":1360,\"follower_text\":\"1,360 followers\",\"connections\":{\"raw\":\"500+connections\",\"lower\":500,\"upper\":null},\"headline\":\"Marketing Specialist\",\"bio\":\"\",\"public_links\":[],\"contact_links\":[\"https://www.linkedin.com/in/liu-zhengyang-009325285/overlay/contact-info/\"],\"evidence_source\":\"visible_profile_header\",\"bio_truncated\":true}",
+      "stop_code": null,
+      "updated_at": 1792574423
+    },
+    "discovery_content_reads": {
+      "search_hit_id": "712ac154-4288-406e-9da9-f3046e1b56a5",
+      "discovery_campaign_id": "linkedin-test-20261021-9cb6836",
+      "platform": "linkedin",
+      "profile_ref": "d5pskwub",
+      "author_id": "liu-zhengyang-009325285",
+      "source_url": "https://www.linkedin.com/in/liu-zhengyang-009325285/",
+      "expected_revision": 1,
+      "call_number": 69,
+      "status": "failed",
+      "native_content_json": null,
+      "stop_code": "linkedin_content_unavailable",
+      "updated_at": 1792574544
+    },
+    "discovery_candidates": {
+      "id": "07f57c93-1736-428f-9040-8898856d6100",
+      "discovery_campaign_id": "linkedin-test-20261021-9cb6836",
+      "criteria_revision": 1,
+      "platform": "linkedin",
+      "source_profile_ref": "d5pskwub",
+      "platform_account_id": "ACoAAEVH98kBNx6gVWKsFcdzImo-FdIKwo3ngGs",
+      "display_name": "Liu Zhengyang",
+      "profile_url": "https://www.linkedin.com/in/liu-zhengyang-009325285/",
+      "verdict": "pending",
+      "evidence_json": "{\"assessment\":{\"match_rating\":null,\"quality_rating\":null,\"reasons\":[\"selection_unverified\",\"requirement_unverified\"],\"selection\":{\"reason\":\"已保存的当前职位“Marketing Specialist”支持 Marketing 岗位条件，但未显示任职公司，无法确认其当前任职于 Binance、OKX、Bitget、Bybit 或 Gate.io 任一公司。这是基于已保存职业资料的初步评估，唯一未解决的核心条件是当前雇主。\",\"source_url\":\"https://www.linkedin.com/in/liu-zhengyang-009325285/\",\"state\":\"unverified\"},\"subscribers_normalized\":1360},\"author_identity_kind\":\"native_id\",\"author_identity_search_hit_id\":null,\"captured_at\":1792574423,\"profile_bio_status\":\"truncated\",\"profile_bio_status_source_url\":\"https://www.linkedin.com/in/liu-zhengyang-009325285/\",\"reviewed_quality\":{\"level\":null,\"material_hash\":\"11aebbb8a98148e3f0dfaa7ac84ce6dd72f5bcb9381294d3e021a9ee061f1cf9\",\"native_author_id\":\"ACoAAEVH98kBNx6gVWKsFcdzImo-FdIKwo3ngGs\",\"outcome\":\"insufficient\",\"policy_version\":\"selection-quality-evaluation-v2\",\"reason\":\"已保存职位表明此人的工作属于目标 Marketing 职能，但目标公司的当前任职关系缺少证据，尚不能评价其作为本次目标人员的推荐质量。本次仅评估已保存职业资料；粉丝、connections 和联系方式不构成评分限制。\",\"review_id\":\"5d0ecadd-5958-43da-961d-0e0b34351270\",\"score\":null,\"source_url\":\"https://www.linkedin.com/in/liu-zhengyang-009325285/\",\"verified\":true},\"reviewed_requirements\":[{\"criteria_revision\":1,\"index\":0,\"material_hash\":\"11aebbb8a98148e3f0dfaa7ac84ce6dd72f5bcb9381294d3e021a9ee061f1cf9\",\"native_author_id\":\"ACoAAEVH98kBNx6gVWKsFcdzImo-FdIKwo3ngGs\",\"outcome\":\"insufficient\",\"reason\":\"已保存职业资料仅显示“Marketing Specialist”，没有当前雇主信息，五家目标公司中的任一任职关系均未得到确认。这是基于已保存职业资料的评估，缺少公司信息属于未知，不能据此判定违反要求。\",\"requirement\":{\"description\":\"人员须任职于币安（Binance）、OKX、Bitget、Bybit 或 Gate.io 任一公司；公司之间为 OR 关系。\",\"excerpt\":\"币安（Binance）、OKX、Bitget、Bybit、Gate.io 的商务、BD 或 Marketing 人员\"},\"review_id\":\"5d0ecadd-5958-43da-961d-0e0b34351270\",\"source_url\":\"https://www.linkedin.com/in/liu-zhengyang-009325285/\"}],\"reviewed_selection\":{\"language_only_pending\":false,\"material_hash\":\"11aebbb8a98148e3f0dfaa7ac84ce6dd72f5bcb9381294d3e021a9ee061f1cf9\",\"native_author_id\":\"ACoAAEVH98kBNx6gVWKsFcdzImo-FdIKwo3ngGs\",\"outcome\":\"insufficient\",\"policy_version\":\"selection-quality-evaluation-v2\",\"reason\":\"已保存的当前职位“Marketing Specialist”支持 Marketing 岗位条件，但未显示任职公司，无法确认其当前任职于 Binance、OKX、Bitget、Bybit 或 Gate.io 任一公司。这是基于已保存职业资料的初步评估，唯一未解决的核心条件是当前雇主。\",\"review_id\":\"5d0ecadd-5958-43da-961d-0e0b34351270\",\"source_url\":\"https://www.linkedin.com/in/liu-zhengyang-009325285/\",\"verified\":true},\"source_urls\":[\"https://www.linkedin.com/in/liu-zhengyang-009325285/\",\"https://www.linkedin.com/in/liu-zhengyang-009325285/\"],\"subscribers_raw\":\"1360\",\"subscribers_source_url\":\"https://www.linkedin.com/in/liu-zhengyang-009325285/\"}",
+      "created_at": 1792574423,
+      "updated_at": 1792574440,
+      "source_platform": "linkedin"
+    }
+  }
+}

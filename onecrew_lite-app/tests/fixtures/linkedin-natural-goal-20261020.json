@@ -1,0 +1,141 @@
+{
+  "understanding": {
+    "product_or_topic": "币安（Binance）、OKX、Bitget、Bybit、Gate.io 的商务、BD 或 Marketing 人员",
+    "purpose": "在 LinkedIn 寻找30名符合公司和岗位条件的人员，采集公开联系方式并保留 LinkedIn 主页，优先展示公开邮箱。",
+    "desired_creators": "任职于五家指定公司中的任意一家，且岗位为商务、BD、Marketing 中任意一种的人员；没有创作者或内容发布资格要求。",
+    "explicit_requirements_with_quotes": [
+      "平台：“在 LinkedIn 搜索”",
+      "人数：“共30人”",
+      "公司与岗位：“任职于这五家公司中的任意一家，并且岗位为商务、BD、Marketing中的任意一种即可。”",
+      "证据范围：“主页、帖子或当前职位中有足够证据符合条件即可。”",
+      "粉丝与联系人数量：“粉丝数和 connection 数不限”",
+      "评分：“不设置最低评分档位”",
+      "联系方式与主页：“采集公开联系方式，保留 LinkedIn 主页”",
+      "邮箱偏好：“优先展示公开邮箱；没有邮箱不影响入选。”",
+      "证据复用：“复用已经成功读取的账号资料和证据，不重复读取成功账号。”"
+    ],
+    "relevant_content_angles": [
+      "通过 LinkedIn 人员搜索检索五家公司的商务、Business Development、BD 和 Marketing 岗位。",
+      "从主页、帖子或当前职位中的任一种证据确认公司与岗位条件。",
+      "复用已读取的账号资料与证据，汇总公开联系方式及 LinkedIn 主页。"
+    ],
+    "misleading_matches_to_avoid": [
+      "仅提及指定公司、缺少任职证据的人员。",
+      "任职于指定公司，但岗位不符合商务、BD 或 Marketing 的人员。",
+      "将五家公司或三种岗位分别解释为每个人必须同时满足的条件。",
+      "将 connection 数当作粉丝数，或自行增加人数、粉丝、联系人数量及评分门槛。",
+      "因缺少公开邮箱而排除符合条件的人员。",
+      "额外要求人员具备博主、创作者或原创内容发布资格。"
+    ]
+  },
+  "plan": {
+    "target_count": {
+      "state": "specified",
+      "value": 30,
+      "excerpt": "共30人"
+    },
+    "max_calls": {
+      "state": "unspecified",
+      "value": null,
+      "excerpt": null
+    },
+    "intent": {
+      "original_request": "在 LinkedIn 搜索币安（Binance）、OKX、Bitget、Bybit、Gate.io 的商务、BD 或 Marketing 人员，共30人。任职于这五家公司中的任意一家，并且岗位为商务、BD、Marketing中的任意一种即可。主页、帖子或当前职位中有足够证据符合条件即可。粉丝数和 connection 数不限，不设置最低评分档位。采集公开联系方式，保留 LinkedIn 主页，优先展示公开邮箱；没有邮箱不影响入选。复用已经成功读取的账号资料和证据，不重复读取成功账号。",
+      "goal": "在 LinkedIn 寻找30名任职于币安（Binance）、OKX、Bitget、Bybit、Gate.io 中任意一家，且岗位为商务、BD、Marketing 中任意一种的人员。通过主页、帖子或当前职位中的充分证据确认资格；粉丝数和 connection 数不限，不设置最低评分。采集公开联系方式，保留 LinkedIn 主页，优先展示公开邮箱，缺少邮箱不影响入选。复用已经成功读取的账号资料和证据，不重复读取成功账号。",
+      "category": {
+        "state": "specified",
+        "value": "商务、BD 或 Marketing 人员",
+        "excerpt": "商务、BD 或 Marketing 人员"
+      },
+      "region": {
+        "state": "unspecified",
+        "value": null,
+        "excerpt": null
+      },
+      "language": {
+        "state": "unspecified",
+        "value": null,
+        "excerpt": null
+      },
+      "min_subscribers": {
+        "state": "unrestricted",
+        "value": null,
+        "excerpt": "粉丝数和 connection 数不限"
+      },
+      "quality_filter": {
+        "state": "unrestricted",
+        "value": null,
+        "excerpt": "不设置最低评分档位"
+      },
+      "other_hard_conditions": [
+        {
+          "description": "公司与岗位条件同时满足：任职公司为币安（Binance）、OKX、Bitget、Bybit、Gate.io 中的任意一家；岗位为商务、BD、Marketing 中的任意一种。两个组内分别为 OR，组间为 AND。",
+          "excerpt": "在 LinkedIn 搜索币安（Binance）、OKX、Bitget、Bybit、Gate.io 的商务、BD 或 Marketing 人员，共30人。任职于这五家公司中的任意一家，并且岗位为商务、BD、Marketing中的任意一种即可。"
+        },
+        {
+          "description": "主页、帖子或当前职位中任一处有充分证据证明公司和岗位条件即可，三种证据来源为 OR。",
+          "excerpt": "主页、帖子或当前职位中有足够证据符合条件即可。"
+        },
+        {
+          "description": "LinkedIn connection 数明确不限，不设置最低联系人数量。",
+          "excerpt": "粉丝数和 connection 数不限"
+        }
+      ],
+      "soft_preferences": [
+        {
+          "description": "执行要求：采集公开联系方式，并在结果中保留 LinkedIn 主页。",
+          "excerpt": "采集公开联系方式，保留 LinkedIn 主页"
+        },
+        {
+          "description": "展示偏好：优先展示公开邮箱；公开邮箱不是入选条件。",
+          "excerpt": "优先展示公开邮箱；没有邮箱不影响入选。"
+        },
+        {
+          "description": "执行要求：复用已成功读取的账号资料和证据，不重复读取成功账号。",
+          "excerpt": "复用已经成功读取的账号资料和证据，不重复读取成功账号。"
+        }
+      ],
+      "suggested_keywords": [
+        "Binance business development",
+        "币安 商务",
+        "Binance Marketing",
+        "OKX BD",
+        "OKX Marketing",
+        "Bitget business development",
+        "Bybit Marketing",
+        "Gate.io business development"
+      ],
+      "min_subscribers_exclusive": false,
+      "min_subscribers_in_requirements": false,
+      "exclusion_groups": [
+        {
+          "platforms": [
+            "youtube"
+          ],
+          "excerpt": "在 LinkedIn 搜索"
+        }
+      ]
+    },
+    "scopes": [
+      {
+        "platform": "linkedin",
+        "keywords": [
+          "Binance business development",
+          "币安 商务",
+          "Binance Marketing",
+          "OKX BD",
+          "OKX Marketing",
+          "Bitget business development",
+          "Bybit Marketing",
+          "Gate.io business development"
+        ]
+      }
+    ],
+    "contact_search_terms": [
+      "email",
+      "business cooperation",
+      "contact",
+      "official website"
+    ]
+  }
+}

@@ -1,0 +1,2089 @@
+{
+  "source": "Saved OneCrew material and immutable actual review findings, no provider reread",
+  "objective": "新版 LinkedIn 正确率与效率测试。在 LinkedIn 搜索币安（Binance）、OKX、Bitget、Bybit、Gate.io 的商务、BD 和 Marketing 人员，共30人。五家公司任一、商务或BD或Marketing岗位任一，两个条件同时满足。主页、帖子或当前职位的证据符合即可。粉丝和connection不限，不设置最低评分档位。公开邮箱优先，保留其他公开联系方式及LinkedIn主页。不要重复读取已经成功的账号。",
+  "records": [
+    {
+      "name": "Nuaman Khan",
+      "material": {
+        "format_version": 2,
+        "campaign_id": "linkedin-test-20261020-69bac9f",
+        "criteria_revision": 1,
+        "criteria": {
+          "automatic_query_expansion": true,
+          "category": "商务、BD 或 Marketing 人员",
+          "contact_preference": "public_email_first",
+          "contact_search_terms": [
+            "email",
+            "business cooperation",
+            "contact",
+            "official website"
+          ],
+          "excluded_accounts": [
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAACdVXkoBclkH7oGVOCru8oxMsVSJhG-3XVM",
+              "profile_url": "https://www.linkedin.com/in/michela-silvestri/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAxbGXEBQm-krln5f2rtzuTj37y3aSRTkVs",
+              "profile_url": "https://www.linkedin.com/in/saeedkenifati/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADgCjq8Bf0KVIQdMRe4pRXm99Ttwd7DHJ6w",
+              "profile_url": "https://www.linkedin.com/in/sebastian-z-09384b222/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAA9PBAcBNNzFgXFYffI8i1zqIQXwK5see84",
+              "profile_url": "https://www.linkedin.com/in/thanhphank34/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAABW7H-kB4UH1NQ-J0HWRuTSnOb1jzeO01Ww",
+              "profile_url": "https://www.linkedin.com/in/jael-tan-7a1122a2/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAABWpfkMB9KoU-qv65__Dfh9utK6ohLZK3UI",
+              "profile_url": "https://www.linkedin.com/in/raj-timothy-nandwani-link/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAFac71QBcFZ1-4Dhr16Wy9r7dc7rf1t_6_c",
+              "profile_url": "https://www.linkedin.com/in/nansel-labar-104795346/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAy3SPEB5lcKLr-ZnQNQxxxqMrDxzv6AGaY",
+              "profile_url": "https://www.linkedin.com/in/danielgranadosrojas/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADGDVvgBYd2wYAIrimtPngcfCmkl9QaBAAk",
+              "profile_url": "https://www.linkedin.com/in/mahmoud-mohamed-abo-elmaaty/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAABfTYYIB1-8tCa_MRvFb7zcHT-0yL1t8GBI",
+              "profile_url": "https://www.linkedin.com/in/maximburko/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAClbU8EBxpJHC6aHBWj-VYBdQKNCyg97sfI",
+              "profile_url": "https://www.linkedin.com/in/dzungho104/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAACv-z2IBgXBlaIuCPqBbAijFIUWC7Wgp14g",
+              "profile_url": "https://www.linkedin.com/in/cody-ong/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADyBv6kBOWy_XVcd_A5D0peDDc3o2nok5rM",
+              "profile_url": "https://www.linkedin.com/in/daeyeon-hwang-089b73243/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADCaGToBb32eXrE4aXxnW_vn8t89YknkWpc",
+              "profile_url": "https://www.linkedin.com/in/ashikur-rahaman-1360b21a9/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAABUVRJ0BF1xWLBG2ny5p2oAtMhxrlL_frxw",
+              "profile_url": "https://www.linkedin.com/in/amin-kreidi/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADBWeLABQ4PoRCpS2XElkaRU4MTxufnsU-U",
+              "profile_url": "https://www.linkedin.com/in/yb-wi-3547151a7/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAE00xeQBKjiofN4B_8VxCuMeltS2Ny3pSks",
+              "profile_url": "https://www.linkedin.com/in/yongkim337/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAACu6f04B6vkbzAUk_bD-cnQ2t6P3zfyw0iA",
+              "profile_url": "https://www.linkedin.com/in/ellie-wang-812841185/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAWZEFMBT47FJwrkzXBDdBDTFujJj5gSBhA",
+              "profile_url": "https://www.linkedin.com/in/akshay-jadhav-2104aj/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADAaVKsB2hQuH6J34lsGqjmnEOgny6fgZnc",
+              "profile_url": "https://www.linkedin.com/in/ray-yee-liew/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAjrW24BID5wj-0AE_K5l-oRCIViKxw-Spg",
+              "profile_url": "https://www.linkedin.com/in/shawn-lee-52614642/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAA6UevcBiBwfdSilELXf_IjovffAR1waEjk",
+              "profile_url": "https://www.linkedin.com/in/tonychankihong/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAD3XUO0Bk6tdfqlVquOxsifxsvBfT1FZznU",
+              "profile_url": "https://www.linkedin.com/in/ken-chen-3a556924b/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAZJkA4BGBMLEXxdfJLmVbxjQa5-pcg_RLw",
+              "profile_url": "https://www.linkedin.com/in/juan-pablo-moreno-lara-1a63b02b/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAs1KzkBzl7D4rVDUapI_pTepkMLCNtOOT4",
+              "profile_url": "https://www.linkedin.com/in/ivan-charnas/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAApjZHEBxX_YfvUdcrzf2CiHUoXrnM-9om4",
+              "profile_url": "https://www.linkedin.com/in/steven-gotama-b0144b4a/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAatkFcBcHA38bmGaY6vo9dnRcvHmNXi9os",
+              "profile_url": "https://www.linkedin.com/in/mario-gonzalez9/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAC1dZb0BiDZXawurogLQvjyAgTQUA29O2rM",
+              "profile_url": "https://www.linkedin.com/in/jihadul0/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADxTPDkBpglAGwo8M66PpeeUYOFRg2AR8_I",
+              "profile_url": "https://www.linkedin.com/in/alec-lau-bb5b42242/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAA_Mk64BYzgHpQL1eZxXVSwj8pur0YRwPuM",
+              "profile_url": "https://www.linkedin.com/in/gasperstih/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAqeE_4BBEcVbhnylezI139KXn9FEycN1N4",
+              "profile_url": "https://www.linkedin.com/in/aaralyntong/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADXaJKcBsj2kPHFHXY_HEnkT9-mrYnHK58o",
+              "profile_url": "https://www.linkedin.com/in/jp-koning/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAACjQtOEBVpWHOdCrD9JLJqA7XSZAdOzUkH8",
+              "profile_url": "https://www.linkedin.com/in/eujin-lauren-lee-1022/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAACqDRaMBz71dbQzTEROuW-MjalDxGfo4FTg",
+              "profile_url": "https://www.linkedin.com/in/farukabdul/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAABsAXR8BVCrBNX-S8WVGNmCQBO1GOrisBxc",
+              "profile_url": "https://www.linkedin.com/in/dracyzy/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAA1m7sUBTU72ZZYXOuvSW9i3OMAAP4yhS04",
+              "profile_url": "https://www.linkedin.com/in/ycervantes/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAFnXJ0UBQxhtfOC1v0rXic2QCrnf5izV3U4",
+              "profile_url": "https://www.linkedin.com/in/md-omer-as-sani/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAGKH5fYBN8yyd4ZhpO8t73dxnoUwr2ttu4k",
+              "profile_url": "https://www.linkedin.com/in/john-monday-84673b3a1/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADV_vwkBSRO1-PDwz50UtG_9UfNZh9qInQo",
+              "profile_url": "https://www.linkedin.com/in/hatrithuan/"
+            }
+          ],
+          "language": "",
+          "min_subscribers": 0,
+          "min_subscribers_source": "default",
+          "region": "",
+          "requirements": [
+            {
+              "description": "人员须任职于以下任一公司：币安（Binance）、OKX、Bitget、Bybit 或 Gate.io；公司之间为 OR 关系。",
+              "excerpt": "币安（Binance）、OKX、Bitget、Bybit、Gate.io 的商务、BD 和 Marketing 人员"
+            }
+          ],
+          "requires_ai_tool_demo": false,
+          "requires_public_tool_url": false,
+          "table_subject": "LinkedIn 新版正确率与效率测试"
+        },
+        "approved_scopes": [
+          {
+            "platform": "linkedin",
+            "profile_ref": "d5pskwub",
+            "keywords": [
+              "Binance business development",
+              "OKX business development",
+              "Bitget BD",
+              "Bybit business development",
+              "\"Gate.io\" 商务",
+              "Binance Marketing",
+              "OKX Marketing",
+              "(Bitget OR Bybit OR \"Gate.io\") Marketing"
+            ]
+          }
+        ],
+        "approved_at": 1792563983,
+        "hit": {
+          "id": "0a8b3358-ff84-480d-95a0-1239040f6a77",
+          "campaign_id": "linkedin-test-20261020-69bac9f",
+          "platform": "linkedin",
+          "profile_ref": "d5pskwub",
+          "search_keyword": "Binance Marketing",
+          "source_url": "https://www.linkedin.com/in/nomankhan37/",
+          "title": "Nuaman Khan",
+          "author_label": "Nuaman Khan",
+          "captured_at": 1792566496,
+          "author_id": "ACoAABrb0CYB8pFKlSsKTtrgGlymIGUFJ1dCIFw",
+          "author_url": "https://www.linkedin.com/in/nomankhan37/",
+          "author_observed_at": 1792566613
+        },
+        "candidate_id": "48181e4a-d331-49af-9ebe-4a1529adca37",
+        "native_author_id": "ACoAABrb0CYB8pFKlSsKTtrgGlymIGUFJ1dCIFw",
+        "native_followers": 4450,
+        "native_profile": {
+          "web_text": "Digital & Performance Marketing Manager at Binance\n4,450 followers\n500+connections",
+          "profile_url": "https://www.linkedin.com/in/nomankhan37/",
+          "observed_at": 1792566613,
+          "bio": "Performance Marketing Specialist with 8+ years of experience within Digital & Performance Marketing specialized in Retail E-commerce, Fintech & OTT. Skilled in PPC advertising, Paid Search, Paid Social, Affiliate Marketing, Programmatic Buying and Conversion Optimization.",
+          "connections": {
+            "raw": "500+connections",
+            "lower": 500,
+            "upper": null
+          },
+          "bio_status": "complete"
+        },
+        "candidate_evidence_hash": "8361764527b840c48f38e8ba8ea41815cb605fb531b233d2db8a33b5ed88573f",
+        "video_description": null,
+        "transcript": null,
+        "public_pages": [
+          {
+            "candidate_id": "48181e4a-d331-49af-9ebe-4a1529adca37",
+            "requested_url": "https://www.linkedin.com/in/nomankhan37/overlay/contact-info/",
+            "search_hit_id": "0a8b3358-ff84-480d-95a0-1239040f6a77",
+            "source_url": "https://www.linkedin.com/in/nomankhan37/",
+            "source_excerpt": "https://www.linkedin.com/in/nomankhan37/overlay/contact-info/",
+            "profile_ref": "d5pskwub",
+            "platform_account_id": "ACoAABrb0CYB8pFKlSsKTtrgGlymIGUFJ1dCIFw",
+            "call_number": 80,
+            "status": "completed",
+            "document_url": "https://www.linkedin.com/in/nomankhan37/overlay/contact-info/",
+            "title": "Nuaman Khan",
+            "markdown_excerpt": "\n",
+            "truncated": true,
+            "stop_code": null,
+            "captured_at": 1792566658
+          }
+        ],
+        "material_hash": "0795e385c44a75b3055104341fc20830dfb8992904e2040939bc00a196c2ba5e"
+      },
+      "previous_findings": [
+        {
+          "criterion": "selection_fit",
+          "outcome": "supported",
+          "rationale": "保存的当前职位明确为 Binance 的 Digital & Performance Marketing Manager，同时满足指定公司任一及商务、BD 或 Marketing 岗位任一的条件，且账号未出现在排除名单中。本次为保存样本的初步评估；粉丝和 connection 无门槛，联系方式由后续环节独立核验。",
+          "citations": [
+            {
+              "kind": "native_profile",
+              "profile_url": "https://www.linkedin.com/in/nomankhan37/",
+              "quote": "Digital & Performance Marketing Manager at Binance\n4,450 followers\n500+connections"
+            }
+          ],
+          "tool": null
+        },
+        {
+          "criterion": "quality_rating",
+          "outcome": "supported",
+          "rationale": "当前 Binance Marketing 管理岗位直接符合目标，自述拥有超过八年的数字与效果营销经验，并列明 PPC、付费搜索、付费社交及转化优化等专业能力，具有与本次人员搜索相关的明确优势。本次仅依据保存的职位和简介初评，经验属于个人自述，未据此推断业绩或合作意愿。",
+          "citations": [
+            {
+              "kind": "native_profile",
+              "profile_url": "https://www.linkedin.com/in/nomankhan37/",
+              "quote": "Digital & Performance Marketing Manager at Binance\n4,450 followers\n500+connections"
+            },
+            {
+              "kind": "native_profile",
+              "profile_url": "https://www.linkedin.com/in/nomankhan37/",
+              "quote": "Performance Marketing Specialist with 8+ years of experience within Digital & Performance Marketing specialized in Retail E-commerce, Fintech & OTT. Skilled in PPC advertising, Paid Search, Paid Social, Affiliate Marketing, Programmatic Buying and Conversion Optimization."
+            }
+          ],
+          "tool": null,
+          "match_level": "excellent"
+        },
+        {
+          "criterion": {
+            "requirement": 0
+          },
+          "outcome": "supported",
+          "rationale": "保存的当前职位明确显示任职于 Binance，满足五家公司任一的 OR 条件。该结论是基于保存职位资料的初步评估，无须同时任职于其余公司。",
+          "citations": [
+            {
+              "kind": "native_profile",
+              "profile_url": "https://www.linkedin.com/in/nomankhan37/",
+              "quote": "Digital & Performance Marketing Manager at Binance\n4,450 followers\n500+connections"
+            }
+          ],
+          "tool": null
+        }
+      ]
+    },
+    {
+      "name": "Uliana Teixeira",
+      "material": {
+        "format_version": 2,
+        "campaign_id": "linkedin-test-20261020-69bac9f",
+        "criteria_revision": 1,
+        "criteria": {
+          "automatic_query_expansion": true,
+          "category": "商务、BD 或 Marketing 人员",
+          "contact_preference": "public_email_first",
+          "contact_search_terms": [
+            "email",
+            "business cooperation",
+            "contact",
+            "official website"
+          ],
+          "excluded_accounts": [
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAACdVXkoBclkH7oGVOCru8oxMsVSJhG-3XVM",
+              "profile_url": "https://www.linkedin.com/in/michela-silvestri/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAxbGXEBQm-krln5f2rtzuTj37y3aSRTkVs",
+              "profile_url": "https://www.linkedin.com/in/saeedkenifati/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADgCjq8Bf0KVIQdMRe4pRXm99Ttwd7DHJ6w",
+              "profile_url": "https://www.linkedin.com/in/sebastian-z-09384b222/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAA9PBAcBNNzFgXFYffI8i1zqIQXwK5see84",
+              "profile_url": "https://www.linkedin.com/in/thanhphank34/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAABW7H-kB4UH1NQ-J0HWRuTSnOb1jzeO01Ww",
+              "profile_url": "https://www.linkedin.com/in/jael-tan-7a1122a2/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAABWpfkMB9KoU-qv65__Dfh9utK6ohLZK3UI",
+              "profile_url": "https://www.linkedin.com/in/raj-timothy-nandwani-link/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAFac71QBcFZ1-4Dhr16Wy9r7dc7rf1t_6_c",
+              "profile_url": "https://www.linkedin.com/in/nansel-labar-104795346/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAy3SPEB5lcKLr-ZnQNQxxxqMrDxzv6AGaY",
+              "profile_url": "https://www.linkedin.com/in/danielgranadosrojas/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADGDVvgBYd2wYAIrimtPngcfCmkl9QaBAAk",
+              "profile_url": "https://www.linkedin.com/in/mahmoud-mohamed-abo-elmaaty/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAABfTYYIB1-8tCa_MRvFb7zcHT-0yL1t8GBI",
+              "profile_url": "https://www.linkedin.com/in/maximburko/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAClbU8EBxpJHC6aHBWj-VYBdQKNCyg97sfI",
+              "profile_url": "https://www.linkedin.com/in/dzungho104/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAACv-z2IBgXBlaIuCPqBbAijFIUWC7Wgp14g",
+              "profile_url": "https://www.linkedin.com/in/cody-ong/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADyBv6kBOWy_XVcd_A5D0peDDc3o2nok5rM",
+              "profile_url": "https://www.linkedin.com/in/daeyeon-hwang-089b73243/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADCaGToBb32eXrE4aXxnW_vn8t89YknkWpc",
+              "profile_url": "https://www.linkedin.com/in/ashikur-rahaman-1360b21a9/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAABUVRJ0BF1xWLBG2ny5p2oAtMhxrlL_frxw",
+              "profile_url": "https://www.linkedin.com/in/amin-kreidi/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADBWeLABQ4PoRCpS2XElkaRU4MTxufnsU-U",
+              "profile_url": "https://www.linkedin.com/in/yb-wi-3547151a7/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAE00xeQBKjiofN4B_8VxCuMeltS2Ny3pSks",
+              "profile_url": "https://www.linkedin.com/in/yongkim337/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAACu6f04B6vkbzAUk_bD-cnQ2t6P3zfyw0iA",
+              "profile_url": "https://www.linkedin.com/in/ellie-wang-812841185/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAWZEFMBT47FJwrkzXBDdBDTFujJj5gSBhA",
+              "profile_url": "https://www.linkedin.com/in/akshay-jadhav-2104aj/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADAaVKsB2hQuH6J34lsGqjmnEOgny6fgZnc",
+              "profile_url": "https://www.linkedin.com/in/ray-yee-liew/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAjrW24BID5wj-0AE_K5l-oRCIViKxw-Spg",
+              "profile_url": "https://www.linkedin.com/in/shawn-lee-52614642/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAA6UevcBiBwfdSilELXf_IjovffAR1waEjk",
+              "profile_url": "https://www.linkedin.com/in/tonychankihong/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAD3XUO0Bk6tdfqlVquOxsifxsvBfT1FZznU",
+              "profile_url": "https://www.linkedin.com/in/ken-chen-3a556924b/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAZJkA4BGBMLEXxdfJLmVbxjQa5-pcg_RLw",
+              "profile_url": "https://www.linkedin.com/in/juan-pablo-moreno-lara-1a63b02b/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAs1KzkBzl7D4rVDUapI_pTepkMLCNtOOT4",
+              "profile_url": "https://www.linkedin.com/in/ivan-charnas/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAApjZHEBxX_YfvUdcrzf2CiHUoXrnM-9om4",
+              "profile_url": "https://www.linkedin.com/in/steven-gotama-b0144b4a/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAatkFcBcHA38bmGaY6vo9dnRcvHmNXi9os",
+              "profile_url": "https://www.linkedin.com/in/mario-gonzalez9/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAC1dZb0BiDZXawurogLQvjyAgTQUA29O2rM",
+              "profile_url": "https://www.linkedin.com/in/jihadul0/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADxTPDkBpglAGwo8M66PpeeUYOFRg2AR8_I",
+              "profile_url": "https://www.linkedin.com/in/alec-lau-bb5b42242/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAA_Mk64BYzgHpQL1eZxXVSwj8pur0YRwPuM",
+              "profile_url": "https://www.linkedin.com/in/gasperstih/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAqeE_4BBEcVbhnylezI139KXn9FEycN1N4",
+              "profile_url": "https://www.linkedin.com/in/aaralyntong/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADXaJKcBsj2kPHFHXY_HEnkT9-mrYnHK58o",
+              "profile_url": "https://www.linkedin.com/in/jp-koning/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAACjQtOEBVpWHOdCrD9JLJqA7XSZAdOzUkH8",
+              "profile_url": "https://www.linkedin.com/in/eujin-lauren-lee-1022/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAACqDRaMBz71dbQzTEROuW-MjalDxGfo4FTg",
+              "profile_url": "https://www.linkedin.com/in/farukabdul/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAABsAXR8BVCrBNX-S8WVGNmCQBO1GOrisBxc",
+              "profile_url": "https://www.linkedin.com/in/dracyzy/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAA1m7sUBTU72ZZYXOuvSW9i3OMAAP4yhS04",
+              "profile_url": "https://www.linkedin.com/in/ycervantes/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAFnXJ0UBQxhtfOC1v0rXic2QCrnf5izV3U4",
+              "profile_url": "https://www.linkedin.com/in/md-omer-as-sani/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAGKH5fYBN8yyd4ZhpO8t73dxnoUwr2ttu4k",
+              "profile_url": "https://www.linkedin.com/in/john-monday-84673b3a1/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADV_vwkBSRO1-PDwz50UtG_9UfNZh9qInQo",
+              "profile_url": "https://www.linkedin.com/in/hatrithuan/"
+            }
+          ],
+          "language": "",
+          "min_subscribers": 0,
+          "min_subscribers_source": "default",
+          "region": "",
+          "requirements": [
+            {
+              "description": "人员须任职于以下任一公司：币安（Binance）、OKX、Bitget、Bybit 或 Gate.io；公司之间为 OR 关系。",
+              "excerpt": "币安（Binance）、OKX、Bitget、Bybit、Gate.io 的商务、BD 和 Marketing 人员"
+            }
+          ],
+          "requires_ai_tool_demo": false,
+          "requires_public_tool_url": false,
+          "table_subject": "LinkedIn 新版正确率与效率测试"
+        },
+        "approved_scopes": [
+          {
+            "platform": "linkedin",
+            "profile_ref": "d5pskwub",
+            "keywords": [
+              "Binance business development",
+              "OKX business development",
+              "Bitget BD",
+              "Bybit business development",
+              "\"Gate.io\" 商务",
+              "Binance Marketing",
+              "OKX Marketing",
+              "(Bitget OR Bybit OR \"Gate.io\") Marketing"
+            ]
+          }
+        ],
+        "approved_at": 1792563983,
+        "hit": {
+          "id": "14b1905f-73d9-446c-82f6-e2caaafe4b58",
+          "campaign_id": "linkedin-test-20261020-69bac9f",
+          "platform": "linkedin",
+          "profile_ref": "d5pskwub",
+          "search_keyword": "Bybit business development",
+          "source_url": "https://www.linkedin.com/in/ulianateixeira/",
+          "title": "Uliana Teixeira",
+          "author_label": "Uliana Teixeira",
+          "captured_at": 1792565024,
+          "author_id": "ACoAADR8OcMB2b58XC4tf6jcw4t_B9DjQQy18KI",
+          "author_url": "https://www.linkedin.com/in/ulianateixeira/",
+          "author_observed_at": 1792565041
+        },
+        "candidate_id": "639aad8f-3951-48ef-acef-994cccd4515d",
+        "native_author_id": "ACoAADR8OcMB2b58XC4tf6jcw4t_B9DjQQy18KI",
+        "native_profile": {
+          "web_text": "Business Development  @ Bybit | Crypto | Expansion & Growth  | Partnerships | Fintech | International Relations\n478connections",
+          "profile_url": "https://www.linkedin.com/in/ulianateixeira/",
+          "observed_at": 1792565041,
+          "bio": "Currently working at Bybit, one of the world’s leading crypto exchanges, where I help bridge fiat and crypto in a fast-paced, global environment. I support day-to-day fiat operations, ensuring users have smooth, secure, and efficient payment experiences.I’m passionate about financial operations, payment systems, and how crypto is reshaping the way we think about money. I enjoy solving problems, optimizing processes, and being part of a company that’s pushing the boundaries of innovation in the fintech space.\nTop skills\nTeamwork • crypto • Trabalho em equipe • Comunicação",
+          "connections": {
+            "raw": "478connections",
+            "lower": 478,
+            "upper": 478
+          },
+          "bio_status": "complete"
+        },
+        "candidate_evidence_hash": "b2cc230d262a64ea90ff2968aba9b0f2f33fb3a6dc9482f9db7e6cee5f5ffc6c",
+        "video_description": null,
+        "transcript": null,
+        "public_pages": [
+          {
+            "candidate_id": "639aad8f-3951-48ef-acef-994cccd4515d",
+            "requested_url": "https://www.linkedin.com/in/ulianateixeira/overlay/contact-info/",
+            "search_hit_id": "14b1905f-73d9-446c-82f6-e2caaafe4b58",
+            "source_url": "https://www.linkedin.com/in/ulianateixeira/",
+            "source_excerpt": "https://www.linkedin.com/in/ulianateixeira/overlay/contact-info/",
+            "profile_ref": "d5pskwub",
+            "platform_account_id": "ACoAADR8OcMB2b58XC4tf6jcw4t_B9DjQQy18KI",
+            "call_number": 49,
+            "status": "completed",
+            "document_url": "https://www.linkedin.com/in/ulianateixeira/overlay/contact-info/",
+            "title": "Uliana Teixeira",
+            "markdown_excerpt": "\n",
+            "truncated": true,
+            "stop_code": null,
+            "captured_at": 1792565072
+          }
+        ],
+        "material_hash": "cf6199761cd64dcac0eef27fcb6712d3326f0c45ccb36e9536a8f31e2ed5ed79"
+      },
+      "previous_findings": [
+        {
+          "criterion": "selection_fit",
+          "outcome": "supported",
+          "rationale": "保存的当前职位标题明确标注 Business Development @ Bybit，满足指定公司任一与商务、BD 或 Marketing 岗位任一同时成立的条件，且账号不在已成功账号排除名单中。本判断基于保存的主页样本，简介偏重法币运营职责，但没有否定当前 BD 职位；未核查完整发布历史。",
+          "citations": [
+            {
+              "kind": "native_profile",
+              "profile_url": "https://www.linkedin.com/in/ulianateixeira/",
+              "quote": "Business Development  @ Bybit | Crypto | Expansion & Growth  | Partnerships | Fintech | International Relations\n478connections"
+            }
+          ],
+          "tool": null
+        },
+        {
+          "criterion": "quality_rating",
+          "outcome": "supported",
+          "rationale": "当前职位直接对应 Bybit 的 Business Development，并列出 Expansion & Growth 与 Partnerships，足以支持本次人员筛选的初步推荐，评为 good。保存的简介主要描述法币运营，具体 BD 职责范围仍有限，但未见显著匹配弱点；判断仅依据保存的主页样本，不代表已检查完整发布历史或通过联系方式推荐门槛。",
+          "citations": [
+            {
+              "kind": "native_profile",
+              "profile_url": "https://www.linkedin.com/in/ulianateixeira/",
+              "quote": "Business Development  @ Bybit | Crypto | Expansion & Growth  | Partnerships | Fintech | International Relations\n478connections"
+            },
+            {
+              "kind": "native_profile",
+              "profile_url": "https://www.linkedin.com/in/ulianateixeira/",
+              "quote": "Currently working at Bybit, one of the world’s leading crypto exchanges, where I help bridge fiat and crypto in a fast-paced, global environment. I support day-to-day fiat operations, ensuring users have smooth, secure, and efficient payment experiences.I’m passionate about financial operations, payment systems, and how crypto is reshaping the way we think about money. I enjoy solving problems, optimizing processes, and being part of a company that’s pushing the boundaries of innovation in the fintech space.\nTop skills\nTeamwork • crypto • Trabalho em equipe • Comunicação"
+            }
+          ],
+          "tool": null,
+          "match_level": "good"
+        },
+        {
+          "criterion": {
+            "requirement": 0
+          },
+          "outcome": "supported",
+          "rationale": "当前职位标题写明 Bybit，简介也明确表示目前任职于 Bybit，满足五家公司任选其一的条件。这是保存的个人员工主页证据，本次初步判断无需以其他公司任职或近期帖子补充证明。",
+          "citations": [
+            {
+              "kind": "native_profile",
+              "profile_url": "https://www.linkedin.com/in/ulianateixeira/",
+              "quote": "Business Development  @ Bybit | Crypto | Expansion & Growth  | Partnerships | Fintech | International Relations\n478connections"
+            }
+          ],
+          "tool": null
+        }
+      ]
+    },
+    {
+      "name": "Patricio Mesri",
+      "material": {
+        "format_version": 2,
+        "campaign_id": "linkedin-test-20261020-69bac9f",
+        "criteria_revision": 1,
+        "criteria": {
+          "automatic_query_expansion": true,
+          "category": "商务、BD 或 Marketing 人员",
+          "contact_preference": "public_email_first",
+          "contact_search_terms": [
+            "email",
+            "business cooperation",
+            "contact",
+            "official website"
+          ],
+          "excluded_accounts": [
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAACdVXkoBclkH7oGVOCru8oxMsVSJhG-3XVM",
+              "profile_url": "https://www.linkedin.com/in/michela-silvestri/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAxbGXEBQm-krln5f2rtzuTj37y3aSRTkVs",
+              "profile_url": "https://www.linkedin.com/in/saeedkenifati/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADgCjq8Bf0KVIQdMRe4pRXm99Ttwd7DHJ6w",
+              "profile_url": "https://www.linkedin.com/in/sebastian-z-09384b222/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAA9PBAcBNNzFgXFYffI8i1zqIQXwK5see84",
+              "profile_url": "https://www.linkedin.com/in/thanhphank34/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAABW7H-kB4UH1NQ-J0HWRuTSnOb1jzeO01Ww",
+              "profile_url": "https://www.linkedin.com/in/jael-tan-7a1122a2/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAABWpfkMB9KoU-qv65__Dfh9utK6ohLZK3UI",
+              "profile_url": "https://www.linkedin.com/in/raj-timothy-nandwani-link/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAFac71QBcFZ1-4Dhr16Wy9r7dc7rf1t_6_c",
+              "profile_url": "https://www.linkedin.com/in/nansel-labar-104795346/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAy3SPEB5lcKLr-ZnQNQxxxqMrDxzv6AGaY",
+              "profile_url": "https://www.linkedin.com/in/danielgranadosrojas/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADGDVvgBYd2wYAIrimtPngcfCmkl9QaBAAk",
+              "profile_url": "https://www.linkedin.com/in/mahmoud-mohamed-abo-elmaaty/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAABfTYYIB1-8tCa_MRvFb7zcHT-0yL1t8GBI",
+              "profile_url": "https://www.linkedin.com/in/maximburko/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAClbU8EBxpJHC6aHBWj-VYBdQKNCyg97sfI",
+              "profile_url": "https://www.linkedin.com/in/dzungho104/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAACv-z2IBgXBlaIuCPqBbAijFIUWC7Wgp14g",
+              "profile_url": "https://www.linkedin.com/in/cody-ong/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADyBv6kBOWy_XVcd_A5D0peDDc3o2nok5rM",
+              "profile_url": "https://www.linkedin.com/in/daeyeon-hwang-089b73243/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADCaGToBb32eXrE4aXxnW_vn8t89YknkWpc",
+              "profile_url": "https://www.linkedin.com/in/ashikur-rahaman-1360b21a9/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAABUVRJ0BF1xWLBG2ny5p2oAtMhxrlL_frxw",
+              "profile_url": "https://www.linkedin.com/in/amin-kreidi/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADBWeLABQ4PoRCpS2XElkaRU4MTxufnsU-U",
+              "profile_url": "https://www.linkedin.com/in/yb-wi-3547151a7/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAE00xeQBKjiofN4B_8VxCuMeltS2Ny3pSks",
+              "profile_url": "https://www.linkedin.com/in/yongkim337/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAACu6f04B6vkbzAUk_bD-cnQ2t6P3zfyw0iA",
+              "profile_url": "https://www.linkedin.com/in/ellie-wang-812841185/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAWZEFMBT47FJwrkzXBDdBDTFujJj5gSBhA",
+              "profile_url": "https://www.linkedin.com/in/akshay-jadhav-2104aj/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADAaVKsB2hQuH6J34lsGqjmnEOgny6fgZnc",
+              "profile_url": "https://www.linkedin.com/in/ray-yee-liew/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAjrW24BID5wj-0AE_K5l-oRCIViKxw-Spg",
+              "profile_url": "https://www.linkedin.com/in/shawn-lee-52614642/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAA6UevcBiBwfdSilELXf_IjovffAR1waEjk",
+              "profile_url": "https://www.linkedin.com/in/tonychankihong/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAD3XUO0Bk6tdfqlVquOxsifxsvBfT1FZznU",
+              "profile_url": "https://www.linkedin.com/in/ken-chen-3a556924b/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAZJkA4BGBMLEXxdfJLmVbxjQa5-pcg_RLw",
+              "profile_url": "https://www.linkedin.com/in/juan-pablo-moreno-lara-1a63b02b/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAs1KzkBzl7D4rVDUapI_pTepkMLCNtOOT4",
+              "profile_url": "https://www.linkedin.com/in/ivan-charnas/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAApjZHEBxX_YfvUdcrzf2CiHUoXrnM-9om4",
+              "profile_url": "https://www.linkedin.com/in/steven-gotama-b0144b4a/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAatkFcBcHA38bmGaY6vo9dnRcvHmNXi9os",
+              "profile_url": "https://www.linkedin.com/in/mario-gonzalez9/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAC1dZb0BiDZXawurogLQvjyAgTQUA29O2rM",
+              "profile_url": "https://www.linkedin.com/in/jihadul0/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADxTPDkBpglAGwo8M66PpeeUYOFRg2AR8_I",
+              "profile_url": "https://www.linkedin.com/in/alec-lau-bb5b42242/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAA_Mk64BYzgHpQL1eZxXVSwj8pur0YRwPuM",
+              "profile_url": "https://www.linkedin.com/in/gasperstih/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAqeE_4BBEcVbhnylezI139KXn9FEycN1N4",
+              "profile_url": "https://www.linkedin.com/in/aaralyntong/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADXaJKcBsj2kPHFHXY_HEnkT9-mrYnHK58o",
+              "profile_url": "https://www.linkedin.com/in/jp-koning/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAACjQtOEBVpWHOdCrD9JLJqA7XSZAdOzUkH8",
+              "profile_url": "https://www.linkedin.com/in/eujin-lauren-lee-1022/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAACqDRaMBz71dbQzTEROuW-MjalDxGfo4FTg",
+              "profile_url": "https://www.linkedin.com/in/farukabdul/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAABsAXR8BVCrBNX-S8WVGNmCQBO1GOrisBxc",
+              "profile_url": "https://www.linkedin.com/in/dracyzy/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAA1m7sUBTU72ZZYXOuvSW9i3OMAAP4yhS04",
+              "profile_url": "https://www.linkedin.com/in/ycervantes/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAFnXJ0UBQxhtfOC1v0rXic2QCrnf5izV3U4",
+              "profile_url": "https://www.linkedin.com/in/md-omer-as-sani/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAGKH5fYBN8yyd4ZhpO8t73dxnoUwr2ttu4k",
+              "profile_url": "https://www.linkedin.com/in/john-monday-84673b3a1/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADV_vwkBSRO1-PDwz50UtG_9UfNZh9qInQo",
+              "profile_url": "https://www.linkedin.com/in/hatrithuan/"
+            }
+          ],
+          "language": "",
+          "min_subscribers": 0,
+          "min_subscribers_source": "default",
+          "region": "",
+          "requirements": [
+            {
+              "description": "人员须任职于以下任一公司：币安（Binance）、OKX、Bitget、Bybit 或 Gate.io；公司之间为 OR 关系。",
+              "excerpt": "币安（Binance）、OKX、Bitget、Bybit、Gate.io 的商务、BD 和 Marketing 人员"
+            }
+          ],
+          "requires_ai_tool_demo": false,
+          "requires_public_tool_url": false,
+          "table_subject": "LinkedIn 新版正确率与效率测试"
+        },
+        "approved_scopes": [
+          {
+            "platform": "linkedin",
+            "profile_ref": "d5pskwub",
+            "keywords": [
+              "Binance business development",
+              "OKX business development",
+              "Bitget BD",
+              "Bybit business development",
+              "\"Gate.io\" 商务",
+              "Binance Marketing",
+              "OKX Marketing",
+              "(Bitget OR Bybit OR \"Gate.io\") Marketing"
+            ]
+          }
+        ],
+        "approved_at": 1792563983,
+        "hit": {
+          "id": "316883f1-bc4c-4534-8dbe-f21eda515bd6",
+          "campaign_id": "linkedin-test-20261020-69bac9f",
+          "platform": "linkedin",
+          "profile_ref": "d5pskwub",
+          "search_keyword": "(Bitget OR Bybit OR \"Gate.io\") Marketing",
+          "source_url": "https://www.linkedin.com/in/pisaacm/",
+          "title": "Patricio Mesri",
+          "author_label": "Patricio Mesri",
+          "captured_at": 1792566785,
+          "author_id": "ACoAAAy8mswBR6fGlzeXWsrFjTn_b_hTztpi2Z8",
+          "author_url": "https://www.linkedin.com/in/pisaacm/",
+          "author_observed_at": 1792566899
+        },
+        "candidate_id": "d90a8f6e-2c66-45aa-ab7f-22cb868bacab",
+        "native_author_id": "ACoAAAy8mswBR6fGlzeXWsrFjTn_b_hTztpi2Z8",
+        "native_profile": {
+          "web_text": "Head of LATAM @ Bybit",
+          "profile_url": "https://www.linkedin.com/in/pisaacm/",
+          "observed_at": 1792566899,
+          "bio": "Top skills\nOnline Marketing • Social Media • Marketing • Product Marketing • Marketing Strategy",
+          "connections": null,
+          "bio_status": "complete"
+        },
+        "candidate_evidence_hash": "2d55576511ff0501d17b904fbedf52ad7dcca393b2e59bc7503c20d514561def",
+        "video_description": null,
+        "transcript": null,
+        "public_pages": [
+          {
+            "candidate_id": "d90a8f6e-2c66-45aa-ab7f-22cb868bacab",
+            "requested_url": "https://www.linkedin.com/in/pisaacm/overlay/contact-info/",
+            "search_hit_id": "316883f1-bc4c-4534-8dbe-f21eda515bd6",
+            "source_url": "https://www.linkedin.com/in/pisaacm/",
+            "source_excerpt": "https://www.linkedin.com/in/pisaacm/overlay/contact-info/",
+            "profile_ref": "d5pskwub",
+            "platform_account_id": "ACoAAAy8mswBR6fGlzeXWsrFjTn_b_hTztpi2Z8",
+            "call_number": 104,
+            "status": "completed",
+            "document_url": "https://www.linkedin.com/in/pisaacm/overlay/contact-info/",
+            "title": "Patricio Mesri",
+            "markdown_excerpt": "\n",
+            "truncated": true,
+            "stop_code": null,
+            "captured_at": 1792566937
+          }
+        ],
+        "material_hash": "2a9829f62bc99b1916b849b348f322f9824ba24dd3cd6a47ad8ef9ed8d329e9f"
+      },
+      "previous_findings": [
+        {
+          "criterion": "selection_fit",
+          "outcome": "supported",
+          "rationale": "保存的当前职位为 Bybit 拉美地区负责人，个人资料同时列出 Marketing、Product Marketing 和 Marketing Strategy，支持其符合目标公司的商务或 Marketing 人员条件；账号未出现在排除名单中。此为基于保存资料的初步判断，用户未设置粉丝、connection 或内容语言门槛。",
+          "citations": [
+            {
+              "kind": "native_profile",
+              "profile_url": "https://www.linkedin.com/in/pisaacm/",
+              "quote": "Head of LATAM @ Bybit"
+            },
+            {
+              "kind": "native_profile",
+              "profile_url": "https://www.linkedin.com/in/pisaacm/",
+              "quote": "Top skills\nOnline Marketing • Social Media • Marketing • Product Marketing • Marketing Strategy"
+            }
+          ],
+          "tool": null
+        },
+        {
+          "criterion": "quality_rating",
+          "outcome": "supported",
+          "rationale": "Bybit 当前地区负责人职位与保存的多项 Marketing 技能共同支持推荐，目标公司和业务职能均有具体资料依据。初步评为 good；保存样本未展开具体职责，无法进一步确认其负责的商务或营销项目，但用户允许以主页和当前职位完成判断。",
+          "citations": [
+            {
+              "kind": "native_profile",
+              "profile_url": "https://www.linkedin.com/in/pisaacm/",
+              "quote": "Head of LATAM @ Bybit"
+            },
+            {
+              "kind": "native_profile",
+              "profile_url": "https://www.linkedin.com/in/pisaacm/",
+              "quote": "Top skills\nOnline Marketing • Social Media • Marketing • Product Marketing • Marketing Strategy"
+            }
+          ],
+          "tool": null,
+          "match_level": "good"
+        },
+        {
+          "criterion": {
+            "requirement": 0
+          },
+          "outcome": "supported",
+          "rationale": "保存的当前职位明确显示其任职于 Bybit，满足五家公司任选其一的条件。此为基于保存职位资料的初步判断，无须同时任职于其他四家公司。",
+          "citations": [
+            {
+              "kind": "native_profile",
+              "profile_url": "https://www.linkedin.com/in/pisaacm/",
+              "quote": "Head of LATAM @ Bybit"
+            }
+          ],
+          "tool": null
+        }
+      ]
+    },
+    {
+      "name": "Jill L.",
+      "material": {
+        "format_version": 2,
+        "campaign_id": "linkedin-test-20261020-69bac9f",
+        "criteria_revision": 1,
+        "criteria": {
+          "automatic_query_expansion": true,
+          "category": "商务、BD 或 Marketing 人员",
+          "contact_preference": "public_email_first",
+          "contact_search_terms": [
+            "email",
+            "business cooperation",
+            "contact",
+            "official website"
+          ],
+          "excluded_accounts": [
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAACdVXkoBclkH7oGVOCru8oxMsVSJhG-3XVM",
+              "profile_url": "https://www.linkedin.com/in/michela-silvestri/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAxbGXEBQm-krln5f2rtzuTj37y3aSRTkVs",
+              "profile_url": "https://www.linkedin.com/in/saeedkenifati/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADgCjq8Bf0KVIQdMRe4pRXm99Ttwd7DHJ6w",
+              "profile_url": "https://www.linkedin.com/in/sebastian-z-09384b222/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAA9PBAcBNNzFgXFYffI8i1zqIQXwK5see84",
+              "profile_url": "https://www.linkedin.com/in/thanhphank34/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAABW7H-kB4UH1NQ-J0HWRuTSnOb1jzeO01Ww",
+              "profile_url": "https://www.linkedin.com/in/jael-tan-7a1122a2/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAABWpfkMB9KoU-qv65__Dfh9utK6ohLZK3UI",
+              "profile_url": "https://www.linkedin.com/in/raj-timothy-nandwani-link/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAFac71QBcFZ1-4Dhr16Wy9r7dc7rf1t_6_c",
+              "profile_url": "https://www.linkedin.com/in/nansel-labar-104795346/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAy3SPEB5lcKLr-ZnQNQxxxqMrDxzv6AGaY",
+              "profile_url": "https://www.linkedin.com/in/danielgranadosrojas/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADGDVvgBYd2wYAIrimtPngcfCmkl9QaBAAk",
+              "profile_url": "https://www.linkedin.com/in/mahmoud-mohamed-abo-elmaaty/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAABfTYYIB1-8tCa_MRvFb7zcHT-0yL1t8GBI",
+              "profile_url": "https://www.linkedin.com/in/maximburko/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAClbU8EBxpJHC6aHBWj-VYBdQKNCyg97sfI",
+              "profile_url": "https://www.linkedin.com/in/dzungho104/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAACv-z2IBgXBlaIuCPqBbAijFIUWC7Wgp14g",
+              "profile_url": "https://www.linkedin.com/in/cody-ong/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADyBv6kBOWy_XVcd_A5D0peDDc3o2nok5rM",
+              "profile_url": "https://www.linkedin.com/in/daeyeon-hwang-089b73243/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADCaGToBb32eXrE4aXxnW_vn8t89YknkWpc",
+              "profile_url": "https://www.linkedin.com/in/ashikur-rahaman-1360b21a9/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAABUVRJ0BF1xWLBG2ny5p2oAtMhxrlL_frxw",
+              "profile_url": "https://www.linkedin.com/in/amin-kreidi/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADBWeLABQ4PoRCpS2XElkaRU4MTxufnsU-U",
+              "profile_url": "https://www.linkedin.com/in/yb-wi-3547151a7/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAE00xeQBKjiofN4B_8VxCuMeltS2Ny3pSks",
+              "profile_url": "https://www.linkedin.com/in/yongkim337/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAACu6f04B6vkbzAUk_bD-cnQ2t6P3zfyw0iA",
+              "profile_url": "https://www.linkedin.com/in/ellie-wang-812841185/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAWZEFMBT47FJwrkzXBDdBDTFujJj5gSBhA",
+              "profile_url": "https://www.linkedin.com/in/akshay-jadhav-2104aj/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADAaVKsB2hQuH6J34lsGqjmnEOgny6fgZnc",
+              "profile_url": "https://www.linkedin.com/in/ray-yee-liew/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAjrW24BID5wj-0AE_K5l-oRCIViKxw-Spg",
+              "profile_url": "https://www.linkedin.com/in/shawn-lee-52614642/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAA6UevcBiBwfdSilELXf_IjovffAR1waEjk",
+              "profile_url": "https://www.linkedin.com/in/tonychankihong/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAD3XUO0Bk6tdfqlVquOxsifxsvBfT1FZznU",
+              "profile_url": "https://www.linkedin.com/in/ken-chen-3a556924b/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAZJkA4BGBMLEXxdfJLmVbxjQa5-pcg_RLw",
+              "profile_url": "https://www.linkedin.com/in/juan-pablo-moreno-lara-1a63b02b/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAs1KzkBzl7D4rVDUapI_pTepkMLCNtOOT4",
+              "profile_url": "https://www.linkedin.com/in/ivan-charnas/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAApjZHEBxX_YfvUdcrzf2CiHUoXrnM-9om4",
+              "profile_url": "https://www.linkedin.com/in/steven-gotama-b0144b4a/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAatkFcBcHA38bmGaY6vo9dnRcvHmNXi9os",
+              "profile_url": "https://www.linkedin.com/in/mario-gonzalez9/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAC1dZb0BiDZXawurogLQvjyAgTQUA29O2rM",
+              "profile_url": "https://www.linkedin.com/in/jihadul0/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADxTPDkBpglAGwo8M66PpeeUYOFRg2AR8_I",
+              "profile_url": "https://www.linkedin.com/in/alec-lau-bb5b42242/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAA_Mk64BYzgHpQL1eZxXVSwj8pur0YRwPuM",
+              "profile_url": "https://www.linkedin.com/in/gasperstih/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAqeE_4BBEcVbhnylezI139KXn9FEycN1N4",
+              "profile_url": "https://www.linkedin.com/in/aaralyntong/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADXaJKcBsj2kPHFHXY_HEnkT9-mrYnHK58o",
+              "profile_url": "https://www.linkedin.com/in/jp-koning/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAACjQtOEBVpWHOdCrD9JLJqA7XSZAdOzUkH8",
+              "profile_url": "https://www.linkedin.com/in/eujin-lauren-lee-1022/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAACqDRaMBz71dbQzTEROuW-MjalDxGfo4FTg",
+              "profile_url": "https://www.linkedin.com/in/farukabdul/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAABsAXR8BVCrBNX-S8WVGNmCQBO1GOrisBxc",
+              "profile_url": "https://www.linkedin.com/in/dracyzy/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAA1m7sUBTU72ZZYXOuvSW9i3OMAAP4yhS04",
+              "profile_url": "https://www.linkedin.com/in/ycervantes/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAFnXJ0UBQxhtfOC1v0rXic2QCrnf5izV3U4",
+              "profile_url": "https://www.linkedin.com/in/md-omer-as-sani/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAGKH5fYBN8yyd4ZhpO8t73dxnoUwr2ttu4k",
+              "profile_url": "https://www.linkedin.com/in/john-monday-84673b3a1/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADV_vwkBSRO1-PDwz50UtG_9UfNZh9qInQo",
+              "profile_url": "https://www.linkedin.com/in/hatrithuan/"
+            }
+          ],
+          "language": "",
+          "min_subscribers": 0,
+          "min_subscribers_source": "default",
+          "region": "",
+          "requirements": [
+            {
+              "description": "人员须任职于以下任一公司：币安（Binance）、OKX、Bitget、Bybit 或 Gate.io；公司之间为 OR 关系。",
+              "excerpt": "币安（Binance）、OKX、Bitget、Bybit、Gate.io 的商务、BD 和 Marketing 人员"
+            }
+          ],
+          "requires_ai_tool_demo": false,
+          "requires_public_tool_url": false,
+          "table_subject": "LinkedIn 新版正确率与效率测试"
+        },
+        "approved_scopes": [
+          {
+            "platform": "linkedin",
+            "profile_ref": "d5pskwub",
+            "keywords": [
+              "Binance business development",
+              "OKX business development",
+              "Bitget BD",
+              "Bybit business development",
+              "\"Gate.io\" 商务",
+              "Binance Marketing",
+              "OKX Marketing",
+              "(Bitget OR Bybit OR \"Gate.io\") Marketing"
+            ]
+          }
+        ],
+        "approved_at": 1792563983,
+        "hit": {
+          "id": "750687b0-b5b6-4225-bc89-7bb624d2d5ac",
+          "campaign_id": "linkedin-test-20261020-69bac9f",
+          "platform": "linkedin",
+          "profile_ref": "d5pskwub",
+          "search_keyword": "(Bitget OR Bybit OR \"Gate.io\") Marketing",
+          "source_url": "https://www.linkedin.com/in/jillliu777/",
+          "title": "Jill L.",
+          "author_label": "Jill L.",
+          "captured_at": 1792566785,
+          "author_id": "ACoAACkbsQYBas1imPPFRzMmjPz55oj7Zm1MAa8",
+          "author_url": "https://www.linkedin.com/in/jillliu777/",
+          "author_observed_at": 1792566907
+        },
+        "candidate_id": "3434bfca-ee8e-47ab-999a-fcbd05fe0e66",
+        "native_author_id": "ACoAACkbsQYBas1imPPFRzMmjPz55oj7Zm1MAa8",
+        "native_followers": 274,
+        "native_profile": {
+          "web_text": "Gate.io Japan Marketing Head\n274 followers\n243connections",
+          "profile_url": "https://www.linkedin.com/in/jillliu777/",
+          "observed_at": 1792566907,
+          "bio": "Result-driven Web3 professional with 6+ years of hands-on experience in Crypto Exchange Operations, Marketing, and Compliance within the Japanese market. Held key roles including Japan Marketing Head at Gate.io and operation at BTC Box. Certified with the JSDA Class-2 Securities Sales Representative (日本証券外務員二種), combining deep knowledge of Japanese financial regulations with robust practical experience in AML/KYC compliance and transaction monitoring. Proven track record in scaling brand presence through KOL networking, localized media PR, X (Twitter) growth, and offline community building. Fully trilingual in Chinese (Native), Japanese (Fluent), and English (Professional).",
+          "connections": {
+            "raw": "243connections",
+            "lower": 243,
+            "upper": 243
+          },
+          "bio_status": "complete"
+        },
+        "candidate_evidence_hash": "b00aab1d17b8986523961baaff28ecdc2d2153bf3808fe67c1ebb9dbeada6ab3",
+        "video_description": null,
+        "transcript": null,
+        "public_pages": [
+          {
+            "candidate_id": "3434bfca-ee8e-47ab-999a-fcbd05fe0e66",
+            "requested_url": "https://www.linkedin.com/in/jillliu777/overlay/contact-info/",
+            "search_hit_id": "750687b0-b5b6-4225-bc89-7bb624d2d5ac",
+            "source_url": "https://www.linkedin.com/in/jillliu777/",
+            "source_excerpt": "https://www.linkedin.com/in/jillliu777/overlay/contact-info/",
+            "profile_ref": "d5pskwub",
+            "platform_account_id": "ACoAACkbsQYBas1imPPFRzMmjPz55oj7Zm1MAa8",
+            "call_number": 105,
+            "status": "completed",
+            "document_url": "https://www.linkedin.com/in/jillliu777/overlay/contact-info/",
+            "title": "Jill L.",
+            "markdown_excerpt": "\n",
+            "truncated": true,
+            "stop_code": null,
+            "captured_at": 1792566947
+          }
+        ],
+        "material_hash": "c5f62d05926043a45eecb307b148cbcb6df2f31820c9612a57b3be4dbe8183bd"
+      },
+      "previous_findings": [
+        {
+          "criterion": "selection_fit",
+          "outcome": "supported",
+          "rationale": "保存的 LinkedIn 职位标题为“Gate.io Japan Marketing Head”，同时满足指定公司任一与商务、BD 或 Marketing 岗位任一的条件，且该账号不在已成功账号排除名单中。本结论是基于保存样本的初步评估，不代表已检查其全部发布历史；本任务未设置粉丝、connection 或内容语言门槛。",
+          "citations": [
+            {
+              "kind": "native_profile",
+              "profile_url": "https://www.linkedin.com/in/jillliu777/",
+              "quote": "Gate.io Japan Marketing Head\n274 followers\n243connections"
+            }
+          ],
+          "tool": null
+        },
+        {
+          "criterion": "quality_rating",
+          "outcome": "supported",
+          "rationale": "保存的职位标题直接标明其为 Gate.io 日本市场负责人，公司与 Marketing 职能均明确，足以支持本次人员搜索，评为 good。此为保存样本的初步评估，证据限于主页职业信息；未见影响本任务匹配的显著弱点，公开联系方式仍由后续独立环节核验。",
+          "citations": [
+            {
+              "kind": "native_profile",
+              "profile_url": "https://www.linkedin.com/in/jillliu777/",
+              "quote": "Gate.io Japan Marketing Head\n274 followers\n243connections"
+            }
+          ],
+          "tool": null,
+          "match_level": "good"
+        },
+        {
+          "criterion": {
+            "requirement": 0
+          },
+          "outcome": "supported",
+          "rationale": "保存的 LinkedIn 职位标题明确列出 Gate.io，满足五家指定公司中任职任一公司的条件。此为基于保存主页样本的初步判断，当前职位证据已足够，无须额外帖子佐证。",
+          "citations": [
+            {
+              "kind": "native_profile",
+              "profile_url": "https://www.linkedin.com/in/jillliu777/",
+              "quote": "Gate.io Japan Marketing Head\n274 followers\n243connections"
+            }
+          ],
+          "tool": null
+        }
+      ]
+    },
+    {
+      "name": "Ewelina Pendino",
+      "material": {
+        "format_version": 2,
+        "campaign_id": "linkedin-test-20261020-69bac9f",
+        "criteria_revision": 1,
+        "criteria": {
+          "automatic_query_expansion": true,
+          "category": "商务、BD 或 Marketing 人员",
+          "contact_preference": "public_email_first",
+          "contact_search_terms": [
+            "email",
+            "business cooperation",
+            "contact",
+            "official website"
+          ],
+          "excluded_accounts": [
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAACdVXkoBclkH7oGVOCru8oxMsVSJhG-3XVM",
+              "profile_url": "https://www.linkedin.com/in/michela-silvestri/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAxbGXEBQm-krln5f2rtzuTj37y3aSRTkVs",
+              "profile_url": "https://www.linkedin.com/in/saeedkenifati/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADgCjq8Bf0KVIQdMRe4pRXm99Ttwd7DHJ6w",
+              "profile_url": "https://www.linkedin.com/in/sebastian-z-09384b222/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAA9PBAcBNNzFgXFYffI8i1zqIQXwK5see84",
+              "profile_url": "https://www.linkedin.com/in/thanhphank34/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAABW7H-kB4UH1NQ-J0HWRuTSnOb1jzeO01Ww",
+              "profile_url": "https://www.linkedin.com/in/jael-tan-7a1122a2/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAABWpfkMB9KoU-qv65__Dfh9utK6ohLZK3UI",
+              "profile_url": "https://www.linkedin.com/in/raj-timothy-nandwani-link/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAFac71QBcFZ1-4Dhr16Wy9r7dc7rf1t_6_c",
+              "profile_url": "https://www.linkedin.com/in/nansel-labar-104795346/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAy3SPEB5lcKLr-ZnQNQxxxqMrDxzv6AGaY",
+              "profile_url": "https://www.linkedin.com/in/danielgranadosrojas/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADGDVvgBYd2wYAIrimtPngcfCmkl9QaBAAk",
+              "profile_url": "https://www.linkedin.com/in/mahmoud-mohamed-abo-elmaaty/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAABfTYYIB1-8tCa_MRvFb7zcHT-0yL1t8GBI",
+              "profile_url": "https://www.linkedin.com/in/maximburko/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAClbU8EBxpJHC6aHBWj-VYBdQKNCyg97sfI",
+              "profile_url": "https://www.linkedin.com/in/dzungho104/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAACv-z2IBgXBlaIuCPqBbAijFIUWC7Wgp14g",
+              "profile_url": "https://www.linkedin.com/in/cody-ong/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADyBv6kBOWy_XVcd_A5D0peDDc3o2nok5rM",
+              "profile_url": "https://www.linkedin.com/in/daeyeon-hwang-089b73243/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADCaGToBb32eXrE4aXxnW_vn8t89YknkWpc",
+              "profile_url": "https://www.linkedin.com/in/ashikur-rahaman-1360b21a9/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAABUVRJ0BF1xWLBG2ny5p2oAtMhxrlL_frxw",
+              "profile_url": "https://www.linkedin.com/in/amin-kreidi/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADBWeLABQ4PoRCpS2XElkaRU4MTxufnsU-U",
+              "profile_url": "https://www.linkedin.com/in/yb-wi-3547151a7/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAE00xeQBKjiofN4B_8VxCuMeltS2Ny3pSks",
+              "profile_url": "https://www.linkedin.com/in/yongkim337/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAACu6f04B6vkbzAUk_bD-cnQ2t6P3zfyw0iA",
+              "profile_url": "https://www.linkedin.com/in/ellie-wang-812841185/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAWZEFMBT47FJwrkzXBDdBDTFujJj5gSBhA",
+              "profile_url": "https://www.linkedin.com/in/akshay-jadhav-2104aj/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADAaVKsB2hQuH6J34lsGqjmnEOgny6fgZnc",
+              "profile_url": "https://www.linkedin.com/in/ray-yee-liew/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAjrW24BID5wj-0AE_K5l-oRCIViKxw-Spg",
+              "profile_url": "https://www.linkedin.com/in/shawn-lee-52614642/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAA6UevcBiBwfdSilELXf_IjovffAR1waEjk",
+              "profile_url": "https://www.linkedin.com/in/tonychankihong/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAD3XUO0Bk6tdfqlVquOxsifxsvBfT1FZznU",
+              "profile_url": "https://www.linkedin.com/in/ken-chen-3a556924b/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAZJkA4BGBMLEXxdfJLmVbxjQa5-pcg_RLw",
+              "profile_url": "https://www.linkedin.com/in/juan-pablo-moreno-lara-1a63b02b/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAs1KzkBzl7D4rVDUapI_pTepkMLCNtOOT4",
+              "profile_url": "https://www.linkedin.com/in/ivan-charnas/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAApjZHEBxX_YfvUdcrzf2CiHUoXrnM-9om4",
+              "profile_url": "https://www.linkedin.com/in/steven-gotama-b0144b4a/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAatkFcBcHA38bmGaY6vo9dnRcvHmNXi9os",
+              "profile_url": "https://www.linkedin.com/in/mario-gonzalez9/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAC1dZb0BiDZXawurogLQvjyAgTQUA29O2rM",
+              "profile_url": "https://www.linkedin.com/in/jihadul0/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADxTPDkBpglAGwo8M66PpeeUYOFRg2AR8_I",
+              "profile_url": "https://www.linkedin.com/in/alec-lau-bb5b42242/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAA_Mk64BYzgHpQL1eZxXVSwj8pur0YRwPuM",
+              "profile_url": "https://www.linkedin.com/in/gasperstih/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAqeE_4BBEcVbhnylezI139KXn9FEycN1N4",
+              "profile_url": "https://www.linkedin.com/in/aaralyntong/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADXaJKcBsj2kPHFHXY_HEnkT9-mrYnHK58o",
+              "profile_url": "https://www.linkedin.com/in/jp-koning/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAACjQtOEBVpWHOdCrD9JLJqA7XSZAdOzUkH8",
+              "profile_url": "https://www.linkedin.com/in/eujin-lauren-lee-1022/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAACqDRaMBz71dbQzTEROuW-MjalDxGfo4FTg",
+              "profile_url": "https://www.linkedin.com/in/farukabdul/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAABsAXR8BVCrBNX-S8WVGNmCQBO1GOrisBxc",
+              "profile_url": "https://www.linkedin.com/in/dracyzy/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAA1m7sUBTU72ZZYXOuvSW9i3OMAAP4yhS04",
+              "profile_url": "https://www.linkedin.com/in/ycervantes/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAFnXJ0UBQxhtfOC1v0rXic2QCrnf5izV3U4",
+              "profile_url": "https://www.linkedin.com/in/md-omer-as-sani/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAGKH5fYBN8yyd4ZhpO8t73dxnoUwr2ttu4k",
+              "profile_url": "https://www.linkedin.com/in/john-monday-84673b3a1/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADV_vwkBSRO1-PDwz50UtG_9UfNZh9qInQo",
+              "profile_url": "https://www.linkedin.com/in/hatrithuan/"
+            }
+          ],
+          "language": "",
+          "min_subscribers": 0,
+          "min_subscribers_source": "default",
+          "region": "",
+          "requirements": [
+            {
+              "description": "人员须任职于以下任一公司：币安（Binance）、OKX、Bitget、Bybit 或 Gate.io；公司之间为 OR 关系。",
+              "excerpt": "币安（Binance）、OKX、Bitget、Bybit、Gate.io 的商务、BD 和 Marketing 人员"
+            }
+          ],
+          "requires_ai_tool_demo": false,
+          "requires_public_tool_url": false,
+          "table_subject": "LinkedIn 新版正确率与效率测试"
+        },
+        "approved_scopes": [
+          {
+            "platform": "linkedin",
+            "profile_ref": "d5pskwub",
+            "keywords": [
+              "Binance business development",
+              "OKX business development",
+              "Bitget BD",
+              "Bybit business development",
+              "\"Gate.io\" 商务",
+              "Binance Marketing",
+              "OKX Marketing",
+              "(Bitget OR Bybit OR \"Gate.io\") Marketing"
+            ]
+          }
+        ],
+        "approved_at": 1792563983,
+        "hit": {
+          "id": "eeed06d6-5dfd-41bb-bc82-2d893047aeff",
+          "campaign_id": "linkedin-test-20261020-69bac9f",
+          "platform": "linkedin",
+          "profile_ref": "d5pskwub",
+          "search_keyword": "Binance Marketing",
+          "source_url": "https://www.linkedin.com/in/ewelina-pendino-685182113/",
+          "title": "Ewelina Pendino",
+          "author_label": "Ewelina Pendino",
+          "captured_at": 1792566496,
+          "author_id": "ACoAABxS1UUBy_MNcm-Va2XKxD-yDXT7Xl_Jg10",
+          "author_url": "https://www.linkedin.com/in/ewelina-pendino-685182113/",
+          "author_observed_at": 1792566733
+        },
+        "candidate_id": "1140c260-cc14-4ed7-a412-b12959634bee",
+        "native_author_id": "ACoAABxS1UUBy_MNcm-Va2XKxD-yDXT7Xl_Jg10",
+        "native_followers": 2516,
+        "native_profile": {
+          "web_text": "Growth & Paid Media @ Binance | Crypto | Performance Marketing\n2,516 followers\n500+connections",
+          "profile_url": "https://www.linkedin.com/in/ewelina-pendino-685182113/",
+          "observed_at": 1792566733,
+          "bio": "Results-driven digital marketer with a strong focus on performance and growth, particularly in the fintech and crypto space. Over the years, I’ve had the opportunity to work with some incredible teams—most recently at Uphold, where I led global performance marketing efforts and helped launch exciting blockchain projects.I love digging into data, building impactful campaigns, and finding meaningful ways to connect with users. What drives me most is creating measurable impact—whether it’s scaling user acquisition, improving ROI, or helping a brand grow in a competitive market.\nTop skills\nGrowth Strategies • Performance Marketing • ROI Optimization • Affiliate Marketing • Users Acquisition",
+          "connections": {
+            "raw": "500+connections",
+            "lower": 500,
+            "upper": null
+          },
+          "bio_status": "complete"
+        },
+        "candidate_evidence_hash": "1b075bce076bbc0a6c73b538b326e263a9cd3b1b891fb94b00a7fea835e9c768",
+        "video_description": null,
+        "transcript": null,
+        "public_pages": [
+          {
+            "candidate_id": "1140c260-cc14-4ed7-a412-b12959634bee",
+            "requested_url": "https://www.linkedin.com/in/ewelina-pendino-685182113/overlay/contact-info/",
+            "search_hit_id": "eeed06d6-5dfd-41bb-bc82-2d893047aeff",
+            "source_url": "https://www.linkedin.com/in/ewelina-pendino-685182113/",
+            "source_excerpt": "https://www.linkedin.com/in/ewelina-pendino-685182113/overlay/contact-info/",
+            "profile_ref": "d5pskwub",
+            "platform_account_id": "ACoAABxS1UUBy_MNcm-Va2XKxD-yDXT7Xl_Jg10",
+            "call_number": 89,
+            "status": "completed",
+            "document_url": "https://www.linkedin.com/in/ewelina-pendino-685182113/overlay/contact-info/",
+            "title": "Ewelina Pendino",
+            "markdown_excerpt": "\n",
+            "truncated": true,
+            "stop_code": null,
+            "captured_at": 1792566770
+          }
+        ],
+        "material_hash": "7c67f1d206d0e5a57a21d343c247a4bc88985d8d8926dcea033286bebe8cb8e2"
+      },
+      "previous_findings": [
+        {
+          "criterion": "selection_fit",
+          "outcome": "supported",
+          "rationale": "保存的当前职位标题显示其在 Binance 从事 Growth、Paid Media 和 Performance Marketing，同时满足指定公司任一与岗位任一的条件，账号也未命中排除名单。此为基于保存资料的初步判断；粉丝和 connections 不限，联系方式由后续环节独立核验。",
+          "citations": [
+            {
+              "kind": "native_profile",
+              "profile_url": "https://www.linkedin.com/in/ewelina-pendino-685182113/",
+              "quote": "Growth & Paid Media @ Binance | Crypto | Performance Marketing\n2,516 followers\n500+connections"
+            }
+          ],
+          "tool": null
+        },
+        {
+          "criterion": "quality_rating",
+          "outcome": "supported",
+          "rationale": "当前职位标题直接关联 Binance 与 Performance Marketing，足以支持本次寻找指定交易所 Marketing 人员的推荐，评为 good。此为保存样本的初步评估，具体职级与职责范围尚未展开，也未据此推断合作意愿或商业表现。",
+          "citations": [
+            {
+              "kind": "native_profile",
+              "profile_url": "https://www.linkedin.com/in/ewelina-pendino-685182113/",
+              "quote": "Growth & Paid Media @ Binance | Crypto | Performance Marketing\n2,516 followers\n500+connections"
+            }
+          ],
+          "tool": null,
+          "match_level": "good"
+        },
+        {
+          "criterion": {
+            "requirement": 0
+          },
+          "outcome": "supported",
+          "rationale": "保存的当前职位标题明确标注任职于 Binance，满足五家公司任选其一的条件。此为基于保存主页资料的初步判断，无须同时任职于其他列出的公司。",
+          "citations": [
+            {
+              "kind": "native_profile",
+              "profile_url": "https://www.linkedin.com/in/ewelina-pendino-685182113/",
+              "quote": "Growth & Paid Media @ Binance | Crypto | Performance Marketing\n2,516 followers\n500+connections"
+            }
+          ],
+          "tool": null
+        }
+      ]
+    },
+    {
+      "name": "Euren Leyson",
+      "material": {
+        "format_version": 2,
+        "campaign_id": "linkedin-test-20261020-69bac9f",
+        "criteria_revision": 1,
+        "criteria": {
+          "automatic_query_expansion": true,
+          "category": "商务、BD 或 Marketing 人员",
+          "contact_preference": "public_email_first",
+          "contact_search_terms": [
+            "email",
+            "business cooperation",
+            "contact",
+            "official website"
+          ],
+          "excluded_accounts": [
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAACdVXkoBclkH7oGVOCru8oxMsVSJhG-3XVM",
+              "profile_url": "https://www.linkedin.com/in/michela-silvestri/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAxbGXEBQm-krln5f2rtzuTj37y3aSRTkVs",
+              "profile_url": "https://www.linkedin.com/in/saeedkenifati/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADgCjq8Bf0KVIQdMRe4pRXm99Ttwd7DHJ6w",
+              "profile_url": "https://www.linkedin.com/in/sebastian-z-09384b222/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAA9PBAcBNNzFgXFYffI8i1zqIQXwK5see84",
+              "profile_url": "https://www.linkedin.com/in/thanhphank34/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAABW7H-kB4UH1NQ-J0HWRuTSnOb1jzeO01Ww",
+              "profile_url": "https://www.linkedin.com/in/jael-tan-7a1122a2/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAABWpfkMB9KoU-qv65__Dfh9utK6ohLZK3UI",
+              "profile_url": "https://www.linkedin.com/in/raj-timothy-nandwani-link/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAFac71QBcFZ1-4Dhr16Wy9r7dc7rf1t_6_c",
+              "profile_url": "https://www.linkedin.com/in/nansel-labar-104795346/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAy3SPEB5lcKLr-ZnQNQxxxqMrDxzv6AGaY",
+              "profile_url": "https://www.linkedin.com/in/danielgranadosrojas/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADGDVvgBYd2wYAIrimtPngcfCmkl9QaBAAk",
+              "profile_url": "https://www.linkedin.com/in/mahmoud-mohamed-abo-elmaaty/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAABfTYYIB1-8tCa_MRvFb7zcHT-0yL1t8GBI",
+              "profile_url": "https://www.linkedin.com/in/maximburko/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAClbU8EBxpJHC6aHBWj-VYBdQKNCyg97sfI",
+              "profile_url": "https://www.linkedin.com/in/dzungho104/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAACv-z2IBgXBlaIuCPqBbAijFIUWC7Wgp14g",
+              "profile_url": "https://www.linkedin.com/in/cody-ong/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADyBv6kBOWy_XVcd_A5D0peDDc3o2nok5rM",
+              "profile_url": "https://www.linkedin.com/in/daeyeon-hwang-089b73243/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADCaGToBb32eXrE4aXxnW_vn8t89YknkWpc",
+              "profile_url": "https://www.linkedin.com/in/ashikur-rahaman-1360b21a9/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAABUVRJ0BF1xWLBG2ny5p2oAtMhxrlL_frxw",
+              "profile_url": "https://www.linkedin.com/in/amin-kreidi/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADBWeLABQ4PoRCpS2XElkaRU4MTxufnsU-U",
+              "profile_url": "https://www.linkedin.com/in/yb-wi-3547151a7/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAE00xeQBKjiofN4B_8VxCuMeltS2Ny3pSks",
+              "profile_url": "https://www.linkedin.com/in/yongkim337/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAACu6f04B6vkbzAUk_bD-cnQ2t6P3zfyw0iA",
+              "profile_url": "https://www.linkedin.com/in/ellie-wang-812841185/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAWZEFMBT47FJwrkzXBDdBDTFujJj5gSBhA",
+              "profile_url": "https://www.linkedin.com/in/akshay-jadhav-2104aj/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADAaVKsB2hQuH6J34lsGqjmnEOgny6fgZnc",
+              "profile_url": "https://www.linkedin.com/in/ray-yee-liew/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAjrW24BID5wj-0AE_K5l-oRCIViKxw-Spg",
+              "profile_url": "https://www.linkedin.com/in/shawn-lee-52614642/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAA6UevcBiBwfdSilELXf_IjovffAR1waEjk",
+              "profile_url": "https://www.linkedin.com/in/tonychankihong/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAD3XUO0Bk6tdfqlVquOxsifxsvBfT1FZznU",
+              "profile_url": "https://www.linkedin.com/in/ken-chen-3a556924b/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAZJkA4BGBMLEXxdfJLmVbxjQa5-pcg_RLw",
+              "profile_url": "https://www.linkedin.com/in/juan-pablo-moreno-lara-1a63b02b/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAs1KzkBzl7D4rVDUapI_pTepkMLCNtOOT4",
+              "profile_url": "https://www.linkedin.com/in/ivan-charnas/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAApjZHEBxX_YfvUdcrzf2CiHUoXrnM-9om4",
+              "profile_url": "https://www.linkedin.com/in/steven-gotama-b0144b4a/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAatkFcBcHA38bmGaY6vo9dnRcvHmNXi9os",
+              "profile_url": "https://www.linkedin.com/in/mario-gonzalez9/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAC1dZb0BiDZXawurogLQvjyAgTQUA29O2rM",
+              "profile_url": "https://www.linkedin.com/in/jihadul0/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADxTPDkBpglAGwo8M66PpeeUYOFRg2AR8_I",
+              "profile_url": "https://www.linkedin.com/in/alec-lau-bb5b42242/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAA_Mk64BYzgHpQL1eZxXVSwj8pur0YRwPuM",
+              "profile_url": "https://www.linkedin.com/in/gasperstih/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAAqeE_4BBEcVbhnylezI139KXn9FEycN1N4",
+              "profile_url": "https://www.linkedin.com/in/aaralyntong/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADXaJKcBsj2kPHFHXY_HEnkT9-mrYnHK58o",
+              "profile_url": "https://www.linkedin.com/in/jp-koning/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAACjQtOEBVpWHOdCrD9JLJqA7XSZAdOzUkH8",
+              "profile_url": "https://www.linkedin.com/in/eujin-lauren-lee-1022/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAACqDRaMBz71dbQzTEROuW-MjalDxGfo4FTg",
+              "profile_url": "https://www.linkedin.com/in/farukabdul/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAABsAXR8BVCrBNX-S8WVGNmCQBO1GOrisBxc",
+              "profile_url": "https://www.linkedin.com/in/dracyzy/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAA1m7sUBTU72ZZYXOuvSW9i3OMAAP4yhS04",
+              "profile_url": "https://www.linkedin.com/in/ycervantes/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAFnXJ0UBQxhtfOC1v0rXic2QCrnf5izV3U4",
+              "profile_url": "https://www.linkedin.com/in/md-omer-as-sani/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAAGKH5fYBN8yyd4ZhpO8t73dxnoUwr2ttu4k",
+              "profile_url": "https://www.linkedin.com/in/john-monday-84673b3a1/"
+            },
+            {
+              "excerpt": "不要重复读取已经成功的账号",
+              "native_author_id": "ACoAADV_vwkBSRO1-PDwz50UtG_9UfNZh9qInQo",
+              "profile_url": "https://www.linkedin.com/in/hatrithuan/"
+            }
+          ],
+          "language": "",
+          "min_subscribers": 0,
+          "min_subscribers_source": "default",
+          "region": "",
+          "requirements": [
+            {
+              "description": "人员须任职于以下任一公司：币安（Binance）、OKX、Bitget、Bybit 或 Gate.io；公司之间为 OR 关系。",
+              "excerpt": "币安（Binance）、OKX、Bitget、Bybit、Gate.io 的商务、BD 和 Marketing 人员"
+            }
+          ],
+          "requires_ai_tool_demo": false,
+          "requires_public_tool_url": false,
+          "table_subject": "LinkedIn 新版正确率与效率测试"
+        },
+        "approved_scopes": [
+          {
+            "platform": "linkedin",
+            "profile_ref": "d5pskwub",
+            "keywords": [
+              "Binance business development",
+              "OKX business development",
+              "Bitget BD",
+              "Bybit business development",
+              "\"Gate.io\" 商务",
+              "Binance Marketing",
+              "OKX Marketing",
+              "(Bitget OR Bybit OR \"Gate.io\") Marketing",
+              "Bybit affiliate marketing"
+            ]
+          }
+        ],
+        "approved_at": 1792563983,
+        "hit": {
+          "id": "f5170de0-1b2a-4eb0-bcc7-2e71b8df8ea2",
+          "campaign_id": "linkedin-test-20261020-69bac9f",
+          "platform": "linkedin",
+          "profile_ref": "d5pskwub",
+          "search_keyword": "Bybit affiliate marketing",
+          "source_url": "https://www.linkedin.com/in/euren-leyson-bb3b54224/",
+          "title": "Euren Leyson",
+          "author_label": "Euren Leyson",
+          "captured_at": 1792567280,
+          "author_id": "ACoAADhpOrcBlCDwkfdNVz6Pte8M6H2r5UWR_NU",
+          "author_url": "https://www.linkedin.com/in/euren-leyson-bb3b54224/",
+          "author_observed_at": 1792567437
+        },
+        "candidate_id": "efb36799-3a86-4865-95c9-f3499da5d165",
+        "native_author_id": "ACoAADhpOrcBlCDwkfdNVz6Pte8M6H2r5UWR_NU",
+        "native_followers": 460,
+        "native_profile": {
+          "web_text": "Bybit Affiliate Partnership | Affiliate Partnership |  Looking for Sub-IB and Sub-Affiliates | Commission/Revenue Sharing | Crypto Headhunter for KOLs/Influencers  | CEX | Blockchain | Cryptocurrency\n460 followers\n407connections",
+          "profile_url": "https://www.linkedin.com/in/euren-leyson-bb3b54224/",
+          "observed_at": 1792567437,
+          "connections": {
+            "raw": "407connections",
+            "lower": 407,
+            "upper": 407
+          },
+          "bio_status": "truncated"
+        },
+        "candidate_evidence_hash": "31188693aa089cc8f848569c7a41f01b4a5b654fecf8ac38254eacf8d04baaed",
+        "video_description": null,
+        "transcript": null,
+        "public_pages": [
+          {
+            "candidate_id": "efb36799-3a86-4865-95c9-f3499da5d165",
+            "requested_url": "https://partner.bybit.com/b/BybitGlobal",
+            "search_hit_id": "f5170de0-1b2a-4eb0-bcc7-2e71b8df8ea2",
+            "source_url": "https://www.linkedin.com/in/euren-leyson-bb3b54224/",
+            "source_excerpt": "Website: https://partner.bybit.com/b/BybitGlobal\nhttps://www.linkedin.com/in/euren-leyson-bb3b54224/overlay/contact-info/",
+            "profile_ref": "d5pskwub",
+            "platform_account_id": "ACoAADhpOrcBlCDwkfdNVz6Pte8M6H2r5UWR_NU",
+            "call_number": 142,
+            "status": "completed",
+            "document_url": "https://www.bybit.com/zh-MY/sign-up?affiliate_id=34404&group_id=60182&group_type=1",
+            "title": "通过代理计划加入 Bybit | 专属奖励及返佣",
+            "markdown_excerpt": "![](https://www.bybit.com/common-static/images/3780847dcf5b4367a3a34c4a199661a6_671475209a41d35d9643ddf6b680554c.png)\n\n邀请您加入 Bybit\n\n# 立即获得至少 20 USDT 奖励\n\n1\n\n注册\n\n![](https://s1.bycsi.com/common-static/images/aea704d39a684549857589f983ffdfd0_c88c0c5cd020e85293e876af68085057.png)\n\n2\n\n完善资料\n\n![](https://s1.bycsi.com/common-static/images/aea704d39a684549857589f983ffdfd0_c88c0c5cd020e85293e876af68085057.png)\n\n![reward](https://www.bybit.com/common-static/images/b60807ee45514ce2b067fb67a5ddf36a_bbdd6bd4d7c28acd302a9e26bbd409a1.png)\n\n获得至少 20 USDT\n\nloading\n\n创建账户\n\n检测到您当前的 IP 属于 Bybit 服务受限地区。如有任何疑问，请联系在线客服。\n\n或通过以下方式注册\n\n使用 Google 账号登录使用 Google 账号登录。在新标签页中打开\n\nGoogle\n\nGoogle\n\nAppleApple\n\nTelegramTelegram\n\n或通过以下方式注册\n\nGoogle\n\nGoogle\n\nAppleApple\n\nTelegramTelegram\n",
+            "truncated": false,
+            "stop_code": null,
+            "captured_at": 1792567486
+          },
+          {
+            "candidate_id": "efb36799-3a86-4865-95c9-f3499da5d165",
+            "requested_url": "https://www.linkedin.com/in/euren-leyson-bb3b54224/overlay/contact-info/",
+            "search_hit_id": "f5170de0-1b2a-4eb0-bcc7-2e71b8df8ea2",
+            "source_url": "https://www.linkedin.com/in/euren-leyson-bb3b54224/",
+            "source_excerpt": "Website: https://partner.bybit.com/b/BybitGlobal\nhttps://www.linkedin.com/in/euren-leyson-bb3b54224/overlay/contact-info/",
+            "profile_ref": "d5pskwub",
+            "platform_account_id": "ACoAADhpOrcBlCDwkfdNVz6Pte8M6H2r5UWR_NU",
+            "call_number": 144,
+            "status": "failed",
+            "document_url": null,
+            "title": "",
+            "markdown_excerpt": "",
+            "truncated": false,
+            "stop_code": "opencli_invalid_output",
+            "captured_at": 1792567506
+          }
+        ],
+        "material_hash": "9fa0d12eea3cf47d54198a42e0499e36e8a42a89b96ac18f2e4d64781c2906c6"
+      },
+      "previous_findings": [
+        {
+          "criterion": "selection_fit",
+          "outcome": "supported",
+          "rationale": "保存的 LinkedIn 当前职位标题标明“Bybit Affiliate Partnership”，并列出寻找下级代理、联盟伙伴及佣金分成，支持其属于 Bybit 商务合作人员；账号未命中排除名单，粉丝和连接数均无限制。这是基于已保存主页样本的初步判断，未核查完整任职或发布历史。",
+          "citations": [
+            {
+              "kind": "native_profile",
+              "profile_url": "https://www.linkedin.com/in/euren-leyson-bb3b54224/",
+              "quote": "Bybit Affiliate Partnership | Affiliate Partnership |  Looking for Sub-IB and Sub-Affiliates | Commission/Revenue Sharing | Crypto Headhunter for KOLs/Influencers  | CEX | Blockchain | Cryptocurrency"
+            }
+          ],
+          "tool": null
+        },
+        {
+          "criterion": "quality_rating",
+          "outcome": "supported",
+          "rationale": "当前职位标题直接关联 Bybit，且具体描述联盟伙伴拓展、佣金分成和 KOL 招募，与寻找交易所商务、BD 或 Marketing 人员的任务明确相关，初步评为 good。判断依据限于保存的主页职位信息，未据此推断合作意愿或商业业绩；联系方式由后续环节独立核验。",
+          "citations": [
+            {
+              "kind": "native_profile",
+              "profile_url": "https://www.linkedin.com/in/euren-leyson-bb3b54224/",
+              "quote": "Bybit Affiliate Partnership | Affiliate Partnership |  Looking for Sub-IB and Sub-Affiliates | Commission/Revenue Sharing | Crypto Headhunter for KOLs/Influencers  | CEX | Blockchain | Cryptocurrency"
+            }
+          ],
+          "tool": null,
+          "match_level": "good"
+        },
+        {
+          "criterion": {
+            "requirement": 0
+          },
+          "outcome": "supported",
+          "rationale": "保存的当前职位标题明确列出“Bybit Affiliate Partnership”，支持其当前任职关联 Bybit，满足五家公司任一的条件。此项为依据主页样本作出的初步判断，其他四家公司无需同时满足。",
+          "citations": [
+            {
+              "kind": "native_profile",
+              "profile_url": "https://www.linkedin.com/in/euren-leyson-bb3b54224/",
+              "quote": "Bybit Affiliate Partnership | Affiliate Partnership |  Looking for Sub-IB and Sub-Affiliates | Commission/Revenue Sharing | Crypto Headhunter for KOLs/Influencers  | CEX | Blockchain | Cryptocurrency"
+            }
+          ],
+          "tool": null
+        }
+      ]
+    }
+  ]
+}

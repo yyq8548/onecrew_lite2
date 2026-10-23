@@ -87,6 +87,10 @@ export const cellValueSchema = z
   .describe('A scalar, fixed people/company object, fixed score object, or null');
 export type PeopleValue = z.infer<typeof peopleValueSchema>;
 export type ScoreValue = z.infer<typeof scoreValueSchema>;
+export const QUALITY_LEVEL_POINTS = Object.freeze({ excellent: 95, good: 85, medium: 70, low: 40 } as const);
+export function scoreValuePoints(value: Pick<ScoreValue, 'level'> | null): number | null {
+  return value === null ? null : QUALITY_LEVEL_POINTS[value.level];
+}
 export type CellValue = z.infer<typeof cellValueSchema>;
 
 export const columnSchema = z
@@ -218,10 +222,9 @@ export type RowQueryInput = z.infer<typeof rowQuerySchema>;
 export type CreateRowsInput = z.infer<typeof createRowsSchema>;
 export type UpdateRowsInput = z.infer<typeof updateRowsSchema>;
 
-/** Presentation priority; a hidden entry is an opportunity, never an email address. */
+/** 优先展示邮箱，保留其他联系方式及隐藏邮箱入口。 */
 export function preferredContacts<T extends { kind: string }>(contacts: T[]): T[] {
-  return contacts.some(c => c.kind === 'email')
-    ? contacts.filter(c => c.kind !== 'hidden_email') : contacts;
+  return [...contacts].sort((a, b) => Number(b.kind === 'email') - Number(a.kind === 'email'));
 }
 export function contactDisplay(contact: {
   kind: string;
@@ -229,7 +232,17 @@ export function contactDisplay(contact: {
   original_value: string;
   source_excerpt?: string;
 }): string {
-  if (contact.kind === 'hidden_email') return `隐藏邮箱，在更多信息手动查看 — ${contact.normalized_value}`;
+  if (contact.kind === 'hidden_email') {
+    const status = contact.source_excerpt?.match(/YouTube hidden email status: ([a-z_]+);/)?.[1];
+    const labels: Record<string, string> = {
+      daily_limit: '隐藏邮箱：已达查看上限，本次任务跳过',
+      task_limited: '隐藏邮箱：已达查看上限，本次任务跳过',
+      verification_required: '隐藏邮箱：需要人工完成验证',
+      revealed: '隐藏邮箱已读取', cached: '隐藏邮箱已读取',
+      public_email: '简介已有邮箱，已跳过隐藏邮箱查看', busy: '隐藏邮箱：其他查看任务进行中',
+    };
+    return `${status && labels[status] ? labels[status] : '隐藏邮箱，在更多信息手动查看'} — ${contact.normalized_value}`;
+  }
   if (contact.kind === 'social_profile' && isSocialProfile(contact.normalized_value)
       && new URL(contact.normalized_value).hostname.replace(/^www\./, '') === 'tiktok.com')
     return `TikTok 私信：${contact.normalized_value}`;
@@ -238,8 +251,9 @@ export function contactDisplay(contact: {
     if (host === 'douyin.com') return `抖音主页：${contact.normalized_value}`;
     if (host === 'facebook.com') return `Facebook 主页：${contact.normalized_value}`;
     if (host === 'youtube.com') return `YouTube 主页：${contact.normalized_value}`;
+    if (host === 'linkedin.com') return `LinkedIn 主页：${contact.normalized_value}`;
   }
-  const labels: Record<string, string> = { wechat: '微信', wechat_official: '公众号', whatsapp: 'WhatsApp', telegram: 'Telegram' };
+  const labels: Record<string, string> = { wechat: '微信', wechat_official: '公众号', whatsapp: 'WhatsApp', telegram: 'Telegram', website: '网站', messenger: 'Messenger', phone: '电话' };
   const label = labels[contact.kind];
   const remark = ['wechat', 'wechat_official'].includes(contact.kind)
     ? (contact.source_excerpt ?? contact.original_value).match(/[（(]([^）)]{1,100})[）)]/)?.[1] : null;
@@ -299,7 +313,6 @@ export function isSocialProfile(value: string): boolean {
       return parts.length === 1 && parts[0].startsWith('@') && handle(parts[0].slice(1));
     if (host === 'space.bilibili.com') return parts.length === 1 && /^\d+$/.test(parts[0]);
     if (host === 'linkedin.com') return parts.length === 2 && parts[0] === 'in' && handle(parts[1]);
-    if (host === 'reddit.com') return parts.length === 2 && ['user', 'u'].includes(parts[0]) && handle(parts[1]);
     if (host === 'bsky.app')
       return parts.length === 2 && parts[0] === 'profile' && handle(parts[1]);
     return false;

@@ -1,0 +1,57 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { DatabaseSync } from "node:sqlite";
+import test from "node:test";
+import { AccountContextService } from "../src/identity/account-context.ts";
+import { executeSubmittedCreatorBatch, intoCreatorBatchOwnerCompletion, prepareCreatorBatch } from "../src/creators/batch-review.ts";
+import { CreatorRepository } from "../src/creators/repository.ts";
+import { OwnerConfirmationStore } from "../src/results/grants.ts";
+import { OwnerReviewContext, PeerResumePayload } from "../src/results/owner-context.ts";
+
+test("sequential reviewed batches preserve the first real commit when the remaining review is cancelled", () => {
+  const db = new DatabaseSync(":memory:");
+  for (const name of ["creator-schema90.sql", "creator-indexes90.sql", "creator-triggers90.sql"]) db.exec(readFileSync(new URL(`../src/storage/${name}`, import.meta.url), "utf8"));
+  db.exec("PRAGMA user_version=90");
+  const accounts = new AccountContextService();
+  const account = accounts.activate({ user: { id: "owner", email: "owner@example.com" }, tenantId: "tenant", baseId: "base", deviceId: "device", source: "access" });
+  const store = new OwnerConfirmationStore(accounts), repository = new CreatorRepository(db);
+  const operation = "onecrew.creator.batch.create";
+  const firstInput = { idempotency_key: "first", validation: "strict", items: [{ display_name: "First reviewed Creator" }] };
+  const secondInput = { idempotency_key: "second", validation: "strict", items: [{ display_name: "Second reviewed Creator" }] };
+  const call1 = Buffer.from(JSON.stringify({ operation, input: firstInput }));
+  const call2 = Buffer.from(JSON.stringify({ operation, input: secondInput }));
+  const context1 = new OwnerReviewContext("mcp:sequence", "first-call", operation, call1);
+  const context2 = new OwnerReviewContext("mcp:sequence", "second-call", operation, call2);
+  const peer = new PeerResumePayload(Buffer.from(JSON.stringify([firstInput, secondInput])));
+  const pending = (call_id: string) => ({ call_id, operation_id: operation, disposition: { kind: "not_run" as const, reason: "confirmation_required" }, summary: "Review this batch.", resource_refs: [] });
+  try {
+    const reference = store.mint(prepareCreatorBatch(firstInput, context1), { outcomes: [pending("first-call"), pending("second-call")] }, account, peer);
+    const presented = store.present(reference, "mcp:sequence", account, "zh-CN");
+    assert.throws(() => store.submit({ ...presented.binding, revision: 1n }, account), /revision_conflict/);
+    const grant = store.submit(presented.binding, account);
+    const first = intoCreatorBatchOwnerCompletion(executeSubmittedCreatorBatch(grant, account, repository), grant.context());
+    assert.equal(db.prepare("SELECT count(*) AS n FROM creators").get()!.n, 1);
+    const secondReview = prepareCreatorBatch(secondInput, context2);
+    const advanced = store.advance(grant.binding(), account, secondReview, { outcomes: [first.outcome, pending("second-call")] }, first.presentation.sections, peer);
+    assert.equal(advanced.locale, "zh-CN");
+    assert.equal(advanced.binding.fingerprint, presented.binding.fingerprint);
+    assert.equal(advanced.binding.view.identity, presented.binding.view.identity);
+    assert.equal(advanced.completed_sections_count, first.presentation.sections.length);
+    assert.equal(advanced.batch.outcomes[0]!.disposition.kind, "succeeded");
+    const cancelled = store.cancel(advanced.binding, account, { message: "Cancelled.", context: { kind: "cancelled" } });
+    assert.equal(cancelled.state.kind, "resolved");
+    assert.equal(cancelled.batch.outcomes[0]!.disposition.kind, "succeeded");
+    assert.deepEqual(cancelled.batch.outcomes[1]!.disposition, { kind: "not_run", reason: "user_cancelled" });
+    assert.equal(cancelled.continuation.state, "pending");
+    assert.equal(cancelled.pending_action, null);
+    assert.equal(db.prepare("SELECT count(*) AS n FROM creators").get()!.n, 1);
+    assert.throws(() => store.submit(cancelled.binding, account), /consumed/);
+    const notification = store.claimContinuation(cancelled.binding, account, cancelled.continuation.continuation_revision, "pending");
+    assert.equal(notification.request.context.kind, "execution");
+    if (notification.request.context.kind !== "execution") throw new Error("Expected retained execution history");
+    assert.equal(notification.request.context.outcomes[0]!.resource_refs[0]!.label, null);
+    const delivered = store.completeContinuation(cancelled.binding, account, notification.continuation_revision, notification.lease_id, "delivered");
+    assert.equal(delivered.continuation.state, "delivered");
+    assert.throws(() => store.claimContinuation(cancelled.binding, account, delivered.continuation.continuation_revision, "pending"), /not_claimable/);
+  } finally { store.close(); db.close(); }
+});

@@ -14,7 +14,7 @@ export type CreatorMaterial = InferResponseType<
   (typeof api)['dynamic-tables'][':tableId']['creators']['$get'],
   200
 >;
-export type VerdictFilter = 'all' | 'qualified' | 'pending' | 'rejected';
+export type VerdictFilter = 'all' | 'qualified' | 'related' | 'pending' | 'rejected';
 export type CreatorAccount = {
   platform: string;
   nativeId: string;
@@ -22,6 +22,7 @@ export type CreatorAccount = {
   authorUrl: string;
   verdict: string;
   followers: string | null;
+  bioStatus?: string;
 };
 export type CreatorGroup = {
   key: string;
@@ -45,6 +46,7 @@ const sourceColumns = new Set([
   'Platform',
   'Author label',
   'Followers',
+  'Biography status',
   'Author ID',
   'Author URL',
   'Content title',
@@ -55,7 +57,7 @@ const sourceColumns = new Set([
   'Match evaluation',
 ]);
 const scoreOrder = { excellent: 0, good: 1, medium: 2, low: 3 };
-const verdictOrder: Record<string, number> = { qualified: 0, pending: 1, rejected: 2 };
+const verdictOrder: Record<string, number> = { qualified: 0, related: 1, pending: 2, rejected: 3 };
 export function filterCreators(creators: CreatorGroup[], filter: VerdictFilter): CreatorGroup[] {
   return creators
     .filter((creator) => filter === 'all' || creator.verdict === filter)
@@ -100,6 +102,7 @@ export function groupedCreators(table: Table, material: CreatorMaterial) {
         nativeId: member.native_author_id,
         label: member.display_name || member.native_author_id,
         followers: observedCounts.length === 1 ? observedCounts[0] : null,
+        bioStatus: [...new Set(member.source_hit_ids.map(hit => text(sources.get(hit)!.row.values, 'Biography status')).filter(Boolean))].join(','),
         authorUrl: profileUrl(member.platform, member.native_author_id, member.profile_url),
         verdict:
           verdicts.every((verdict) => verdict === first) &&
@@ -115,9 +118,9 @@ export function groupedCreators(table: Table, material: CreatorMaterial) {
       contacts: preferredContacts([
         ...new Map(
           bound
-            .filter((source) => source.verdict === 'qualified')
+            .filter((source) => source.verdict === 'qualified' || source.verdict === 'pending' && source.reasons.includes('related_alternative'))
             .flatMap((source) => source.contacts)
-            .map((contact) => [contact.normalized_value, contact]),
+            .map((contact) => [`${contact.kind}:${contact.normalized_value}`, contact]),
         ).values(),
       ]),
       rating: recommendation?.values.score ??
@@ -127,10 +130,7 @@ export function groupedCreators(table: Table, material: CreatorMaterial) {
               (column) => column.name === 'Match evaluation' && column.data_type === 'score',
             );
             const score = scoreValueSchema.safeParse(field ? source.row.values[field.id] : null);
-            return score.success &&
-              score.data.reason?.trim() &&
-              (source.verdict === 'qualified' ||
-                (source.verdict === 'rejected' && score.data.level === 'low'))
+            return score.success
               ? [score.data]
               : [];
           })
@@ -141,7 +141,9 @@ export function groupedCreators(table: Table, material: CreatorMaterial) {
         ? 'qualified'
         : accounts.every((account) => account.verdict === 'rejected')
           ? 'rejected'
-          : 'pending',
+          : bound.some(source => source.verdict === 'pending' && source.reasons.includes('related_alternative'))
+            ? 'related'
+            : 'pending',
       reasons: [...new Set(bound.flatMap((source) => source.reasons))],
       sources: bound.map(({ row }) => ({
         title: text(row.values, 'Content title'),

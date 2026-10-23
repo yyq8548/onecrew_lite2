@@ -2,9 +2,10 @@ import * as XLSX from 'xlsx';
 import { recommendationFields, recommendationRows } from './recommendation-result.js';
 import type { DiscoveryCreatorView, RowDto, TableDto } from './data.js';
 import type { DataType } from '@onecrew/contracts/tables';
+import { scoreValueSchema, scoreValuePoints } from '@onecrew/contracts/tables';
 
 const scoreLabels: Record<'zh-CN' | 'en', Record<string, string>> = {
-  'zh-CN': { excellent: '优秀', good: '良好', medium: '一般', low: '较低' },
+  'zh-CN': { excellent: '优秀', good: '良好', medium: '中等', low: '较低' },
   en: { excellent: 'Excellent', good: 'Good', medium: 'Medium', low: 'Low' },
 };
 
@@ -46,7 +47,7 @@ const toCell = (value: unknown, type: DataType, locale: 'zh-CN' | 'en'): XLSX.Ce
     const level = typeof score.level === 'string' ? score.level : String(value);
     const cell: XLSX.CellObject = {
       t: 's',
-      v: scoreLabels[locale][level] ?? level,
+      v: `${scoreValuePoints(scoreValueSchema.parse(value))} · ${scoreLabels[locale][level] ?? level}`,
     };
     if (typeof score.reason === 'string' && score.reason.length) note(cell, score.reason);
     return cell;

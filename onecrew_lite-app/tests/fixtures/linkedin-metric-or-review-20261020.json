@@ -1,0 +1,217 @@
+{
+  "captured_from": "Actual CodexSemanticClient assessment of a real OpenCLI LinkedIn snapshot, replayed in isolated SQLite; production campaign unchanged",
+  "captured_at": "2026-10-21T02:07:26.200Z",
+  "model_elapsed_ms": 16173,
+  "operator_account_id": "Ye7CHhx3OvrXP80JGxEJJVmabkhpM9Kn",
+  "metric_index": 3,
+  "basis": {
+    "campaign_id": "602c0efd-6922-4999-9c99-79777b532150",
+    "revision": 1,
+    "criteria_json": "{\"category\":\"BD人员\",\"region\":\"\",\"language\":\"\",\"min_subscribers\":0,\"requires_ai_tool_demo\":false,\"requires_public_tool_url\":false,\"min_subscribers_source\":\"requirements\",\"requirements\":[{\"description\":\"候选人须任职于币安（Binance），从事BD工作。\",\"excerpt\":\"币安的BD人员\"},{\"description\":\"每位候选人须满足以下任一条件：LinkedIn followers >= 2000，或者LinkedIn connections >= 500。两个分支为OR关系，达到任一分支即可；followers和connections分别核实。\",\"excerpt\":\"followers至少2000或者connections至少500，满足其中一个就行。\"}],\"contact_preference\":\"public_email_first\",\"contact_search_terms\":[\"email\",\"business cooperation\",\"contact\",\"official website\"],\"automatic_query_expansion\":true,\"table_subject\":\"币安（Binance）的BD人员\"}",
+    "scopes_json": "[{\"platform\":\"linkedin\",\"profile_ref\":\"d5pskwub\",\"keywords\":[\"Binance business development\",\"OKX business development\",\"Bitget business development\",\"Bybit Marketing\",\"Gate.io business development\",\"币安 商务\",\"OKX Marketing\",\"Bitget Marketing\"]}]",
+    "approved_at": 1792542706,
+    "hit": {
+      "id": "2ddf93d8-6cfb-4fa0-bd42-30e15119200d",
+      "campaign_id": "602c0efd-6922-4999-9c99-79777b532150",
+      "platform": "linkedin",
+      "profile_ref": "d5pskwub",
+      "search_keyword": "Binance business development",
+      "source_url": "https://www.linkedin.com/in/ray-yee-liew/",
+      "title": "Ray Yee Liew",
+      "author_label": "Ray Yee Liew",
+      "captured_at": 1792542733,
+      "author_id": "ACoAADAaVKsB2hQuH6J34lsGqjmnEOgny6fgZnc",
+      "author_url": "https://www.linkedin.com/in/ray-yee-liew/",
+      "author_observed_at": 1792548259
+    },
+    "candidate_id": "f1bbc525-0b49-48ed-9213-4479c2b789bd",
+    "native_author_id": "ACoAADAaVKsB2hQuH6J34lsGqjmnEOgny6fgZnc",
+    "native_followers": 1548,
+    "native_follower_estimate": null,
+    "native_profile": {
+      "web_text": "Global Business Development at Binance | Payments\n1,548 followers\n500+connections",
+      "profile_url": "https://www.linkedin.com/in/ray-yee-liew/",
+      "observed_at": 1792548259,
+      "bio": null,
+      "bio_status": "truncated",
+      "self_declared_location": null,
+      "connections": {
+        "raw": "500+connections",
+        "lower": 500,
+        "upper": null
+      }
+    },
+    "evidence_json": "{\"source_urls\":[\"https://www.linkedin.com/in/ray-yee-liew/\",\"https://www.linkedin.com/in/ray-yee-liew/\"],\"subscribers_raw\":\"1548\",\"subscribers_source_url\":\"https://www.linkedin.com/in/ray-yee-liew/\",\"author_identity_kind\":\"native_id\",\"author_identity_search_hit_id\":null,\"captured_at\":1792542763,\"profile_bio_status\":\"truncated\",\"profile_bio_status_source_url\":\"https://www.linkedin.com/in/ray-yee-liew/\",\"assessment\":{\"reasons\":[\"category_unverified\",\"requirement_unverified\"],\"subscribers_normalized\":1548,\"match_rating\":null}}",
+    "transcript": null,
+    "source_description": null,
+    "native_content": null,
+    "language_samples": [],
+    "pages": []
+  },
+  "proposal": {
+    "finding": {
+      "criterion": "match_fit",
+      "outcome": "supported",
+      "rationale": "保存的LinkedIn职位标题表明该候选人在币安从事全球商务拓展；followers为1548，connections为500+，满足人数条件中的connections分支，构成直接匹配。这是依据保存的资料进行的初步评估，未检查其完整发布历史。",
+      "citations": [
+        {
+          "kind": "native_profile",
+          "profile_url": "https://www.linkedin.com/in/ray-yee-liew/",
+          "quote": "Global Business Development at Binance | Payments\n1,548 followers\n500+connections"
+        }
+      ],
+      "tool": null,
+      "country_code": null,
+      "match_level": "excellent"
+    },
+    "language_only_pending": false,
+    "requirement_findings": [
+      {
+        "criterion": {
+          "requirement": 0
+        },
+        "outcome": "supported",
+        "rationale": "账号资料显示其当前职位为币安全球商务拓展，满足任职于币安且从事BD工作的条件；此处评估的是员工身份，无须另行建立创作者身份。",
+        "citations": [
+          {
+            "kind": "native_profile",
+            "profile_url": "https://www.linkedin.com/in/ray-yee-liew/",
+            "quote": "Global Business Development at Binance | Payments\n1,548 followers\n500+connections"
+          }
+        ],
+        "tool": null,
+        "country_code": null,
+        "match_level": null
+      },
+      {
+        "criterion": {
+          "requirement": 1
+        },
+        "outcome": "supported",
+        "rationale": "已观察到1548位followers，未达到2000；500+ connections支持至少500，满足OR条件中的一个完整分支。",
+        "citations": [
+          {
+            "kind": "native_profile",
+            "profile_url": "https://www.linkedin.com/in/ray-yee-liew/",
+            "quote": "Global Business Development at Binance | Payments\n1,548 followers\n500+connections"
+          }
+        ],
+        "tool": null,
+        "country_code": null,
+        "match_level": null
+      }
+    ]
+  },
+  "input": {
+    "campaign_id": "602c0efd-6922-4999-9c99-79777b532150",
+    "expected_revision": 1,
+    "search_hit_id": "2ddf93d8-6cfb-4fa0-bd42-30e15119200d",
+    "material_hash": "437a92c233f2201adfafab25d5ab6910a3335f7d99c19c0384c14caf9ed75762",
+    "request_id": "0de3e52e-9f35-4cab-8cc0-670647759009",
+    "reviewer": {
+      "kind": "agent",
+      "label": "onecrew-match-evaluation-0cebf122-initial-v1"
+    },
+    "findings": [
+      {
+        "criterion": "match_fit",
+        "outcome": "supported",
+        "rationale": "保存的LinkedIn职位标题表明该候选人在币安从事全球商务拓展；followers为1548，connections为500+，满足人数条件中的connections分支，构成直接匹配。这是依据保存的资料进行的初步评估，未检查其完整发布历史。",
+        "citations": [
+          {
+            "kind": "native_profile",
+            "profile_url": "https://www.linkedin.com/in/ray-yee-liew/",
+            "quote": "Global Business Development at Binance | Payments\n1,548 followers\n500+connections"
+          }
+        ],
+        "tool": null,
+        "country_code": null,
+        "match_level": "excellent"
+      },
+      {
+        "criterion": {
+          "requirement": 0
+        },
+        "outcome": "supported",
+        "rationale": "账号资料显示其当前职位为币安全球商务拓展，满足任职于币安且从事BD工作的条件；此处评估的是员工身份，无须另行建立创作者身份。",
+        "citations": [
+          {
+            "kind": "native_profile",
+            "profile_url": "https://www.linkedin.com/in/ray-yee-liew/",
+            "quote": "Global Business Development at Binance | Payments\n1,548 followers\n500+connections"
+          }
+        ],
+        "tool": null,
+        "country_code": null,
+        "match_level": null
+      },
+      {
+        "criterion": {
+          "requirement": 1
+        },
+        "outcome": "supported",
+        "rationale": "已观察到1548位followers，未达到2000；500+ connections支持至少500，满足OR条件中的一个完整分支。",
+        "citations": [
+          {
+            "kind": "native_profile",
+            "profile_url": "https://www.linkedin.com/in/ray-yee-liew/",
+            "quote": "Global Business Development at Binance | Payments\n1,548 followers\n500+connections"
+          }
+        ],
+        "tool": null,
+        "country_code": null,
+        "match_level": null
+      }
+    ]
+  },
+  "receipt": {
+    "review_id": "2fdc84b2-f9f8-4e0e-b1ef-034731f31785",
+    "operator_account_id": "Ye7CHhx3OvrXP80JGxEJJVmabkhpM9Kn",
+    "campaign_id": "602c0efd-6922-4999-9c99-79777b532150",
+    "criteria_revision": 1,
+    "search_hit_id": "2ddf93d8-6cfb-4fa0-bd42-30e15119200d",
+    "candidate_id": "f1bbc525-0b49-48ed-9213-4479c2b789bd",
+    "native_author_id": "ACoAADAaVKsB2hQuH6J34lsGqjmnEOgny6fgZnc",
+    "profile_ref": "d5pskwub",
+    "request_id": "0de3e52e-9f35-4cab-8cc0-670647759009",
+    "material_hash": "437a92c233f2201adfafab25d5ab6910a3335f7d99c19c0384c14caf9ed75762",
+    "policy_version": "initial-match-evaluation-v1",
+    "judgments": [
+      {
+        "criterion": "match_fit",
+        "outcome": "supported"
+      },
+      {
+        "criterion": {
+          "requirement": 0
+        },
+        "outcome": "supported"
+      },
+      {
+        "criterion": {
+          "requirement": 1
+        },
+        "outcome": "supported"
+      }
+    ],
+    "verdict": "qualified",
+    "reasons": [],
+    "subscribers": 1548,
+    "created_at": 1792548446
+  },
+  "saved_candidate": {
+    "id": "f1bbc525-0b49-48ed-9213-4479c2b789bd",
+    "discovery_campaign_id": "602c0efd-6922-4999-9c99-79777b532150",
+    "criteria_revision": 1,
+    "platform": "linkedin",
+    "source_profile_ref": "d5pskwub",
+    "platform_account_id": "ACoAADAaVKsB2hQuH6J34lsGqjmnEOgny6fgZnc",
+    "display_name": "Ray Yee Liew",
+    "profile_url": "https://www.linkedin.com/in/ray-yee-liew/",
+    "verdict": "qualified",
+    "evidence_json": "{\"assessment\":{\"match_rating\":{\"level\":\"excellent\",\"reason\":\"保存的LinkedIn职位标题表明该候选人在币安从事全球商务拓展；followers为1548，connections为500+，满足人数条件中的connections分支，构成直接匹配。这是依据保存的资料进行的初步评估，未检查其完整发布历史。\",\"source_url\":\"https://www.linkedin.com/in/ray-yee-liew/\"},\"reasons\":[],\"subscribers_normalized\":1548},\"author_identity_kind\":\"native_id\",\"author_identity_search_hit_id\":null,\"captured_at\":1792542763,\"profile_bio_status\":\"truncated\",\"profile_bio_status_source_url\":\"https://www.linkedin.com/in/ray-yee-liew/\",\"reviewed_match\":{\"language_only_pending\":false,\"level\":\"excellent\",\"material_hash\":\"437a92c233f2201adfafab25d5ab6910a3335f7d99c19c0384c14caf9ed75762\",\"native_author_id\":\"ACoAADAaVKsB2hQuH6J34lsGqjmnEOgny6fgZnc\",\"outcome\":\"supported\",\"policy_version\":\"initial-match-evaluation-v1\",\"reason\":\"保存的LinkedIn职位标题表明该候选人在币安从事全球商务拓展；followers为1548，connections为500+，满足人数条件中的connections分支，构成直接匹配。这是依据保存的资料进行的初步评估，未检查其完整发布历史。\",\"review_id\":\"2fdc84b2-f9f8-4e0e-b1ef-034731f31785\",\"source_url\":\"https://www.linkedin.com/in/ray-yee-liew/\",\"verified\":true},\"reviewed_requirements\":[{\"criteria_revision\":1,\"index\":0,\"material_hash\":\"437a92c233f2201adfafab25d5ab6910a3335f7d99c19c0384c14caf9ed75762\",\"native_author_id\":\"ACoAADAaVKsB2hQuH6J34lsGqjmnEOgny6fgZnc\",\"outcome\":\"supported\",\"reason\":\"账号资料显示其当前职位为币安全球商务拓展，满足任职于币安且从事BD工作的条件；此处评估的是员工身份，无须另行建立创作者身份。\",\"requirement\":{\"description\":\"候选人须任职于币安（Binance），从事BD工作。\",\"excerpt\":\"币安的BD人员\"},\"review_id\":\"2fdc84b2-f9f8-4e0e-b1ef-034731f31785\",\"source_url\":\"https://www.linkedin.com/in/ray-yee-liew/\"},{\"criteria_revision\":1,\"index\":1,\"material_hash\":\"437a92c233f2201adfafab25d5ab6910a3335f7d99c19c0384c14caf9ed75762\",\"native_author_id\":\"ACoAADAaVKsB2hQuH6J34lsGqjmnEOgny6fgZnc\",\"outcome\":\"supported\",\"reason\":\"已观察到1548位followers，未达到2000；500+ connections支持至少500，满足OR条件中的一个完整分支。\",\"requirement\":{\"description\":\"每位候选人须满足以下任一条件：LinkedIn followers >= 2000，或者LinkedIn connections >= 500。两个分支为OR关系，达到任一分支即可；followers和connections分别核实。\",\"excerpt\":\"followers至少2000或者connections至少500，满足其中一个就行。\"},\"review_id\":\"2fdc84b2-f9f8-4e0e-b1ef-034731f31785\",\"source_url\":\"https://www.linkedin.com/in/ray-yee-liew/\"}],\"source_urls\":[\"https://www.linkedin.com/in/ray-yee-liew/\",\"https://www.linkedin.com/in/ray-yee-liew/\"],\"subscribers_raw\":\"1548\",\"subscribers_source_url\":\"https://www.linkedin.com/in/ray-yee-liew/\"}",
+    "created_at": 1792542763,
+    "updated_at": 1792548446,
+    "source_platform": "linkedin"
+  }
+}

@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/reui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { CellValue, PeopleValue, ScoreValue } from '@onecrew/contracts/tables';
+import { scoreValuePoints } from '@onecrew/contracts/tables';
 import type { Column } from '@/features/tables/model';
 import { initials, isHttpUrl } from '@/features/tables/model';
 
@@ -72,7 +73,7 @@ export function SemanticCell({ column, value }: { column: Column; value: CellVal
                 'score-excellent' | 'score-good' | 'score-medium' | 'score-low'
             }
           >
-            {t(`scores.${score.level}`)}
+            {scoreValuePoints(score)} · {t(`scores.${score.level}`)}
           </Badge>
         </TooltipTrigger>
         <TooltipContent>{score.reason?.trim() || t('common.noExplanation')}</TooltipContent>

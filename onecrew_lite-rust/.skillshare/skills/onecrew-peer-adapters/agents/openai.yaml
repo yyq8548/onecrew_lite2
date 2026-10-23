@@ -1,6 +1,0 @@
-interface:
-  display_name: "OneCrew Peer Adapters"
-  short_description: "Typed peer contracts and deterministic codegen"
-  default_prompt: "Use $onecrew-peer-adapters to project one typed runtime use case through safe HTTP and MCP peers or to change their deterministic Rust-to-TypeScript contract generation and drift gates."
-policy:
-  allow_implicit_invocation: true

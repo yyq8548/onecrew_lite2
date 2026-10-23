@@ -1,0 +1,60 @@
+import assert from "node:assert/strict";
+import { createCipheriv, randomBytes, randomUUID } from "node:crypto";
+import { readFileSync } from "node:fs";
+import { mkdir, mkdtemp, open, writeFile } from "node:fs/promises";
+import { join } from "node:path";
+import { DatabaseSync } from "node:sqlite";
+import { fileURLToPath } from "node:url";
+import { test } from "node:test";
+import { createPrivateDirectory } from "../src/storage/private-backup.ts";
+import { PlatformVaultReader } from "../src/platforms/browser/platform-vault.ts";
+import { verifyOwnedChromeDirectory } from "../src/platforms/browser/binding.ts";
+
+test("真实AES-GCM Vault读取绑定元数据与secret原生ID，拒绝版本与认证损坏", async () => {
+  const scratch = fileURLToPath(new URL("../../.scratch/opencli-browser-tests/", import.meta.url));
+  await mkdir(scratch, { recursive: true }); const root = await mkdtemp(join(scratch, "vault-"));
+  const directory = await createPrivateDirectory(join(root, "private"));
+  const path = join(directory, "vault.sqlite3"); const keyPath = join(directory, "vault.key");
+  const reservation = await open(path, "wx", 0o600); await reservation.close();
+  const key = randomBytes(32); await writeFile(keyPath, key, { mode: 0o600, flag: "wx" });
+  const db = new DatabaseSync(path); const profileId = randomUUID();
+  const reader = new PlatformVaultReader(path, keyPath);
+  try {
+    db.exec(readFileSync(new URL("../src/storage/vault-schema.sql", import.meta.url), "utf8")); db.exec("PRAGMA user_version=4");
+    const secret = { provider_account_id: "12345", cookies: [], x_chat_passcode: null, instagram_session_settings: null, telegram_api_id: null, telegram_api_hash: null, telegram_session: null, browser_profile_dir: join(directory, "profiles", profileId) };
+    const nonce = randomBytes(12); const cipher = createCipheriv("aes-256-gcm", key, nonce);
+    const envelope = Buffer.concat([nonce, cipher.update(JSON.stringify(secret)), cipher.final(), cipher.getAuthTag()]);
+    db.prepare("INSERT INTO profiles VALUES (?,'x','12345','creator',?,'1','2')").run(profileId, envelope);
+    const profile = await reader.profile(profileId);
+    assert.equal(profile.provider_account_id, "12345"); assert.equal(profile.browserProfileDirectory, secret.browser_profile_dir);
+    assert.equal("cookies" in profile, false); assert.equal(profile.revision.length, 64);
+    const credentialId = randomUUID(), credentialNonce = randomBytes(12), credentialCipher = createCipheriv("aes-256-gcm", key, credentialNonce);
+    const credentialEnvelope = Buffer.concat([credentialNonce, credentialCipher.update(JSON.stringify({ value: "local-test-key" })), credentialCipher.final(), credentialCipher.getAuthTag()]);
+    db.prepare("INSERT INTO service_credentials(id,provider,label,encrypted_secret,created_at,updated_at) VALUES (?,'youtube','local',?,'1','2')").run(credentialId, credentialEnvelope);
+    const credential = await reader.withYoutubeCredential(credentialId, async value => value);
+    const earlier = reader.nextYoutubeObservation(), later = reader.nextYoutubeObservation();
+    assert.equal(await reader.recordYoutubeHealth(credential, later, "quota_exceeded"), "applied");
+    assert.equal(await reader.recordYoutubeHealth(credential, earlier, "api_key_invalid"), "superseded");
+    assert.equal(db.prepare("SELECT disabled FROM service_credentials WHERE id=?").get(credentialId)?.disabled, 0);
+    assert.equal(await reader.recordYoutubeHealth(credential, reader.nextYoutubeObservation(), null), "applied");
+    assert.equal(db.prepare("SELECT last_error FROM service_credentials WHERE id=?").get(credentialId)?.last_error, "YouTube API quota is exhausted");
+    db.prepare("UPDATE service_credentials SET updated_at='999999999999'").run();
+    assert.equal(await reader.recordYoutubeHealth(credential, reader.nextYoutubeObservation(), "api_key_invalid"), "superseded");
+    db.prepare("UPDATE profiles SET provider_account_id='999'").run();
+    await assert.rejects(reader.profile(profileId), /stable provider identity/);
+    db.prepare("UPDATE profiles SET provider_account_id='12345',encrypted_secret=?").run(Buffer.alloc(28));
+    await assert.rejects(reader.profile(profileId));
+    db.exec("PRAGMA user_version=3"); await assert.rejects(reader.profile(profileId), /schema version 4/);
+  } finally { key.fill(0); db.close(); }
+});
+test("真实私有目录只接受app-owned profiles下的独立Chrome目录", async () => {
+  const scratch = fileURLToPath(new URL("../../.scratch/opencli-browser-tests/", import.meta.url));
+  await mkdir(scratch, { recursive: true }); const root = await mkdtemp(join(scratch, "directory-"));
+  const privateRoot = await createPrivateDirectory(join(root, "private"));
+  const profiles = await createPrivateDirectory(join(privateRoot, "profiles"));
+  const profile = await createPrivateDirectory(join(profiles, randomUUID()));
+  const value = await verifyOwnedChromeDirectory(profiles, profile);
+  assert.ok(value.identity.length > 2);
+  await assert.rejects(verifyOwnedChromeDirectory(profiles, privateRoot), /outside/);
+  await assert.rejects(verifyOwnedChromeDirectory(profiles, profiles), /outside/);
+});

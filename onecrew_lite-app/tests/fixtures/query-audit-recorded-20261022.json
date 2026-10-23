@@ -1,0 +1,16 @@
+{
+  "scopes": [
+    {"platform":"instagram","keywords":["AI agent trainer","agentic AI educator"]},
+    {"platform":"facebook","keywords":["AI agent training","CrewAI community"]}
+  ],
+  "audit": {
+    "requirements_preserved": true,
+    "requirement_reason": "本轮仅追加关键词，保留八个历史来源及每来源10个、总计80个的目标；Google、Yahoo按approved_execution保留历史范围并跳过执行。普通平台默认粉丝至少2000、语言地区不限、无最低质量限制均未改变。相关性证据完整保留简介、当前工作、本人公开内容三选一的OR关系，关键词命中不算资格证据。公开邮箱优先属于软偏好；预算、Computer Use、缓存复用及其他执行规则继续继承，无须在关键词载荷中重述。未提供实际拒绝证据，不能据此认定某条路线已经反复失效。",
+    "queries": [
+      {"platform":"instagram","keyword":"AI agent trainer","suitable":true,"reason":"简短的AI Agent培训角色词，适合匹配用户名和显示名称；培训机构或从业账号也未被原请求排除，仍须核实相关性和粉丝数。"},
+      {"platform":"instagram","keyword":"agentic AI educator","suitable":true,"reason":"保留智能体主题并加入教育角色，适合原生账号名称搜索；名称中的educator不能代替相关性证据。"},
+      {"platform":"facebook","keyword":"AI agent training","suitable":true,"reason":"明确包含AI Agent主题，培训领域词适合当前返回账号链接的搜索入口；机构账号并未被排除，结果仍需读取证据。"},
+      {"platform":"facebook","keyword":"CrewAI community","suitable":true,"reason":"具体智能体框架加社群名称词，适合发现相关账号或社区；群组链接本身不能直接计为已核实账号。"}
+    ]
+  }
+}

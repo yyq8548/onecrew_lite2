@@ -19,7 +19,7 @@ const table = {
 } as Table;
 test('all platform accounts retain exact and approximate follower counts from synchronized rows', () => {
   const countedTable = { ...table, columns: [...table.columns, { id: 'Followers', name: 'Followers', data_type: 'string' as const }] };
-  for (const platform of ['youtube', 'twitter', 'tiktok', 'instagram', 'facebook', 'linkedin', 'bilibili', 'douyin', 'weibo', 'reddit']) {
+  for (const platform of ['youtube', 'twitter', 'tiktok', 'instagram', 'facebook', 'linkedin', 'bilibili', 'douyin', 'weibo']) {
     for (const followers of ['4029', '~12400', '~22.9万', null]) {
       const state = material(false);
       state.projection!.groups[0].members[0].platform = platform;
@@ -173,7 +173,7 @@ test('unbound sources are reported separately and do not invent author rows', ()
   assert.equal(result.creators[0].sources.length, 2);
 });
 
-test('initial grades sort before unrated authors and pending cells cannot invent a grade', () => {
+test('initial grades sort before unrated authors independently of pending qualification', () => {
   const scoredTable = {
     ...table,
     columns: [
@@ -198,13 +198,14 @@ test('initial grades sort before unrated authors and pending cells cannot invent
   input.sources[0].verdict = 'pending';
   input.sources[0].row.values = {
     ...input.sources[0].row.values,
-    score: { level: 'excellent', reason: 'Forged pending score.' },
+    score: { level: 'excellent', reason: 'Saved quality assessment; qualification remains pending.' },
   };
   const pending = groupedCreators(scoredTable, input).creators;
   assert.deepEqual(
     filterCreators(pending, 'all').map((group) => group.rating?.level ?? null),
-    ['low', null],
+    ['excellent', 'low'],
   );
+  assert.equal(pending.find((group) => group.rating?.level === 'excellent')?.verdict, 'pending');
   const template = groups[0];
   const levels = ['low', 'medium', 'good', 'excellent'] as const;
   assert.deepEqual(

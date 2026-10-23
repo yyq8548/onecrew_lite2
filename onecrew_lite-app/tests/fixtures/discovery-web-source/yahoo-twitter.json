@@ -1,0 +1,120 @@
+{
+  "claim": {
+    "call_number": 4,
+    "campaign_id": "web-source-flow",
+    "expected_revision": 1,
+    "origin_platform": "yahoo",
+    "profile_ref": "dedicated",
+    "search_hit_id": "b05efed9-8e4a-45ab-95d2-8e448e8013ab",
+    "source_url": "https://x.com/Creator_1/status/1234567890123456789",
+    "target_platform": "twitter",
+    "video_id": "1234567890123456789"
+  },
+  "material": {
+    "content": {
+      "adapter_version": "1.0.0",
+      "created_at": "Fri Oct 08 00:00:00 +0000 2026",
+      "expanded_urls": [],
+      "has_media": false,
+      "identity": {
+        "account_id": "987654321012345678",
+        "adapter_version": "1.0.0",
+        "evidence_source": "x_tweet_detail",
+        "handle": "creator_1",
+        "identity_kind": "native_post_author_id",
+        "post_id": "1234567890123456789",
+        "profile_url": "https://x.com/creator_1",
+        "source_url": "https://x.com/creator_1/status/1234567890123456789"
+      },
+      "quotes_another_post": false,
+      "text": "Original keyboard review.",
+      "text_source": "legacy_full_text",
+      "text_truncated": false
+    },
+    "identity": {
+      "account_id": "987654321012345678",
+      "adapter_version": "1.0.0",
+      "evidence_source": "x_tweet_detail",
+      "handle": "creator_1",
+      "identity_kind": "native_post_author_id",
+      "post_id": "1234567890123456789",
+      "profile_url": "https://x.com/creator_1",
+      "source_url": "https://x.com/creator_1/status/1234567890123456789"
+    },
+    "profile": {
+      "account_id": "987654321012345678",
+      "adapter_version": "1.0.0",
+      "bio": "Business studio@example.org",
+      "evidence_source": "x_user_by_screen_name",
+      "follower_count": 1500,
+      "handle": "creator_1",
+      "identity_kind": "native_id",
+      "name": "Native X creator",
+      "profile_url": "https://x.com/creator_1",
+      "self_declared_location": ""
+    }
+  },
+  "result": {
+    "candidate_id": "14283c6d-075b-4d5e-a4a4-fa6b04fcdba6",
+    "captured_at": 1792088472,
+    "claim": {
+      "call_number": 4,
+      "campaign_id": "web-source-flow",
+      "expected_revision": 1,
+      "origin_platform": "yahoo",
+      "profile_ref": "dedicated",
+      "search_hit_id": "b05efed9-8e4a-45ab-95d2-8e448e8013ab",
+      "source_url": "https://x.com/Creator_1/status/1234567890123456789",
+      "target_platform": "twitter",
+      "video_id": "1234567890123456789"
+    },
+    "is_primary_source": true,
+    "native_author_id": "987654321012345678",
+    "native_material": {
+      "content": {
+        "adapter_version": "1.0.0",
+        "created_at": "Fri Oct 08 00:00:00 +0000 2026",
+        "expanded_urls": [],
+        "has_media": false,
+        "identity": {
+          "account_id": "987654321012345678",
+          "adapter_version": "1.0.0",
+          "evidence_source": "x_tweet_detail",
+          "handle": "creator_1",
+          "identity_kind": "native_post_author_id",
+          "post_id": "1234567890123456789",
+          "profile_url": "https://x.com/creator_1",
+          "source_url": "https://x.com/creator_1/status/1234567890123456789"
+        },
+        "quotes_another_post": false,
+        "text": "Original keyboard review.",
+        "text_source": "legacy_full_text",
+        "text_truncated": false
+      },
+      "identity": {
+        "account_id": "987654321012345678",
+        "adapter_version": "1.0.0",
+        "evidence_source": "x_tweet_detail",
+        "handle": "creator_1",
+        "identity_kind": "native_post_author_id",
+        "post_id": "1234567890123456789",
+        "profile_url": "https://x.com/creator_1",
+        "source_url": "https://x.com/creator_1/status/1234567890123456789"
+      },
+      "profile": {
+        "account_id": "987654321012345678",
+        "adapter_version": "1.0.0",
+        "bio": "Business studio@example.org",
+        "evidence_source": "x_user_by_screen_name",
+        "follower_count": 1500,
+        "handle": "creator_1",
+        "identity_kind": "native_id",
+        "name": "Native X creator",
+        "profile_url": "https://x.com/creator_1",
+        "self_declared_location": ""
+      }
+    },
+    "status": "completed",
+    "stop_code": null
+  }
+}
