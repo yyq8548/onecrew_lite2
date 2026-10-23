@@ -1,0 +1,307 @@
+{
+  "source_sha256": "410cd31315e5a40dfa3219fce040b93089dc262d45476e9fc9a8ca4cdcd43552",
+  "results": [
+    {
+      "name": "Rachel Rekkab",
+      "elapsed_ms": 34589,
+      "proposal": {
+        "selection": {
+          "criterion": "selection_fit",
+          "outcome": "insufficient",
+          "rationale": "已保存的职业资料显示其从事 Marketing、活动策略及合作相关工作，符合岗位范围；但“x-Bybit”仅支持曾与 Bybit 有任职关联，不能证明目前任职于五家目标公司之一。本次依据保存的职业资料评估，当前雇主条件仍未核实。",
+          "citations": [
+            {
+              "kind": "native_profile",
+              "profile_url": "https://www.linkedin.com/in/rachel-rekkab-47a27314/",
+              "quote": "Marketing & Events Strategist - Sponsorship & Partnerships | Experiential Events | Web3 Advisory- Art & FinTech (x-Bybit)\n4,269 followers"
+            }
+          ],
+          "tool": null,
+          "country_code": null,
+          "match_level": null
+        },
+        "quality_rating": {
+          "criterion": "quality_rating",
+          "outcome": "insufficient",
+          "rationale": "保存的职位介绍呈现了 Marketing、赞助及合作职责，与所需职能相关；但目标公司当前任职关系是判断本次职业匹配推荐价值的关键证据，目前尚未确立。因此本次保存职业资料评估暂不评级，粉丝数量和缺少帖子不影响该判断。",
+          "citations": [
+            {
+              "kind": "native_profile",
+              "profile_url": "https://www.linkedin.com/in/rachel-rekkab-47a27314/",
+              "quote": "Marketing & Events Strategist - Sponsorship & Partnerships | Experiential Events | Web3 Advisory- Art & FinTech (x-Bybit)\n4,269 followers"
+            }
+          ],
+          "tool": null,
+          "country_code": null,
+          "match_level": null
+        },
+        "language_only_pending": false,
+        "requirement_findings": [
+          {
+            "criterion": {
+              "requirement": 0
+            },
+            "outcome": "insufficient",
+            "rationale": "保存的职业标题标注“x-Bybit”，支持过去的 Bybit 关联，未证明目前任职于 Binance、OKX、Bitget、Bybit 或 Gate.io 任一公司。本次保存的职业资料不足以确认当前雇主，也不足以确认其已不在所有目标公司任职。",
+            "citations": [
+              {
+                "kind": "native_profile",
+                "profile_url": "https://www.linkedin.com/in/rachel-rekkab-47a27314/",
+                "quote": "Marketing & Events Strategist - Sponsorship & Partnerships | Experiential Events | Web3 Advisory- Art & FinTech (x-Bybit)\n4,269 followers"
+              }
+            ],
+            "tool": null,
+            "country_code": null,
+            "match_level": null
+          }
+        ]
+      },
+      "audit": {
+        "applicable": true,
+        "checks": [
+          {
+            "criterion": "selection_fit",
+            "employment_required": false,
+            "role_required": true,
+            "time_requirement": "current",
+            "relationship": "unknown",
+            "role_evidence": "position_title",
+            "time_relation": "current",
+            "outcome": "supported",
+            "rationale": "完整主页标题明确列出 Marketing & Events Strategist，符合 Marketing 岗位类别。",
+            "citations": [
+              {
+                "kind": "native_profile",
+                "profile_url": "https://www.linkedin.com/in/rachel-rekkab-47a27314/",
+                "quote": "Marketing & Events Strategist - Sponsorship & Partnerships | Experiential Events | Web3 Advisory- Art & FinTech (x-Bybit)"
+              }
+            ]
+          },
+          {
+            "criterion": {
+              "requirement": 0
+            },
+            "employment_required": true,
+            "role_required": false,
+            "time_requirement": "current",
+            "relationship": "past_staff",
+            "role_evidence": "not_requested",
+            "time_relation": "past",
+            "outcome": "insufficient",
+            "rationale": "标题仅以 x-Bybit 标明过去的 Bybit 关系，未证明目前任职于五家目标公司中的任何一家。",
+            "citations": [
+              {
+                "kind": "native_profile",
+                "profile_url": "https://www.linkedin.com/in/rachel-rekkab-47a27314/",
+                "quote": "Marketing & Events Strategist - Sponsorship & Partnerships | Experiential Events | Web3 Advisory- Art & FinTech (x-Bybit)"
+              }
+            ]
+          }
+        ]
+      },
+      "checked": {
+        "selection": {
+          "criterion": "selection_fit",
+          "outcome": "insufficient",
+          "rationale": "已保存的职业资料显示其从事 Marketing、活动策略及合作相关工作，符合岗位范围；但“x-Bybit”仅支持曾与 Bybit 有任职关联，不能证明目前任职于五家目标公司之一。本次依据保存的职业资料评估，当前雇主条件仍未核实。",
+          "citations": [
+            {
+              "kind": "native_profile",
+              "profile_url": "https://www.linkedin.com/in/rachel-rekkab-47a27314/",
+              "quote": "Marketing & Events Strategist - Sponsorship & Partnerships | Experiential Events | Web3 Advisory- Art & FinTech (x-Bybit)\n4,269 followers"
+            }
+          ],
+          "tool": null,
+          "country_code": null,
+          "match_level": null
+        },
+        "quality_rating": {
+          "criterion": "quality_rating",
+          "outcome": "insufficient",
+          "rationale": "保存的职位介绍呈现了 Marketing、赞助及合作职责，与所需职能相关；但目标公司当前任职关系是判断本次职业匹配推荐价值的关键证据，目前尚未确立。因此本次保存职业资料评估暂不评级，粉丝数量和缺少帖子不影响该判断。",
+          "citations": [
+            {
+              "kind": "native_profile",
+              "profile_url": "https://www.linkedin.com/in/rachel-rekkab-47a27314/",
+              "quote": "Marketing & Events Strategist - Sponsorship & Partnerships | Experiential Events | Web3 Advisory- Art & FinTech (x-Bybit)\n4,269 followers"
+            }
+          ],
+          "tool": null,
+          "country_code": null,
+          "match_level": null
+        },
+        "language_only_pending": false,
+        "requirement_findings": [
+          {
+            "criterion": {
+              "requirement": 0
+            },
+            "outcome": "insufficient",
+            "rationale": "保存的职业标题标注“x-Bybit”，支持过去的 Bybit 关联，未证明目前任职于 Binance、OKX、Bitget、Bybit 或 Gate.io 任一公司。本次保存的职业资料不足以确认当前雇主，也不足以确认其已不在所有目标公司任职。",
+            "citations": [
+              {
+                "kind": "native_profile",
+                "profile_url": "https://www.linkedin.com/in/rachel-rekkab-47a27314/",
+                "quote": "Marketing & Events Strategist - Sponsorship & Partnerships | Experiential Events | Web3 Advisory- Art & FinTech (x-Bybit)\n4,269 followers"
+              }
+            ],
+            "tool": null,
+            "country_code": null,
+            "match_level": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "Alicia Foo",
+      "elapsed_ms": 23652,
+      "proposal": {
+        "selection": {
+          "criterion": "selection_fit",
+          "outcome": "supported",
+          "rationale": "保存的当前职位为 Bitget 的 Regional Affiliate Manager，符合指定公司任一及商务、BD 或 Marketing 岗位任一同时满足的条件。本次依据保存的职业资料进行初步评估；目标没有粉丝、connections 或内容语言门槛。",
+          "citations": [
+            {
+              "kind": "native_profile",
+              "profile_url": "https://www.linkedin.com/in/aliciafoo98/",
+              "quote": "Regional Affiliate Manager at Bitget\n1,092 followers\n500+connections"
+            }
+          ],
+          "tool": null,
+          "country_code": null,
+          "match_level": null
+        },
+        "quality_rating": {
+          "criterion": "quality_rating",
+          "outcome": "supported",
+          "rationale": "当前职位明确表明 Alicia Foo 在 Bitget 担任区域 Affiliate Manager，足以支持所需商务岗位的职业匹配，评为 good。保存的职业资料未展示具体职责或市场范围，尚无可据以评为 excellent 的明确优势，也未观察到显著相关弱点。",
+          "citations": [
+            {
+              "kind": "native_profile",
+              "profile_url": "https://www.linkedin.com/in/aliciafoo98/",
+              "quote": "Regional Affiliate Manager at Bitget\n1,092 followers\n500+connections"
+            }
+          ],
+          "tool": null,
+          "country_code": null,
+          "match_level": "good"
+        },
+        "language_only_pending": false,
+        "requirement_findings": [
+          {
+            "criterion": {
+              "requirement": 0
+            },
+            "outcome": "supported",
+            "rationale": "保存的当前职位明确标注任职于 Bitget，满足五家指定公司中任一公司的要求。本次判断依据账户绑定的职业资料，公司之间的 OR 条件已满足。",
+            "citations": [
+              {
+                "kind": "native_profile",
+                "profile_url": "https://www.linkedin.com/in/aliciafoo98/",
+                "quote": "Regional Affiliate Manager at Bitget\n1,092 followers\n500+connections"
+              }
+            ],
+            "tool": null,
+            "country_code": null,
+            "match_level": null
+          }
+        ]
+      },
+      "audit": {
+        "applicable": true,
+        "checks": [
+          {
+            "criterion": "selection_fit",
+            "employment_required": true,
+            "role_required": true,
+            "time_requirement": "current",
+            "relationship": "current_staff",
+            "role_evidence": "position_title",
+            "time_relation": "current",
+            "outcome": "supported",
+            "rationale": "Regional Affiliate Manager 是明确的联盟营销及商务合作职位，符合所要求岗位之一。",
+            "citations": [
+              {
+                "kind": "native_profile",
+                "profile_url": "https://www.linkedin.com/in/aliciafoo98/",
+                "quote": "Regional Affiliate Manager at Bitget"
+              }
+            ]
+          },
+          {
+            "criterion": {
+              "requirement": 0
+            },
+            "employment_required": true,
+            "role_required": false,
+            "time_requirement": "current",
+            "relationship": "current_staff",
+            "role_evidence": "position_title",
+            "time_relation": "current",
+            "outcome": "supported",
+            "rationale": "当前职位明确注明任职于 Bitget，满足五家公司任一的 OR 条件。",
+            "citations": [
+              {
+                "kind": "native_profile",
+                "profile_url": "https://www.linkedin.com/in/aliciafoo98/",
+                "quote": "Regional Affiliate Manager at Bitget"
+              }
+            ]
+          }
+        ]
+      },
+      "checked": {
+        "selection": {
+          "criterion": "selection_fit",
+          "outcome": "supported",
+          "rationale": "Regional Affiliate Manager 是明确的联盟营销及商务合作职位，符合所要求岗位之一。",
+          "citations": [
+            {
+              "kind": "native_profile",
+              "profile_url": "https://www.linkedin.com/in/aliciafoo98/",
+              "quote": "Regional Affiliate Manager at Bitget"
+            }
+          ],
+          "tool": null,
+          "country_code": null,
+          "match_level": null
+        },
+        "quality_rating": {
+          "criterion": "quality_rating",
+          "outcome": "supported",
+          "rationale": "当前职位明确表明 Alicia Foo 在 Bitget 担任区域 Affiliate Manager，足以支持所需商务岗位的职业匹配，评为 good。保存的职业资料未展示具体职责或市场范围，尚无可据以评为 excellent 的明确优势，也未观察到显著相关弱点。",
+          "citations": [
+            {
+              "kind": "native_profile",
+              "profile_url": "https://www.linkedin.com/in/aliciafoo98/",
+              "quote": "Regional Affiliate Manager at Bitget\n1,092 followers\n500+connections"
+            }
+          ],
+          "tool": null,
+          "country_code": null,
+          "match_level": "good"
+        },
+        "language_only_pending": false,
+        "requirement_findings": [
+          {
+            "criterion": {
+              "requirement": 0
+            },
+            "outcome": "supported",
+            "rationale": "当前职位明确注明任职于 Bitget，满足五家公司任一的 OR 条件。",
+            "citations": [
+              {
+                "kind": "native_profile",
+                "profile_url": "https://www.linkedin.com/in/aliciafoo98/",
+                "quote": "Regional Affiliate Manager at Bitget"
+              }
+            ],
+            "tool": null,
+            "country_code": null,
+            "match_level": null
+          }
+        ]
+      }
+    }
+  ]
+}

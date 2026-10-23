@@ -1,0 +1,60 @@
+{
+  "claim": {
+    "call_number": 2,
+    "campaign_id": "web-source-flow",
+    "expected_revision": 1,
+    "origin_platform": "yahoo",
+    "profile_ref": "dedicated",
+    "search_hit_id": "dfb805ea-50fc-4c2d-beb1-76f1fc603339",
+    "source_url": "https://www.youtube.com/watch?v=abcdefghijk&pp=source-tracking",
+    "target_platform": "youtube",
+    "video_id": "abcdefghijk"
+  },
+  "material": {
+    "adapterVersion": "1.0.0",
+    "author": "Native creator",
+    "channelId": "UCabcdefghijklmnopqrstuv",
+    "description": "Original keyboard review. Business studio@example.org",
+    "descriptionSource": "ytInitialPlayerResponse.videoDetails.shortDescription",
+    "displayDescription": "Translated UI is not language proof",
+    "links": [],
+    "playabilityStatus": "OK",
+    "sourceUrl": "https://www.youtube.com/watch?v=abcdefghijk",
+    "subscribers": "Unknown",
+    "title": "Original review",
+    "videoId": "abcdefghijk"
+  },
+  "result": {
+    "candidate_id": "68067769-8c58-4701-88f7-368a5436497d",
+    "captured_at": 1792088472,
+    "claim": {
+      "call_number": 2,
+      "campaign_id": "web-source-flow",
+      "expected_revision": 1,
+      "origin_platform": "yahoo",
+      "profile_ref": "dedicated",
+      "search_hit_id": "dfb805ea-50fc-4c2d-beb1-76f1fc603339",
+      "source_url": "https://www.youtube.com/watch?v=abcdefghijk&pp=source-tracking",
+      "target_platform": "youtube",
+      "video_id": "abcdefghijk"
+    },
+    "is_primary_source": true,
+    "native_author_id": "UCabcdefghijklmnopqrstuv",
+    "native_material": {
+      "adapterVersion": "1.0.0",
+      "author": "Native creator",
+      "channelId": "UCabcdefghijklmnopqrstuv",
+      "description": "Original keyboard review. Business studio@example.org",
+      "descriptionSource": "ytInitialPlayerResponse.videoDetails.shortDescription",
+      "displayDescription": "Translated UI is not language proof",
+      "links": [],
+      "playabilityStatus": "OK",
+      "sourceUrl": "https://www.youtube.com/watch?v=abcdefghijk",
+      "subscribers": "Unknown",
+      "title": "Original review",
+      "videoId": "abcdefghijk"
+    },
+    "status": "completed",
+    "stop_code": null
+  }
+}

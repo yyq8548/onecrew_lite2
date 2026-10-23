@@ -1,0 +1,235 @@
+{
+  "directory": {
+    "categories": [
+      {
+        "category": "find",
+        "title": "Find creators",
+        "topics": [
+          {
+            "title": "Find by criteria",
+            "topic": "find-batch"
+          },
+          {
+            "title": "Find one account",
+            "topic": "find-one"
+          },
+          {
+            "title": "Find people in replies",
+            "topic": "find-replies"
+          },
+          {
+            "title": "Find group administrators",
+            "topic": "find-admins"
+          }
+        ]
+      },
+      {
+        "category": "enrich",
+        "title": "Enrich creator data",
+        "topics": [
+          {
+            "title": "Update follower counts",
+            "topic": "enrich-followers"
+          },
+          {
+            "title": "Add scores",
+            "topic": "enrich-scores"
+          },
+          {
+            "title": "Add contact routes",
+            "topic": "enrich-routes"
+          },
+          {
+            "title": "Update one account",
+            "topic": "enrich-one"
+          }
+        ]
+      }
+    ],
+    "kind": "directory"
+  },
+  "enrich-followers": {
+    "guide": {
+      "confirmation_boundary": "This tool provides guidance only: it does not execute business operations or create durable tasks. Guidance is not authorization to write; do not write to Creator before user confirmation. Saves and updates must follow the user's actual authorization and the current owner's confirmation contract. User sending is available only through GmailBulk on the Mail page.",
+      "example": "Find the people in the list who have no follower count, review their public profiles again on their respective platforms, and fill in the counts; list any accounts that cannot be read separately.",
+      "expected_output": [
+        "Follower-count changes, accounts that could not be read, and save readback results"
+      ],
+      "questions": [
+        "Which list or selection scope needs follower counts filled in?"
+      ],
+      "title": "Update follower counts",
+      "tool_discovery_queries": [
+        "OneCrew creator list missing follower counts",
+        "creator update follower counts"
+      ],
+      "topic": "enrich-followers",
+      "workflow": [
+        "First confirm the user's goal and scope for this request. Use onecrew_tool_search to discover currently available capabilities, then use onecrew_tool_get to retrieve the selected operation's live contract; follow the current schema_revision, connection requirements, confirmation method, and readback rules exactly. Use only identifiers and references returned by the current calls; do not guess arguments or reuse expired references. External searches follow the confirmed real-time search-plan contract. Keep actual user-facing questions/plans/explanations in the user's language.",
+        "Read the accounts in the specified list that are missing follower counts, review them again on their platforms, show field changes and failures, then save and read back under the live update contract."
+      ]
+    },
+    "kind": "guide"
+  },
+  "enrich-one": {
+    "guide": {
+      "confirmation_boundary": "This tool provides guidance only: it does not execute business operations or create durable tasks. Guidance is not authorization to write; do not write to Creator before user confirmation. Saves and updates must follow the user's actual authorization and the current owner's confirmation contract. User sending is available only through GmailBulk on the Mail page.",
+      "example": "Review the public profile at [username or profile link] on [platform] again and list the changes; update the latest follower count on the saved Creator, and route avatar, bio, and homepage changes through candidate-save confirmation.",
+      "expected_output": [
+        "Changes in native platform data, Creator updates or candidate-save confirmation results, and readback results"
+      ],
+      "questions": [
+        "What are the platform, account, and fields to update for this request?"
+      ],
+      "title": "Update one account",
+      "tool_discovery_queries": [
+        "profile get channel get",
+        "creator update follower counts",
+        "creator candidate save link hub extract"
+      ],
+      "topic": "enrich-one",
+      "workflow": [
+        "First confirm the user's goal and scope for this request. Use onecrew_tool_search to discover currently available capabilities, then use onecrew_tool_get to retrieve the selected operation's live contract; follow the current schema_revision, connection requirements, confirmation method, and readback rules exactly. Use only identifiers and references returned by the current calls; do not guess arguments or reuse expired references. External searches follow the confirmed real-time search-plan contract. Keep actual user-facing questions/plans/explanations in the user's language.",
+        "Follow three independent paths: first, read the account's native platform data through profile or channel on the target platform, compare it with the saved Creator, and show changes; the read itself does not write Creator. Second, write follower counts or display names that the user explicitly wants changed through onecrew.creator.update. Third, for observed changes to the avatar, handle, bio, homepage, or similar fields, run prepare and confirmation for the same account through onecrew.creator.candidate.save and append them as historical observations. Expand new contact routes through onecrew.link_hub.extract and merge them through onecrew.creator.candidate.save as well. Finally read back Creator."
+      ]
+    },
+    "kind": "guide"
+  },
+  "enrich-routes": {
+    "guide": {
+      "confirmation_boundary": "This tool provides guidance only: it does not execute business operations or create durable tasks. Guidance is not authorization to write; do not write to Creator before user confirmation. Saves and updates must follow the user's actual authorization and the current owner's confirmation contract. User sending is available only through GmailBulk on the Mail page.",
+      "example": "For [name, or \"everyone missing contact routes\"], review each person's platform profile, bio, and public links; list the email addresses or social accounts found and their sources, then wait for my confirmation before saving.",
+      "expected_output": [
+        "Contact routes, sources, and save readback results after confirmation"
+      ],
+      "questions": [
+        "For which people should which contact routes be found?"
+      ],
+      "title": "Add contact routes",
+      "tool_discovery_queries": [
+        "creator candidate save selected locator",
+        "candidate save prepare contact routes review"
+      ],
+      "topic": "enrich-routes",
+      "workflow": [
+        "First confirm the user's goal and scope for this request. Use onecrew_tool_search to discover currently available capabilities, then use onecrew_tool_get to retrieve the selected operation's live contract; follow the current schema_revision, connection requirements, confirmation method, and readback rules exactly. Use only identifiers and references returned by the current calls; do not guess arguments or reuse expired references. External searches follow the confirmed real-time search-plan contract. Keep actual user-facing questions/plans/explanations in the user's language.",
+        "Verify the specified accounts' platform identifiers, connections, and real sources, then submit directly under the current candidate-save contract; during prepare, obtain current profile and link-page data, and show the returned result_ref for the user to confirm identity, rows, and contact routes. The App confirmation submits the immutable data already shown; read back Creator after completion. The prepare stage does not write Creator and does not need a separate candidate cache."
+      ]
+    },
+    "kind": "guide"
+  },
+  "enrich-scores": {
+    "guide": {
+      "confirmation_boundary": "This tool provides guidance only: it does not execute business operations or create durable tasks. Guidance is not authorization to write; do not write to Creator before user confirmation. Saves and updates must follow the user's actual authorization and the current owner's confirmation contract. User sending is available only through GmailBulk on the Mail page.",
+      "example": "Find the people in the list who need assessment. Use their platforms' existing public content and necessary evidence to choose the excellent, good, medium, or low tier, then fill in the corresponding score and per-candidate rationale; keep unverifiable items unknown.",
+      "expected_output": [
+        "Scores, rationale, evidence, and save readback results"
+      ],
+      "questions": [
+        "Which existing candidates should be assessed, and what matching criteria and evidence window did the user specify?"
+      ],
+      "title": "Add scores",
+      "tool_discovery_queries": [
+        "OneCrew creators missing scores",
+        "public profile recent content creator assessment update"
+      ],
+      "topic": "enrich-scores",
+      "workflow": [
+        "First confirm the user's goal and scope for this request. Use onecrew_tool_search to discover currently available capabilities, then use onecrew_tool_get to retrieve the selected operation's live contract; follow the current schema_revision, connection requirements, confirmation method, and readback rules exactly. Use only identifiers and references returned by the current calls; do not guess arguments or reuse expired references. External searches follow the confirmed real-time search-plan contract. Keep actual user-facing questions/plans/explanations in the user's language.",
+        "Process content or account leads under the user's original request and confirmed interpretation; classify matches only as matched, unmatched, or unverified, and unknown does not mean unmatched. Group results by the stable platform identity returned by each platform and preserve sources; do not merge same-named accounts across platforms. Reuse equivalent requests with the same platform, connection, operation/schema revision, native arguments, depth, and cursor; do not resend because of call_id, display name, shape, or presentation reference. Start with existing evidence; make one targeted supplementary read only for a clear gap that could change the current decision, and mark unknown and stop when the same gap remains unverifiable. Keep scoring separate from matching: first read the single shared four-tier rubric from the find-batch guide, choose the tier there, then fill the fixed score without rewriting the standard; each per-candidate assessment must state its own concrete facts, relation to the requirement, and actual limitations, do not re-verify candidates in the same tier. Do not add follower, geographic, short-form-content, originality, or commercial-collaboration gates. Stop searching after reaching the matching target; when more pages are needed, use the actual cursor returned and do not fetch the first page again. Save and read back under the live update contract."
+      ]
+    },
+    "kind": "guide"
+  },
+  "find-admins": {
+    "guide": {
+      "confirmation_boundary": "This tool provides guidance only: it does not execute business operations or create durable tasks. Guidance is not authorization to write; do not write to Creator before user confirmation. Saves and updates must follow the user's actual authorization and the current owner's confirmation contract. User sending is available only through GmailBulk on the Mail page.",
+      "example": "Review the administrators of [Telegram group or channel link], excluding bots; list confirmed human administrators and public profiles, then wait for my confirmation before adding them to the list and saving Telegram contact routes. State directly if the current account cannot view them.",
+      "expected_output": [
+        "Confirmed human administrators, public profiles, and access limitations"
+      ],
+      "questions": [
+        "What is the Telegram group or channel link? Should this include human administrators only?"
+      ],
+      "title": "Find group administrators",
+      "tool_discovery_queries": [
+        "Telegram community administrators discover"
+      ],
+      "topic": "find-admins",
+      "workflow": [
+        "First confirm the user's goal and scope for this request. Use onecrew_tool_search to discover currently available capabilities, then use onecrew_tool_get to retrieve the selected operation's live contract; follow the current schema_revision, connection requirements, confirmation method, and readback rules exactly. Use only identifiers and references returned by the current calls; do not guess arguments or reuse expired references. External searches follow the confirmed real-time search-plan contract. Keep actual user-facing questions/plans/explanations in the user's language.",
+        "Check whether the current account can access the target, read the group or channel administrators, and exclude bots; clearly state when access is unavailable."
+      ]
+    },
+    "kind": "guide"
+  },
+  "find-batch": {
+    "guide": {
+      "confirmation_boundary": "This tool provides guidance only: it does not execute business operations or create durable tasks. Guidance is not authorization to write; do not write to Creator before user confirmation. Saves and updates must follow the user's actual authorization and the current owner's confirmation contract. User sending is available only through GmailBulk on the Mail page.",
+      "example": "Find creators on the connected platforms under [topic or account leads] who meet [the user's explicit criteria]; preserve sources separately across platforms and deduplicate by each platform's stable identity. I need [a fixed candidate set / number of new people]. When delivering the candidate list, prepare one review directly with the [add_new/save_or_update] intent, show the match, tier, per-candidate rationale, and public contact routes, and wait for my confirmation before writing.",
+      "expected_output": [
+        "Candidate review card (match, tier, per-candidate rationale, public contact routes, and real sources) plus a result_ref awaiting user confirmation; submitted data preserves the numeric score and does not write Creator before confirmation."
+      ],
+      "questions": [
+        "Which connected platforms should this request search, or are there existing account leads? Which criteria did the user state explicitly? Is this a fixed candidate set, or how many new people are required?",
+        "For each candidate, should the save intent be add_new or save_or_update?"
+      ],
+      "title": "Find by criteria",
+      "tool_discovery_queries": [
+        "creator accounts search public profiles",
+        "creator candidate save review"
+      ],
+      "topic": "find-batch",
+      "workflow": [
+        "First confirm the user's goal and scope for this request. Use onecrew_tool_search to discover currently available capabilities, then use onecrew_tool_get to retrieve the selected operation's live contract; follow the current schema_revision, connection requirements, confirmation method, and readback rules exactly. Use only identifiers and references returned by the current calls; do not guess arguments or reuse expired references. External searches follow the confirmed real-time search-plan contract. Keep actual user-facing questions/plans/explanations in the user's language.",
+        "Process content or account leads under the user's original request and confirmed interpretation; do not add standards during execution. Classify matches only as matched, unmatched, or unverified; unknown does not mean unmatched. Group by the stable platform identity returned by each platform, count each stable identity on a platform once, preserve every source and real provenance, and do not merge same-named accounts across platforms. Platform details follow the live contract: for example, YouTube's stable channel ID is its stable identity, so deduplicate only by platform + stable ID. The same connection and read depth are used only to reuse equivalent reads; pass depth: light or full when needed, with light intentionally omitting comments. This does not change the shared flow for other platforms. Reuse equivalent requests with the same platform, connection, operation/schema revision, native arguments, depth, and cursor; do not resend because of call_id, display name, shape, or presentation reference. Start with evidence already returned by search. Before each supplementary read, state which fact is missing from the search results and which value would change the match or tier. Make one targeted supplementary read only when quality or geographic evidence is missing and could change the current decision; mark unknown and stop when the same gap remains unverifiable. When recent publication or content evidence already exists, do not get every channel again for review. Do not require new fields or unrelated quality due diligence; do not pre-read profile solely for a later save, and do not mechanically supplement same-tier candidates to make profiles more complete or split a tier. This workflow guide is the sole source for the scoring rubric: choose the tier first, then use the fixed score: excellent 95, good 85, medium 70, low 40. Excellent means a clear match with direct concrete evidence and a distinctive advantage relevant to this task. Good means a clear match with enough existing content evidence to support recommendation and no observed significant relevant weakness. Medium means the candidate meets the selection requirement but visible evidence has a recommendation limitation to explain. Low means the candidate may still meet the selection requirement but has a specific, citable, significant recommendation weakness; do not assign low only because of follower count or missing fields. Only when the user explicitly provides a minimum tier does the tier become an eligibility gate; otherwise matches may be delivered across tiers. Each per-candidate assessment must state its own concrete facts, relation to the requirement, and actual limitations; do not re-verify candidates in the same tier. Do not add follower, geographic, short-form-content, originality, or commercial-collaboration gates, and do not lower a tier automatically because a field is missing. Stop searching after reaching the matching target. If the target is not met, process candidates already obtained first, then continue within the originally approved scope under the same conditions using the actual cursor returned; do not fetch the first page again, change conditions, expand authority, or hide the actual gap. Complete search, matching, and per-candidate assessment after the search plan is confirmed. When delivering the candidate list, prepare one review using the existing candidate batch save flow: this is the prepare stage of onecrew.creator.candidate.batch.save, not a new operation. Use the live schema to call onecrew.creator.candidate.batch.save with candidates <=50 and explicit default intent add_new; use save_or_update only when the user explicitly requests an update. Submit the real target, connection, provenance, numeric score, and per-candidate assessment. The owner obtains fresh platform data during prepare; when search evidence is sufficient, do not issue an independent profile/channel get just because of saving. Use the owner's summary to explain eligible_new, eligible_update, existing_skipped, duplicate_skipped, identity_pending, contact_conflict, and failed; count only eligible_new toward the new-candidate target. Do not accept Agent profiles or caches. Preparation does not write Creator and does not auto-confirm. Present the returned result_ref, wait for the user to confirm consumption of the same immutable preparation, then read back the real result. The default delivery is a candidate review card. A pure Markdown list is not the default completion; only when the user explicitly requests plain text or no card, the user disallows additional preparation reads, or actual capability is blocked, explain the change and deliver that instead; do not silently trigger a write. Keep actual user-facing questions/plans/explanations in the user's language."
+      ]
+    },
+    "kind": "guide"
+  },
+  "find-one": {
+    "guide": {
+      "confirmation_boundary": "This tool provides guidance only: it does not execute business operations or create durable tasks. Guidance is not authorization to write; do not write to Creator before user confirmation. Saves and updates must follow the user's actual authorization and the current owner's confirmation contract. User sending is available only through GmailBulk on the Mail page.",
+      "example": "Review [username or profile link] on [platform]. Check the necessary public evidence against the user's criteria and organize the score, rationale, and sources; prepare a save with the explicit [add_new/save_or_update] intent, show me the owner's returned result first, and wait for my confirmation before adding or updating the list.",
+      "expected_output": [
+        "The specified account's profile, scoring rationale, and public sources"
+      ],
+      "questions": [
+        "What are the account's platform and username or profile link? Is this add_new or save_or_update?"
+      ],
+      "title": "Find one account",
+      "tool_discovery_queries": [
+        "public profile recent posts",
+        "creator candidate save review"
+      ],
+      "topic": "find-one",
+      "workflow": [
+        "First confirm the user's goal and scope for this request. Use onecrew_tool_search to discover currently available capabilities, then use onecrew_tool_get to retrieve the selected operation's live contract; follow the current schema_revision, connection requirements, confirmation method, and readback rules exactly. Use only identifiers and references returned by the current calls; do not guess arguments or reuse expired references. External searches follow the confirmed real-time search-plan contract. Keep actual user-facing questions/plans/explanations in the user's language.",
+        "First use current discovery and onecrew_tool_get to obtain the exact contract; if external search is needed, run the same conditions under the user's confirmed search plan. Preserve the selected hit's stable locator, connection, source, and real provenance. Read profile, channel, or recent content only when quality or geographic evidence requested by the user is missing; when search evidence is sufficient, do not pre-read anything extra for a later save. Merge duplicate YouTube hits by stable channel ID only within the same connection and read depth; when channel verification is needed, pass depth: light or full explicitly, with light intentionally omitting comments and full requesting comments where supported; never merge by display name or similar handle. Submit one intent per candidate under the current save contract (add_new or save_or_update); the owner still obtains fresh platform data during prepare, and its returned status and reasons are what you present—do not accept Agent profiles or caches. An add_new existing_skipped result is not a new addition; show only result_ref before confirmation and read back the real result after confirmation."
+      ]
+    },
+    "kind": "guide"
+  },
+  "find-replies": {
+    "guide": {
+      "confirmation_boundary": "This tool provides guidance only: it does not execute business operations or create durable tasks. Guidance is not authorization to write; do not write to Creator before user confirmation. Saves and updates must follow the user's actual authorization and the current owner's confirmation contract. User sending is available only through GmailBulk on the Mail page.",
+      "example": "Review the comments and replies on [post link] and find suitable accounts under [selection criteria]. List each account, original reply, and selection rationale, then wait for my confirmation before adding them to the list.",
+      "expected_output": [
+        "Accounts, original replies, selection rationale, and sources"
+      ],
+      "questions": [
+        "What are the post link, selection criteria, and maximum number for this request?"
+      ],
+      "title": "Find people in replies",
+      "tool_discovery_queries": [
+        "post comments replies creator profiles"
+      ],
+      "topic": "find-replies",
+      "workflow": [
+        "First confirm the user's goal and scope for this request. Use onecrew_tool_search to discover currently available capabilities, then use onecrew_tool_get to retrieve the selected operation's live contract; follow the current schema_revision, connection requirements, confirmation method, and readback rules exactly. Use only identifiers and references returned by the current calls; do not guess arguments or reuse expired references. External searches follow the confirmed real-time search-plan contract. Keep actual user-facing questions/plans/explanations in the user's language.",
+        "Read replies to the specified post, filter accounts by the criteria, and show the original reply, source, and rationale."
+      ]
+    },
+    "kind": "guide"
+  }
+}

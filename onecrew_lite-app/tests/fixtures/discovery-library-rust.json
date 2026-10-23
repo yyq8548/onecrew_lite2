@@ -1,0 +1,200 @@
+[
+  {
+    "basis": {
+      "approved_at": 1792079499,
+      "campaign_id": "library-proof",
+      "contact_required": true,
+      "criteria_json": "{\"min_followers\":10000,\"requires_ai_tool_demo\":false,\"requires_public_tool_url\":false}",
+      "revision": 1,
+      "rows": [
+        {
+          "candidate": null,
+          "hit": {
+            "author_id": null,
+            "author_label": "Same display name",
+            "author_observed_at": null,
+            "author_url": null,
+            "campaign_id": "library-proof",
+            "captured_at": 1792079499,
+            "id": "0b4c3997-1a53-4976-a1de-3fcce4903294",
+            "platform": "youtube",
+            "profile_ref": "dedicated",
+            "search_keyword": "AI tools",
+            "source_url": "https://www.youtube.com/watch?v=LR04bU_yV5k",
+            "title": "AI tools review"
+          }
+        }
+      ],
+      "scopes_json": "[{\"platform\":\"youtube\",\"profile_ref\":\"dedicated\",\"keywords\":[\"AI tools\"]}]"
+    },
+    "expected": {
+      "campaign_id": "library-proof",
+      "criteria_revision": 1,
+      "rows": [
+        {
+          "candidate_id": null,
+          "evidence_version": "3786700f0da58e191152e4860482afcefb8a3f34555450e532ad619442054db5",
+          "hit": {
+            "author_id": null,
+            "author_label": "Same display name",
+            "author_observed_at": null,
+            "author_url": null,
+            "campaign_id": "library-proof",
+            "captured_at": 1792079499,
+            "id": "0b4c3997-1a53-4976-a1de-3fcce4903294",
+            "platform": "youtube",
+            "profile_ref": "dedicated",
+            "search_keyword": "AI tools",
+            "source_url": "https://www.youtube.com/watch?v=LR04bU_yV5k",
+            "title": "AI tools review"
+          },
+          "native_author_id": null,
+          "reasons": [
+            "author_candidate_binding_unverified"
+          ],
+          "verdict": "unverified"
+        }
+      ],
+      "snapshot_hash": "b0dd77744ac588f06ba96683f0742317e008091b76afb4a5eeebcfb516e59ac7",
+      "source_revision": 0
+    }
+  },
+  {
+    "basis": {
+      "approved_at": 1792079499,
+      "campaign_id": "library-proof",
+      "contact_required": true,
+      "criteria_json": "{\"min_followers\":10000,\"requires_ai_tool_demo\":false,\"requires_public_tool_url\":false}",
+      "revision": 1,
+      "rows": [
+        {
+          "candidate": {
+            "evidence_json": "{\"assessment\":{\"match_rating\":null,\"reasons\":[],\"subscribers_normalized\":20000},\"captured_at\":1,\"source_urls\":[\"https://www.youtube.com/watch?v=LR04bU_yV5k\"],\"subscribers_raw\":\"20000 subscribers\",\"subscribers_source_url\":\"https://www.youtube.com/watch?v=LR04bU_yV5k\"}",
+            "followers": "20000",
+            "id": "ae1a20ac-59b9-47fe-877a-a17db374941b",
+            "identity_receipt": "{\"video_hit_id\":\"0b4c3997-1a53-4976-a1de-3fcce4903294\",\"native_author_id\":\"UC1234567890\",\"candidate_id\":\"ae1a20ac-59b9-47fe-877a-a17db374941b\",\"criteria_revision\":1}",
+            "manual_approved_at": null,
+            "native_author_id": "UC1234567890",
+            "verdict": "qualified"
+          },
+          "hit": {
+            "author_id": null,
+            "author_label": "Same display name",
+            "author_observed_at": null,
+            "author_url": null,
+            "campaign_id": "library-proof",
+            "captured_at": 1792079499,
+            "id": "0b4c3997-1a53-4976-a1de-3fcce4903294",
+            "platform": "youtube",
+            "profile_ref": "dedicated",
+            "search_keyword": "AI tools",
+            "source_url": "https://www.youtube.com/watch?v=LR04bU_yV5k",
+            "title": "AI tools review"
+          }
+        }
+      ],
+      "scopes_json": "[{\"platform\":\"youtube\",\"profile_ref\":\"dedicated\",\"keywords\":[\"AI tools\"]}]"
+    },
+    "expected": {
+      "campaign_id": "library-proof",
+      "criteria_revision": 1,
+      "rows": [
+        {
+          "candidate_id": "ae1a20ac-59b9-47fe-877a-a17db374941b",
+          "evidence_version": "b0a30e911640b84540edc27be76510a6ffeac515246f3ee32be68d92f705ceea",
+          "followers": "20000",
+          "hit": {
+            "author_id": null,
+            "author_label": "Same display name",
+            "author_observed_at": null,
+            "author_url": null,
+            "campaign_id": "library-proof",
+            "captured_at": 1792079499,
+            "id": "0b4c3997-1a53-4976-a1de-3fcce4903294",
+            "platform": "youtube",
+            "profile_ref": "dedicated",
+            "search_keyword": "AI tools",
+            "source_url": "https://www.youtube.com/watch?v=LR04bU_yV5k",
+            "title": "AI tools review"
+          },
+          "native_author_id": "UC1234567890",
+          "reasons": [
+            "contact_unavailable"
+          ],
+          "verdict": "pending"
+        }
+      ],
+      "snapshot_hash": "732e1d3e8288e5dc929455a8be329cdacdcf8e8bcd2477195a215efd4114507b",
+      "source_revision": 0
+    }
+  },
+  {
+    "basis": {
+      "approved_at": 1792079499,
+      "campaign_id": "library-proof",
+      "contact_required": false,
+      "criteria_json": "{\"min_followers\":10000,\"requires_ai_tool_demo\":false,\"requires_public_tool_url\":false}",
+      "revision": 1,
+      "rows": [
+        {
+          "candidate": {
+            "evidence_json": "{\"assessment\":{\"match_rating\":null,\"reasons\":[],\"subscribers_normalized\":20000},\"captured_at\":1,\"source_urls\":[\"https://www.youtube.com/watch?v=LR04bU_yV5k\"],\"subscribers_raw\":\"20000 subscribers\",\"subscribers_source_url\":\"https://www.youtube.com/watch?v=LR04bU_yV5k\"}",
+            "followers": "20000",
+            "id": "ae1a20ac-59b9-47fe-877a-a17db374941b",
+            "identity_receipt": "{\"video_hit_id\":\"0b4c3997-1a53-4976-a1de-3fcce4903294\",\"native_author_id\":\"UC1234567890\",\"candidate_id\":\"ae1a20ac-59b9-47fe-877a-a17db374941b\",\"criteria_revision\":1}",
+            "manual_approved_at": 123,
+            "native_author_id": "UC1234567890",
+            "verdict": "qualified"
+          },
+          "hit": {
+            "author_id": null,
+            "author_label": "Same display name",
+            "author_observed_at": null,
+            "author_url": null,
+            "campaign_id": "library-proof",
+            "captured_at": 1792079499,
+            "id": "0b4c3997-1a53-4976-a1de-3fcce4903294",
+            "platform": "youtube",
+            "profile_ref": "dedicated",
+            "search_keyword": "AI tools",
+            "source_url": "https://www.youtube.com/watch?v=LR04bU_yV5k",
+            "title": "AI tools review"
+          }
+        }
+      ],
+      "scopes_json": "[{\"platform\":\"youtube\",\"profile_ref\":\"dedicated\",\"keywords\":[\"AI tools\"]}]"
+    },
+    "expected": {
+      "campaign_id": "library-proof",
+      "criteria_revision": 1,
+      "rows": [
+        {
+          "candidate_id": "ae1a20ac-59b9-47fe-877a-a17db374941b",
+          "evidence_version": "dd96fe11476bf8662ccb78259989e6272037b572eff1f049dd842ae22f114188",
+          "followers": "20000",
+          "hit": {
+            "author_id": null,
+            "author_label": "Same display name",
+            "author_observed_at": null,
+            "author_url": null,
+            "campaign_id": "library-proof",
+            "captured_at": 1792079499,
+            "id": "0b4c3997-1a53-4976-a1de-3fcce4903294",
+            "platform": "youtube",
+            "profile_ref": "dedicated",
+            "search_keyword": "AI tools",
+            "source_url": "https://www.youtube.com/watch?v=LR04bU_yV5k",
+            "title": "AI tools review"
+          },
+          "native_author_id": "UC1234567890",
+          "reasons": [
+            "manual_approved"
+          ],
+          "verdict": "qualified"
+        }
+      ],
+      "snapshot_hash": "e5fdc1eda8c0f2d729f4139922b5284bf1cfe5540ec57267941300964bd4bebe",
+      "source_revision": 0
+    }
+  }
+]

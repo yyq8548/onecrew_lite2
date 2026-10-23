@@ -15,6 +15,9 @@
   "account": {
     "login": "Sign in",
     "loginTitle": "Sign in to onecrew_lite",
+    "unifiedSignIn": "Sign in to onecrew_lite, then reopen Library.",
+    "connectionTitle": "Results table connection needs recovery",
+    "connectionUnavailable": "The local session or cloud connection could not be verified. Checking again. After a service restart, reopen both the workbench and results table from the OneCrew status card.",
     "loginDescription": "Sign in to access your tables and connections.",
     "loginSuccess": "Sign in successful",
     "returningToApp": "Returning you to your app…",
@@ -42,7 +45,7 @@
     "tryAgain": "Try again",
     "openLogin": "Open sign in",
     "unavailable": "Account service is unavailable.",
-    "reauthorizationRequired": "This device's authorization is no longer valid or usable. Authorize again to continue. Existing tables and data are preserved.",
+    "reauthorizationRequired": "Account authorization expired. Authorize again; existing tables and data are preserved.",
     "reauthorize": "Authorize again",
     "loginError": "Unable to start sign in.",
     "logoutError": "Unable to sign out. Please try again.",
@@ -153,6 +156,7 @@
     "editSourceDetails": "View and edit source details",
     "verdict": {
       "qualified": "Recommended candidate",
+      "related": "Related alternatives (excluded from the target)",
       "pending": "Unrated",
       "rejected": "Outside the shortlist",
       "unverified": "Unverified"
@@ -163,18 +167,13 @@
       "subscriber_count_unverified": "Follower count unverified",
       "subscriber_count_near_threshold": "Follower count near threshold",
       "below_min_subscribers": "Follower count below threshold",
+      "related_alternative": "Related alternative; excluded from the recommendation target",
       "own_ai_tool_demo_unverified": "Creator's AI demo unverified",
       "public_tool_url_unverified": "Public tool link unverified",
       "region_unverified": "Creator location unverified",
       "category_unverified": "Category content unverified",
       "language_unverified": "Content language unverified",
       "unsupported_criterion": "A hard criterion still lacks verification",
-      "requirement_unverified": "Customer requirement needs more evidence",
-      "requirement_contradicted": "Saved evidence contradicts a customer requirement",
-      "requirements_invalid": "Condition format needs review",
-      "excluded_by_customer": "Account excluded by the customer",
-      "excluded_account_identity_unverified": "Excluded account identity needs verification",
-      "excluded_accounts_invalid": "Excluded account details need review",
       "initial_match_low": "Low match",
       "initial_match_unrated": "Missing decisive evidence, unrated"
     },
@@ -228,8 +227,8 @@
     "checking": "Checking",
     "online": "Connected",
     "offline": "Waiting for extension",
-    "serviceOffline": "Local service is offline",
-    "serviceHint": "Start the local onecrew_lite service and the extension will reconnect automatically.",
+    "serviceOffline": "Extension connection status is unavailable",
+    "serviceHint": "Check the browser connection in the workbench. If this page session expired, reopen Library from OneCrew.",
     "hint": "The extension connects to the local service automatically; no pairing is required."
   }
 }

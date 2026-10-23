@@ -1,0 +1,863 @@
+{
+  "profiles": [
+    {
+      "expected": {
+        "bio": "",
+        "blue_verified": false,
+        "can_dm": null,
+        "followers": 0,
+        "following": 0,
+        "id": "7",
+        "likes": 0,
+        "location": "",
+        "name": "Core",
+        "posts": 0,
+        "profile_image_url": "https://example.com/avatar",
+        "profile_links": [],
+        "username": "core",
+        "verified": false,
+        "viewer_followed_by": null,
+        "viewer_follows": null
+      },
+      "input": {
+        "avatar": {
+          "image_url": "https://example.com/avatar"
+        },
+        "core": {
+          "name": "Core",
+          "screen_name": "core"
+        },
+        "rest_id": "7"
+      }
+    },
+    {
+      "expected": {
+        "bio": "",
+        "blue_verified": true,
+        "can_dm": false,
+        "followers": 18446744073709551615,
+        "following": 9007199254740993,
+        "id": "8",
+        "likes": 0,
+        "location": "",
+        "name": "",
+        "posts": 12,
+        "profile_image_url": "",
+        "profile_links": [
+          {
+            "display_text": "example.com",
+            "target_url": "https://example.com"
+          },
+          {
+            "display_text": "mailto:public@example.com",
+            "target_url": "mailto:public@example.com"
+          }
+        ],
+        "username": "",
+        "verified": true,
+        "viewer_followed_by": false,
+        "viewer_follows": true
+      },
+      "input": {
+        "is_blue_verified": true,
+        "legacy": {
+          "can_dm": false,
+          "entities": {
+            "description": {
+              "urls": [
+                {
+                  "display_url": "example.com",
+                  "expanded_url": "https://example.com"
+                },
+                {
+                  "url": "mailto:public@example.com"
+                }
+              ]
+            },
+            "url": {
+              "urls": [
+                {
+                  "display_url": "example.com",
+                  "expanded_url": "https://example.com",
+                  "url": "https://t.co/a"
+                }
+              ]
+            }
+          },
+          "favourites_count": -1,
+          "followed_by": false,
+          "followers_count": 18446744073709551615,
+          "following": true,
+          "friends_count": "9,007,199,254,740,993",
+          "statuses_count": "+12"
+        },
+        "rest_id": "8"
+      }
+    },
+    {
+      "expected": null,
+      "input": {
+        "__typename": "UserUnavailable",
+        "rest_id": "9"
+      }
+    }
+  ],
+  "timelines": [
+    {
+      "expected": {
+        "items": [
+          {
+            "article": null,
+            "author": {
+              "blue_verified": false,
+              "can_dm": null,
+              "id": "u1",
+              "name": "Alice",
+              "profile_image_url": "https://img/alice.jpg",
+              "username": "alice",
+              "verified": false,
+              "viewer_followed_by": null,
+              "viewer_follows": null
+            },
+            "conversation_id": null,
+            "created_at": "Sat Mar 08 12:00:00 +0000 2026",
+            "id": "1",
+            "in_reply_to_status_id": null,
+            "language": "en",
+            "media": [
+              {
+                "height": 800,
+                "kind": "photo",
+                "url": "https://pbs.twimg.com/1.jpg",
+                "width": 1200
+              }
+            ],
+            "metrics": {
+              "bookmarks": 3,
+              "likes": 10,
+              "quotes": 0,
+              "replies": 1,
+              "retweets": 2,
+              "views": 1234
+            },
+            "promoted": false,
+            "text": "Hello\nworld\n\nThis is the full text of a long tweet that goes beyond the 280 character limit and contains additional content that would be hidden behind Show More in the Twitter UI.",
+            "urls": [
+              "https://example.com/post"
+            ]
+          },
+          {
+            "article": null,
+            "author": {
+              "blue_verified": false,
+              "can_dm": null,
+              "id": "u2",
+              "name": "Bob",
+              "profile_image_url": "https://img/bob.jpg",
+              "username": "bob",
+              "verified": true,
+              "viewer_followed_by": null,
+              "viewer_follows": null
+            },
+            "conversation_id": null,
+            "created_at": "Sat Mar 08 12:01:00 +0000 2026",
+            "id": "2",
+            "in_reply_to_status_id": null,
+            "language": "zh",
+            "media": [],
+            "metrics": {
+              "bookmarks": 0,
+              "likes": 5,
+              "quotes": 0,
+              "replies": 0,
+              "retweets": 1,
+              "views": 10
+            },
+            "promoted": false,
+            "text": "RT wrapper",
+            "urls": []
+          }
+        ],
+        "next_cursor": "cursor-bottom-1"
+      },
+      "input": {
+        "data": {
+          "home": {
+            "home_timeline_urt": {
+              "instructions": [
+                {
+                  "entries": [
+                    {
+                      "content": {
+                        "entryType": "TimelineTimelineItem",
+                        "itemContent": {
+                          "tweet_results": {
+                            "result": {
+                              "__typename": "Tweet",
+                              "core": {
+                                "user_results": {
+                                  "result": {
+                                    "core": {
+                                      "name": "Alice",
+                                      "screen_name": "alice"
+                                    },
+                                    "legacy": {
+                                      "name": "Alice",
+                                      "profile_image_url_https": "https://img/alice.jpg",
+                                      "screen_name": "alice",
+                                      "verified": false
+                                    },
+                                    "rest_id": "u1"
+                                  }
+                                }
+                              },
+                              "legacy": {
+                                "bookmark_count": 3,
+                                "created_at": "Sat Mar 08 12:00:00 +0000 2026",
+                                "entities": {
+                                  "urls": [
+                                    {
+                                      "expanded_url": "https://example.com/post"
+                                    }
+                                  ]
+                                },
+                                "extended_entities": {
+                                  "media": [
+                                    {
+                                      "media_url_https": "https://pbs.twimg.com/1.jpg",
+                                      "original_info": {
+                                        "height": 800,
+                                        "width": 1200
+                                      },
+                                      "type": "photo"
+                                    }
+                                  ]
+                                },
+                                "favorite_count": 10,
+                                "full_text": "Hello\nworld",
+                                "lang": "en",
+                                "quote_count": 0,
+                                "reply_count": 1,
+                                "retweet_count": 2
+                              },
+                              "note_tweet": {
+                                "note_tweet_results": {
+                                  "result": {
+                                    "text": "Hello\nworld\n\nThis is the full text of a long tweet that goes beyond the 280 character limit and contains additional content that would be hidden behind Show More in the Twitter UI."
+                                  }
+                                }
+                              },
+                              "rest_id": "1",
+                              "views": {
+                                "count": "1234"
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "entryId": "tweet-1"
+                    },
+                    {
+                      "content": {
+                        "entryType": "TimelineTimelineItem",
+                        "itemContent": {
+                          "tweet_results": {
+                            "result": {
+                              "__typename": "Tweet",
+                              "core": {
+                                "user_results": {
+                                  "result": {
+                                    "core": {
+                                      "name": "Bob",
+                                      "screen_name": "bob"
+                                    },
+                                    "legacy": {
+                                      "name": "Bob",
+                                      "profile_image_url_https": "https://img/bob.jpg",
+                                      "screen_name": "bob",
+                                      "verified": true
+                                    },
+                                    "rest_id": "u2"
+                                  }
+                                }
+                              },
+                              "legacy": {
+                                "bookmark_count": 0,
+                                "created_at": "Sat Mar 08 12:01:00 +0000 2026",
+                                "entities": {
+                                  "urls": []
+                                },
+                                "favorite_count": 5,
+                                "full_text": "RT wrapper",
+                                "lang": "zh",
+                                "quote_count": 0,
+                                "reply_count": 0,
+                                "retweet_count": 1,
+                                "retweeted_status_result": {
+                                  "result": {
+                                    "__typename": "Tweet",
+                                    "core": {
+                                      "user_results": {
+                                        "result": {
+                                          "core": {
+                                            "name": "Carol",
+                                            "screen_name": "carol"
+                                          },
+                                          "legacy": {
+                                            "name": "Carol",
+                                            "profile_image_url_https": "https://img/carol.jpg",
+                                            "screen_name": "carol",
+                                            "verified": false
+                                          },
+                                          "rest_id": "u20"
+                                        }
+                                      }
+                                    },
+                                    "legacy": {
+                                      "bookmark_count": 4,
+                                      "created_at": "Sat Mar 08 11:59:00 +0000 2026",
+                                      "entities": {
+                                        "urls": []
+                                      },
+                                      "favorite_count": 50,
+                                      "full_text": "original retweeted post",
+                                      "lang": "en",
+                                      "quote_count": 1,
+                                      "reply_count": 2,
+                                      "retweet_count": 7
+                                    },
+                                    "quoted_status_result": {
+                                      "result": {
+                                        "__typename": "Tweet",
+                                        "core": {
+                                          "user_results": {
+                                            "result": {
+                                              "core": {
+                                                "name": "Dan",
+                                                "screen_name": "dan"
+                                              },
+                                              "legacy": {
+                                                "name": "Dan",
+                                                "profile_image_url_https": "https://img/dan.jpg",
+                                                "screen_name": "dan",
+                                                "verified": false
+                                              },
+                                              "rest_id": "u30"
+                                            }
+                                          }
+                                        },
+                                        "legacy": {
+                                          "bookmark_count": 0,
+                                          "created_at": "Sat Mar 08 11:58:00 +0000 2026",
+                                          "entities": {
+                                            "urls": []
+                                          },
+                                          "favorite_count": 1,
+                                          "full_text": "quoted text",
+                                          "lang": "en",
+                                          "quote_count": 0,
+                                          "reply_count": 0,
+                                          "retweet_count": 0
+                                        },
+                                        "rest_id": "30"
+                                      }
+                                    },
+                                    "rest_id": "20",
+                                    "views": {
+                                      "count": "999"
+                                    }
+                                  }
+                                }
+                              },
+                              "rest_id": "2",
+                              "views": {
+                                "count": "10"
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "entryId": "tweet-2"
+                    },
+                    {
+                      "content": {
+                        "cursorType": "Bottom",
+                        "entryType": "TimelineTimelineCursor",
+                        "value": "cursor-bottom-1"
+                      },
+                      "entryId": "cursor-bottom"
+                    }
+                  ],
+                  "type": "TimelineAddEntries"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "name": "home"
+    },
+    {
+      "expected": {
+        "items": [
+          {
+            "article": null,
+            "author": {
+              "blue_verified": false,
+              "can_dm": null,
+              "id": "u500",
+              "name": "Searcher",
+              "profile_image_url": "https://img/searcher.jpg",
+              "username": "searcher",
+              "verified": false,
+              "viewer_followed_by": null,
+              "viewer_follows": null
+            },
+            "conversation_id": null,
+            "created_at": "Sat Mar 08 13:00:00 +0000 2026",
+            "id": "500",
+            "in_reply_to_status_id": null,
+            "language": "en",
+            "media": [
+              {
+                "height": 720,
+                "kind": "video",
+                "url": "https://video-high.mp4",
+                "width": 1280
+              }
+            ],
+            "metrics": {
+              "bookmarks": 2,
+              "likes": 12,
+              "quotes": 0,
+              "replies": 1,
+              "retweets": 4,
+              "views": 4321
+            },
+            "promoted": false,
+            "text": "search result with video",
+            "urls": []
+          }
+        ],
+        "next_cursor": "search-cursor"
+      },
+      "input": {
+        "data": {
+          "search_by_raw_query": {
+            "search_timeline": {
+              "timeline": {
+                "instructions": [
+                  {
+                    "entries": [
+                      {
+                        "content": {
+                          "entryType": "TimelineTimelineModule",
+                          "items": [
+                            {
+                              "item": {
+                                "itemContent": {
+                                  "tweet_results": {
+                                    "result": {
+                                      "__typename": "TweetWithVisibilityResults",
+                                      "tweet": {
+                                        "__typename": "Tweet",
+                                        "core": {
+                                          "user_results": {
+                                            "result": {
+                                              "core": {
+                                                "name": "Searcher",
+                                                "screen_name": "searcher"
+                                              },
+                                              "legacy": {
+                                                "name": "Searcher",
+                                                "profile_image_url_https": "https://img/searcher.jpg",
+                                                "screen_name": "searcher",
+                                                "verified": false
+                                              },
+                                              "rest_id": "u500"
+                                            }
+                                          }
+                                        },
+                                        "legacy": {
+                                          "bookmark_count": 2,
+                                          "created_at": "Sat Mar 08 13:00:00 +0000 2026",
+                                          "entities": {
+                                            "urls": []
+                                          },
+                                          "extended_entities": {
+                                            "media": [
+                                              {
+                                                "media_url_https": "https://pbs.twimg.com/thumb.jpg",
+                                                "original_info": {
+                                                  "height": 720,
+                                                  "width": 1280
+                                                },
+                                                "type": "video",
+                                                "video_info": {
+                                                  "variants": [
+                                                    {
+                                                      "bitrate": 832000,
+                                                      "content_type": "video/mp4",
+                                                      "url": "https://video-low.mp4"
+                                                    },
+                                                    {
+                                                      "bitrate": 2176000,
+                                                      "content_type": "video/mp4",
+                                                      "url": "https://video-high.mp4"
+                                                    }
+                                                  ]
+                                                }
+                                              }
+                                            ]
+                                          },
+                                          "favorite_count": 12,
+                                          "full_text": "search result with video",
+                                          "lang": "en",
+                                          "quote_count": 0,
+                                          "reply_count": 1,
+                                          "retweet_count": 4
+                                        },
+                                        "rest_id": "500",
+                                        "views": {
+                                          "count": "4321"
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        "entryId": "search-module-1"
+                      },
+                      {
+                        "content": {
+                          "cursorType": "Bottom",
+                          "entryType": "TimelineTimelineCursor",
+                          "value": "search-cursor"
+                        },
+                        "entryId": "cursor-bottom"
+                      }
+                    ],
+                    "type": "TimelineAddEntries"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "name": "search"
+    },
+    {
+      "expected": {
+        "items": [
+          {
+            "article": null,
+            "author": {
+              "blue_verified": false,
+              "can_dm": null,
+              "id": "ua",
+              "name": "Author A",
+              "profile_image_url": "https://img/a.jpg",
+              "username": "authora",
+              "verified": false,
+              "viewer_followed_by": null,
+              "viewer_follows": null
+            },
+            "conversation_id": null,
+            "created_at": "Sat Mar 08 12:10:00 +0000 2026",
+            "id": "100",
+            "in_reply_to_status_id": null,
+            "language": "en",
+            "media": [],
+            "metrics": {
+              "bookmarks": 8,
+              "likes": 100,
+              "quotes": 1,
+              "replies": 2,
+              "retweets": 10,
+              "views": 8000
+            },
+            "promoted": false,
+            "text": "root tweet",
+            "urls": []
+          },
+          {
+            "article": null,
+            "author": {
+              "blue_verified": false,
+              "can_dm": null,
+              "id": "ub",
+              "name": "Author B",
+              "profile_image_url": "https://img/b.jpg",
+              "username": "authorb",
+              "verified": false,
+              "viewer_followed_by": null,
+              "viewer_follows": null
+            },
+            "conversation_id": null,
+            "created_at": "Sat Mar 08 12:12:00 +0000 2026",
+            "id": "101",
+            "in_reply_to_status_id": null,
+            "language": "en",
+            "media": [],
+            "metrics": {
+              "bookmarks": 0,
+              "likes": 5,
+              "quotes": 0,
+              "replies": 0,
+              "retweets": 1,
+              "views": 100
+            },
+            "promoted": false,
+            "text": "reply tweet",
+            "urls": []
+          }
+        ],
+        "next_cursor": "conversation-cursor"
+      },
+      "input": {
+        "data": {
+          "threaded_conversation_with_injections_v2": {
+            "instructions": [
+              {
+                "entries": [
+                  {
+                    "content": {
+                      "items": [
+                        {
+                          "item": {
+                            "itemContent": {
+                              "tweet_results": {
+                                "result": {
+                                  "__typename": "Tweet",
+                                  "core": {
+                                    "user_results": {
+                                      "result": {
+                                        "core": {
+                                          "name": "Author A",
+                                          "screen_name": "authora"
+                                        },
+                                        "legacy": {
+                                          "name": "Author A",
+                                          "profile_image_url_https": "https://img/a.jpg",
+                                          "screen_name": "authora",
+                                          "verified": false
+                                        },
+                                        "rest_id": "ua"
+                                      }
+                                    }
+                                  },
+                                  "legacy": {
+                                    "bookmark_count": 8,
+                                    "created_at": "Sat Mar 08 12:10:00 +0000 2026",
+                                    "entities": {
+                                      "urls": []
+                                    },
+                                    "favorite_count": 100,
+                                    "full_text": "root tweet",
+                                    "lang": "en",
+                                    "quote_count": 1,
+                                    "reply_count": 2,
+                                    "retweet_count": 10
+                                  },
+                                  "rest_id": "100",
+                                  "views": {
+                                    "count": "8000"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "item": {
+                            "itemContent": {
+                              "tweet_results": {
+                                "result": {
+                                  "__typename": "Tweet",
+                                  "core": {
+                                    "user_results": {
+                                      "result": {
+                                        "core": {
+                                          "name": "Author B",
+                                          "screen_name": "authorb"
+                                        },
+                                        "legacy": {
+                                          "name": "Author B",
+                                          "profile_image_url_https": "https://img/b.jpg",
+                                          "screen_name": "authorb",
+                                          "verified": false
+                                        },
+                                        "rest_id": "ub"
+                                      }
+                                    }
+                                  },
+                                  "legacy": {
+                                    "bookmark_count": 0,
+                                    "created_at": "Sat Mar 08 12:12:00 +0000 2026",
+                                    "entities": {
+                                      "urls": []
+                                    },
+                                    "favorite_count": 5,
+                                    "full_text": "reply tweet",
+                                    "lang": "en",
+                                    "quote_count": 0,
+                                    "reply_count": 0,
+                                    "retweet_count": 1
+                                  },
+                                  "rest_id": "101",
+                                  "views": {
+                                    "count": "100"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "entryId": "conversation-thread"
+                  },
+                  {
+                    "content": {
+                      "cursorType": "Bottom",
+                      "entryType": "TimelineTimelineCursor",
+                      "value": "conversation-cursor"
+                    },
+                    "entryId": "cursor-bottom"
+                  }
+                ],
+                "type": "TimelineAddEntries"
+              }
+            ]
+          }
+        }
+      },
+      "name": "thread"
+    },
+    {
+      "expected": {
+        "items": [
+          {
+            "article": null,
+            "author": {
+              "blue_verified": false,
+              "can_dm": null,
+              "id": "u700",
+              "name": "Lister",
+              "profile_image_url": "https://img/lister.jpg",
+              "username": "lister",
+              "verified": true,
+              "viewer_followed_by": null,
+              "viewer_follows": null
+            },
+            "conversation_id": null,
+            "created_at": "Sat Mar 08 13:10:00 +0000 2026",
+            "id": "700",
+            "in_reply_to_status_id": null,
+            "language": "zh",
+            "media": [],
+            "metrics": {
+              "bookmarks": 1,
+              "likes": 8,
+              "quotes": 0,
+              "replies": 1,
+              "retweets": 2,
+              "views": 321
+            },
+            "promoted": false,
+            "text": "list timeline tweet",
+            "urls": []
+          }
+        ],
+        "next_cursor": "list-cursor"
+      },
+      "input": {
+        "data": {
+          "list": {
+            "tweets_timeline": {
+              "timeline": {
+                "instructions": [
+                  {
+                    "entries": [
+                      {
+                        "content": {
+                          "entryType": "TimelineTimelineItem",
+                          "itemContent": {
+                            "tweet_results": {
+                              "result": {
+                                "__typename": "TweetWithVisibilityResults",
+                                "tweet": {
+                                  "__typename": "Tweet",
+                                  "core": {
+                                    "user_results": {
+                                      "result": {
+                                        "core": {
+                                          "name": "Lister",
+                                          "screen_name": "lister"
+                                        },
+                                        "legacy": {
+                                          "name": "Lister",
+                                          "profile_image_url_https": "https://img/lister.jpg",
+                                          "screen_name": "lister",
+                                          "verified": true
+                                        },
+                                        "rest_id": "u700"
+                                      }
+                                    }
+                                  },
+                                  "legacy": {
+                                    "bookmark_count": 1,
+                                    "created_at": "Sat Mar 08 13:10:00 +0000 2026",
+                                    "entities": {
+                                      "urls": []
+                                    },
+                                    "favorite_count": 8,
+                                    "full_text": "list timeline tweet",
+                                    "lang": "zh",
+                                    "quote_count": 0,
+                                    "reply_count": 1,
+                                    "retweet_count": 2
+                                  },
+                                  "rest_id": "700",
+                                  "views": {
+                                    "count": "321"
+                                  }
+                                },
+                                "tweetInterstitial": {
+                                  "__typename": "TweetInterstitial",
+                                  "text": {
+                                    "rtl": false,
+                                    "text": "Subscribe to @lister to see this post"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "entryId": "list-tweet-1"
+                      },
+                      {
+                        "content": {
+                          "cursorType": "Bottom",
+                          "entryType": "TimelineTimelineCursor",
+                          "value": "list-cursor"
+                        },
+                        "entryId": "cursor-bottom"
+                      }
+                    ],
+                    "type": "TimelineAddEntries"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "name": "list"
+    }
+  ]
+}

@@ -61,11 +61,8 @@ export class AccessClient {
     }
     if (!response.ok)
       throw new AccessError(
-        response.status === 401
-          ? 'access.unauthorized'
-          : response.status === 403
-            ? 'access.forbidden'
-            : 'access.remote_rejected',
+        response.status === 401 ? 'access.unauthorized'
+          : response.status === 403 ? 'access.forbidden' : 'access.remote_rejected',
         response.status,
       );
     // Responses never go into logs or error messages.

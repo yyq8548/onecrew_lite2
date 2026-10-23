@@ -14,6 +14,9 @@ target/
 *.sqlite3
 *.log
 /dist/
+/onecrew_lite-web/dist/
+/onecrew_lite-mcp-ui/dist/
+**/.schema-codegen-*/
 /audits/
 
 # Also ignore local dependency symlinks (not only directories).

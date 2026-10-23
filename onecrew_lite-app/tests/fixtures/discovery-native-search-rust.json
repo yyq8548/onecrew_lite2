@@ -1,0 +1,552 @@
+[
+  {
+    "connection": {
+      "kind": "service_credential",
+      "toolkit": "youtube"
+    },
+    "initial_scope": {
+      "arguments": {
+        "query": "headphone review"
+      },
+      "connection": {
+        "credential_id": "selected",
+        "kind": "service_credential",
+        "toolkit": "youtube"
+      },
+      "operation_id": "youtube.channels.search",
+      "schema_revision": "sha256:2e668efba3de5dd30b262658b5f254aa72f4f40e54dd8c19f0fcab69c7b95306"
+    },
+    "initial_token": "sha256:139c2956e6174cfb2facb6913963f9449a0b8949ea95a6b8d1baf58871119987",
+    "input_schema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "confirmed_plan_ref": {
+          "default": null,
+          "description": "Execute-only reference issued by the confirmed search plan.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "count": {
+          "default": 20,
+          "description": "YouTube page size. Omitted means 20; a confirmed plan freezes it.",
+          "format": "uint8",
+          "maximum": 50,
+          "minimum": 1,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "cursor": {
+          "default": null,
+          "description": "Execute-only native next_page_token from the preceding YouTube page; omit from plan scopes.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "language": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "order": {
+          "default": "relevance",
+          "description": "How YouTube ranks the page. `date` returns the newest uploads first, so each hit's matched.published_at shows how recently that channel published.",
+          "enum": [
+            "relevance",
+            "date"
+          ],
+          "type": "string"
+        },
+        "published_after": {
+          "default": null,
+          "description": "Keep only resources published at or after this RFC 3339 UTC instant, YYYY-MM-DDTHH:MM:SSZ.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "query": {
+          "type": "string"
+        },
+        "region_code": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "search_plan_policy": {
+          "default": "require_confirmation",
+          "description": "Execute-only. Direct search requires an explicit request from the user.",
+          "enum": [
+            "require_confirmation",
+            "user_requested_direct"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "query"
+      ],
+      "title": "YoutubeSearchArguments",
+      "type": "object"
+    },
+    "operation_id": "youtube.channels.search",
+    "schema_revision": "sha256:2e668efba3de5dd30b262658b5f254aa72f4f40e54dd8c19f0fcab69c7b95306"
+  },
+  {
+    "connection": {
+      "kind": "service_credential",
+      "toolkit": "youtube"
+    },
+    "initial_scope": {
+      "arguments": {
+        "query": "headphone review"
+      },
+      "connection": {
+        "credential_id": "selected",
+        "kind": "service_credential",
+        "toolkit": "youtube"
+      },
+      "operation_id": "youtube.videos.search",
+      "schema_revision": "sha256:2e668efba3de5dd30b262658b5f254aa72f4f40e54dd8c19f0fcab69c7b95306"
+    },
+    "initial_token": "sha256:491d953544a130252033725daee94692a45682a944dd0770f60c0866f9e3e65e",
+    "input_schema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "confirmed_plan_ref": {
+          "default": null,
+          "description": "Execute-only reference issued by the confirmed search plan.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "count": {
+          "default": 20,
+          "description": "YouTube page size. Omitted means 20; a confirmed plan freezes it.",
+          "format": "uint8",
+          "maximum": 50,
+          "minimum": 1,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "cursor": {
+          "default": null,
+          "description": "Execute-only native next_page_token from the preceding YouTube page; omit from plan scopes.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "language": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "order": {
+          "default": "relevance",
+          "description": "How YouTube ranks the page. `date` returns the newest uploads first, so each hit's matched.published_at shows how recently that channel published.",
+          "enum": [
+            "relevance",
+            "date"
+          ],
+          "type": "string"
+        },
+        "published_after": {
+          "default": null,
+          "description": "Keep only resources published at or after this RFC 3339 UTC instant, YYYY-MM-DDTHH:MM:SSZ.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "query": {
+          "type": "string"
+        },
+        "region_code": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "search_plan_policy": {
+          "default": "require_confirmation",
+          "description": "Execute-only. Direct search requires an explicit request from the user.",
+          "enum": [
+            "require_confirmation",
+            "user_requested_direct"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "query"
+      ],
+      "title": "YoutubeSearchArguments",
+      "type": "object"
+    },
+    "operation_id": "youtube.videos.search",
+    "schema_revision": "sha256:2e668efba3de5dd30b262658b5f254aa72f4f40e54dd8c19f0fcab69c7b95306"
+  },
+  {
+    "connection": {
+      "kind": "operator_account",
+      "toolkit": "instagram"
+    },
+    "initial_scope": {
+      "arguments": {
+        "query": "headphone review"
+      },
+      "connection": {
+        "kind": "operator_account",
+        "operator_account_id": "selected",
+        "toolkit": "instagram"
+      },
+      "operation_id": "instagram.users.search",
+      "schema_revision": "sha256:621e690f1a0ccfb1106e9caf0625a9f410549b6f549e9326b90d9c5d6ed3e06f"
+    },
+    "initial_token": "sha256:511d5870b70bdee05042e706f478082abf18cc06f67980ed262e97a095940fec",
+    "input_schema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "confirmed_plan_ref": {
+          "default": null,
+          "description": "Execute-only reference issued by the confirmed search plan.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "count": {
+          "default": 20,
+          "format": "uint8",
+          "maximum": 100,
+          "minimum": 1,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "query": {
+          "type": "string"
+        },
+        "search_plan_policy": {
+          "default": "require_confirmation",
+          "description": "Execute-only. Direct search requires an explicit request from the user.",
+          "enum": [
+            "require_confirmation",
+            "user_requested_direct"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "query"
+      ],
+      "title": "SearchArguments",
+      "type": "object"
+    },
+    "operation_id": "instagram.users.search",
+    "schema_revision": "sha256:621e690f1a0ccfb1106e9caf0625a9f410549b6f549e9326b90d9c5d6ed3e06f"
+  },
+  {
+    "connection": {
+      "kind": "operator_account",
+      "toolkit": "telegram"
+    },
+    "initial_scope": {
+      "arguments": {
+        "query": "headphone review"
+      },
+      "connection": {
+        "kind": "operator_account",
+        "operator_account_id": "selected",
+        "toolkit": "telegram"
+      },
+      "operation_id": "telegram.communities.search",
+      "schema_revision": "sha256:6fafa5a54e6dfc5d0a36225a6818e2d7df770e45b190cb65eeb48b1c13b75486"
+    },
+    "initial_token": "sha256:fbff16fa530acd821d568b3dffe160201b5f383200f3388d9891ce23ac7570be",
+    "input_schema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "confirmed_plan_ref": {
+          "default": null,
+          "description": "Execute-only reference issued by the confirmed search plan.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "count": {
+          "default": null,
+          "format": "uint8",
+          "maximum": 100,
+          "minimum": 1,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "query": {
+          "type": "string"
+        },
+        "search_plan_policy": {
+          "default": "require_confirmation",
+          "description": "Execute-only. Direct search requires an explicit request from the user.",
+          "enum": [
+            "require_confirmation",
+            "user_requested_direct"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "query"
+      ],
+      "title": "SearchArguments",
+      "type": "object"
+    },
+    "operation_id": "telegram.communities.search",
+    "schema_revision": "sha256:6fafa5a54e6dfc5d0a36225a6818e2d7df770e45b190cb65eeb48b1c13b75486"
+  },
+  {
+    "connection": {
+      "kind": "operator_account",
+      "toolkit": "x"
+    },
+    "initial_scope": {
+      "arguments": {
+        "all_words": [
+          "headphone review"
+        ]
+      },
+      "connection": {
+        "kind": "operator_account",
+        "operator_account_id": "selected",
+        "toolkit": "x"
+      },
+      "operation_id": "x.posts.search.advanced",
+      "schema_revision": "sha256:9d59e33ec27aa15cd9892a2c6ff9645e8abfbe62e514c02780614e00b39068c5"
+    },
+    "initial_token": "sha256:03e5a0cf9e5ea73b535e71e11807023c6ea4193578fec06a891818832142424e",
+    "input_schema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "all_words": {
+          "default": [],
+          "description": "Words that must all occur; each value is one word, or a space-separated phrase compiled in double quotes.",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 20,
+          "type": "array"
+        },
+        "any_words": {
+          "default": [],
+          "description": "Alternatives compiled as one parenthesized OR group; each value is one word, or a space-separated phrase compiled in double quotes.",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 20,
+          "type": "array"
+        },
+        "confirmed_plan_ref": {
+          "default": null,
+          "description": "Execute-only; omit from plan scope arguments. Reference issued by the user-confirmed onecrew.search.plan.prepare card.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "count": {
+          "default": null,
+          "description": "Provider page size from 1 through 100; omitted means 20; a confirmed plan freezes it.",
+          "format": "uint8",
+          "maximum": 100,
+          "minimum": 1,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "cursor": {
+          "default": null,
+          "description": "Execute-only continuation from next_cursor; omit from plan scopes.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "exact_phrase": {
+          "default": null,
+          "description": "One phrase compiled inside X Web Search double quotes.",
+          "maxLength": 256,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "exclude_words": {
+          "default": [],
+          "description": "Words excluded from results; each value is one word, or a space-separated phrase compiled in double quotes.",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 20,
+          "type": "array"
+        },
+        "from_accounts": {
+          "default": [],
+          "description": "X handles whose posts may match, with or without a leading `@`.",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 20,
+          "type": "array"
+        },
+        "hashtags": {
+          "default": [],
+          "description": "Hashtag names, with or without a leading `#`.",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 20,
+          "type": "array"
+        },
+        "language": {
+          "default": null,
+          "description": "Lowercase X Web Search language code such as `en` or `zh-cn`.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "links": {
+          "default": "any",
+          "description": "Include links, exclude links, or leave link filtering unset.",
+          "enum": [
+            "any",
+            "include",
+            "exclude"
+          ],
+          "type": "string"
+        },
+        "mentioning_accounts": {
+          "default": [],
+          "description": "X handles that matching posts mention, with or without a leading `@`.",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 20,
+          "type": "array"
+        },
+        "min_likes": {
+          "default": null,
+          "description": "Minimum like count compiled to the X Web operator `min_faves`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "min_replies": {
+          "default": null,
+          "description": "Minimum reply count compiled through `min_replies`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "min_reposts": {
+          "default": null,
+          "description": "Minimum repost count compiled to the X Web operator `min_retweets`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "replies": {
+          "default": "any",
+          "description": "Include replies, exclude replies, or leave reply filtering unset.",
+          "enum": [
+            "any",
+            "include",
+            "exclude"
+          ],
+          "type": "string"
+        },
+        "result_mode": {
+          "default": "top",
+          "description": "`top` requests X relevance results; `latest` requests recent results.",
+          "enum": [
+            "top",
+            "latest"
+          ],
+          "type": "string"
+        },
+        "search_plan_policy": {
+          "default": "require_confirmation",
+          "description": "Execute-only; omit from plan scope arguments. Set user_requested_direct only when the current user explicitly asks to skip the plan or search directly; never choose it autonomously.",
+          "enum": [
+            "require_confirmation",
+            "user_requested_direct"
+          ],
+          "type": "string"
+        },
+        "since": {
+          "default": null,
+          "description": "Gregorian date compiled through X's `since:YYYY-MM-DD` operator.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "to_accounts": {
+          "default": [],
+          "description": "X handles whose replies may match, with or without a leading `@`.",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 20,
+          "type": "array"
+        },
+        "until": {
+          "default": null,
+          "description": "Gregorian date compiled through X's `until:YYYY-MM-DD` operator.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "title": "AdvancedXPostSearchArguments",
+      "type": "object"
+    },
+    "operation_id": "x.posts.search.advanced",
+    "schema_revision": "sha256:9d59e33ec27aa15cd9892a2c6ff9645e8abfbe62e514c02780614e00b39068c5"
+  }
+]

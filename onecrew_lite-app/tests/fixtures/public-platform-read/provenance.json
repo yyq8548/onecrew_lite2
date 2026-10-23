@@ -1,0 +1,16 @@
+{
+  "source_commit": "efc3c6eb69507b9809bb30279d9af26156d075e3",
+  "command": "cargo +1.98.0-x86_64-pc-windows-msvc test --locked -p onecrew-x-client -p onecrew-ig-client -p onecrew-youtube-client export_public_platform_read_node_oracle --lib",
+  "output_environment": "ONECREW_PUBLIC_READ_ORACLE_DIRECTORY",
+  "tests": [
+    "onecrew_lite-rust/crates/x-client/src/parser.rs::export_public_platform_read_node_oracle",
+    "onecrew_lite-rust/crates/ig-client/src/parser.rs::export_public_platform_read_node_oracle",
+    "onecrew_lite-rust/crates/youtube-client/src/client.rs::export_public_platform_read_node_oracle"
+  ],
+  "scope": "原生产纯解析器、serde、数值转换与读取深度常量；没有网络、凭据、公司身份、HTTP替身或fixture transport。X四个timeline使用原仓库fixture。边界输入只作为纯函数测试数据。YouTube异步provider分支另按源码核对，未作远端验收。",
+  "sha256": {
+    "instagram.json": "099878cad327fc1bbbcfa58b8cc73d546e8ff72685f0f73d881d79ebe299a865",
+    "x.json": "1f9998b1906408ea4294dcb459566a9e408072248d597c0c5869e71afb1b3966",
+    "youtube.json": "a6eb8e176575f904ec1f4c085e4d01b2a2c70488fa359b62543853e19d656765"
+  }
+}

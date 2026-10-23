@@ -1,0 +1,1228 @@
+{
+  "source": "Actual saved MCP review material from paused Campaign linkedin-test-20261021-9cb6836; no provider rereads",
+  "records": [
+    {
+      "name": "Rachel Rekkab",
+      "material": {
+        "format_version": 2,
+        "campaign_id": "linkedin-test-20261021-9cb6836",
+        "criteria_revision": 1,
+        "criteria": {
+          "automatic_query_expansion": true,
+          "category": "商务、BD 或 Marketing 人员",
+          "contact_preference": "public_email_first",
+          "contact_search_terms": [
+            "email",
+            "business cooperation",
+            "contact",
+            "official website"
+          ],
+          "excluded_accounts": [
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAACdVXkoBclkH7oGVOCru8oxMsVSJhG-3XVM",
+              "profile_url": "https://www.linkedin.com/in/michela-silvestri/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAAxbGXEBQm-krln5f2rtzuTj37y3aSRTkVs",
+              "profile_url": "https://www.linkedin.com/in/saeedkenifati/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAADgCjq8Bf0KVIQdMRe4pRXm99Ttwd7DHJ6w",
+              "profile_url": "https://www.linkedin.com/in/sebastian-z-09384b222/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAA9PBAcBNNzFgXFYffI8i1zqIQXwK5see84",
+              "profile_url": "https://www.linkedin.com/in/thanhphank34/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAABW7H-kB4UH1NQ-J0HWRuTSnOb1jzeO01Ww",
+              "profile_url": "https://www.linkedin.com/in/jael-tan-7a1122a2/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAABWpfkMB9KoU-qv65__Dfh9utK6ohLZK3UI",
+              "profile_url": "https://www.linkedin.com/in/raj-timothy-nandwani-link/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAFac71QBcFZ1-4Dhr16Wy9r7dc7rf1t_6_c",
+              "profile_url": "https://www.linkedin.com/in/nansel-labar-104795346/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAAy3SPEB5lcKLr-ZnQNQxxxqMrDxzv6AGaY",
+              "profile_url": "https://www.linkedin.com/in/danielgranadosrojas/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAADGDVvgBYd2wYAIrimtPngcfCmkl9QaBAAk",
+              "profile_url": "https://www.linkedin.com/in/mahmoud-mohamed-abo-elmaaty/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAABfTYYIB1-8tCa_MRvFb7zcHT-0yL1t8GBI",
+              "profile_url": "https://www.linkedin.com/in/maximburko/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAClbU8EBxpJHC6aHBWj-VYBdQKNCyg97sfI",
+              "profile_url": "https://www.linkedin.com/in/dzungho104/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAACv-z2IBgXBlaIuCPqBbAijFIUWC7Wgp14g",
+              "profile_url": "https://www.linkedin.com/in/cody-ong/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAADyBv6kBOWy_XVcd_A5D0peDDc3o2nok5rM",
+              "profile_url": "https://www.linkedin.com/in/daeyeon-hwang-089b73243/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAADCaGToBb32eXrE4aXxnW_vn8t89YknkWpc",
+              "profile_url": "https://www.linkedin.com/in/ashikur-rahaman-1360b21a9/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAABUVRJ0BF1xWLBG2ny5p2oAtMhxrlL_frxw",
+              "profile_url": "https://www.linkedin.com/in/amin-kreidi/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAADBWeLABQ4PoRCpS2XElkaRU4MTxufnsU-U",
+              "profile_url": "https://www.linkedin.com/in/yb-wi-3547151a7/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAE00xeQBKjiofN4B_8VxCuMeltS2Ny3pSks",
+              "profile_url": "https://www.linkedin.com/in/yongkim337/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAACu6f04B6vkbzAUk_bD-cnQ2t6P3zfyw0iA",
+              "profile_url": "https://www.linkedin.com/in/ellie-wang-812841185/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAAWZEFMBT47FJwrkzXBDdBDTFujJj5gSBhA",
+              "profile_url": "https://www.linkedin.com/in/akshay-jadhav-2104aj/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAADAaVKsB2hQuH6J34lsGqjmnEOgny6fgZnc",
+              "profile_url": "https://www.linkedin.com/in/ray-yee-liew/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAAjrW24BID5wj-0AE_K5l-oRCIViKxw-Spg",
+              "profile_url": "https://www.linkedin.com/in/shawn-lee-52614642/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAA6UevcBiBwfdSilELXf_IjovffAR1waEjk",
+              "profile_url": "https://www.linkedin.com/in/tonychankihong/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAD3XUO0Bk6tdfqlVquOxsifxsvBfT1FZznU",
+              "profile_url": "https://www.linkedin.com/in/ken-chen-3a556924b/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAAZJkA4BGBMLEXxdfJLmVbxjQa5-pcg_RLw",
+              "profile_url": "https://www.linkedin.com/in/juan-pablo-moreno-lara-1a63b02b/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAAs1KzkBzl7D4rVDUapI_pTepkMLCNtOOT4",
+              "profile_url": "https://www.linkedin.com/in/ivan-charnas/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAApjZHEBxX_YfvUdcrzf2CiHUoXrnM-9om4",
+              "profile_url": "https://www.linkedin.com/in/steven-gotama-b0144b4a/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAAatkFcBcHA38bmGaY6vo9dnRcvHmNXi9os",
+              "profile_url": "https://www.linkedin.com/in/mario-gonzalez9/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAC1dZb0BiDZXawurogLQvjyAgTQUA29O2rM",
+              "profile_url": "https://www.linkedin.com/in/jihadul0/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAADxTPDkBpglAGwo8M66PpeeUYOFRg2AR8_I",
+              "profile_url": "https://www.linkedin.com/in/alec-lau-bb5b42242/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAA_Mk64BYzgHpQL1eZxXVSwj8pur0YRwPuM",
+              "profile_url": "https://www.linkedin.com/in/gasperstih/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAAqeE_4BBEcVbhnylezI139KXn9FEycN1N4",
+              "profile_url": "https://www.linkedin.com/in/aaralyntong/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAADXaJKcBsj2kPHFHXY_HEnkT9-mrYnHK58o",
+              "profile_url": "https://www.linkedin.com/in/jp-koning/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAACjQtOEBVpWHOdCrD9JLJqA7XSZAdOzUkH8",
+              "profile_url": "https://www.linkedin.com/in/eujin-lauren-lee-1022/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAACqDRaMBz71dbQzTEROuW-MjalDxGfo4FTg",
+              "profile_url": "https://www.linkedin.com/in/farukabdul/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAABsAXR8BVCrBNX-S8WVGNmCQBO1GOrisBxc",
+              "profile_url": "https://www.linkedin.com/in/dracyzy/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAA1m7sUBTU72ZZYXOuvSW9i3OMAAP4yhS04",
+              "profile_url": "https://www.linkedin.com/in/ycervantes/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAFnXJ0UBQxhtfOC1v0rXic2QCrnf5izV3U4",
+              "profile_url": "https://www.linkedin.com/in/md-omer-as-sani/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAGKH5fYBN8yyd4ZhpO8t73dxnoUwr2ttu4k",
+              "profile_url": "https://www.linkedin.com/in/john-monday-84673b3a1/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAADV_vwkBSRO1-PDwz50UtG_9UfNZh9qInQo",
+              "profile_url": "https://www.linkedin.com/in/hatrithuan/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAAc10ZIBA2wnx9fGwqYRrV5nD60IKc-HKk8",
+              "profile_url": "https://www.linkedin.com/in/naomi-c-46a61834/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAADaMKGYBX9TDBeqxFrKtjByJ8caSnNIgttE",
+              "profile_url": "https://www.linkedin.com/in/kyle-pang-746597216/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAABrb0CYB8pFKlSsKTtrgGlymIGUFJ1dCIFw",
+              "profile_url": "https://www.linkedin.com/in/nomankhan37/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAAe9DpABwd41jtDusx3BIAAssnr2mZ5ToR0",
+              "profile_url": "https://www.linkedin.com/in/frederica-tompkins/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAAJwx3IBBkjvISZHDcGdtsw3eA_IYA2NMrU",
+              "profile_url": "https://www.linkedin.com/in/costa-daniel-chua/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAGbdKdwBZw_Od7VsaFSFllKZLhnYaYs9vaQ",
+              "profile_url": "https://www.linkedin.com/in/sandro-van-eykels/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAB6nczwBBkOb_WEwA4C-pgb_il1W6sl2Sng",
+              "profile_url": "https://www.linkedin.com/in/jw-sohn/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAALaCYsBvmF_7jvsAJt3bm352k6QnUBHO3I",
+              "profile_url": "https://www.linkedin.com/in/kandaniel/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAEHJheUBelCKXkC5-4jhDDrGvZ2I4C8yLBg",
+              "profile_url": "https://www.linkedin.com/in/serhii-holodniuk/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAABxS1UUBy_MNcm-Va2XKxD-yDXT7Xl_Jg10",
+              "profile_url": "https://www.linkedin.com/in/ewelina-pendino-685182113/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAEnp73cBDbAcJe-LywRi5YVhqFb4MUCAMqQ",
+              "profile_url": "https://www.linkedin.com/in/river-young-b073672a7/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAABtb7IkBdgLHDtGRL5UYUXEUEnZHq44l918",
+              "profile_url": "https://www.linkedin.com/in/chris-kong-block/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAGltlCQBL6jGI-mzkdCJppGC4LqgObZwkUw",
+              "profile_url": "https://www.linkedin.com/in/derry-rukmana-anugrah/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAACkbsQYBas1imPPFRzMmjPz55oj7Zm1MAa8",
+              "profile_url": "https://www.linkedin.com/in/jillliu777/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAABLZNjEBjYe3q306QYCDYS3lkNYCzlc0qNQ",
+              "profile_url": "https://www.linkedin.com/in/sandro-slukan/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAADDueoABMq_xd3K4OklWLumBHI3PeN3wc1k",
+              "profile_url": "https://www.linkedin.com/in/tina-tan-368b1a1aa/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAABZk1j8BijFQHeoTFzloH5hadeKZbXOHB74",
+              "profile_url": "https://www.linkedin.com/in/kifewee/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAAzjjNcBF5LIiMxXdYBhhXgQWCoz6wUCFbw",
+              "profile_url": "https://www.linkedin.com/in/peter-li-5b350260/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAADR8OcMB2b58XC4tf6jcw4t_B9DjQQy18KI",
+              "profile_url": "https://www.linkedin.com/in/ulianateixeira/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAAxbTmUBqRGI-ZjqKfjfT1Uzv4onlW6U5bM",
+              "profile_url": "https://www.linkedin.com/in/carolynvivianty/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAAgA6qoByPycNvXqVz5Ysmpjso8b2jCwzVc",
+              "profile_url": "https://www.linkedin.com/in/leahdong/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAACBgnyMBWuVgRh0DPSWXdudIm0Pej_iV3Ck",
+              "profile_url": "https://www.linkedin.com/in/xavier-owyeong/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAD36ezUBlfsq3_qEBGS8dSpnhOPl79GJG-U",
+              "profile_url": "https://www.linkedin.com/in/jon-goga-bb129a250/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAACmqwTwB9MCkCWLNzTAXM47x8mMgALynufY",
+              "profile_url": "https://www.linkedin.com/in/guli-zhu-678142176/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAAg5-8UBfdJ3ecuD9XX930KHj7ZrBVKXjxM",
+              "profile_url": "https://www.linkedin.com/in/jenny-liu-45927b3a/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAAy8mswBR6fGlzeXWsrFjTn_b_hTztpi2Z8",
+              "profile_url": "https://www.linkedin.com/in/pisaacm/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAACuM-vABYjlJZ3ML1AqS0DEoue4YGZvp3MM",
+              "profile_url": "https://www.linkedin.com/in/elara-el-494843184/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAAWRmtwBs9a6WemI1vHsHuTBWIphrSMggI8",
+              "profile_url": "https://www.linkedin.com/in/ho-yanyi/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAEehKQcBEnN6UOchlZGMXbRBEq-9lIyxw0M",
+              "profile_url": "https://www.linkedin.com/in/uladzislau-semianchuk/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAADhpOrcBlCDwkfdNVz6Pte8M6H2r5UWR_NU",
+              "profile_url": "https://www.linkedin.com/in/euren-leyson-bb3b54224/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAACBHY9MBBB1PU0v5X3NdsLr-ryPO7TEf2gQ",
+              "profile_url": "https://www.linkedin.com/in/umutdenizkaya/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAChr9YsBQlLWCe7uUJsHzYHBx51U_gQ8SIo",
+              "profile_url": "https://www.linkedin.com/in/jordelia-tan-b2314716b/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAADejF0cBLs3Kg1mCcjuoVjKfdmNamPwxDNw",
+              "profile_url": "https://www.linkedin.com/in/shiva-sharma-4b3732220/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAGdGmtQBn5jsig19_3JzEq1uaALxhihxfJA",
+              "profile_url": "https://www.linkedin.com/in/shahzaib-ahmad001/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAC2gCBgBs3cfFF0GeFmp8-wE6bF9aWUFy4g",
+              "profile_url": "https://www.linkedin.com/in/issa-ad/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAADUWHCIBtk2HapUgjyI6v3Fu0OcNt_F4XnU",
+              "profile_url": "https://www.linkedin.com/in/husnain65/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAALGe2gBRn7OTEswdDgL8u8W4RHiKFJZ5RI",
+              "profile_url": "https://www.linkedin.com/in/congebe1/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAACd10acBh46ZcMB1ZE_Y0uF1vTrdsyO38Fo",
+              "profile_url": "https://www.linkedin.com/in/dustindai/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAADSGAfIB14EIsz1eypIawTQavLIDniQ7vSs",
+              "profile_url": "https://www.linkedin.com/in/fatih06/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAABBGPRMBzysS0ZnXvaU7eVr83A5bkwklCYE",
+              "profile_url": "https://www.linkedin.com/in/elvira-lukmanova-55753477/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAABSwnpMBqyc6QGO6RN3j8fcUyYsFJXeLUto",
+              "profile_url": "https://www.linkedin.com/in/suphatthanak/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAApwTmYBSQOQLQDjF1dWnBoKmUSeP6uCvZg",
+              "profile_url": "https://www.linkedin.com/in/tarikamzil/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAEG-EaABKO5CQjt-1PUur8uSE0OVqVRiO_c",
+              "profile_url": "https://www.linkedin.com/in/aaron01302357/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAABtOTiUBEQREG4v5hfcJxqCleNDfDxtIonw",
+              "profile_url": "https://www.linkedin.com/in/ojosamson/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAADx2OqIBLd6ns1YzkZuC-KUj3Jfl4m9Doug",
+              "profile_url": "https://www.linkedin.com/in/wayne-zhang-20286a243/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAB_RnG0B-6w9K3E8k-I2QtmS9gVCFFf1tmI",
+              "profile_url": "https://www.linkedin.com/in/arunchunchu/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAABfX9tIBA9-V0_NordzjuCN9Gn6R6i_u1UM",
+              "profile_url": "https://www.linkedin.com/in/kurtise/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAACd6sIQBp_8myW2493i6KSG3UghRtHp-Eoo",
+              "profile_url": "https://www.linkedin.com/in/joseph-l-6849a1165/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAADFcM_cBfTTw3_NgExZKyrhuE8Z8nrG3ZAU",
+              "profile_url": "https://www.linkedin.com/in/marco-chacin-8474071b1/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAACAr8EgBScE9uOwtT_Odnclmqu3TO8ZpOUI",
+              "profile_url": "https://www.linkedin.com/in/sergioheras-cantalejo/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAGtA4UIBljGwcMStNkSDnjtbTUU7rfH4Zwc",
+              "profile_url": "https://www.linkedin.com/in/mahmoud-mekawy-716753422/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAAO4lPwBEv6YEfiyJgEHjxP4I1mJzFSOzUE",
+              "profile_url": "https://www.linkedin.com/in/melindakjacobs/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAABdDWu8Be3hQc-eUMj3w_xVG3uz_Prc8oKk",
+              "profile_url": "https://www.linkedin.com/in/vera-wong-43b85aaa/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAAPtQr8B7muCQdT6oVyvxOibMOklvisp_LQ",
+              "profile_url": "https://www.linkedin.com/in/winnie-kelekwang-53b0911a/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAC9XTuYBQifxC2YySzK9Hlbc7OL3Y-ZxE4s",
+              "profile_url": "https://www.linkedin.com/in/nikolai-davydov-b9abab1a1/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAEf_qb8BtIHtzOiHKcj4vUbXxC20_tRtZNc",
+              "profile_url": "https://www.linkedin.com/in/earn-cryptoz-a7b651298/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAAjffpgBpe2XFKQ9Y_69kPqajQUhVIkvsfo",
+              "profile_url": "https://www.linkedin.com/in/jorgeoseguera/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAADqawVQBsdEF5dDD4h8RF94fmBuOcL9kq0M",
+              "profile_url": "https://www.linkedin.com/in/lucas-yu-470341235/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAE4G2C0Bn-CFLrUHhW22SBzEkqIkwZO2tlo",
+              "profile_url": "https://www.linkedin.com/in/jia-cheng-sie-5794a4306/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAADJUzZIBtb-8kppaOdj2EuXbnoQhu-JyeGM",
+              "profile_url": "https://www.linkedin.com/in/jerzel-b-1029641b6/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAB39FIkB3wDsU_R8DIDPI2tou7e8UEIanAk",
+              "profile_url": "https://www.linkedin.com/in/sherwyn-tan-/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAADFIN4BPSCS8_2qAuAGFyeE6nGeE6gatj0",
+              "profile_url": "https://www.linkedin.com/in/haider-rafique/"
+            }
+          ],
+          "language": "",
+          "min_subscribers": 0,
+          "min_subscribers_source": "default",
+          "region": "",
+          "requirements": [
+            {
+              "description": "人员须任职于币安（Binance）、OKX、Bitget、Bybit 或 Gate.io 任一公司；公司之间为 OR 关系。",
+              "excerpt": "币安（Binance）、OKX、Bitget、Bybit、Gate.io 的商务、BD 或 Marketing 人员"
+            }
+          ],
+          "requires_ai_tool_demo": false,
+          "requires_public_tool_url": false,
+          "table_subject": "LinkedIn 修复版正确率与效率测试 1021"
+        },
+        "approved_scopes": [
+          {
+            "platform": "linkedin",
+            "profile_ref": "d5pskwub",
+            "keywords": [
+              "Binance business development",
+              "OKX business development",
+              "Bitget BD",
+              "Bybit business development",
+              "\"Gate.io\" 商务",
+              "Binance Marketing",
+              "OKX Marketing",
+              "(Bitget OR Bybit OR \"Gate.io\") Marketing",
+              "Bitget partnerships",
+              "Bybit affiliate marketing",
+              "\"Gate.io\" business development",
+              "Bitget regional marketing",
+              "Bybit brand marketing",
+              "\"Gate.io\" 社群营销",
+              "Binance field marketing",
+              "OKX institutional business development"
+            ]
+          }
+        ],
+        "approved_at": 1792570755,
+        "hit": {
+          "id": "668cbe73-1f78-4514-9d24-63d29af811b2",
+          "campaign_id": "linkedin-test-20261021-9cb6836",
+          "platform": "linkedin",
+          "profile_ref": "d5pskwub",
+          "search_keyword": "Bitget regional marketing",
+          "source_url": "https://www.linkedin.com/in/rachel-rekkab-47a27314/",
+          "title": "Rachel Rekkab",
+          "author_label": "Rachel Rekkab",
+          "captured_at": 1792571023,
+          "author_id": "ACoAAALi5d4B2GMYe3hVZbzxaqFXkhCWuuTYVPI",
+          "author_url": "https://www.linkedin.com/in/rachel-rekkab-47a27314/",
+          "author_observed_at": 1792571063
+        },
+        "candidate_id": "16881f2c-b3ff-4ebd-9f5f-162f93bf8601",
+        "native_author_id": "ACoAAALi5d4B2GMYe3hVZbzxaqFXkhCWuuTYVPI",
+        "native_followers": 4269,
+        "native_profile": {
+          "web_text": "Marketing & Events Strategist - Sponsorship & Partnerships | Experiential Events | Web3 Advisory- Art & FinTech (x-Bybit)\n4,269 followers",
+          "profile_url": "https://www.linkedin.com/in/rachel-rekkab-47a27314/",
+          "observed_at": 1792571063,
+          "bio": "Rachel has exuded an entrepreneurial spirit since the beginning of her career. Her genuine interest in business coupled with her strong business acumen always add value to her clients and have been the fundamental driving force behind her continued success with everything she chooses to undertake. With over 17 years of experience in the Events & Exhibitions industry, Rachel has mastered a transferable skill set enabling her to identify, recruit, train and develop performing teams of over 30 in multiple locations. Rachel leads by example and has delivered multi- million dollar events successfully over and over again due to the thorough grasp of the market and ultimately meeting and exceeding the needs and expectations of her clients. Rachel lives and breathes events and is passionate about successful event deliveries, which she culminates into Long lasting relationships. Over the years, Rachel has developed successful client relationships with C-level decision executives from various industries, HNIs, UHNWIs, diplomats, government authorities from across the globe and has decided to start a new chapter of her life where she has founded and fully conceptualise the realisation of UNFOLD, Art Beyond the BRICS which led to the formation of UNFOLD Art XChange, an unparalleled B2B Art business conférence and summits platform. https://www.artemholdings.com.Rachel is fluent in English, Chinese (Mandarin) and French and currently resides in Dubai.",
+          "connections": null,
+          "bio_status": "complete"
+        },
+        "candidate_evidence_hash": "848c4f0c867b5dfe71be06ac5005aaacbeb05826648e99f71aeef6be4477d0b3",
+        "video_description": null,
+        "transcript": null,
+        "public_pages": [],
+        "material_hash": "f9ce8caf5838c5ae1cdf5e86b2a9744f48bc70d63dfd7e1850ff96da5b2850dc"
+      },
+      "previous_assessment": {
+        "match_rating": null,
+        "quality_rating": null,
+        "reasons": [
+          "selection_unverified",
+          "requirement_unverified"
+        ],
+        "selection": {
+          "reason": "保存的当前职位标题支持 Marketing 岗位方向，但“x-Bybit”仅表明曾与 Bybit 有任职关系，无法确认目前任职于五家指定公司中的任一家。此为保存样本的初步评估，尚缺当前雇主证据；粉丝、connections 和联系方式不影响本次匹配判断。",
+          "source_url": "https://www.linkedin.com/in/rachel-rekkab-47a27314/",
+          "state": "unverified"
+        },
+        "subscribers_normalized": 4269
+      }
+    },
+    {
+      "name": "Alicia Foo",
+      "material": {
+        "format_version": 2,
+        "campaign_id": "linkedin-test-20261021-9cb6836",
+        "criteria_revision": 1,
+        "criteria": {
+          "automatic_query_expansion": true,
+          "category": "商务、BD 或 Marketing 人员",
+          "contact_preference": "public_email_first",
+          "contact_search_terms": [
+            "email",
+            "business cooperation",
+            "contact",
+            "official website"
+          ],
+          "excluded_accounts": [
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAACdVXkoBclkH7oGVOCru8oxMsVSJhG-3XVM",
+              "profile_url": "https://www.linkedin.com/in/michela-silvestri/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAAxbGXEBQm-krln5f2rtzuTj37y3aSRTkVs",
+              "profile_url": "https://www.linkedin.com/in/saeedkenifati/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAADgCjq8Bf0KVIQdMRe4pRXm99Ttwd7DHJ6w",
+              "profile_url": "https://www.linkedin.com/in/sebastian-z-09384b222/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAA9PBAcBNNzFgXFYffI8i1zqIQXwK5see84",
+              "profile_url": "https://www.linkedin.com/in/thanhphank34/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAABW7H-kB4UH1NQ-J0HWRuTSnOb1jzeO01Ww",
+              "profile_url": "https://www.linkedin.com/in/jael-tan-7a1122a2/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAABWpfkMB9KoU-qv65__Dfh9utK6ohLZK3UI",
+              "profile_url": "https://www.linkedin.com/in/raj-timothy-nandwani-link/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAFac71QBcFZ1-4Dhr16Wy9r7dc7rf1t_6_c",
+              "profile_url": "https://www.linkedin.com/in/nansel-labar-104795346/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAAy3SPEB5lcKLr-ZnQNQxxxqMrDxzv6AGaY",
+              "profile_url": "https://www.linkedin.com/in/danielgranadosrojas/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAADGDVvgBYd2wYAIrimtPngcfCmkl9QaBAAk",
+              "profile_url": "https://www.linkedin.com/in/mahmoud-mohamed-abo-elmaaty/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAABfTYYIB1-8tCa_MRvFb7zcHT-0yL1t8GBI",
+              "profile_url": "https://www.linkedin.com/in/maximburko/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAClbU8EBxpJHC6aHBWj-VYBdQKNCyg97sfI",
+              "profile_url": "https://www.linkedin.com/in/dzungho104/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAACv-z2IBgXBlaIuCPqBbAijFIUWC7Wgp14g",
+              "profile_url": "https://www.linkedin.com/in/cody-ong/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAADyBv6kBOWy_XVcd_A5D0peDDc3o2nok5rM",
+              "profile_url": "https://www.linkedin.com/in/daeyeon-hwang-089b73243/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAADCaGToBb32eXrE4aXxnW_vn8t89YknkWpc",
+              "profile_url": "https://www.linkedin.com/in/ashikur-rahaman-1360b21a9/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAABUVRJ0BF1xWLBG2ny5p2oAtMhxrlL_frxw",
+              "profile_url": "https://www.linkedin.com/in/amin-kreidi/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAADBWeLABQ4PoRCpS2XElkaRU4MTxufnsU-U",
+              "profile_url": "https://www.linkedin.com/in/yb-wi-3547151a7/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAE00xeQBKjiofN4B_8VxCuMeltS2Ny3pSks",
+              "profile_url": "https://www.linkedin.com/in/yongkim337/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAACu6f04B6vkbzAUk_bD-cnQ2t6P3zfyw0iA",
+              "profile_url": "https://www.linkedin.com/in/ellie-wang-812841185/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAAWZEFMBT47FJwrkzXBDdBDTFujJj5gSBhA",
+              "profile_url": "https://www.linkedin.com/in/akshay-jadhav-2104aj/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAADAaVKsB2hQuH6J34lsGqjmnEOgny6fgZnc",
+              "profile_url": "https://www.linkedin.com/in/ray-yee-liew/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAAjrW24BID5wj-0AE_K5l-oRCIViKxw-Spg",
+              "profile_url": "https://www.linkedin.com/in/shawn-lee-52614642/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAA6UevcBiBwfdSilELXf_IjovffAR1waEjk",
+              "profile_url": "https://www.linkedin.com/in/tonychankihong/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAD3XUO0Bk6tdfqlVquOxsifxsvBfT1FZznU",
+              "profile_url": "https://www.linkedin.com/in/ken-chen-3a556924b/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAAZJkA4BGBMLEXxdfJLmVbxjQa5-pcg_RLw",
+              "profile_url": "https://www.linkedin.com/in/juan-pablo-moreno-lara-1a63b02b/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAAs1KzkBzl7D4rVDUapI_pTepkMLCNtOOT4",
+              "profile_url": "https://www.linkedin.com/in/ivan-charnas/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAApjZHEBxX_YfvUdcrzf2CiHUoXrnM-9om4",
+              "profile_url": "https://www.linkedin.com/in/steven-gotama-b0144b4a/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAAatkFcBcHA38bmGaY6vo9dnRcvHmNXi9os",
+              "profile_url": "https://www.linkedin.com/in/mario-gonzalez9/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAC1dZb0BiDZXawurogLQvjyAgTQUA29O2rM",
+              "profile_url": "https://www.linkedin.com/in/jihadul0/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAADxTPDkBpglAGwo8M66PpeeUYOFRg2AR8_I",
+              "profile_url": "https://www.linkedin.com/in/alec-lau-bb5b42242/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAA_Mk64BYzgHpQL1eZxXVSwj8pur0YRwPuM",
+              "profile_url": "https://www.linkedin.com/in/gasperstih/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAAqeE_4BBEcVbhnylezI139KXn9FEycN1N4",
+              "profile_url": "https://www.linkedin.com/in/aaralyntong/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAADXaJKcBsj2kPHFHXY_HEnkT9-mrYnHK58o",
+              "profile_url": "https://www.linkedin.com/in/jp-koning/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAACjQtOEBVpWHOdCrD9JLJqA7XSZAdOzUkH8",
+              "profile_url": "https://www.linkedin.com/in/eujin-lauren-lee-1022/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAACqDRaMBz71dbQzTEROuW-MjalDxGfo4FTg",
+              "profile_url": "https://www.linkedin.com/in/farukabdul/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAABsAXR8BVCrBNX-S8WVGNmCQBO1GOrisBxc",
+              "profile_url": "https://www.linkedin.com/in/dracyzy/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAA1m7sUBTU72ZZYXOuvSW9i3OMAAP4yhS04",
+              "profile_url": "https://www.linkedin.com/in/ycervantes/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAFnXJ0UBQxhtfOC1v0rXic2QCrnf5izV3U4",
+              "profile_url": "https://www.linkedin.com/in/md-omer-as-sani/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAGKH5fYBN8yyd4ZhpO8t73dxnoUwr2ttu4k",
+              "profile_url": "https://www.linkedin.com/in/john-monday-84673b3a1/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAADV_vwkBSRO1-PDwz50UtG_9UfNZh9qInQo",
+              "profile_url": "https://www.linkedin.com/in/hatrithuan/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAAc10ZIBA2wnx9fGwqYRrV5nD60IKc-HKk8",
+              "profile_url": "https://www.linkedin.com/in/naomi-c-46a61834/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAADaMKGYBX9TDBeqxFrKtjByJ8caSnNIgttE",
+              "profile_url": "https://www.linkedin.com/in/kyle-pang-746597216/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAABrb0CYB8pFKlSsKTtrgGlymIGUFJ1dCIFw",
+              "profile_url": "https://www.linkedin.com/in/nomankhan37/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAAe9DpABwd41jtDusx3BIAAssnr2mZ5ToR0",
+              "profile_url": "https://www.linkedin.com/in/frederica-tompkins/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAAJwx3IBBkjvISZHDcGdtsw3eA_IYA2NMrU",
+              "profile_url": "https://www.linkedin.com/in/costa-daniel-chua/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAGbdKdwBZw_Od7VsaFSFllKZLhnYaYs9vaQ",
+              "profile_url": "https://www.linkedin.com/in/sandro-van-eykels/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAB6nczwBBkOb_WEwA4C-pgb_il1W6sl2Sng",
+              "profile_url": "https://www.linkedin.com/in/jw-sohn/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAALaCYsBvmF_7jvsAJt3bm352k6QnUBHO3I",
+              "profile_url": "https://www.linkedin.com/in/kandaniel/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAEHJheUBelCKXkC5-4jhDDrGvZ2I4C8yLBg",
+              "profile_url": "https://www.linkedin.com/in/serhii-holodniuk/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAABxS1UUBy_MNcm-Va2XKxD-yDXT7Xl_Jg10",
+              "profile_url": "https://www.linkedin.com/in/ewelina-pendino-685182113/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAEnp73cBDbAcJe-LywRi5YVhqFb4MUCAMqQ",
+              "profile_url": "https://www.linkedin.com/in/river-young-b073672a7/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAABtb7IkBdgLHDtGRL5UYUXEUEnZHq44l918",
+              "profile_url": "https://www.linkedin.com/in/chris-kong-block/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAGltlCQBL6jGI-mzkdCJppGC4LqgObZwkUw",
+              "profile_url": "https://www.linkedin.com/in/derry-rukmana-anugrah/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAACkbsQYBas1imPPFRzMmjPz55oj7Zm1MAa8",
+              "profile_url": "https://www.linkedin.com/in/jillliu777/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAABLZNjEBjYe3q306QYCDYS3lkNYCzlc0qNQ",
+              "profile_url": "https://www.linkedin.com/in/sandro-slukan/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAADDueoABMq_xd3K4OklWLumBHI3PeN3wc1k",
+              "profile_url": "https://www.linkedin.com/in/tina-tan-368b1a1aa/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAABZk1j8BijFQHeoTFzloH5hadeKZbXOHB74",
+              "profile_url": "https://www.linkedin.com/in/kifewee/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAAzjjNcBF5LIiMxXdYBhhXgQWCoz6wUCFbw",
+              "profile_url": "https://www.linkedin.com/in/peter-li-5b350260/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAADR8OcMB2b58XC4tf6jcw4t_B9DjQQy18KI",
+              "profile_url": "https://www.linkedin.com/in/ulianateixeira/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAAxbTmUBqRGI-ZjqKfjfT1Uzv4onlW6U5bM",
+              "profile_url": "https://www.linkedin.com/in/carolynvivianty/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAAgA6qoByPycNvXqVz5Ysmpjso8b2jCwzVc",
+              "profile_url": "https://www.linkedin.com/in/leahdong/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAACBgnyMBWuVgRh0DPSWXdudIm0Pej_iV3Ck",
+              "profile_url": "https://www.linkedin.com/in/xavier-owyeong/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAD36ezUBlfsq3_qEBGS8dSpnhOPl79GJG-U",
+              "profile_url": "https://www.linkedin.com/in/jon-goga-bb129a250/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAACmqwTwB9MCkCWLNzTAXM47x8mMgALynufY",
+              "profile_url": "https://www.linkedin.com/in/guli-zhu-678142176/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAAg5-8UBfdJ3ecuD9XX930KHj7ZrBVKXjxM",
+              "profile_url": "https://www.linkedin.com/in/jenny-liu-45927b3a/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAAy8mswBR6fGlzeXWsrFjTn_b_hTztpi2Z8",
+              "profile_url": "https://www.linkedin.com/in/pisaacm/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAACuM-vABYjlJZ3ML1AqS0DEoue4YGZvp3MM",
+              "profile_url": "https://www.linkedin.com/in/elara-el-494843184/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAAWRmtwBs9a6WemI1vHsHuTBWIphrSMggI8",
+              "profile_url": "https://www.linkedin.com/in/ho-yanyi/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAEehKQcBEnN6UOchlZGMXbRBEq-9lIyxw0M",
+              "profile_url": "https://www.linkedin.com/in/uladzislau-semianchuk/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAADhpOrcBlCDwkfdNVz6Pte8M6H2r5UWR_NU",
+              "profile_url": "https://www.linkedin.com/in/euren-leyson-bb3b54224/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAACBHY9MBBB1PU0v5X3NdsLr-ryPO7TEf2gQ",
+              "profile_url": "https://www.linkedin.com/in/umutdenizkaya/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAChr9YsBQlLWCe7uUJsHzYHBx51U_gQ8SIo",
+              "profile_url": "https://www.linkedin.com/in/jordelia-tan-b2314716b/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAADejF0cBLs3Kg1mCcjuoVjKfdmNamPwxDNw",
+              "profile_url": "https://www.linkedin.com/in/shiva-sharma-4b3732220/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAGdGmtQBn5jsig19_3JzEq1uaALxhihxfJA",
+              "profile_url": "https://www.linkedin.com/in/shahzaib-ahmad001/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAC2gCBgBs3cfFF0GeFmp8-wE6bF9aWUFy4g",
+              "profile_url": "https://www.linkedin.com/in/issa-ad/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAADUWHCIBtk2HapUgjyI6v3Fu0OcNt_F4XnU",
+              "profile_url": "https://www.linkedin.com/in/husnain65/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAALGe2gBRn7OTEswdDgL8u8W4RHiKFJZ5RI",
+              "profile_url": "https://www.linkedin.com/in/congebe1/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAACd10acBh46ZcMB1ZE_Y0uF1vTrdsyO38Fo",
+              "profile_url": "https://www.linkedin.com/in/dustindai/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAADSGAfIB14EIsz1eypIawTQavLIDniQ7vSs",
+              "profile_url": "https://www.linkedin.com/in/fatih06/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAABBGPRMBzysS0ZnXvaU7eVr83A5bkwklCYE",
+              "profile_url": "https://www.linkedin.com/in/elvira-lukmanova-55753477/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAABSwnpMBqyc6QGO6RN3j8fcUyYsFJXeLUto",
+              "profile_url": "https://www.linkedin.com/in/suphatthanak/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAApwTmYBSQOQLQDjF1dWnBoKmUSeP6uCvZg",
+              "profile_url": "https://www.linkedin.com/in/tarikamzil/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAEG-EaABKO5CQjt-1PUur8uSE0OVqVRiO_c",
+              "profile_url": "https://www.linkedin.com/in/aaron01302357/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAABtOTiUBEQREG4v5hfcJxqCleNDfDxtIonw",
+              "profile_url": "https://www.linkedin.com/in/ojosamson/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAADx2OqIBLd6ns1YzkZuC-KUj3Jfl4m9Doug",
+              "profile_url": "https://www.linkedin.com/in/wayne-zhang-20286a243/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAB_RnG0B-6w9K3E8k-I2QtmS9gVCFFf1tmI",
+              "profile_url": "https://www.linkedin.com/in/arunchunchu/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAABfX9tIBA9-V0_NordzjuCN9Gn6R6i_u1UM",
+              "profile_url": "https://www.linkedin.com/in/kurtise/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAACd6sIQBp_8myW2493i6KSG3UghRtHp-Eoo",
+              "profile_url": "https://www.linkedin.com/in/joseph-l-6849a1165/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAADFcM_cBfTTw3_NgExZKyrhuE8Z8nrG3ZAU",
+              "profile_url": "https://www.linkedin.com/in/marco-chacin-8474071b1/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAACAr8EgBScE9uOwtT_Odnclmqu3TO8ZpOUI",
+              "profile_url": "https://www.linkedin.com/in/sergioheras-cantalejo/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAGtA4UIBljGwcMStNkSDnjtbTUU7rfH4Zwc",
+              "profile_url": "https://www.linkedin.com/in/mahmoud-mekawy-716753422/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAAO4lPwBEv6YEfiyJgEHjxP4I1mJzFSOzUE",
+              "profile_url": "https://www.linkedin.com/in/melindakjacobs/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAABdDWu8Be3hQc-eUMj3w_xVG3uz_Prc8oKk",
+              "profile_url": "https://www.linkedin.com/in/vera-wong-43b85aaa/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAAPtQr8B7muCQdT6oVyvxOibMOklvisp_LQ",
+              "profile_url": "https://www.linkedin.com/in/winnie-kelekwang-53b0911a/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAC9XTuYBQifxC2YySzK9Hlbc7OL3Y-ZxE4s",
+              "profile_url": "https://www.linkedin.com/in/nikolai-davydov-b9abab1a1/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAEf_qb8BtIHtzOiHKcj4vUbXxC20_tRtZNc",
+              "profile_url": "https://www.linkedin.com/in/earn-cryptoz-a7b651298/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAAjffpgBpe2XFKQ9Y_69kPqajQUhVIkvsfo",
+              "profile_url": "https://www.linkedin.com/in/jorgeoseguera/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAADqawVQBsdEF5dDD4h8RF94fmBuOcL9kq0M",
+              "profile_url": "https://www.linkedin.com/in/lucas-yu-470341235/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAE4G2C0Bn-CFLrUHhW22SBzEkqIkwZO2tlo",
+              "profile_url": "https://www.linkedin.com/in/jia-cheng-sie-5794a4306/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAADJUzZIBtb-8kppaOdj2EuXbnoQhu-JyeGM",
+              "profile_url": "https://www.linkedin.com/in/jerzel-b-1029641b6/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAB39FIkB3wDsU_R8DIDPI2tou7e8UEIanAk",
+              "profile_url": "https://www.linkedin.com/in/sherwyn-tan-/"
+            },
+            {
+              "excerpt": "成功的账号",
+              "native_author_id": "ACoAAADFIN4BPSCS8_2qAuAGFyeE6nGeE6gatj0",
+              "profile_url": "https://www.linkedin.com/in/haider-rafique/"
+            }
+          ],
+          "language": "",
+          "min_subscribers": 0,
+          "min_subscribers_source": "default",
+          "region": "",
+          "requirements": [
+            {
+              "description": "人员须任职于币安（Binance）、OKX、Bitget、Bybit 或 Gate.io 任一公司；公司之间为 OR 关系。",
+              "excerpt": "币安（Binance）、OKX、Bitget、Bybit、Gate.io 的商务、BD 或 Marketing 人员"
+            }
+          ],
+          "requires_ai_tool_demo": false,
+          "requires_public_tool_url": false,
+          "table_subject": "LinkedIn 修复版正确率与效率测试 1021"
+        },
+        "approved_scopes": [
+          {
+            "platform": "linkedin",
+            "profile_ref": "d5pskwub",
+            "keywords": [
+              "Binance business development",
+              "OKX business development",
+              "Bitget BD",
+              "Bybit business development",
+              "\"Gate.io\" 商务",
+              "Binance Marketing",
+              "OKX Marketing",
+              "(Bitget OR Bybit OR \"Gate.io\") Marketing",
+              "Bitget partnerships",
+              "Bybit affiliate marketing",
+              "\"Gate.io\" business development",
+              "Bitget regional marketing",
+              "Bybit brand marketing",
+              "\"Gate.io\" 社群营销",
+              "Binance field marketing",
+              "OKX institutional business development"
+            ]
+          }
+        ],
+        "approved_at": 1792570755,
+        "hit": {
+          "id": "747e0043-f9a1-4b4c-8e2f-0bbf759d40da",
+          "campaign_id": "linkedin-test-20261021-9cb6836",
+          "platform": "linkedin",
+          "profile_ref": "d5pskwub",
+          "search_keyword": "Bitget regional marketing",
+          "source_url": "https://www.linkedin.com/in/aliciafoo98/",
+          "title": "Alicia Foo",
+          "author_label": "Alicia Foo",
+          "captured_at": 1792571023,
+          "author_id": "ACoAADMlGykBv_Kbt11OlBGp4lmUUxHunWt5dQI",
+          "author_url": "https://www.linkedin.com/in/aliciafoo98/",
+          "author_observed_at": 1792571089
+        },
+        "candidate_id": "3966ec21-7103-42c0-b3de-a81b6310c7ac",
+        "native_author_id": "ACoAADMlGykBv_Kbt11OlBGp4lmUUxHunWt5dQI",
+        "native_followers": 1092,
+        "native_profile": {
+          "web_text": "Regional Affiliate Manager at Bitget\n1,092 followers\n500+connections",
+          "profile_url": "https://www.linkedin.com/in/aliciafoo98/",
+          "observed_at": 1792571089,
+          "connections": {
+            "raw": "500+connections",
+            "lower": 500,
+            "upper": null
+          },
+          "bio_status": "truncated"
+        },
+        "candidate_evidence_hash": "f41fb70444a402771151089a426fdd4d3357786510bdffd88808331f5240d00a",
+        "video_description": null,
+        "transcript": null,
+        "public_pages": [],
+        "material_hash": "bff64affca02dc99d52c82541fb8ccdc29e4e56f84ed2fc68f5a4f5fd427d90e"
+      },
+      "previous_assessment": {
+        "match_rating": null,
+        "quality_rating": {
+          "level": "good",
+          "reason": "当前职位直接标明 Bitget 与区域联盟合作管理职责，公司和商务合作岗位均有明确依据，足以支持本次人员寻找任务的初步匹配，评为 good。保存样本未展示具体职责或业务覆盖范围，因此不据此推断更细的合作权限；公开联系方式由后续环节独立核验。",
+          "score": 85,
+          "source_url": "https://www.linkedin.com/in/aliciafoo98/"
+        },
+        "reasons": [
+          "selection_unverified"
+        ],
+        "selection": {
+          "reason": "“Regional Affiliate Manager”明确了任职职位，但未明确其属于商务、BD 或 Marketing，也未提供相关职责。",
+          "source_url": "https://www.linkedin.com/in/aliciafoo98/",
+          "state": "unverified"
+        },
+        "subscribers_normalized": 1092
+      }
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "captured_at": "2026-10-21T02:04:19.967Z",
+  "elapsed_ms": 8789,
+  "profile": {
+    "adapter_version": "1.0.0",
+    "author_handle": "ray-yee-liew",
+    "account_id": "ACoAADAaVKsB2hQuH6J34lsGqjmnEOgny6fgZnc",
+    "author_label": "Ray Yee Liew",
+    "profile_url": "https://www.linkedin.com/in/ray-yee-liew/",
+    "follower_count": 1548,
+    "follower_text": "1,548 followers",
+    "connections": {
+      "raw": "500+connections",
+      "lower": 500,
+      "upper": null
+    },
+    "headline": "Global Business Development at Binance | Payments",
+    "bio": "",
+    "public_links": [],
+    "contact_links": [
+      "https://www.linkedin.com/in/ray-yee-liew/overlay/contact-info/"
+    ],
+    "evidence_source": "visible_profile_header",
+    "bio_truncated": true
+  }
+}

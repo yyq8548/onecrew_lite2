@@ -1,0 +1,58 @@
+import assert from "node:assert/strict";
+import { chmod, copyFile, mkdir, mkdtemp, readdir, rm } from "node:fs/promises";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { DatabaseSync } from "node:sqlite";
+import test from "node:test";
+import { createEmbeddedTables } from "onecrew_lite_tables/embedded";
+import { AccountDatabases } from "../src/identity/account-databases.ts";
+import { AccountContextService } from "../src/identity/account-context.ts";
+import { acquireInstanceLock } from "../src/service/instance-lock.ts";
+import { createPrivateDirectory } from "../src/storage/private-backup.ts";
+import { createDiscoveryLibraryProjection } from "../src/sync/discovery-library.ts";
+import { createLibraryCaptureSource } from "../src/sync/library-capture.ts";
+import { validateTableSyncArchive } from "../src/sync/table-sync-integrity.ts";
+import { randomUUID } from "node:crypto";
+
+for (const fixture of ["discovery-identity/merged.sqlite", "discovery-contacts/native-before.sqlite", ...(process.env.ONECREW_QUERY_FEEDBACK_DATABASE ? ["current-account"] : [])]) test(`real SQLite ${fixture} publishes into embedded Library, replays exact row IDs and rejects an old account`, async () => {
+  const scratch = fileURLToPath(new URL("../../.scratch/discovery-library-embedded/", import.meta.url));
+  await mkdir(scratch, { recursive: true });
+  const root = await mkdtemp(join(scratch, "projection-"));
+  const directory = await createPrivateDirectory(join(root, "private"));
+  const lease = await acquireInstanceLock(directory);
+  const tables = await createEmbeddedTables(await createPrivateDirectory(join(directory, "tables")), "http://127.0.0.1:33333");
+  const accounts = new AccountContextService();
+  const tenant = await tables.tenants.resolve({ id: "operator", email: "operator@example.com" });
+  const context = accounts.activate({ user: tenant.user, tenantId: tenant.tenantId, baseId: tenant.baseId, deviceId: "test-device", source: "access" });
+  const databases = new AccountDatabases(lease, accounts);
+  try {
+    await databases.createNewAccount(context);
+    const directories = (await readdir(directory)).filter(name => /^account-[a-f0-9]{64}$/u.test(name));
+    assert.equal(directories.length, 1);
+    const path = join(directory, directories[0]!, "creator.sqlite");
+    await copyFile(fixture === "current-account" ? process.env.ONECREW_QUERY_FEEDBACK_DATABASE! : fileURLToPath(new URL(`./fixtures/${fixture}`, import.meta.url)), path);
+    if (process.platform !== "win32") await chmod(path, 0o600);
+    using original = new DatabaseSync(path, { readOnly: true });
+    const plan = fixture === "current-account" ? original.prepare("SELECT id,current_revision FROM discovery_campaigns WHERE id=?").get("b29b55fa-1131-4d00-9d92-ecad85d3f8f7")! : original.prepare("SELECT id,current_revision FROM discovery_campaigns ORDER BY id LIMIT 1").get()!;
+    assert.equal(typeof plan.id, "string"); assert.equal(typeof plan.current_revision, "number");
+    const projection = createDiscoveryLibraryProjection(accounts, databases, tables, "http://127.0.0.1:33333");
+    await projection.readiness(context);
+    const result = await projection.publish(context, plan.id as string, plan.current_revision as number);
+    assert.ok(result.total_hits > 0); assert.equal(result.inserted_rows, result.total_hits);
+    assert.equal(result.web_url, `http://127.0.0.1:33333/library/${result.table_id}`);
+    const before = await tables.data.getDiscoveryState(tenant, { table_id: result.table_id, campaign_id: plan.id as string, limit: 100 });
+    const identity = await tables.data.getDiscoveryIdentity(tenant, { table_id: result.table_id, campaign_id: plan.id as string });
+    assert.equal(identity.state, "current");
+    if (fixture.startsWith("discovery-identity/")) assert.ok(identity.projection!.groups.some(group => group.members.length > 1));
+    const repeated = await projection.publish(context, plan.id as string, plan.current_revision as number);
+    assert.equal(repeated.inserted_rows, 0); assert.equal(repeated.table_id, result.table_id);
+    assert.deepEqual(await tables.data.getDiscoveryState(tenant, { table_id: result.table_id, campaign_id: plan.id as string, limit: 100 }), before);
+    assert.deepEqual(await tables.data.getDiscoveryIdentity(tenant, { table_id: result.table_id, campaign_id: plan.id as string }), identity);
+    const capture = await createLibraryCaptureSource(accounts, tables).capture(context, plan.id as string, { version_id: randomUUID(), source_instance_id: randomUUID(), consent_id: randomUUID(), capture_started_at: new Date().toISOString() });
+    assert.equal(capture.table_id, result.table_id);
+    assert.match(capture.content_hash, /^[a-f0-9]{64}$/u);
+    await validateTableSyncArchive(capture.archive, BigInt(capture.record_count));
+    accounts.logout();
+    await assert.rejects(projection.publish(context, plan.id as string, plan.current_revision as number), { code: "access.account_changed" });
+  } finally { databases.close(); await tables.close(); await lease.close(); await rm(root, { recursive: true }); }
+});

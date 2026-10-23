@@ -19,6 +19,7 @@ import { setLanguage } from '@/i18n';
 type SystemInfo = InferResponseType<typeof api.system.info.$get, 200>;
 
 import { useAccess } from './AccessProvider';
+import { unifiedRuntimeMode } from '@/lib/unified-runtime';
 
 const requestHeaders = { 'X-OneCrew-Request': '1' };
 
@@ -54,6 +55,11 @@ export function AccountMenu({ navigate }: { navigate: (path: string) => void }) 
   }, [open]);
 
   const startLogin = async () => {
+    if (unifiedRuntimeMode) {
+      setOpen(false);
+      navigate('/login');
+      return;
+    }
     setError(null);
     setPopupBlocked(false);
     popupRef.current = window.open('', '_blank');

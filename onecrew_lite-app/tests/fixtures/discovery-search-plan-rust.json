@@ -1,0 +1,4 @@
+[
+  {"scope":{"arguments":{"count":5,"query":"rust"},"connection":{"credential_id":"selected","kind":"service_credential","toolkit":"youtube"},"operation_id":"youtube.channels.search","schema_revision":"exact-revision"},"token":"sha256:9061a03e6f213421a8d384d683add911f03597a3925fcec096cf79df8df7c0c0"},
+  {"scope":{"arguments":{"10":"ten","2":"two","u64":18446744073709551615,"z":{"":2,"😀":1}},"connection":{"credential_id":"selected","kind":"service_credential","toolkit":"youtube"},"operation_id":"youtube.channels.search","schema_revision":"exact-revision"},"token":"sha256:3a92429b7dac83e03c71db01231cb98f5d598cba7cd844326bb6282539662602"}
+]

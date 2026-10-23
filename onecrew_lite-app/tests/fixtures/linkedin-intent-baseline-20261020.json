@@ -1,0 +1,233 @@
+{
+  "index": 0,
+  "input": {
+    "id": "linkedin-intent-real-0",
+    "brief": "只在LinkedIn搜索10位币安、OKX、Bitget、Bybit或Gate.io的商务、BD和Marketing人员。",
+    "profile_ref": "d5pskwub",
+    "opencli_version": "1.8.8"
+  },
+  "sources": [
+    {
+      "platform": "linkedin",
+      "registered": true,
+      "allowed_values": [],
+      "command": "onecrew-search-linkedin/people-search"
+    },
+    {
+      "platform": "youtube",
+      "registered": true,
+      "allowed_values": [],
+      "command": "youtube/search"
+    }
+  ],
+  "elapsed_ms": 49794,
+  "trace": [
+    {
+      "understanding": {
+        "product_or_topic": "币安、OKX、Bitget、Bybit或Gate.io的商务、BD和Marketing人员",
+        "purpose": "在LinkedIn寻找上述公司的10位相关业务人员；未说明后续联系或合作目的。",
+        "desired_creators": "目标是相关公司的商务、BD和Marketing人员，未要求其具有创作者身份。",
+        "explicit_requirements_with_quotes": [
+          "平台限制：“只在LinkedIn搜索”",
+          "目标人数：“10位”",
+          "公司范围：“币安、OKX、Bitget、Bybit或Gate.io”",
+          "职位范围：“商务、BD和Marketing人员”"
+        ],
+        "relevant_content_angles": [
+          "按公司名称与商务职位检索LinkedIn人员资料",
+          "按公司名称与BD或Business Development职位检索LinkedIn人员资料",
+          "按公司名称与Marketing职位检索LinkedIn人员资料"
+        ],
+        "misleading_matches_to_avoid": [
+          "仅提及相关交易所，但没有相关任职证据的人员",
+          "在指定公司任职，但职位不属于商务、BD或Marketing范围的人员",
+          "将一般加密货币创作者或交易所用户视为所需公司人员",
+          "将公司页面计为人员"
+        ]
+      },
+      "plan": {
+        "target_count": {
+          "state": "specified",
+          "value": 10,
+          "excerpt": "10位"
+        },
+        "max_calls": {
+          "state": "unspecified",
+          "value": null,
+          "excerpt": null
+        },
+        "intent": {
+          "original_request": "只在LinkedIn搜索10位币安、OKX、Bitget、Bybit或Gate.io的商务、BD和Marketing人员。",
+          "goal": "仅在LinkedIn寻找10位在币安、OKX、Bitget、Bybit或Gate.io从事商务、BD或Marketing工作的人员。",
+          "category": {
+            "state": "specified",
+            "value": "商务、BD和Marketing人员",
+            "excerpt": "商务、BD和Marketing人员"
+          },
+          "region": {
+            "state": "unspecified",
+            "value": null,
+            "excerpt": null
+          },
+          "language": {
+            "state": "unspecified",
+            "value": null,
+            "excerpt": null
+          },
+          "min_subscribers": {
+            "state": "unspecified",
+            "value": null,
+            "excerpt": null
+          },
+          "other_hard_conditions": [
+            {
+              "description": "人员须在币安、OKX、Bitget、Bybit或Gate.io中的任意一家公司任职。",
+              "excerpt": "币安、OKX、Bitget、Bybit或Gate.io的商务、BD和Marketing人员"
+            }
+          ],
+          "soft_preferences": [],
+          "suggested_keywords": [
+            "Binance Business Development",
+            "OKX Business Development",
+            "Bitget BD",
+            "Bybit Business Development",
+            "Gate.io Business Development",
+            "币安 商务",
+            "OKX Marketing",
+            "Bitget Marketing"
+          ],
+          "min_subscribers_exclusive": false,
+          "exclusion_groups": [
+            {
+              "platforms": [
+                "youtube"
+              ],
+              "excerpt": "只在LinkedIn搜索"
+            }
+          ]
+        },
+        "scopes": [
+          {
+            "platform": "linkedin",
+            "keywords": [
+              "Binance Business Development",
+              "OKX Business Development",
+              "Bitget BD",
+              "Bybit Business Development",
+              "Gate.io Business Development",
+              "币安 商务",
+              "OKX Marketing",
+              "Bitget Marketing"
+            ]
+          }
+        ],
+        "contact_search_terms": [
+          "email",
+          "business cooperation",
+          "contact",
+          "official website"
+        ]
+      }
+    },
+    {
+      "requirements_preserved": true,
+      "requirement_reason": "最终计划保留仅LinkedIn、10位、五家指定公司任职及商务、BD或Marketing岗位条件。客户未指定语言、粉丝门槛或预算；新计划采用默认粉丝数≥2000及不限预算符合规则。execution_settings未提供明确覆盖值，manual_scopes为空。联系偏好未被列为人员资格条件。8条查询符合自动计划数量要求；任职、岗位及粉丝数仍须依据真实个人资料验证。",
+      "queries": [
+        {
+          "platform": "linkedin",
+          "keyword": "Binance Business Development",
+          "suitable": true,
+          "reason": "公司英文名与商务拓展岗位适合LinkedIn人员搜索，直接对应币安BD人员。搜索命中仍需核实当前任职。"
+        },
+        {
+          "platform": "linkedin",
+          "keyword": "OKX Business Development",
+          "suitable": true,
+          "reason": "保留OKX公司名称并指定商务拓展岗位，符合人员搜索入口与客户寻找BD人员的目的。"
+        },
+        {
+          "platform": "linkedin",
+          "keyword": "Bitget BD",
+          "suitable": true,
+          "reason": "Bitget与客户明确使用的BD岗位简称组合简洁，适合匹配个人资料；简称可能产生的噪声不影响其检索价值。"
+        },
+        {
+          "platform": "linkedin",
+          "keyword": "Bybit Business Development",
+          "suitable": true,
+          "reason": "准确结合Bybit与商务拓展岗位，符合指定公司和岗位范围，未增加资格条件或不支持的语法。"
+        },
+        {
+          "platform": "linkedin",
+          "keyword": "Gate.io Business Development",
+          "suitable": true,
+          "reason": "完整保留Gate.io品牌名称并指定商务拓展岗位，适合发现该公司的BD人员。"
+        },
+        {
+          "platform": "linkedin",
+          "keyword": "币安 商务",
+          "suitable": true,
+          "reason": "使用客户提供的中文公司名及岗位词，补充中文个人资料检索；客户未限制资料语言。"
+        },
+        {
+          "platform": "linkedin",
+          "keyword": "OKX Marketing",
+          "suitable": true,
+          "reason": "公司与Marketing岗位组合直接对应客户要求，适合LinkedIn个人资料检索。"
+        },
+        {
+          "platform": "linkedin",
+          "keyword": "Bitget Marketing",
+          "suitable": true,
+          "reason": "准确指定Bitget及Marketing岗位，提供与BD检索互补的岗位路线；命中本身不能证明人员符合全部条件。"
+        }
+      ]
+    }
+  ],
+  "draft": {
+    "id": "linkedin-intent-real-0",
+    "brief": "只在LinkedIn搜索10位币安、OKX、Bitget、Bybit或Gate.io的商务、BD和Marketing人员。",
+    "opencli_version": "1.8.8",
+    "criteria": {
+      "category": "商务、BD和Marketing人员",
+      "region": "",
+      "language": "",
+      "min_subscribers": 2000,
+      "requires_ai_tool_demo": false,
+      "requires_public_tool_url": false,
+      "requirements": [
+        {
+          "description": "人员须在币安、OKX、Bitget、Bybit或Gate.io中的任意一家公司任职。",
+          "excerpt": "币安、OKX、Bitget、Bybit或Gate.io的商务、BD和Marketing人员"
+        }
+      ],
+      "contact_preference": "public_email_first",
+      "contact_search_terms": [
+        "email",
+        "business cooperation",
+        "contact",
+        "official website"
+      ],
+      "automatic_query_expansion": true,
+      "table_subject": "币安、OKX、Bitget、Bybit或Gate.io的商务、BD和Market"
+    },
+    "scopes": [
+      {
+        "platform": "linkedin",
+        "profile_ref": "d5pskwub",
+        "keywords": [
+          "Binance Business Development",
+          "OKX Business Development",
+          "Bitget BD",
+          "Bybit Business Development",
+          "Gate.io Business Development",
+          "币安 商务",
+          "OKX Marketing",
+          "Bitget Marketing"
+        ]
+      }
+    ],
+    "target_count": 10,
+    "max_calls": null
+  }
+}

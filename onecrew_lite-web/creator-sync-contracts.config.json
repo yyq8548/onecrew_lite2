@@ -1,0 +1,5 @@
+{
+  "target": "web-creator-sync",
+  "manifest": "../onecrew_lite-contracts/schemas/web-creator-sync.json",
+  "output": "src/lib/generated/creator-sync-contracts"
+}

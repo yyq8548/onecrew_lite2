@@ -1,0 +1,37 @@
+packages:
+  - onecrew_lite-contracts
+  - onecrew_lite-app
+  - onecrew_lite-web
+  - onecrew_lite-mcp-ui
+  - development/schema-codegen
+  - onecrew_lite-library
+  - onecrew_lite-library/web
+  - onecrew_lite-library/packages/contracts
+  - onecrew_lite-library/vendor/teable/packages/core
+  - onecrew_lite-library/vendor/teable/packages/formula
+  - onecrew_lite-library/vendor/teable/packages/i18n-keys
+  - onecrew_lite-library/vendor/teable/packages/v2/adapter-csv-parser-papaparse
+  - onecrew_lite-library/vendor/teable/packages/v2/adapter-db-postgres-shared
+  - onecrew_lite-library/vendor/teable/packages/v2/adapter-repository-postgres
+  - onecrew_lite-library/vendor/teable/packages/v2/adapter-table-repository-postgres
+  - onecrew_lite-library/vendor/teable/packages/v2/core
+  - onecrew_lite-library/vendor/teable/packages/v2/di
+  - onecrew_lite-library/vendor/teable/packages/v2/field-dependency-core
+  - onecrew_lite-library/vendor/teable/packages/v2/formula-sql-pg
+  - onecrew_lite-library/vendor/teable/packages/v2/import
+  - onecrew_lite-library/vendor/teable/packages/v2/postgres-schema
+  - onecrew_lite-library/vendor/teable/packages/v2/tsdown-config
+  - onecrew_lite-library/vendor/teable/packages/v2/utils
+allowBuilds:
+  '@primno/dpapi': true
+  better-sqlite3: true
+  esbuild: true
+patchedDependencies:
+  '@mtcute/node@0.32.4': patches/@mtcute__node@0.32.4.patch
+packageExtensions:
+  lucide-react@0.468.0:
+    peerDependencies:
+      '@types/react': ^19.0.0
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true

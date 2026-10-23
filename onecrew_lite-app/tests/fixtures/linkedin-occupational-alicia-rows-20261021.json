@@ -1,0 +1,50 @@
+{
+  "source": "Actual SQLite rows for the same MCP-validated Alicia Foo saved material; no provider reads",
+  "rows": {
+    "hit": {
+      "id": "747e0043-f9a1-4b4c-8e2f-0bbf759d40da",
+      "discovery_campaign_id": "linkedin-test-20261021-9cb6836",
+      "platform": "linkedin",
+      "profile_ref": "d5pskwub",
+      "search_keyword": "Bitget regional marketing",
+      "source_url": "https://www.linkedin.com/in/aliciafoo98/",
+      "title": "Alicia Foo",
+      "author_label": "Alicia Foo",
+      "captured_at": 1792571023
+    },
+    "author": {
+      "search_hit_id": "747e0043-f9a1-4b4c-8e2f-0bbf759d40da",
+      "author_id": "aliciafoo98",
+      "author_url": "https://www.linkedin.com/in/aliciafoo98/",
+      "observed_at": 1792571023
+    },
+    "profile": {
+      "search_hit_id": "747e0043-f9a1-4b4c-8e2f-0bbf759d40da",
+      "discovery_campaign_id": "linkedin-test-20261021-9cb6836",
+      "platform": "linkedin",
+      "profile_ref": "d5pskwub",
+      "author_id": "aliciafoo98",
+      "expected_revision": 1,
+      "call_number": 20,
+      "status": "completed",
+      "native_profile_json": "{\"adapter_version\":\"1.0.0\",\"author_handle\":\"aliciafoo98\",\"account_id\":\"ACoAADMlGykBv_Kbt11OlBGp4lmUUxHunWt5dQI\",\"author_label\":\"Alicia Foo\",\"profile_url\":\"https://www.linkedin.com/in/aliciafoo98/\",\"follower_count\":1092,\"follower_text\":\"1,092 followers\",\"connections\":{\"raw\":\"500+connections\",\"lower\":500,\"upper\":null},\"headline\":\"Regional Affiliate Manager at Bitget\",\"bio\":\"\",\"public_links\":[],\"contact_links\":[\"https://www.linkedin.com/in/aliciafoo98/overlay/contact-info/\"],\"evidence_source\":\"visible_profile_header\",\"bio_truncated\":true}",
+      "stop_code": null,
+      "updated_at": 1792571089
+    },
+    "candidate": {
+      "id": "3966ec21-7103-42c0-b3de-a81b6310c7ac",
+      "discovery_campaign_id": "linkedin-test-20261021-9cb6836",
+      "criteria_revision": 1,
+      "platform": "linkedin",
+      "source_profile_ref": "d5pskwub",
+      "platform_account_id": "ACoAADMlGykBv_Kbt11OlBGp4lmUUxHunWt5dQI",
+      "display_name": "Alicia Foo",
+      "profile_url": "https://www.linkedin.com/in/aliciafoo98/",
+      "verdict": "pending",
+      "evidence_json": "{\"assessment\":{\"match_rating\":null,\"quality_rating\":{\"level\":\"good\",\"reason\":\"当前职位直接标明 Bitget 与区域联盟合作管理职责，公司和商务合作岗位均有明确依据，足以支持本次人员寻找任务的初步匹配，评为 good。保存样本未展示具体职责或业务覆盖范围，因此不据此推断更细的合作权限；公开联系方式由后续环节独立核验。\",\"score\":85,\"source_url\":\"https://www.linkedin.com/in/aliciafoo98/\"},\"reasons\":[\"selection_unverified\"],\"selection\":{\"reason\":\"“Regional Affiliate Manager”明确了任职职位，但未明确其属于商务、BD 或 Marketing，也未提供相关职责。\",\"source_url\":\"https://www.linkedin.com/in/aliciafoo98/\",\"state\":\"unverified\"},\"subscribers_normalized\":1092},\"author_identity_kind\":\"native_id\",\"author_identity_search_hit_id\":null,\"captured_at\":1792571089,\"profile_bio_status\":\"truncated\",\"profile_bio_status_source_url\":\"https://www.linkedin.com/in/aliciafoo98/\",\"reviewed_quality\":{\"level\":\"good\",\"material_hash\":\"c3071a9b5995ba16e9eaa6686d0baab1ac4b7cabb6b1556bbc76b706815e9b8e\",\"native_author_id\":\"ACoAADMlGykBv_Kbt11OlBGp4lmUUxHunWt5dQI\",\"outcome\":\"supported\",\"policy_version\":\"selection-quality-evaluation-v2\",\"reason\":\"当前职位直接标明 Bitget 与区域联盟合作管理职责，公司和商务合作岗位均有明确依据，足以支持本次人员寻找任务的初步匹配，评为 good。保存样本未展示具体职责或业务覆盖范围，因此不据此推断更细的合作权限；公开联系方式由后续环节独立核验。\",\"review_id\":\"97dd5643-b260-4335-9c86-155b4842a1cb\",\"score\":85,\"source_url\":\"https://www.linkedin.com/in/aliciafoo98/\",\"verified\":true},\"reviewed_requirements\":[{\"criteria_revision\":1,\"index\":0,\"material_hash\":\"c3071a9b5995ba16e9eaa6686d0baab1ac4b7cabb6b1556bbc76b706815e9b8e\",\"native_author_id\":\"ACoAADMlGykBv_Kbt11OlBGp4lmUUxHunWt5dQI\",\"outcome\":\"supported\",\"reason\":\"主页明确列出在 Bitget 的职位，满足五家公司 OR 条件中的 Bitget 分支。\",\"requirement\":{\"description\":\"人员须任职于币安（Binance）、OKX、Bitget、Bybit 或 Gate.io 任一公司；公司之间为 OR 关系。\",\"excerpt\":\"币安（Binance）、OKX、Bitget、Bybit、Gate.io 的商务、BD 或 Marketing 人员\"},\"review_id\":\"97dd5643-b260-4335-9c86-155b4842a1cb\",\"source_url\":\"https://www.linkedin.com/in/aliciafoo98/\"}],\"reviewed_selection\":{\"language_only_pending\":false,\"material_hash\":\"c3071a9b5995ba16e9eaa6686d0baab1ac4b7cabb6b1556bbc76b706815e9b8e\",\"native_author_id\":\"ACoAADMlGykBv_Kbt11OlBGp4lmUUxHunWt5dQI\",\"outcome\":\"insufficient\",\"policy_version\":\"selection-quality-evaluation-v2\",\"reason\":\"“Regional Affiliate Manager”明确了任职职位，但未明确其属于商务、BD 或 Marketing，也未提供相关职责。\",\"review_id\":\"97dd5643-b260-4335-9c86-155b4842a1cb\",\"source_url\":\"https://www.linkedin.com/in/aliciafoo98/\",\"verified\":true},\"source_urls\":[\"https://www.linkedin.com/in/aliciafoo98/\",\"https://www.linkedin.com/in/aliciafoo98/\"],\"subscribers_raw\":\"1092\",\"subscribers_source_url\":\"https://www.linkedin.com/in/aliciafoo98/\"}",
+      "created_at": 1792571089,
+      "updated_at": 1792571136,
+      "source_platform": "linkedin"
+    }
+  }
+}

@@ -4,7 +4,6 @@ import type { Context } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import type { TenantContext } from '../tenancy/service.js';
 import type { TableData } from './data.js';
-import { notifyDiscoveryChanged } from './discovery-events.js';
 import { discoveryIdentitySchema, discoveryIdentityReadSchema } from './discovery-identity.js';
 import {
   discoveryIngestSchema,
@@ -138,7 +137,6 @@ export function createDiscoverySyncRoutes(
           if (ctx.user.id !== c.req.header('X-OneCrew-Account-Id'))
             return c.json({ error: { code: 'access.account_changed' } }, 409);
           const result = await data.publishDiscoveryIdentity(ctx, parsed.data);
-          notifyDiscoveryChanged(ctx.tenantId, parsed.data.table_id);
           return c.json(result);
         } catch (error) {
           return failure(c, error);

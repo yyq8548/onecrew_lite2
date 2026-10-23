@@ -1,6 +1,6 @@
 {
   "name": "onecrew_lite_tables",
-  "version": "0.1.4",
+  "version": "0.9.1",
   "private": true,
   "type": "module",
   "license": "MIT",
@@ -8,11 +8,13 @@
     "dev": "pnpm build:server && tsx watch --conditions=onecrew:source src/cli.ts serve --data-dir .data",
     "start": "node dist/cli.js start --data-dir .data",
     "build:web": "pnpm --dir web typecheck && pnpm --dir web build",
+    "build:web:unified": "pnpm --dir web typecheck && pnpm --dir web build --mode unified",
     "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm build && pnpm test",
     "test": "tsx tests/integration/http-mcp.ts && pnpm test:rpc && pnpm test:tenancy && pnpm test:discovery-projection",
     "test:discovery-projection": "tsx tests/integration/discovery-projection-migration.ts && tsx tests/integration/discovery-identity-migration.ts && tsx tests/integration/discovery-identity-contract.ts && tsx tests/integration/discovery-field-protection.ts && tsx tests/integration/discovery-projection.ts && tsx tests/integration/discovery-ingest.ts && tsx tests/integration/discovery-sync-http.ts && tsx tests/integration/discovery-score-http.ts && tsx tests/integration/creator-updates.ts && tsx tests/integration/creator-refresh.ts",
     "test:browser": "tsx tests/integration/browser.ts",
-    "test:rust-discovery-sync": "tsx tests/integration/discovery-rust-sync.ts",
+    "test:embedded": "tsx tests/integration/embedded.ts",
+    "test:discovery-sync": "tsx tests/integration/discovery-sync-http.ts && tsx tests/integration/discovery-score-http.ts",
     "test:search": "tsx tests/integration/search.ts",
     "test:stdio": "tsx tests/integration/mcp-stdio.ts",
     "test:port": "tsx tests/integration/port.ts",
@@ -87,6 +89,14 @@
     "onecrew_lite_tables": "./dist/cli.js"
   },
   "exports": {
+    "./migration-copy": {
+      "types": "./dist/migration-copy.d.ts",
+      "import": "./dist/migration-copy.js"
+    },
+    "./embedded": {
+      "types": "./dist/embedded.d.ts",
+      "import": "./dist/embedded.js"
+    },
     "./rpc": {
       "types": "./dist/app.d.ts"
     },

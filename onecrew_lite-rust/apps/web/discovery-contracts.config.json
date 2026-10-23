@@ -1,7 +1,0 @@
-{
-  "target": "web-discovery",
-  "cargoPackage": "onecrew-local-service",
-  "cargoTest": "opencli_discovery::contract_manifest_tests::web_discovery_contract_manifest_is_exact_and_exportable",
-  "manifestEnvironment": "ONECREW_WEB_DISCOVERY_MANIFEST_OUT",
-  "output": "src/lib/generated/discovery-contracts"
-}

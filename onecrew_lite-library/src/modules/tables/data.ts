@@ -43,6 +43,7 @@ import type {
 } from '@teable/v2-core';
 import { resolvePostgresDbOrTx } from '@teable/v2-adapter-db-postgres-shared';
 import pLimit from 'p-limit';
+import { notifyDiscoveryChanged } from './discovery-events.js';
 import type { LocalDatabase } from '../../database.js';
 import { TABLE_CAPACITY } from '@onecrew/contracts/tables';
 import type { ColumnInput, DataType } from '@onecrew/contracts/tables';
@@ -75,6 +76,7 @@ import {
 } from './discovery-projection.js';
 
 type TableAggregate = CreateTableResult['table'];
+const discoveryEnrichmentNames = new Set(['Content category', 'Followers', 'Pinterest monthly views', 'Pinterest scale passed by', 'Biography status']);
 type FieldTypesDatabase = {
   onecrew_field_types: {
     table_id: string;
@@ -506,10 +508,8 @@ export const createTableData = async (database: LocalDatabase): Promise<TableDat
           )
             conflict('data.projection_field_conflict');
           const types = await readFieldTypes(tableId, executionContext);
-          const categoryField = table.getFields().find((field) =>
-            field.name().toString() === 'Content category')?.id().toString();
-          const followersField = table.getFields().find((field) =>
-            field.name().toString() === 'Followers')?.id().toString();
+          const enrichmentFields = new Set(table.getFields().filter((field) =>
+            discoveryEnrichmentNames.has(field.name().toString())).map(field => field.id().toString()));
           for (const row of sources.rows) {
             const scores: Record<string, unknown> = {};
             for (const [field, value] of Object.entries(row.values)) {
@@ -520,7 +520,7 @@ export const createTableData = async (database: LocalDatabase): Promise<TableDat
               )
                 conflict('data.projection_field_conflict');
               if (score) scores[field] = encodeValue('score', value);
-              else if ((field === categoryField || field === followersField) && types.get(field) === 'string')
+              else if (enrichmentFields.has(field) && types.get(field) === 'string')
                 scores[field] = value === '' ? null : value;
             }
             scoreCells.set(row.search_hit_id, scores);
@@ -689,10 +689,9 @@ export const createTableData = async (database: LocalDatabase): Promise<TableDat
           );
         };
         const before = await readRecords();
-        // Adding the category export field must also populate older owned
-        // rows, even when their qualification/source revision is unchanged.
+        // 来源补充字段须更新已有行，证据版本未变化时也比较实际单元格。
         const enrichedFields = table.getFields().filter((field) =>
-          ['Content category', 'Followers'].includes(field.name().toString())).map(field => field.id().toString());
+          discoveryEnrichmentNames.has(field.name().toString())).map(field => field.id().toString());
         for (const categoryField of enrichedFields) for (const row of incoming) {
           const values = scoreCells.get(row.search_hit_id);
           if (values && Object.hasOwn(values, categoryField) &&
@@ -715,20 +714,29 @@ export const createTableData = async (database: LocalDatabase): Promise<TableDat
             conflict('data.projection_readback_conflict');
         }
         if (changed.length) {
-          for (const row of changed) {
-            const saved = {
+          const saved = changed.map((row) => ({
               ...row,
               table_id: tableId,
               reasons: JSON.stringify(row.reasons),
               contacts: JSON.stringify(row.contacts),
               updated_at: new Date().toISOString(),
-            };
-            await db
+          }));
+          await db
               .insertInto('onecrew_discovery_rows')
               .values(saved)
-              .onConflict((oc) => oc.columns(['table_id', 'row_id']).doUpdateSet(saved))
+              .onConflict((oc) => oc.columns(['table_id', 'row_id']).doUpdateSet((eb) => ({
+                criteria_revision: eb.ref('excluded.criteria_revision'),
+                source_revision: eb.ref('excluded.source_revision'),
+                search_hit_id: eb.ref('excluded.search_hit_id'),
+                candidate_id: eb.ref('excluded.candidate_id'),
+                native_author_id: eb.ref('excluded.native_author_id'),
+                verdict: eb.ref('excluded.verdict'),
+                reasons: eb.ref('excluded.reasons'),
+                contacts: eb.ref('excluded.contacts'),
+                evidence_version: eb.ref('excluded.evidence_version'),
+                updated_at: eb.ref('excluded.updated_at'),
+              })))
               .execute();
-          }
           const command = unwrap(
             UpdateRecordsCommand.create({
               tableId,
@@ -957,6 +965,7 @@ export const createTableData = async (database: LocalDatabase): Promise<TableDat
       if (!parsed.success)
         throw new TableDataError('Invalid identity projection', 400, 'data.identity_invalid');
       const { sources: _sources, ...state } = await identitySnapshot(ctx, parsed.data, parsed.data);
+      notifyDiscoveryChanged(ctx.tenantId, parsed.data.table_id);
       return state;
     },
     async getDiscoveryIdentity(ctx, input) {

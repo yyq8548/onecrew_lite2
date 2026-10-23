@@ -4,7 +4,7 @@ import * as XLSX from 'xlsx';
 import { buildCreatorWorkbook } from '../../src/modules/tables/files.js';
 import type { DiscoveryCreatorView, TableDto } from '../../src/modules/tables/data.js';
 import { recommendationCapture } from '../../src/modules/tables/recommendation-capture.js';
-import { contactDisplay, isSocialProfile } from '@onecrew/contracts/tables';
+import { contactDisplay, isSocialProfile, preferredContacts } from '@onecrew/contracts/tables';
 
 const table: TableDto = {
   id: 'table',
@@ -82,11 +82,11 @@ const read = (value: DiscoveryCreatorView) => {
 };
 assert.deepEqual(read(material), [
   ['名字', '类别', '平台', '评分', '联系方式'],
-  ['作者', '科技', 'X', '一般', 'business@example.com'],
+  ['作者', '科技', 'X', '70 · 中等', 'business@example.com'],
 ]);
 const exported = XLSX.read(buildCreatorWorkbook(table, material, 'zh-CN'), {type: 'array'}).Sheets['推荐'];
 const followerTable = { ...table, columns: [...table.columns, { id: 'followers', name: 'Followers', data_type: 'string' as const }] };
-for (const platform of ['youtube', 'twitter', 'tiktok', 'instagram', 'facebook', 'linkedin', 'bilibili', 'douyin', 'weibo', 'reddit']) {
+for (const platform of ['youtube', 'twitter', 'tiktok', 'instagram', 'facebook', 'linkedin', 'bilibili', 'douyin', 'weibo']) {
 for (const [value, expected] of [['4029', '4029'], ['~12400', '约 12400'], ['~1万', '约 1万'], [null, '未知']] as const) {
   const counted = structuredClone(material);
   counted.projection!.groups[0].members[0].platform = platform;
@@ -99,13 +99,13 @@ for (const [value, expected] of [['4029', '4029'], ['~12400', '约 12400'], ['~1
 assert.equal(exported.A2.l?.Target, member.profile_url);
 assert.equal(exported.D2.c?.[0].t, '已通过');
 for (const source of [
-  { ...material.sources[0], contacts: [] },
   { ...material.sources[0], verdict: 'rejected' },
   { ...material.sources[0], verdict: 'pending' },
 ])
   assert.equal(read({ ...material, sources: [source] }).length, 1);
 assert.throws(() => read({ ...material, state: 'missing', projection: null }));
-console.log('creator export: five columns, contact gate and owner snapshot passed');
+assert.equal(read({ ...material, sources: [{ ...material.sources[0], contacts: [] }] }).length, 2);
+console.log('creator export: five columns, owner qualification and snapshot passed');
 
 const channel = 'UCabcdefghijklmnopqrstuv';
 const homepage = `https://www.youtube.com/channel/${channel}`;
@@ -133,9 +133,14 @@ assert.equal(
 );
 assert.equal(
   (read(withContacts([hidden, social, contact]))[1] as unknown[])[4],
-  `${social.normalized_value}\nbusiness@example.com`,
+  `business@example.com\n隐藏邮箱，在更多信息手动查看 — ${homepage}\n${social.normalized_value}`,
 );
 assert.equal((read(withContacts([social]))[1] as unknown[])[4], social.normalized_value);
+const originalContacts = [hidden, social, contact];
+assert.match(contactDisplay({ ...hidden, source_excerpt: 'YouTube hidden email status: daily_limit; task: youtube-export' }), /本次任务跳过/);
+assert.match(contactDisplay({ ...hidden, source_excerpt: 'YouTube hidden email status: verification_required; task: youtube-export' }), /需要人工完成验证/);
+assert.deepEqual(preferredContacts(originalContacts), [contact, hidden, social]);
+assert.deepEqual(originalContacts, [hidden, social, contact]);
 const { discoveryContactSchema } = await import('../../src/modules/tables/discovery-projection.js');
 assert.equal(discoveryContactSchema.safeParse(hidden).success, true);
 assert.equal(
@@ -162,12 +167,12 @@ assert.deepEqual(events[2].values.score, {level:'medium',reason:'已通过'});
 assert.equal(events[2].values.name.url, member.profile_url);
 assert.equal(events[2].values.contacts, `微信：cherrymiaojiang（备注来历）\n${social.normalized_value}`);
 assert.equal(recommendationCapture(table, withContacts([wechat, social]), metadata).bytes.equals(capture.bytes), true);
-const emptyCapture = recommendationCapture(table, withContacts([]), metadata);
-assert.equal(emptyCapture.record_count, 0);
-assert.equal(emptyCapture.bytes.toString().trim().split('\n').length, 2);
+const contactlessCapture = recommendationCapture(table, withContacts([]), metadata);
+assert.equal(contactlessCapture.record_count, 1);
+assert.equal(contactlessCapture.bytes.toString().trim().split('\n').length, 3);
 if (process.env.ONECREW_UPLOAD_CONTRACT_MODULE) {
   const {captureEventSchema} = await import(process.env.ONECREW_UPLOAD_CONTRACT_MODULE);
-  for (const event of [...events, ...emptyCapture.bytes.toString().trim().split('\n').map(line => JSON.parse(line))]) captureEventSchema.parse(event);
+  for (const event of [...events, ...contactlessCapture.bytes.toString().trim().split('\n').map(line => JSON.parse(line))]) captureEventSchema.parse(event);
   const {beginUploadSchema, completeUploadSchema} = await import(process.env.ONECREW_UPLOAD_CONTRACT_MODULE.replace('capture.ts','uploads.ts'));
   const header = events[0];
   const input = {version_id:header.version_id,consent_id:header.consent_id,local_source_id:metadata.source_instance_id,table_id:header.table_id,table_name:header.table_name,capture_seq:'1',capture_kind:'full_sample',capture_started_at:header.capture_started_at,previous_version_id:null,scopes:['dynamic_table_records','dynamic_table_schema'],format:header.format,format_version:1};

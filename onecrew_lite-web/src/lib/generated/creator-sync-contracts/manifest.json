@@ -1,0 +1,2893 @@
+{
+  "schema_version": 1,
+  "target": "web-creator-sync",
+  "roots": [
+    {
+      "name": "CreatorSyncStatus",
+      "direction": "serialize",
+      "id": "https://reacher.local/contracts/CreatorSyncStatus.schema.json",
+      "revision": "sha256:99feddd83bcc54d43880827c5c2fba37be7a0177c3d22b64c67302d2edcfb212",
+      "schema": {
+        "$id": "https://reacher.local/contracts/CreatorSyncStatus.schema.json",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "anyOf": [
+              {
+                "enum": [
+                  "begin_pairing",
+                  "await_pairing_callback",
+                  "cancel_pairing",
+                  "validate_admission",
+                  "retry"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "credential_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "installation_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "issue": {
+            "anyOf": [
+              {
+                "enum": [
+                  "configuration_unavailable",
+                  "credential_unavailable",
+                  "pairing_rejected",
+                  "pairing_expired",
+                  "pairing_cancelled",
+                  "admission_validation_required",
+                  "safe_cleanup_incomplete",
+                  "enrollment_unknown",
+                  "verification_failed",
+                  "remote_unavailable",
+                  "remote_rate_limited",
+                  "remote_unauthorized",
+                  "remote_revoked",
+                  "protocol_mismatch",
+                  "local_vault_unavailable"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "state": {
+            "enum": [
+              "unconfigured",
+              "pairing_required",
+              "pairing_pending",
+              "pairing_completing",
+              "validation_required",
+              "validating",
+              "active",
+              "revoked",
+              "unauthorized",
+              "recovery_required",
+              "temporarily_unavailable"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "state",
+          "action",
+          "issue",
+          "installation_id",
+          "credential_id"
+        ],
+        "title": "CreatorSyncStatus",
+        "type": "object"
+      }
+    },
+    {
+      "name": "DataStartupStatus",
+      "direction": "serialize",
+      "id": "https://reacher.local/contracts/DataStartupStatus.schema.json",
+      "revision": "sha256:026959ee55d4996e63d7a188c868ffe39457c0aa61247020cf5114d77fb8a6aa",
+      "schema": {
+        "$id": "https://reacher.local/contracts/DataStartupStatus.schema.json",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "diagnostic_code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "failure": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "insufficient_space",
+                      "busy",
+                      "backup_failed",
+                      "newer_version",
+                      "not_writable",
+                      "initialization_failed",
+                      "unsafe_data"
+                    ],
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "results": {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "from_version": {
+                          "format": "int64",
+                          "maximum": 9007199254740991,
+                          "minimum": -9007199254740991,
+                          "type": "integer"
+                        },
+                        "impact": {
+                          "anyOf": [
+                            {
+                              "additionalProperties": false,
+                              "description": "Named per-category counts of what an upgrade deletes or converts, built\nread-only from persisted facts and compared for equality under the data\nlock. The Task counters come from the 33 -> 34 edge; the Campaign counters\nfrom the 35 -> 36 edge, which retires the persisted Campaign plan model:\nCampaign rows are removed outright, campaign-bound search provenance is\nconverted to the operator account that ran the search, a campaign search\norigin whose operator cannot be recovered is removed, the Campaign column\nof historical audit rows is cleared, and the idempotency receipts of the\nretired Campaign actions are removed.",
+                              "properties": {
+                                "cleared_audit_campaign_refs": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "cleared_reply_triage_task_refs": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "converted_campaign_community_sources": {
+                                  "description": "Community-administrator sources (candidate snapshots and Creator\norigins) that lost their Campaign reference and kept their operator\naccount.",
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "converted_campaign_search_origins": {
+                                  "description": "Creator origins whose campaign search became a platform search with the\noperator account recovered from the matching candidate snapshot.",
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "converted_campaign_search_snapshots": {
+                                  "description": "Candidate snapshots whose campaign search origin became a platform\nsearch origin.",
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "deleted_task_attention": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "deleted_task_idempotency_records": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "deleted_task_runs": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "deleted_tasks": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_campaign_account_bindings": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_campaign_delete_operations": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_campaign_idempotency_records": {
+                                  "description": "Receipts of the retired `campaign_create` / `campaign_template_create`\nactions; nothing references them after the Campaign tables are dropped.",
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_campaign_template_delete_operations": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_campaign_templates": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_campaigns": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_candidate_snapshots": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_contact_confirmations": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_creator_save_confirmations": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_tiktok_one_account_bindings": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_unattributable_campaign_origins": {
+                                  "description": "Campaign search origins with no recoverable operator account; the\nCreator and its observation source remain.",
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "rewritten_contact_route_delete_impacts": {
+                                  "description": "Number of stored impact objects rewritten, including a completed\noperation's separate result impact when present.",
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "unresolved_retired_outreach_actions": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                }
+                              },
+                              "required": [
+                                "deleted_tasks",
+                                "deleted_task_runs",
+                                "deleted_task_attention",
+                                "deleted_task_idempotency_records",
+                                "cleared_reply_triage_task_refs",
+                                "removed_campaigns",
+                                "removed_campaign_templates",
+                                "removed_campaign_account_bindings",
+                                "removed_campaign_delete_operations",
+                                "removed_campaign_template_delete_operations",
+                                "converted_campaign_search_snapshots",
+                                "converted_campaign_search_origins",
+                                "removed_unattributable_campaign_origins",
+                                "converted_campaign_community_sources",
+                                "cleared_audit_campaign_refs",
+                                "removed_campaign_idempotency_records",
+                                "removed_candidate_snapshots",
+                                "rewritten_contact_route_delete_impacts",
+                                "removed_tiktok_one_account_bindings",
+                                "removed_creator_save_confirmations",
+                                "removed_contact_confirmations",
+                                "unresolved_retired_outreach_actions"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "recovery_point_created": {
+                          "type": "boolean"
+                        },
+                        "status": {
+                          "enum": [
+                            "completed"
+                          ],
+                          "type": "string"
+                        },
+                        "store": {
+                          "enum": [
+                            "account",
+                            "business"
+                          ],
+                          "type": "string"
+                        },
+                        "to_version": {
+                          "format": "int64",
+                          "maximum": 9007199254740991,
+                          "minimum": -9007199254740991,
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "store",
+                        "status",
+                        "from_version",
+                        "to_version",
+                        "recovery_point_created",
+                        "impact"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "storage_upgraded": {
+                    "type": "boolean"
+                  },
+                  "support_code": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "message",
+                  "support_code",
+                  "storage_upgraded",
+                  "results"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "phase": {
+            "enum": [
+              "inspecting",
+              "upgrading",
+              "ready",
+              "failed"
+            ],
+            "type": "string"
+          },
+          "postflight": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "blocked_store": {
+                    "anyOf": [
+                      {
+                        "enum": [
+                          "account",
+                          "business"
+                        ],
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "failure_kind": {
+                    "anyOf": [
+                      {
+                        "enum": [
+                          "insufficient_space",
+                          "busy",
+                          "backup_failed",
+                          "newer_version",
+                          "not_writable",
+                          "initialization_failed",
+                          "unsafe_data"
+                        ],
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "message": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "primary_action": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "recoverable_backup": {
+                    "type": "boolean"
+                  },
+                  "remote_data_deleted": {
+                    "type": "boolean"
+                  },
+                  "secondary_action": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "state": {
+                    "enum": [
+                      "fresh",
+                      "ready",
+                      "upgrade_required",
+                      "blocked"
+                    ],
+                    "type": "string"
+                  },
+                  "support_code": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "targets": {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "from_version": {
+                          "format": "int64",
+                          "maximum": 9007199254740991,
+                          "minimum": -9007199254740991,
+                          "type": "integer"
+                        },
+                        "impact": {
+                          "anyOf": [
+                            {
+                              "additionalProperties": false,
+                              "description": "Named per-category counts of what an upgrade deletes or converts, built\nread-only from persisted facts and compared for equality under the data\nlock. The Task counters come from the 33 -> 34 edge; the Campaign counters\nfrom the 35 -> 36 edge, which retires the persisted Campaign plan model:\nCampaign rows are removed outright, campaign-bound search provenance is\nconverted to the operator account that ran the search, a campaign search\norigin whose operator cannot be recovered is removed, the Campaign column\nof historical audit rows is cleared, and the idempotency receipts of the\nretired Campaign actions are removed.",
+                              "properties": {
+                                "cleared_audit_campaign_refs": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "cleared_reply_triage_task_refs": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "converted_campaign_community_sources": {
+                                  "description": "Community-administrator sources (candidate snapshots and Creator\norigins) that lost their Campaign reference and kept their operator\naccount.",
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "converted_campaign_search_origins": {
+                                  "description": "Creator origins whose campaign search became a platform search with the\noperator account recovered from the matching candidate snapshot.",
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "converted_campaign_search_snapshots": {
+                                  "description": "Candidate snapshots whose campaign search origin became a platform\nsearch origin.",
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "deleted_task_attention": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "deleted_task_idempotency_records": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "deleted_task_runs": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "deleted_tasks": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_campaign_account_bindings": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_campaign_delete_operations": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_campaign_idempotency_records": {
+                                  "description": "Receipts of the retired `campaign_create` / `campaign_template_create`\nactions; nothing references them after the Campaign tables are dropped.",
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_campaign_template_delete_operations": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_campaign_templates": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_campaigns": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_candidate_snapshots": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_contact_confirmations": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_creator_save_confirmations": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_tiktok_one_account_bindings": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_unattributable_campaign_origins": {
+                                  "description": "Campaign search origins with no recoverable operator account; the\nCreator and its observation source remain.",
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "rewritten_contact_route_delete_impacts": {
+                                  "description": "Number of stored impact objects rewritten, including a completed\noperation's separate result impact when present.",
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "unresolved_retired_outreach_actions": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                }
+                              },
+                              "required": [
+                                "deleted_tasks",
+                                "deleted_task_runs",
+                                "deleted_task_attention",
+                                "deleted_task_idempotency_records",
+                                "cleared_reply_triage_task_refs",
+                                "removed_campaigns",
+                                "removed_campaign_templates",
+                                "removed_campaign_account_bindings",
+                                "removed_campaign_delete_operations",
+                                "removed_campaign_template_delete_operations",
+                                "converted_campaign_search_snapshots",
+                                "converted_campaign_search_origins",
+                                "removed_unattributable_campaign_origins",
+                                "converted_campaign_community_sources",
+                                "cleared_audit_campaign_refs",
+                                "removed_campaign_idempotency_records",
+                                "removed_candidate_snapshots",
+                                "rewritten_contact_route_delete_impacts",
+                                "removed_tiktok_one_account_bindings",
+                                "removed_creator_save_confirmations",
+                                "removed_contact_confirmations",
+                                "unresolved_retired_outreach_actions"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "store": {
+                          "enum": [
+                            "account",
+                            "business"
+                          ],
+                          "type": "string"
+                        },
+                        "to_version": {
+                          "format": "int64",
+                          "maximum": 9007199254740991,
+                          "minimum": -9007199254740991,
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "store",
+                        "from_version",
+                        "to_version",
+                        "impact"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "title": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "state",
+                  "targets",
+                  "recoverable_backup",
+                  "remote_data_deleted",
+                  "blocked_store",
+                  "title",
+                  "message",
+                  "primary_action",
+                  "secondary_action",
+                  "failure_kind",
+                  "support_code"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "preflight": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "blocked_store": {
+                    "anyOf": [
+                      {
+                        "enum": [
+                          "account",
+                          "business"
+                        ],
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "failure_kind": {
+                    "anyOf": [
+                      {
+                        "enum": [
+                          "insufficient_space",
+                          "busy",
+                          "backup_failed",
+                          "newer_version",
+                          "not_writable",
+                          "initialization_failed",
+                          "unsafe_data"
+                        ],
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "message": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "primary_action": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "recoverable_backup": {
+                    "type": "boolean"
+                  },
+                  "remote_data_deleted": {
+                    "type": "boolean"
+                  },
+                  "secondary_action": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "state": {
+                    "enum": [
+                      "fresh",
+                      "ready",
+                      "upgrade_required",
+                      "blocked"
+                    ],
+                    "type": "string"
+                  },
+                  "support_code": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "targets": {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "from_version": {
+                          "format": "int64",
+                          "maximum": 9007199254740991,
+                          "minimum": -9007199254740991,
+                          "type": "integer"
+                        },
+                        "impact": {
+                          "anyOf": [
+                            {
+                              "additionalProperties": false,
+                              "description": "Named per-category counts of what an upgrade deletes or converts, built\nread-only from persisted facts and compared for equality under the data\nlock. The Task counters come from the 33 -> 34 edge; the Campaign counters\nfrom the 35 -> 36 edge, which retires the persisted Campaign plan model:\nCampaign rows are removed outright, campaign-bound search provenance is\nconverted to the operator account that ran the search, a campaign search\norigin whose operator cannot be recovered is removed, the Campaign column\nof historical audit rows is cleared, and the idempotency receipts of the\nretired Campaign actions are removed.",
+                              "properties": {
+                                "cleared_audit_campaign_refs": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "cleared_reply_triage_task_refs": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "converted_campaign_community_sources": {
+                                  "description": "Community-administrator sources (candidate snapshots and Creator\norigins) that lost their Campaign reference and kept their operator\naccount.",
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "converted_campaign_search_origins": {
+                                  "description": "Creator origins whose campaign search became a platform search with the\noperator account recovered from the matching candidate snapshot.",
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "converted_campaign_search_snapshots": {
+                                  "description": "Candidate snapshots whose campaign search origin became a platform\nsearch origin.",
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "deleted_task_attention": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "deleted_task_idempotency_records": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "deleted_task_runs": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "deleted_tasks": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_campaign_account_bindings": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_campaign_delete_operations": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_campaign_idempotency_records": {
+                                  "description": "Receipts of the retired `campaign_create` / `campaign_template_create`\nactions; nothing references them after the Campaign tables are dropped.",
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_campaign_template_delete_operations": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_campaign_templates": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_campaigns": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_candidate_snapshots": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_contact_confirmations": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_creator_save_confirmations": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_tiktok_one_account_bindings": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_unattributable_campaign_origins": {
+                                  "description": "Campaign search origins with no recoverable operator account; the\nCreator and its observation source remain.",
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "rewritten_contact_route_delete_impacts": {
+                                  "description": "Number of stored impact objects rewritten, including a completed\noperation's separate result impact when present.",
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "unresolved_retired_outreach_actions": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                }
+                              },
+                              "required": [
+                                "deleted_tasks",
+                                "deleted_task_runs",
+                                "deleted_task_attention",
+                                "deleted_task_idempotency_records",
+                                "cleared_reply_triage_task_refs",
+                                "removed_campaigns",
+                                "removed_campaign_templates",
+                                "removed_campaign_account_bindings",
+                                "removed_campaign_delete_operations",
+                                "removed_campaign_template_delete_operations",
+                                "converted_campaign_search_snapshots",
+                                "converted_campaign_search_origins",
+                                "removed_unattributable_campaign_origins",
+                                "converted_campaign_community_sources",
+                                "cleared_audit_campaign_refs",
+                                "removed_campaign_idempotency_records",
+                                "removed_candidate_snapshots",
+                                "rewritten_contact_route_delete_impacts",
+                                "removed_tiktok_one_account_bindings",
+                                "removed_creator_save_confirmations",
+                                "removed_contact_confirmations",
+                                "unresolved_retired_outreach_actions"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "store": {
+                          "enum": [
+                            "account",
+                            "business"
+                          ],
+                          "type": "string"
+                        },
+                        "to_version": {
+                          "format": "int64",
+                          "maximum": 9007199254740991,
+                          "minimum": -9007199254740991,
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "store",
+                        "from_version",
+                        "to_version",
+                        "impact"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "title": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "state",
+                  "targets",
+                  "recoverable_backup",
+                  "remote_data_deleted",
+                  "blocked_store",
+                  "title",
+                  "message",
+                  "primary_action",
+                  "secondary_action",
+                  "failure_kind",
+                  "support_code"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "upgrade": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "message": {
+                    "type": "string"
+                  },
+                  "remote_data_deleted": {
+                    "type": "boolean"
+                  },
+                  "results": {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "from_version": {
+                          "format": "int64",
+                          "maximum": 9007199254740991,
+                          "minimum": -9007199254740991,
+                          "type": "integer"
+                        },
+                        "impact": {
+                          "anyOf": [
+                            {
+                              "additionalProperties": false,
+                              "description": "Named per-category counts of what an upgrade deletes or converts, built\nread-only from persisted facts and compared for equality under the data\nlock. The Task counters come from the 33 -> 34 edge; the Campaign counters\nfrom the 35 -> 36 edge, which retires the persisted Campaign plan model:\nCampaign rows are removed outright, campaign-bound search provenance is\nconverted to the operator account that ran the search, a campaign search\norigin whose operator cannot be recovered is removed, the Campaign column\nof historical audit rows is cleared, and the idempotency receipts of the\nretired Campaign actions are removed.",
+                              "properties": {
+                                "cleared_audit_campaign_refs": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "cleared_reply_triage_task_refs": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "converted_campaign_community_sources": {
+                                  "description": "Community-administrator sources (candidate snapshots and Creator\norigins) that lost their Campaign reference and kept their operator\naccount.",
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "converted_campaign_search_origins": {
+                                  "description": "Creator origins whose campaign search became a platform search with the\noperator account recovered from the matching candidate snapshot.",
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "converted_campaign_search_snapshots": {
+                                  "description": "Candidate snapshots whose campaign search origin became a platform\nsearch origin.",
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "deleted_task_attention": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "deleted_task_idempotency_records": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "deleted_task_runs": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "deleted_tasks": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_campaign_account_bindings": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_campaign_delete_operations": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_campaign_idempotency_records": {
+                                  "description": "Receipts of the retired `campaign_create` / `campaign_template_create`\nactions; nothing references them after the Campaign tables are dropped.",
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_campaign_template_delete_operations": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_campaign_templates": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_campaigns": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_candidate_snapshots": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_contact_confirmations": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_creator_save_confirmations": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_tiktok_one_account_bindings": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_unattributable_campaign_origins": {
+                                  "description": "Campaign search origins with no recoverable operator account; the\nCreator and its observation source remain.",
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "rewritten_contact_route_delete_impacts": {
+                                  "description": "Number of stored impact objects rewritten, including a completed\noperation's separate result impact when present.",
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "unresolved_retired_outreach_actions": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                }
+                              },
+                              "required": [
+                                "deleted_tasks",
+                                "deleted_task_runs",
+                                "deleted_task_attention",
+                                "deleted_task_idempotency_records",
+                                "cleared_reply_triage_task_refs",
+                                "removed_campaigns",
+                                "removed_campaign_templates",
+                                "removed_campaign_account_bindings",
+                                "removed_campaign_delete_operations",
+                                "removed_campaign_template_delete_operations",
+                                "converted_campaign_search_snapshots",
+                                "converted_campaign_search_origins",
+                                "removed_unattributable_campaign_origins",
+                                "converted_campaign_community_sources",
+                                "cleared_audit_campaign_refs",
+                                "removed_campaign_idempotency_records",
+                                "removed_candidate_snapshots",
+                                "rewritten_contact_route_delete_impacts",
+                                "removed_tiktok_one_account_bindings",
+                                "removed_creator_save_confirmations",
+                                "removed_contact_confirmations",
+                                "unresolved_retired_outreach_actions"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "recovery_point_created": {
+                          "type": "boolean"
+                        },
+                        "status": {
+                          "enum": [
+                            "completed"
+                          ],
+                          "type": "string"
+                        },
+                        "store": {
+                          "enum": [
+                            "account",
+                            "business"
+                          ],
+                          "type": "string"
+                        },
+                        "to_version": {
+                          "format": "int64",
+                          "maximum": 9007199254740991,
+                          "minimum": -9007199254740991,
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "store",
+                        "status",
+                        "from_version",
+                        "to_version",
+                        "recovery_point_created",
+                        "impact"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "status": {
+                    "enum": [
+                      "completed",
+                      "already_current",
+                      "upgrade_applied_but_initialization_failed"
+                    ],
+                    "type": "string"
+                  },
+                  "support_code": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "status",
+                  "message",
+                  "support_code",
+                  "results",
+                  "remote_data_deleted"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "phase",
+          "preflight",
+          "postflight",
+          "upgrade",
+          "failure",
+          "diagnostic_code"
+        ],
+        "title": "DataStartupStatus",
+        "type": "object"
+      }
+    },
+    {
+      "name": "LocalServiceStatus",
+      "direction": "serialize",
+      "id": "https://reacher.local/contracts/LocalServiceStatus.schema.json",
+      "revision": "sha256:3b8af1760987821b512c148f2b431045033ec45b2b9c038831207d49deff5b85",
+      "schema": {
+        "$id": "https://reacher.local/contracts/LocalServiceStatus.schema.json",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "binary_sha256": {
+            "type": "string"
+          },
+          "cli_update": {
+            "additionalProperties": false,
+            "properties": {
+              "checked_at": {
+                "format": "uint64",
+                "maximum": 9007199254740991,
+                "minimum": 0,
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "current_version": {
+                "type": "string"
+              },
+              "diagnostic_code": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "check_failed",
+                      "timed_out",
+                      "workspace_update_required"
+                    ],
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "latest_version": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "source": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "fresh_check",
+                      "memory_cache"
+                    ],
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "state": {
+                "enum": [
+                  "not_checked",
+                  "available",
+                  "current",
+                  "unavailable"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "state",
+              "current_version",
+              "latest_version",
+              "checked_at",
+              "source",
+              "diagnostic_code"
+            ],
+            "type": "object"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "blocked_store": {
+                    "anyOf": [
+                      {
+                        "enum": [
+                          "account",
+                          "business"
+                        ],
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "failure_kind": {
+                    "anyOf": [
+                      {
+                        "enum": [
+                          "insufficient_space",
+                          "busy",
+                          "backup_failed",
+                          "newer_version",
+                          "not_writable",
+                          "initialization_failed",
+                          "unsafe_data"
+                        ],
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "message": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "primary_action": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "recoverable_backup": {
+                    "type": "boolean"
+                  },
+                  "remote_data_deleted": {
+                    "type": "boolean"
+                  },
+                  "secondary_action": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "state": {
+                    "enum": [
+                      "fresh",
+                      "ready",
+                      "upgrade_required",
+                      "blocked"
+                    ],
+                    "type": "string"
+                  },
+                  "support_code": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "targets": {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "from_version": {
+                          "format": "int64",
+                          "maximum": 9007199254740991,
+                          "minimum": -9007199254740991,
+                          "type": "integer"
+                        },
+                        "impact": {
+                          "anyOf": [
+                            {
+                              "additionalProperties": false,
+                              "description": "Named per-category counts of what an upgrade deletes or converts, built\nread-only from persisted facts and compared for equality under the data\nlock. The Task counters come from the 33 -> 34 edge; the Campaign counters\nfrom the 35 -> 36 edge, which retires the persisted Campaign plan model:\nCampaign rows are removed outright, campaign-bound search provenance is\nconverted to the operator account that ran the search, a campaign search\norigin whose operator cannot be recovered is removed, the Campaign column\nof historical audit rows is cleared, and the idempotency receipts of the\nretired Campaign actions are removed.",
+                              "properties": {
+                                "cleared_audit_campaign_refs": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "cleared_reply_triage_task_refs": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "converted_campaign_community_sources": {
+                                  "description": "Community-administrator sources (candidate snapshots and Creator\norigins) that lost their Campaign reference and kept their operator\naccount.",
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "converted_campaign_search_origins": {
+                                  "description": "Creator origins whose campaign search became a platform search with the\noperator account recovered from the matching candidate snapshot.",
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "converted_campaign_search_snapshots": {
+                                  "description": "Candidate snapshots whose campaign search origin became a platform\nsearch origin.",
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "deleted_task_attention": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "deleted_task_idempotency_records": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "deleted_task_runs": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "deleted_tasks": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_campaign_account_bindings": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_campaign_delete_operations": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_campaign_idempotency_records": {
+                                  "description": "Receipts of the retired `campaign_create` / `campaign_template_create`\nactions; nothing references them after the Campaign tables are dropped.",
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_campaign_template_delete_operations": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_campaign_templates": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_campaigns": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_candidate_snapshots": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_contact_confirmations": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_creator_save_confirmations": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_tiktok_one_account_bindings": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "removed_unattributable_campaign_origins": {
+                                  "description": "Campaign search origins with no recoverable operator account; the\nCreator and its observation source remain.",
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "rewritten_contact_route_delete_impacts": {
+                                  "description": "Number of stored impact objects rewritten, including a completed\noperation's separate result impact when present.",
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "unresolved_retired_outreach_actions": {
+                                  "format": "uint64",
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                }
+                              },
+                              "required": [
+                                "deleted_tasks",
+                                "deleted_task_runs",
+                                "deleted_task_attention",
+                                "deleted_task_idempotency_records",
+                                "cleared_reply_triage_task_refs",
+                                "removed_campaigns",
+                                "removed_campaign_templates",
+                                "removed_campaign_account_bindings",
+                                "removed_campaign_delete_operations",
+                                "removed_campaign_template_delete_operations",
+                                "converted_campaign_search_snapshots",
+                                "converted_campaign_search_origins",
+                                "removed_unattributable_campaign_origins",
+                                "converted_campaign_community_sources",
+                                "cleared_audit_campaign_refs",
+                                "removed_campaign_idempotency_records",
+                                "removed_candidate_snapshots",
+                                "rewritten_contact_route_delete_impacts",
+                                "removed_tiktok_one_account_bindings",
+                                "removed_creator_save_confirmations",
+                                "removed_contact_confirmations",
+                                "unresolved_retired_outreach_actions"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "store": {
+                          "enum": [
+                            "account",
+                            "business"
+                          ],
+                          "type": "string"
+                        },
+                        "to_version": {
+                          "format": "int64",
+                          "maximum": 9007199254740991,
+                          "minimum": -9007199254740991,
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "store",
+                        "from_version",
+                        "to_version",
+                        "impact"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "title": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "state",
+                  "targets",
+                  "recoverable_backup",
+                  "remote_data_deleted",
+                  "blocked_store",
+                  "title",
+                  "message",
+                  "primary_action",
+                  "secondary_action",
+                  "failure_kind",
+                  "support_code"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "locale": {
+            "enum": [
+              "en-US",
+              "zh-CN"
+            ],
+            "type": "string"
+          },
+          "login": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "browser_opened": {
+                    "type": "boolean"
+                  },
+                  "callback_received": {
+                    "type": "boolean"
+                  },
+                  "flow_id": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "issue": {
+                    "anyOf": [
+                      {
+                        "enum": [
+                          "device_name_unavailable",
+                          "device_name_invalid",
+                          "callback_expired",
+                          "canceled",
+                          "replay",
+                          "owner_changed",
+                          "pairing_rejected",
+                          "recovery_required"
+                        ],
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "status": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "action": {
+                        "anyOf": [
+                          {
+                            "enum": [
+                              "begin_pairing",
+                              "await_pairing_callback",
+                              "cancel_pairing",
+                              "validate_admission",
+                              "retry"
+                            ],
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "credential_id": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "installation_id": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "issue": {
+                        "anyOf": [
+                          {
+                            "enum": [
+                              "configuration_unavailable",
+                              "credential_unavailable",
+                              "pairing_rejected",
+                              "pairing_expired",
+                              "pairing_cancelled",
+                              "admission_validation_required",
+                              "safe_cleanup_incomplete",
+                              "enrollment_unknown",
+                              "verification_failed",
+                              "remote_unavailable",
+                              "remote_rate_limited",
+                              "remote_unauthorized",
+                              "remote_revoked",
+                              "protocol_mismatch",
+                              "local_vault_unavailable"
+                            ],
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "state": {
+                        "enum": [
+                          "unconfigured",
+                          "pairing_required",
+                          "pairing_pending",
+                          "pairing_completing",
+                          "validation_required",
+                          "validating",
+                          "active",
+                          "revoked",
+                          "unauthorized",
+                          "recovery_required",
+                          "temporarily_unavailable"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "state",
+                      "action",
+                      "issue",
+                      "installation_id",
+                      "credential_id"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "status",
+                  "flow_id",
+                  "browser_opened",
+                  "callback_received",
+                  "issue"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "login_error": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "mcp_clients": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "next_actions": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "command": {
+                  "anyOf": [
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "args": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        "executable": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "executable",
+                        "args"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "instruction": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "kind": {
+                  "enum": [
+                    "await_startup",
+                    "login",
+                    "await_login",
+                    "install_plugin",
+                    "enable_plugin",
+                    "open_web",
+                    "inspect_data",
+                    "update_cli"
+                  ],
+                  "type": "string"
+                },
+                "tool": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "kind",
+                "command",
+                "tool"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "pid": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "plugin": {
+            "properties": {
+              "diagnostic_code": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "enabled": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              },
+              "installed_version": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "last_verified_at": {
+                "format": "uint64",
+                "maximum": 9007199254740991,
+                "minimum": 0,
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "state": {
+                "enum": [
+                  "unknown",
+                  "installed",
+                  "not_installed",
+                  "unavailable"
+                ],
+                "type": "string"
+              },
+              "verification": {
+                "enum": [
+                  "not_checked",
+                  "cached",
+                  "fresh"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "state",
+              "verification",
+              "installed_version",
+              "enabled",
+              "last_verified_at",
+              "diagnostic_code"
+            ],
+            "type": "object"
+          },
+          "running": {
+            "type": "boolean"
+          },
+          "startup": {
+            "additionalProperties": false,
+            "properties": {
+              "diagnostic_code": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "failure": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "kind": {
+                        "enum": [
+                          "insufficient_space",
+                          "busy",
+                          "backup_failed",
+                          "newer_version",
+                          "not_writable",
+                          "initialization_failed",
+                          "unsafe_data"
+                        ],
+                        "type": "string"
+                      },
+                      "message": {
+                        "type": "string"
+                      },
+                      "results": {
+                        "items": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "from_version": {
+                              "format": "int64",
+                              "maximum": 9007199254740991,
+                              "minimum": -9007199254740991,
+                              "type": "integer"
+                            },
+                            "impact": {
+                              "anyOf": [
+                                {
+                                  "additionalProperties": false,
+                                  "description": "Named per-category counts of what an upgrade deletes or converts, built\nread-only from persisted facts and compared for equality under the data\nlock. The Task counters come from the 33 -> 34 edge; the Campaign counters\nfrom the 35 -> 36 edge, which retires the persisted Campaign plan model:\nCampaign rows are removed outright, campaign-bound search provenance is\nconverted to the operator account that ran the search, a campaign search\norigin whose operator cannot be recovered is removed, the Campaign column\nof historical audit rows is cleared, and the idempotency receipts of the\nretired Campaign actions are removed.",
+                                  "properties": {
+                                    "cleared_audit_campaign_refs": {
+                                      "format": "uint64",
+                                      "maximum": 9007199254740991,
+                                      "minimum": 0,
+                                      "type": "integer"
+                                    },
+                                    "cleared_reply_triage_task_refs": {
+                                      "format": "uint64",
+                                      "maximum": 9007199254740991,
+                                      "minimum": 0,
+                                      "type": "integer"
+                                    },
+                                    "converted_campaign_community_sources": {
+                                      "description": "Community-administrator sources (candidate snapshots and Creator\norigins) that lost their Campaign reference and kept their operator\naccount.",
+                                      "format": "uint64",
+                                      "maximum": 9007199254740991,
+                                      "minimum": 0,
+                                      "type": "integer"
+                                    },
+                                    "converted_campaign_search_origins": {
+                                      "description": "Creator origins whose campaign search became a platform search with the\noperator account recovered from the matching candidate snapshot.",
+                                      "format": "uint64",
+                                      "maximum": 9007199254740991,
+                                      "minimum": 0,
+                                      "type": "integer"
+                                    },
+                                    "converted_campaign_search_snapshots": {
+                                      "description": "Candidate snapshots whose campaign search origin became a platform\nsearch origin.",
+                                      "format": "uint64",
+                                      "maximum": 9007199254740991,
+                                      "minimum": 0,
+                                      "type": "integer"
+                                    },
+                                    "deleted_task_attention": {
+                                      "format": "uint64",
+                                      "maximum": 9007199254740991,
+                                      "minimum": 0,
+                                      "type": "integer"
+                                    },
+                                    "deleted_task_idempotency_records": {
+                                      "format": "uint64",
+                                      "maximum": 9007199254740991,
+                                      "minimum": 0,
+                                      "type": "integer"
+                                    },
+                                    "deleted_task_runs": {
+                                      "format": "uint64",
+                                      "maximum": 9007199254740991,
+                                      "minimum": 0,
+                                      "type": "integer"
+                                    },
+                                    "deleted_tasks": {
+                                      "format": "uint64",
+                                      "maximum": 9007199254740991,
+                                      "minimum": 0,
+                                      "type": "integer"
+                                    },
+                                    "removed_campaign_account_bindings": {
+                                      "format": "uint64",
+                                      "maximum": 9007199254740991,
+                                      "minimum": 0,
+                                      "type": "integer"
+                                    },
+                                    "removed_campaign_delete_operations": {
+                                      "format": "uint64",
+                                      "maximum": 9007199254740991,
+                                      "minimum": 0,
+                                      "type": "integer"
+                                    },
+                                    "removed_campaign_idempotency_records": {
+                                      "description": "Receipts of the retired `campaign_create` / `campaign_template_create`\nactions; nothing references them after the Campaign tables are dropped.",
+                                      "format": "uint64",
+                                      "maximum": 9007199254740991,
+                                      "minimum": 0,
+                                      "type": "integer"
+                                    },
+                                    "removed_campaign_template_delete_operations": {
+                                      "format": "uint64",
+                                      "maximum": 9007199254740991,
+                                      "minimum": 0,
+                                      "type": "integer"
+                                    },
+                                    "removed_campaign_templates": {
+                                      "format": "uint64",
+                                      "maximum": 9007199254740991,
+                                      "minimum": 0,
+                                      "type": "integer"
+                                    },
+                                    "removed_campaigns": {
+                                      "format": "uint64",
+                                      "maximum": 9007199254740991,
+                                      "minimum": 0,
+                                      "type": "integer"
+                                    },
+                                    "removed_candidate_snapshots": {
+                                      "format": "uint64",
+                                      "maximum": 9007199254740991,
+                                      "minimum": 0,
+                                      "type": "integer"
+                                    },
+                                    "removed_contact_confirmations": {
+                                      "format": "uint64",
+                                      "maximum": 9007199254740991,
+                                      "minimum": 0,
+                                      "type": "integer"
+                                    },
+                                    "removed_creator_save_confirmations": {
+                                      "format": "uint64",
+                                      "maximum": 9007199254740991,
+                                      "minimum": 0,
+                                      "type": "integer"
+                                    },
+                                    "removed_tiktok_one_account_bindings": {
+                                      "format": "uint64",
+                                      "maximum": 9007199254740991,
+                                      "minimum": 0,
+                                      "type": "integer"
+                                    },
+                                    "removed_unattributable_campaign_origins": {
+                                      "description": "Campaign search origins with no recoverable operator account; the\nCreator and its observation source remain.",
+                                      "format": "uint64",
+                                      "maximum": 9007199254740991,
+                                      "minimum": 0,
+                                      "type": "integer"
+                                    },
+                                    "rewritten_contact_route_delete_impacts": {
+                                      "description": "Number of stored impact objects rewritten, including a completed\noperation's separate result impact when present.",
+                                      "format": "uint64",
+                                      "maximum": 9007199254740991,
+                                      "minimum": 0,
+                                      "type": "integer"
+                                    },
+                                    "unresolved_retired_outreach_actions": {
+                                      "format": "uint64",
+                                      "maximum": 9007199254740991,
+                                      "minimum": 0,
+                                      "type": "integer"
+                                    }
+                                  },
+                                  "required": [
+                                    "deleted_tasks",
+                                    "deleted_task_runs",
+                                    "deleted_task_attention",
+                                    "deleted_task_idempotency_records",
+                                    "cleared_reply_triage_task_refs",
+                                    "removed_campaigns",
+                                    "removed_campaign_templates",
+                                    "removed_campaign_account_bindings",
+                                    "removed_campaign_delete_operations",
+                                    "removed_campaign_template_delete_operations",
+                                    "converted_campaign_search_snapshots",
+                                    "converted_campaign_search_origins",
+                                    "removed_unattributable_campaign_origins",
+                                    "converted_campaign_community_sources",
+                                    "cleared_audit_campaign_refs",
+                                    "removed_campaign_idempotency_records",
+                                    "removed_candidate_snapshots",
+                                    "rewritten_contact_route_delete_impacts",
+                                    "removed_tiktok_one_account_bindings",
+                                    "removed_creator_save_confirmations",
+                                    "removed_contact_confirmations",
+                                    "unresolved_retired_outreach_actions"
+                                  ],
+                                  "type": "object"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "recovery_point_created": {
+                              "type": "boolean"
+                            },
+                            "status": {
+                              "enum": [
+                                "completed"
+                              ],
+                              "type": "string"
+                            },
+                            "store": {
+                              "enum": [
+                                "account",
+                                "business"
+                              ],
+                              "type": "string"
+                            },
+                            "to_version": {
+                              "format": "int64",
+                              "maximum": 9007199254740991,
+                              "minimum": -9007199254740991,
+                              "type": "integer"
+                            }
+                          },
+                          "required": [
+                            "store",
+                            "status",
+                            "from_version",
+                            "to_version",
+                            "recovery_point_created",
+                            "impact"
+                          ],
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      "storage_upgraded": {
+                        "type": "boolean"
+                      },
+                      "support_code": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "message",
+                      "support_code",
+                      "storage_upgraded",
+                      "results"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "phase": {
+                "enum": [
+                  "inspecting",
+                  "upgrading",
+                  "ready",
+                  "failed"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "phase"
+            ],
+            "type": "object"
+          },
+          "transport": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "workspace_activity": {
+            "anyOf": [
+              {
+                "properties": {
+                  "attempted": {
+                    "format": "uint",
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "brief": {
+                    "type": "string"
+                  },
+                  "campaign_id": {
+                    "type": "string"
+                  },
+                  "current_read_stops": {
+                    "format": "uint",
+                    "minimum": 0,
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "deferred_scores": {
+                    "format": "uint32",
+                    "minimum": 0,
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "failure_code": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "failure_phase": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "library_sync_error": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "library_sync_pending": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ]
+                  },
+                  "library_synced_at": {
+                    "format": "uint64",
+                    "maximum": 9007199254740991,
+                    "minimum": 0,
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "login_required": {
+                    "format": "uint",
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "max": {
+                    "format": "uint32",
+                    "minimum": 0,
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "pending": {
+                    "format": "uint32",
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "qualified": {
+                    "format": "uint32",
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "read_errors": {
+                    "format": "uint",
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "read_operation_stops": {
+                    "items": {
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "operation": {
+                          "type": "string"
+                        },
+                        "platform": {
+                          "type": "string"
+                        },
+                        "profile_ref": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "platform",
+                        "profile_ref",
+                        "operation",
+                        "code"
+                      ],
+                      "type": "object"
+                    },
+                    "type": [
+                      "array",
+                      "null"
+                    ]
+                  },
+                  "restricted": {
+                    "format": "uint",
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "stage": {
+                    "enum": [
+                      "ready",
+                      "searching",
+                      "verifying",
+                      "pausing",
+                      "paused",
+                      "finished",
+                      "budget_exhausted",
+                      "needs_evidence",
+                      "error"
+                    ],
+                    "type": "string"
+                  },
+                  "stale": {
+                    "type": "boolean"
+                  },
+                  "stop": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": false,
+                        "description": "Browser-reported display diagnostic, never execution or approval authority.",
+                        "properties": {
+                          "reason": {
+                            "enum": [
+                              "user_paused",
+                              "search_page_left",
+                              "page_closed",
+                              "request_failed",
+                              "revision_changed",
+                              "progress_unconfirmed",
+                              "busy",
+                              "needs_evidence",
+                              "search_exhausted",
+                              "target_reached",
+                              "budget_exhausted",
+                              "execution_interrupted"
+                            ],
+                            "type": "string"
+                          },
+                          "recorded_at": {
+                            "format": "uint64",
+                            "maximum": 9007199254740991,
+                            "minimum": 0,
+                            "type": "integer"
+                          }
+                        },
+                        "required": [
+                          "reason",
+                          "recorded_at"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "target": {
+                    "format": "uint32",
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "total": {
+                    "format": "uint",
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "updated_at": {
+                    "format": "uint64",
+                    "maximum": 9007199254740991,
+                    "minimum": 0,
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "used": {
+                    "format": "uint32",
+                    "minimum": 0,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "campaign_id",
+                  "brief",
+                  "stage",
+                  "qualified",
+                  "pending",
+                  "target",
+                  "attempted",
+                  "total",
+                  "used",
+                  "max",
+                  "login_required",
+                  "read_errors",
+                  "restricted",
+                  "stale"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "workspace_activity_error": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "workspace_history": {
+            "items": {
+              "properties": {
+                "attempted": {
+                  "format": "uint",
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "brief": {
+                  "type": "string"
+                },
+                "campaign_id": {
+                  "type": "string"
+                },
+                "current_read_stops": {
+                  "format": "uint",
+                  "minimum": 0,
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "deferred_scores": {
+                  "format": "uint32",
+                  "minimum": 0,
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "failure_code": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "failure_phase": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "library_sync_error": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "library_sync_pending": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                },
+                "library_synced_at": {
+                  "format": "uint64",
+                  "maximum": 9007199254740991,
+                  "minimum": 0,
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "login_required": {
+                  "format": "uint",
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "max": {
+                  "format": "uint32",
+                  "minimum": 0,
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "pending": {
+                  "format": "uint32",
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "qualified": {
+                  "format": "uint32",
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "read_errors": {
+                  "format": "uint",
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "read_operation_stops": {
+                  "items": {
+                    "properties": {
+                      "code": {
+                        "type": "string"
+                      },
+                      "operation": {
+                        "type": "string"
+                      },
+                      "platform": {
+                        "type": "string"
+                      },
+                      "profile_ref": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "platform",
+                      "profile_ref",
+                      "operation",
+                      "code"
+                    ],
+                    "type": "object"
+                  },
+                  "type": [
+                    "array",
+                    "null"
+                  ]
+                },
+                "restricted": {
+                  "format": "uint",
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "stage": {
+                  "enum": [
+                    "ready",
+                    "searching",
+                    "verifying",
+                    "pausing",
+                    "paused",
+                    "finished",
+                    "budget_exhausted",
+                    "needs_evidence",
+                    "error"
+                  ],
+                  "type": "string"
+                },
+                "stale": {
+                  "type": "boolean"
+                },
+                "stop": {
+                  "anyOf": [
+                    {
+                      "additionalProperties": false,
+                      "description": "Browser-reported display diagnostic, never execution or approval authority.",
+                      "properties": {
+                        "reason": {
+                          "enum": [
+                            "user_paused",
+                            "search_page_left",
+                            "page_closed",
+                            "request_failed",
+                            "revision_changed",
+                            "progress_unconfirmed",
+                            "busy",
+                            "needs_evidence",
+                            "search_exhausted",
+                            "target_reached",
+                            "budget_exhausted",
+                            "execution_interrupted"
+                          ],
+                          "type": "string"
+                        },
+                        "recorded_at": {
+                          "format": "uint64",
+                          "maximum": 9007199254740991,
+                          "minimum": 0,
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "reason",
+                        "recorded_at"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "target": {
+                  "format": "uint32",
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "total": {
+                  "format": "uint",
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "updated_at": {
+                  "format": "uint64",
+                  "maximum": 9007199254740991,
+                  "minimum": 0,
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "used": {
+                  "format": "uint32",
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "campaign_id",
+                "brief",
+                "stage",
+                "qualified",
+                "pending",
+                "target",
+                "attempted",
+                "total",
+                "used",
+                "max",
+                "login_required",
+                "read_errors",
+                "restricted",
+                "stale"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "locale",
+          "workspace_activity",
+          "workspace_history",
+          "workspace_activity_error",
+          "version",
+          "pid",
+          "running",
+          "transport",
+          "mcp_clients",
+          "binary_sha256",
+          "data",
+          "startup",
+          "login",
+          "login_error",
+          "plugin",
+          "cli_update",
+          "next_actions"
+        ],
+        "title": "LocalServiceStatus",
+        "type": "object"
+      }
+    },
+    {
+      "name": "LoginProjection",
+      "direction": "serialize",
+      "id": "https://reacher.local/contracts/LoginProjection.schema.json",
+      "revision": "sha256:567d2be5df04307f7138b551b5d2273673c986dfada925fc5ce41e7b886d75b7",
+      "schema": {
+        "$id": "https://reacher.local/contracts/LoginProjection.schema.json",
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "browser_opened": {
+            "type": "boolean"
+          },
+          "callback_received": {
+            "type": "boolean"
+          },
+          "flow_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "issue": {
+            "anyOf": [
+              {
+                "enum": [
+                  "device_name_unavailable",
+                  "device_name_invalid",
+                  "callback_expired",
+                  "canceled",
+                  "replay",
+                  "owner_changed",
+                  "pairing_rejected",
+                  "recovery_required"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "additionalProperties": false,
+            "properties": {
+              "action": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "begin_pairing",
+                      "await_pairing_callback",
+                      "cancel_pairing",
+                      "validate_admission",
+                      "retry"
+                    ],
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "credential_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "installation_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "issue": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "configuration_unavailable",
+                      "credential_unavailable",
+                      "pairing_rejected",
+                      "pairing_expired",
+                      "pairing_cancelled",
+                      "admission_validation_required",
+                      "safe_cleanup_incomplete",
+                      "enrollment_unknown",
+                      "verification_failed",
+                      "remote_unavailable",
+                      "remote_rate_limited",
+                      "remote_unauthorized",
+                      "remote_revoked",
+                      "protocol_mismatch",
+                      "local_vault_unavailable"
+                    ],
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "state": {
+                "enum": [
+                  "unconfigured",
+                  "pairing_required",
+                  "pairing_pending",
+                  "pairing_completing",
+                  "validation_required",
+                  "validating",
+                  "active",
+                  "revoked",
+                  "unauthorized",
+                  "recovery_required",
+                  "temporarily_unavailable"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "state",
+              "action",
+              "issue",
+              "installation_id",
+              "credential_id"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "status",
+          "flow_id",
+          "browser_opened",
+          "callback_received",
+          "issue"
+        ],
+        "title": "LoginProjection",
+        "type": "object"
+      }
+    }
+  ],
+  "manifest_revision": "sha256:2f82fab9163231cb301c72dec39007f61685a0b845e4284b16892490d2cb50ae"
+}

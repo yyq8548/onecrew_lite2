@@ -1,0 +1,45 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "strict": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "jsx": "react-jsx",
+    "types": [
+      "vite/client",
+      "node"
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "@mcp-ui/*": [
+        "./src/*"
+      ],
+      "react": [
+        "./node_modules/@types/react"
+      ],
+      "react/jsx-runtime": [
+        "./node_modules/@types/react/jsx-runtime"
+      ],
+      "react-dom": [
+        "./node_modules/@types/react-dom"
+      ]
+    }
+  },
+  "include": [
+    "src",
+    "vite.config.ts",
+    "preview/*.ts",
+    "preview/*.tsx"
+  ]
+}

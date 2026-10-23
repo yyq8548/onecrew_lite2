@@ -1,0 +1,62 @@
+{
+  "captured_from": "2026-10-20 local LinkedIn completed profile and post receipts",
+  "hit": {
+    "id": "9285047b-e015-4412-bc53-074f3846f2c5",
+    "discovery_campaign_id": "602c0efd-6922-4999-9c99-79777b532150",
+    "platform": "linkedin",
+    "profile_ref": "d5pskwub",
+    "search_keyword": "Binance business development",
+    "source_url": "https://www.linkedin.com/in/raj-timothy-nandwani-link/",
+    "title": "Raj Timothy Nandwani",
+    "author_label": "Raj Timothy Nandwani",
+    "captured_at": 1792542733
+  },
+  "author": {
+    "search_hit_id": "9285047b-e015-4412-bc53-074f3846f2c5",
+    "author_id": "raj-timothy-nandwani-link",
+    "author_url": "https://www.linkedin.com/in/raj-timothy-nandwani-link/",
+    "observed_at": 1792542733
+  },
+  "profile": {
+    "search_hit_id": "9285047b-e015-4412-bc53-074f3846f2c5",
+    "discovery_campaign_id": "602c0efd-6922-4999-9c99-79777b532150",
+    "platform": "linkedin",
+    "profile_ref": "d5pskwub",
+    "author_id": "raj-timothy-nandwani-link",
+    "expected_revision": 1,
+    "call_number": 6,
+    "status": "completed",
+    "native_profile_json": "{\"adapter_version\":\"1.0.0\",\"author_handle\":\"raj-timothy-nandwani-link\",\"account_id\":\"ACoAABWpfkMB9KoU-qv65__Dfh9utK6ohLZK3UI\",\"author_label\":\"Raj Timothy Nandwani\",\"profile_url\":\"https://www.linkedin.com/in/raj-timothy-nandwani-link/\",\"follower_count\":2736,\"follower_text\":\"2,736 followers\",\"headline\":\"Global BD - Marketing and Partnerships | Binance\",\"bio\":\"Areas of Focus include: Web3 and Crypto, Capacity Building, Strategic Advisory, Thematic Research, Sales, Implementation and Business Development and Capacity Building for Start Ups. As the regional APAC lead for Business Development and Partnerships for Binance, I work with management and local leads to source, engage and drive strategic partnerships and spur mass adoption of blockchain technologies across Asia, through the Binance ecosystem. As the Chief of Staff in Amber Group’s Strategy Unit, I helped the firm execute on key business initiatives and build capacity for senior management. Throughout my roles with Citi, I specialized in tactical business growth, content creation, investment advisory and portfolio construction for institutional clients and relationship management. Outside of my professional roles, I am heavily involved jn advising crypto projects from inception to execution. I also provide Finance, Operations and Sustainable Growth strategies for conscious impact businesses in Asia Pacific across sectors including, Beauty, Food&Beverage and Luxury FMCG. I am passionate about sustainable and philanthropic endeavours in the region and work towards bridging the gap between profitability and purpose. I am equally focused on the commercial business cases for D&I and Positive Cultural Shifts and pursue continued education in this space. Happy to grab a drink and chat. Reach out on +852 7075 8806 or send me an email on r.t.nandwani@live.com\\nTop skills\\nClient Relations • Interpersonal Skills\",\"public_links\":[],\"contact_links\":[\"https://www.linkedin.com/in/raj-timothy-nandwani-link/overlay/contact-info/\"],\"evidence_source\":\"visible_profile_header\",\"bio_truncated\":false}",
+    "stop_code": null,
+    "updated_at": 1792542788
+  },
+  "content": {
+    "search_hit_id": "9285047b-e015-4412-bc53-074f3846f2c5",
+    "discovery_campaign_id": "602c0efd-6922-4999-9c99-79777b532150",
+    "platform": "linkedin",
+    "profile_ref": "d5pskwub",
+    "author_id": "raj-timothy-nandwani-link",
+    "source_url": "https://www.linkedin.com/in/raj-timothy-nandwani-link/",
+    "expected_revision": 1,
+    "call_number": 7,
+    "status": "completed",
+    "native_content_json": "{\"account_id\":\"ACoAABWpfkMB9KoU-qv65__Dfh9utK6ohLZK3UI\",\"author_handle\":\"raj-timothy-nandwani-link\",\"profile_url\":\"https://www.linkedin.com/in/raj-timothy-nandwani-link/\",\"post_id\":\"7465015607399428097\",\"source_url\":\"https://www.linkedin.com/feed/update/urn:li:activity:7465015607399428097/\",\"text\":\"Milestone achievement for Binance and the Philippines. Game time\",\"text_truncated\":false,\"evidence_source\":\"visible_author_activity\",\"observations\":{\"published_at\":null,\"text_completeness\":\"unknown\"}}",
+    "stop_code": null,
+    "updated_at": 1792542796
+  },
+  "candidate": {
+    "id": "b2cead26-e096-4ff0-aa83-91dbe70222ef",
+    "discovery_campaign_id": "602c0efd-6922-4999-9c99-79777b532150",
+    "criteria_revision": 1,
+    "platform": "linkedin",
+    "source_profile_ref": "d5pskwub",
+    "platform_account_id": "ACoAABWpfkMB9KoU-qv65__Dfh9utK6ohLZK3UI",
+    "display_name": "Raj Timothy Nandwani",
+    "profile_url": "https://www.linkedin.com/in/raj-timothy-nandwani-link/",
+    "verdict": "qualified",
+    "evidence_json": "{\"assessment\":{\"match_rating\":{\"level\":\"excellent\",\"reason\":\"公开职业简介明确其现任 Binance 亚太地区 Business Development and Partnerships 负责人，直接符合目标公司的商务、BD 人员条件；已观察粉丝数为 2736，目标不限粉丝数、地区和语言，匹配程度为 excellent。这是基于已保存简介和活动样本的初步评估，不代表检查了全部发布历史；公开联系方式由后续推荐环节另行核实。\",\"source_url\":\"https://www.linkedin.com/in/raj-timothy-nandwani-link/\"},\"reasons\":[],\"subscribers_normalized\":2736},\"author_identity_kind\":\"native_id\",\"author_identity_search_hit_id\":null,\"captured_at\":1792542788,\"profile_bio_status\":\"complete\",\"profile_bio_status_source_url\":\"https://www.linkedin.com/in/raj-timothy-nandwani-link/\",\"reviewed_match\":{\"language_only_pending\":false,\"level\":\"excellent\",\"material_hash\":\"b9147ec96db0ff42d0fabc589a7f7026b3b3006712d1c4bf784e4de6f73c633c\",\"native_author_id\":\"ACoAABWpfkMB9KoU-qv65__Dfh9utK6ohLZK3UI\",\"outcome\":\"supported\",\"policy_version\":\"initial-match-evaluation-v1\",\"reason\":\"公开职业简介明确其现任 Binance 亚太地区 Business Development and Partnerships 负责人，直接符合目标公司的商务、BD 人员条件；已观察粉丝数为 2736，目标不限粉丝数、地区和语言，匹配程度为 excellent。这是基于已保存简介和活动样本的初步评估，不代表检查了全部发布历史；公开联系方式由后续推荐环节另行核实。\",\"review_id\":\"c8903db3-4996-477b-b63d-466b5554b04e\",\"source_url\":\"https://www.linkedin.com/in/raj-timothy-nandwani-link/\",\"verified\":true},\"reviewed_requirements\":[{\"criteria_revision\":1,\"index\":0,\"material_hash\":\"b9147ec96db0ff42d0fabc589a7f7026b3b3006712d1c4bf784e4de6f73c633c\",\"native_author_id\":\"ACoAABWpfkMB9KoU-qv65__Dfh9utK6ohLZK3UI\",\"outcome\":\"supported\",\"reason\":\"账号类型为个人职业账号；其公开职业简介明确说明现任 Binance 亚太地区商务拓展与合作负责人，支持目标公司关联及所需岗位条件。此判断依据保存的公开自述，属于初步核实。\",\"requirement\":{\"description\":\"人员须任职于币安（Binance）、OKX、Bitget、Bybit 或 Gate.io，依据公开职业资料核实公司关联。\",\"excerpt\":\"币安（Binance）、OKX、Bitget、Bybit、Gate.io 的商务、BD 和 Marketing 人员\"},\"review_id\":\"c8903db3-4996-477b-b63d-466b5554b04e\",\"source_url\":\"https://www.linkedin.com/in/raj-timothy-nandwani-link/\"}],\"source_urls\":[\"https://www.linkedin.com/in/raj-timothy-nandwani-link/\",\"https://www.linkedin.com/in/raj-timothy-nandwani-link/\"],\"subscribers_raw\":\"2736\",\"subscribers_source_url\":\"https://www.linkedin.com/in/raj-timothy-nandwani-link/\"}",
+    "created_at": 1792542788,
+    "updated_at": 1792542812,
+    "source_platform": "linkedin"
+  }
+}

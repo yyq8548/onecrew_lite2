@@ -1,0 +1,309 @@
+{
+  "source": "Actual independent Codex review of saved author-bound observations; no provider reads",
+  "source_sha256": "88e68d6eaf12e5ea1ea1078a64d8dae95fa7898153b0c75f9ad3f0337dbd2b8b",
+  "results": [
+    {
+      "name": "Nuaman Khan",
+      "elapsed_ms": 14688,
+      "audit": {
+        "applicable": true,
+        "checks": [
+          {
+            "criterion": "selection_fit",
+            "employment_required": true,
+            "role_required": true,
+            "time_requirement": "current",
+            "relationship": "current_staff",
+            "role_evidence": "position_title",
+            "time_relation": "current",
+            "outcome": "supported",
+            "rationale": "保存的完整标题明确表明此人现任 Marketing Manager，满足商务、BD 或 Marketing 岗位的 OR 条件。",
+            "citations": [
+              {
+                "kind": "native_profile",
+                "profile_url": "https://www.linkedin.com/in/nomankhan37/",
+                "quote": "Digital & Performance Marketing Manager at Binance"
+              }
+            ]
+          },
+          {
+            "criterion": {
+              "requirement": 0
+            },
+            "employment_required": true,
+            "role_required": false,
+            "time_requirement": "current",
+            "relationship": "current_staff",
+            "role_evidence": "position_title",
+            "time_relation": "current",
+            "outcome": "supported",
+            "rationale": "完整职位标题明确标注任职于 Binance，满足五家公司任一的 OR 条件。",
+            "citations": [
+              {
+                "kind": "native_profile",
+                "profile_url": "https://www.linkedin.com/in/nomankhan37/",
+                "quote": "Digital & Performance Marketing Manager at Binance"
+              }
+            ]
+          }
+        ]
+      },
+      "expected": "supported"
+    },
+    {
+      "name": "Uliana Teixeira",
+      "elapsed_ms": 10077,
+      "audit": {
+        "applicable": true,
+        "checks": [
+          {
+            "criterion": "selection_fit",
+            "employment_required": true,
+            "role_required": true,
+            "time_requirement": "current",
+            "relationship": "current_staff",
+            "role_evidence": "position_title",
+            "time_relation": "current",
+            "outcome": "supported",
+            "rationale": "完整主页标题明确标注 Bybit 的 Business Development 职位，符合 BD 岗位条件。简介的支付运营职责未否定该职位。",
+            "citations": [
+              {
+                "kind": "native_profile",
+                "profile_url": "https://www.linkedin.com/in/ulianateixeira/",
+                "quote": "Business Development  @ Bybit | Crypto | Expansion & Growth  | Partnerships | Fintech | International Relations"
+              }
+            ]
+          },
+          {
+            "criterion": {
+              "requirement": 0
+            },
+            "employment_required": true,
+            "role_required": false,
+            "time_requirement": "current",
+            "relationship": "current_staff",
+            "role_evidence": "not_requested",
+            "time_relation": "current",
+            "outcome": "supported",
+            "rationale": "简介明确说明目前在 Bybit 工作，满足五家公司 OR 条件中的 Bybit 分支。",
+            "citations": [
+              {
+                "kind": "native_profile",
+                "profile_url": "https://www.linkedin.com/in/ulianateixeira/",
+                "quote": "Currently working at Bybit, one of the world’s leading crypto exchanges, where I help bridge fiat and crypto in a fast-paced, global environment."
+              }
+            ]
+          }
+        ]
+      },
+      "expected": "supported"
+    },
+    {
+      "name": "Patricio Mesri",
+      "elapsed_ms": 10574,
+      "audit": {
+        "applicable": true,
+        "checks": [
+          {
+            "criterion": "selection_fit",
+            "employment_required": true,
+            "role_required": true,
+            "time_requirement": "current",
+            "relationship": "current_staff",
+            "role_evidence": "skills_only",
+            "time_relation": "current",
+            "outcome": "insufficient",
+            "rationale": "地区负责人头衔未说明商务、BD 或 Marketing 职责；技能列表不足以证明所需岗位。",
+            "citations": [
+              {
+                "kind": "native_profile",
+                "profile_url": "https://www.linkedin.com/in/pisaacm/",
+                "quote": "Head of LATAM @ Bybit"
+              },
+              {
+                "kind": "native_profile",
+                "profile_url": "https://www.linkedin.com/in/pisaacm/",
+                "quote": "Top skills\nOnline Marketing • Social Media • Marketing • Product Marketing • Marketing Strategy"
+              }
+            ]
+          },
+          {
+            "criterion": {
+              "requirement": 0
+            },
+            "employment_required": true,
+            "role_required": false,
+            "time_requirement": "current",
+            "relationship": "current_staff",
+            "role_evidence": "position_title",
+            "time_relation": "current",
+            "outcome": "supported",
+            "rationale": "主页明确列出在 Bybit 的负责人职位，满足五家公司任一的条件。",
+            "citations": [
+              {
+                "kind": "native_profile",
+                "profile_url": "https://www.linkedin.com/in/pisaacm/",
+                "quote": "Head of LATAM @ Bybit"
+              }
+            ]
+          }
+        ]
+      },
+      "expected": "insufficient"
+    },
+    {
+      "name": "Jill L.",
+      "elapsed_ms": 12135,
+      "audit": {
+        "applicable": true,
+        "checks": [
+          {
+            "criterion": "selection_fit",
+            "employment_required": true,
+            "role_required": true,
+            "time_requirement": "current",
+            "relationship": "current_staff",
+            "role_evidence": "position_title",
+            "time_relation": "current",
+            "outcome": "supported",
+            "rationale": "主页标题明确列出 Gate.io 的 Japan Marketing Head 职位，满足 Marketing 岗位分支。简介中的历史任职表述未指向其他当前雇主。",
+            "citations": [
+              {
+                "kind": "native_profile",
+                "profile_url": "https://www.linkedin.com/in/jillliu777/",
+                "quote": "Gate.io Japan Marketing Head"
+              }
+            ]
+          },
+          {
+            "criterion": {
+              "requirement": 0
+            },
+            "employment_required": true,
+            "role_required": false,
+            "time_requirement": "current",
+            "relationship": "current_staff",
+            "role_evidence": "position_title",
+            "time_relation": "current",
+            "outcome": "supported",
+            "rationale": "主页标题明确列出在 Gate.io 的职位，满足五家公司 OR 条件中的 Gate.io 分支。",
+            "citations": [
+              {
+                "kind": "native_profile",
+                "profile_url": "https://www.linkedin.com/in/jillliu777/",
+                "quote": "Gate.io Japan Marketing Head"
+              }
+            ]
+          }
+        ]
+      },
+      "expected": "supported"
+    },
+    {
+      "name": "Ewelina Pendino",
+      "elapsed_ms": 16199,
+      "audit": {
+        "applicable": true,
+        "checks": [
+          {
+            "criterion": "selection_fit",
+            "employment_required": true,
+            "role_required": true,
+            "time_requirement": "current",
+            "relationship": "current_staff",
+            "role_evidence": "position_title",
+            "time_relation": "conflicting",
+            "outcome": "insufficient",
+            "rationale": "标题表明从事增长和付费媒体工作，简介却将 Uphold 描述为最近任职公司；缺少时间顺序，无法确认当前岗位。",
+            "citations": [
+              {
+                "kind": "native_profile",
+                "profile_url": "https://www.linkedin.com/in/ewelina-pendino-685182113/",
+                "quote": "Growth & Paid Media @ Binance | Crypto | Performance Marketing"
+              },
+              {
+                "kind": "native_profile",
+                "profile_url": "https://www.linkedin.com/in/ewelina-pendino-685182113/",
+                "quote": "Over the years, I’ve had the opportunity to work with some incredible teams—most recently at Uphold, where I led global performance marketing efforts and helped launch exciting blockchain projects."
+              }
+            ]
+          },
+          {
+            "criterion": {
+              "requirement": 0
+            },
+            "employment_required": true,
+            "role_required": false,
+            "time_requirement": "current",
+            "relationship": "current_staff",
+            "role_evidence": "position_title",
+            "time_relation": "conflicting",
+            "outcome": "insufficient",
+            "rationale": "标题显示任职 Binance，但简介称最近任职 Uphold；保存内容未提供可解决冲突的任职时间，无法确认当前任职于指定公司之一。",
+            "citations": [
+              {
+                "kind": "native_profile",
+                "profile_url": "https://www.linkedin.com/in/ewelina-pendino-685182113/",
+                "quote": "Growth & Paid Media @ Binance | Crypto | Performance Marketing"
+              },
+              {
+                "kind": "native_profile",
+                "profile_url": "https://www.linkedin.com/in/ewelina-pendino-685182113/",
+                "quote": "Over the years, I’ve had the opportunity to work with some incredible teams—most recently at Uphold, where I led global performance marketing efforts and helped launch exciting blockchain projects."
+              }
+            ]
+          }
+        ]
+      },
+      "expected": "insufficient"
+    },
+    {
+      "name": "Euren Leyson",
+      "elapsed_ms": 14844,
+      "audit": {
+        "applicable": true,
+        "checks": [
+          {
+            "criterion": "selection_fit",
+            "employment_required": true,
+            "role_required": true,
+            "time_requirement": "current",
+            "relationship": "external_partner",
+            "role_evidence": "unknown",
+            "time_relation": "unknown",
+            "outcome": "insufficient",
+            "rationale": "标题描述联盟合作、招募下级联盟及佣金分成，未证明本人当前担任商务、BD 或 Marketing 员工岗位。",
+            "citations": [
+              {
+                "kind": "native_profile",
+                "profile_url": "https://www.linkedin.com/in/euren-leyson-bb3b54224/",
+                "quote": "Bybit Affiliate Partnership | Affiliate Partnership |  Looking for Sub-IB and Sub-Affiliates | Commission/Revenue Sharing | Crypto Headhunter for KOLs/Influencers  | CEX | Blockchain | Cryptocurrency"
+              }
+            ]
+          },
+          {
+            "criterion": {
+              "requirement": 0
+            },
+            "employment_required": true,
+            "role_required": false,
+            "time_requirement": "current",
+            "relationship": "external_partner",
+            "role_evidence": "not_requested",
+            "time_relation": "unknown",
+            "outcome": "insufficient",
+            "rationale": "Bybit 联盟合作及佣金分成不能证明任职于 Bybit；也没有任职于其他四家公司的证据，公司 OR 条件尚未得到支持。",
+            "citations": [
+              {
+                "kind": "native_profile",
+                "profile_url": "https://www.linkedin.com/in/euren-leyson-bb3b54224/",
+                "quote": "Bybit Affiliate Partnership | Affiliate Partnership |  Looking for Sub-IB and Sub-Affiliates | Commission/Revenue Sharing | Crypto Headhunter for KOLs/Influencers  | CEX | Blockchain | Cryptocurrency"
+              }
+            ]
+          }
+        ]
+      },
+      "expected": "insufficient"
+    }
+  ]
+}

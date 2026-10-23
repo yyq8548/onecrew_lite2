@@ -1,0 +1,28 @@
+{
+  "claim": {
+    "author_handle": "maker",
+    "author_id": "9876543210123456789",
+    "call_number": 3,
+    "campaign_id": "tiktok-language",
+    "candidate_id": "2e84b142-5cba-4591-9008-259909418132",
+    "ordinal": 1,
+    "platform": "tiktok",
+    "previous_urls": [],
+    "profile_ref": "dedicated",
+    "revision": 1,
+    "root_url": "https://www.tiktok.com/@maker/video/123451",
+    "saved_content_urls": [],
+    "search_hit_id": "c5569b97-527f-4350-8b9d-bcacf2fc38ff"
+  },
+  "sample": {
+    "author_id": "9876543210123456789",
+    "comments": [
+      {
+        "source_url": "https://www.tiktok.com/@maker/video/123451",
+        "text": "Unresolved sample"
+      }
+    ],
+    "source_url": "https://www.tiktok.com/@maker/video/123451",
+    "text": "Clothing"
+  }
+}

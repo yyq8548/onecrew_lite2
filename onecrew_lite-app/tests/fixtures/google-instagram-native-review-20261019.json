@@ -1,0 +1,53 @@
+{
+  "format_version": 2,
+  "campaign_id": "beauty-validation-20261019-google",
+  "criteria_revision": 1,
+  "criteria": {
+    "automatic_query_expansion": false,
+    "category": "美妆",
+    "contact_preference": "public_email_first",
+    "requires_ai_tool_demo": false,
+    "requires_public_tool_url": false
+  },
+  "approved_scopes": [
+    {
+      "platform": "google",
+      "profile_ref": "d5pskwub",
+      "keywords": [
+        "美妆",
+        "makeup beauty creator"
+      ]
+    }
+  ],
+  "approved_at": 1792451910,
+  "hit": {
+    "id": "9f1e2421-c3ed-4146-9664-cbbbf473fb1e",
+    "campaign_id": "beauty-validation-20261019-google",
+    "platform": "google",
+    "profile_ref": "d5pskwub",
+    "search_keyword": "makeup beauty creator",
+    "source_url": "https://www.instagram.com/mikaylajmakeup/?hl=en",
+    "title": "Mikayla Jane Nogueira (@mikaylajmakeup)",
+    "author_label": "Mikayla Jane Nogueira",
+    "captured_at": 1792455518,
+    "author_id": "https://www.instagram.com/mikaylajmakeup/",
+    "author_url": "https://www.instagram.com/mikaylajmakeup/",
+    "author_observed_at": 1792468911
+  },
+  "candidate_id": "ead080b0-3a43-4e0b-894d-f5694a586bcc",
+  "native_author_id": "https://www.instagram.com/mikaylajmakeup/",
+  "native_platform": "instagram",
+  "native_followers": 3395757,
+  "native_profile": {
+    "web_text": "Visible profile post previews; bounded excerpts, not verified full original captions.\nhttps://www.instagram.com/mikaylajmakeup/reel/Deh7cvNhgg1/\nTRACE IT! Coming to @povbeauty Oct 22.\n\nhttps://www.instagram.com/mikaylajmakeup/p/DernKqNFMeF/\nphilly 💚\n\nthank you @sydneyslayyyz for sharing your beautiful home with me. two days wasn’t long enough! \n\nI ate so much cheesesteak, that sh*t is so good 😅\n\nhttps://www.instagram.com/mikaylajmakeup/p/DehaSRwmolR/\nAttended the 4th annual @rarebeauty @selenagomez Rare Impact Fund gala raising money towards mental health services for youth and beyond. It is my fourth year attending and something I look forward to every year. A very special night. So grateful! #rarebeauty #selenagomez #rareimpactfund\n\nhttps://www.instagram.com/mikaylajmakeup/p/DeZ7qp3DnWn/\nI love fall and football 🏈 😋\nOctober moments…\n\nhttps://www.instagram.com/mikaylajmakeup/reel/DeIJdRgKzgw/\n❤️\n\nhttps://www.instagram.com/mikaylajmakeup/reel/DeHtBcEqA4W/\nThanks for the love on my @jayshetty interview ❤️",
+    "profile_url": "https://www.instagram.com/mikaylajmakeup/",
+    "observed_at": 1792468911,
+    "bio": "Makeup Artist\nMUA | Masshole | Pug Mom | Founder @povbeauty\npov beauty available @sephora\nBusiness/PR: haley.walsh@thedigitalbrandarchitects.com\npovbeauty.com and 3 more",
+    "bio_status": "complete"
+  },
+  "candidate_evidence_hash": "c6c0ffe820387ff52983a84bdbb0d9c833ffe5f9869bd278b020eaca2f1d59d9",
+  "video_description": null,
+  "transcript": null,
+  "public_pages": [],
+  "material_hash": "b460ffc234c130a6a1514a0e1de98c1085f3e50ac21d02b7dc0530572be617cb"
+}

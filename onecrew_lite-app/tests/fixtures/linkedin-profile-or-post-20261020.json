@@ -1,0 +1,72 @@
+{
+  "captured_from": "2026-10-20 local LinkedIn reproduction; saved provider receipts, no generated evidence",
+  "plan": {
+    "discovery_campaign_id": "602c0efd-6922-4999-9c99-79777b532150",
+    "revision": 1,
+    "brief_json": "\"在 LinkedIn 搜索币安（Binance）、OKX、Bitget、Bybit、Gate.io 的商务、BD 和 Marketing 人员，共 30 人。粉丝数不限，地区和语言不限。采集公开联系方式，保留 LinkedIn 主页，优先展示公开邮箱。\\nDefault search entries when no platform is requested: youtube\"",
+    "opencli_version": "1.8.8",
+    "criteria_json": "{\"category\":\"商务、BD 和 Marketing 人员\",\"region\":\"\",\"language\":\"\",\"min_subscribers\":0,\"requires_ai_tool_demo\":false,\"requires_public_tool_url\":false,\"requirements\":[{\"description\":\"人员须任职于币安（Binance）、OKX、Bitget、Bybit 或 Gate.io，依据公开职业资料核实公司关联。\",\"excerpt\":\"币安（Binance）、OKX、Bitget、Bybit、Gate.io 的商务、BD 和 Marketing 人员\"}],\"contact_preference\":\"public_email_first\",\"contact_search_terms\":[\"email\",\"business cooperation\",\"contact\",\"official website\"],\"automatic_query_expansion\":true,\"table_subject\":\"币安（Binance）、OKX、Bitget、Bybit、Gate.io 的商务\"}",
+    "scope_json": "[{\"platform\":\"linkedin\",\"profile_ref\":\"d5pskwub\",\"keywords\":[\"Binance business development\",\"OKX business development\",\"Bitget business development\",\"Bybit Marketing\",\"Gate.io business development\",\"币安 商务\",\"OKX Marketing\",\"Bitget Marketing\"]}]",
+    "approved_at": 1792542706
+  },
+  "hit": {
+    "id": "2ddf93d8-6cfb-4fa0-bd42-30e15119200d",
+    "discovery_campaign_id": "602c0efd-6922-4999-9c99-79777b532150",
+    "platform": "linkedin",
+    "profile_ref": "d5pskwub",
+    "search_keyword": "Binance business development",
+    "source_url": "https://www.linkedin.com/in/ray-yee-liew/",
+    "title": "Ray Yee Liew",
+    "author_label": "Ray Yee Liew",
+    "captured_at": 1792542733
+  },
+  "author": {
+    "search_hit_id": "2ddf93d8-6cfb-4fa0-bd42-30e15119200d",
+    "author_id": "ray-yee-liew",
+    "author_url": "https://www.linkedin.com/in/ray-yee-liew/",
+    "observed_at": 1792542733
+  },
+  "profile": {
+    "search_hit_id": "2ddf93d8-6cfb-4fa0-bd42-30e15119200d",
+    "discovery_campaign_id": "602c0efd-6922-4999-9c99-79777b532150",
+    "platform": "linkedin",
+    "profile_ref": "d5pskwub",
+    "author_id": "ray-yee-liew",
+    "expected_revision": 1,
+    "call_number": 4,
+    "status": "completed",
+    "native_profile_json": "{\"adapter_version\":\"1.0.0\",\"author_handle\":\"ray-yee-liew\",\"account_id\":\"ACoAADAaVKsB2hQuH6J34lsGqjmnEOgny6fgZnc\",\"author_label\":\"Ray Yee Liew\",\"profile_url\":\"https://www.linkedin.com/in/ray-yee-liew/\",\"follower_count\":1548,\"follower_text\":\"1,548 followers\",\"headline\":\"Global Business Development at Binance | Payments\",\"bio\":\"\",\"public_links\":[],\"contact_links\":[\"https://www.linkedin.com/in/ray-yee-liew/overlay/contact-info/\"],\"evidence_source\":\"visible_profile_header\",\"bio_truncated\":true}",
+    "stop_code": null,
+    "updated_at": 1792542763
+  },
+  "content": {
+    "search_hit_id": "2ddf93d8-6cfb-4fa0-bd42-30e15119200d",
+    "discovery_campaign_id": "602c0efd-6922-4999-9c99-79777b532150",
+    "platform": "linkedin",
+    "profile_ref": "d5pskwub",
+    "author_id": "ray-yee-liew",
+    "source_url": "https://www.linkedin.com/in/ray-yee-liew/",
+    "expected_revision": 1,
+    "call_number": 5,
+    "status": "failed",
+    "native_content_json": null,
+    "stop_code": "linkedin_content_unavailable",
+    "updated_at": 1792542778
+  },
+  "candidate": {
+    "id": "f1bbc525-0b49-48ed-9213-4479c2b789bd",
+    "discovery_campaign_id": "602c0efd-6922-4999-9c99-79777b532150",
+    "criteria_revision": 1,
+    "platform": "linkedin",
+    "source_profile_ref": "d5pskwub",
+    "platform_account_id": "ACoAADAaVKsB2hQuH6J34lsGqjmnEOgny6fgZnc",
+    "display_name": "Ray Yee Liew",
+    "profile_url": "https://www.linkedin.com/in/ray-yee-liew/",
+    "verdict": "pending",
+    "evidence_json": "{\"source_urls\":[\"https://www.linkedin.com/in/ray-yee-liew/\",\"https://www.linkedin.com/in/ray-yee-liew/\"],\"subscribers_raw\":\"1548\",\"subscribers_source_url\":\"https://www.linkedin.com/in/ray-yee-liew/\",\"author_identity_kind\":\"native_id\",\"author_identity_search_hit_id\":null,\"captured_at\":1792542763,\"profile_bio_status\":\"truncated\",\"profile_bio_status_source_url\":\"https://www.linkedin.com/in/ray-yee-liew/\",\"assessment\":{\"reasons\":[\"category_unverified\",\"requirement_unverified\"],\"subscribers_normalized\":1548,\"match_rating\":null}}",
+    "created_at": 1792542763,
+    "updated_at": 1792542763,
+    "source_platform": "linkedin"
+  },
+  "reviews": []
+}

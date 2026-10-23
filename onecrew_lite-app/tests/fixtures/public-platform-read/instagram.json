@@ -1,0 +1,76 @@
+[
+  {
+    "expected": {
+      "address_street": "Street",
+      "bio_links": [
+        "https://example.com",
+        "https://example.net"
+      ],
+      "biography": "Business: public@example.com",
+      "city_name": "City",
+      "external_url": "https://example.com",
+      "follower_count": 9223372036854775807,
+      "following_count": -9223372036854775808,
+      "full_name": "Creator",
+      "id": "9223372036854775807",
+      "is_private": false,
+      "is_verified": true,
+      "media_count": -1,
+      "profile_pic_url": "https://example.com/a",
+      "public_email": "public@example.com",
+      "username": "creator"
+    },
+    "input": {
+      "address_street": "Street",
+      "bio_links": [
+        {
+          "url": "https://example.com"
+        },
+        {
+          "url": "https://example.com"
+        },
+        {
+          "lynx_url": "https://example.net"
+        }
+      ],
+      "biography": "Business: public@example.com",
+      "city_name": "City",
+      "external_url": "https://example.com",
+      "follower_count": 9223372036854775807,
+      "following_count": -9223372036854775808,
+      "full_name": "Creator",
+      "is_private": false,
+      "is_verified": true,
+      "media_count": -1,
+      "pk": 9223372036854775807,
+      "profile_pic_url": "https://example.com/a",
+      "public_email": "public@example.com",
+      "username": "creator"
+    }
+  },
+  {
+    "expected": {
+      "full_name": "",
+      "id": "9007199254740993",
+      "username": "minimal"
+    },
+    "input": {
+      "biography": "",
+      "external_url": null,
+      "follower_count": 18446744073709551615,
+      "following_count": "42",
+      "full_name": "",
+      "is_private": null,
+      "pk": "9007199254740993",
+      "username": "minimal"
+    }
+  },
+  {
+    "expected": {
+      "full_name": "",
+      "id": "",
+      "username": ""
+    },
+    "input": {}
+  }
+]
