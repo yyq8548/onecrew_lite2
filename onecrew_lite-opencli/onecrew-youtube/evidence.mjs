@@ -125,12 +125,23 @@ export async function readWatchPage(videoId, project) {
   } finally { await reader.cancel(); }
 }
 
+export async function waitForYoutubePage(kind = 'document') {
+  for (let poll = 0; poll < 12; poll++) {
+    if (location.href !== 'about:blank' && location.origin !== 'https://www.youtube.com') throw new Error('ONECREW_ORIGIN_MISMATCH');
+    const documentReady = location.origin === 'https://www.youtube.com' && document.body && document.readyState !== 'loading';
+    const dataReady = kind === 'document' || window.ytInitialData && (kind !== 'watch' || window.ytInitialPlayerResponse && window.ytcfg?.data_?.INNERTUBE_CONTEXT);
+    if (documentReady && dataReady) return;
+    if (poll < 11) await new Promise(resolve => setTimeout(resolve, 250));
+  }
+  throw new Error('ONECREW_YOUTUBE_PAGE_TIMEOUT');
+}
+
 export async function readVideoEvidence(page, videoId) {
   if (typeof videoId !== 'string' || !/^[A-Za-z0-9_-]{11}$/.test(videoId)) {
     throw new Error('ONECREW_VIDEO_ID_INVALID');
   }
   await page.goto('https://www.youtube.com', { waitUntil: 'none' });
-  await page.wait(2);
+  await page.evaluate(`(${waitForYoutubePage.toString()})()`);
   await page.evaluate(`(${restoreOriginalLanguage.toString()})()`);
   const result = await page.evaluate(
     `(${readWatchPage.toString()})(${JSON.stringify(videoId)}, ${projectWatchHtml.toString()})`,

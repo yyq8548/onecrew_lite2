@@ -1,17 +1,14 @@
-import { fetchRedditComments, projectRedditComments } from './reddit-comments.mjs';
 // These are read commands, never the similarly named comment/reply write commands.
 export const commentReaders = Object.freeze([
   ['bilibili', 'comments'], ['zhihu', 'answer-comments'],
-  ['weibo', 'comments'], ['reddit', 'read'],
+  ['weibo', 'comments'],
 ]);
 
 export function boundedCommentArgs(site, args) {
   const limit = args.limit ?? 20;
   if (!Number.isInteger(limit) || limit < 1 || limit > 20) throw new Error('Comment limit must be 1..20');
   // Bound nested traversal as well as the number of top-level rows.
-  return { ...args, limit, ...(site === 'reddit'
-    ? { depth: 1, replies: 1, 'max-length': 2000, 'expand-more': false }
-    : site === 'zhihu' ? { 'replies-limit': 0 } : {}) };
+  return { ...args, limit, ...(site === 'zhihu' ? { 'replies-limit': 0 } : {}) };
 }
 
 export async function readComments(page, args, site, native, ownPage) {
@@ -20,19 +17,11 @@ export async function readComments(page, args, site, native, ownPage) {
     throw new Error('Reviewed comment reader unavailable');
   }
   const bounded = boundedCommentArgs(site, args);
-  if (site === 'reddit' && !/^[a-z0-9]{1,15}$/.test(String(bounded['post-id'] ?? '')))
-    throw new Error('ONECREW_COMMENTS_INPUT');
   if (site === 'weibo' && !/^[1-9][0-9]{0,19}$/.test(String(bounded.id ?? '')))
     throw new Error('ONECREW_COMMENTS_INPUT');
   return ownPage(page, async owned => {
     // Some upstream readers assume navigateBefore has already selected their domain.
     await owned.goto(`https://${native.domain}/`);
-    if (site === 'reddit') {
-      const postId = String(bounded['post-id']);
-      const response = await owned.evaluate(`(${fetchRedditComments.toString()})(${JSON.stringify(postId)}, ${bounded.limit})`);
-      const data = response && 'session' in Object(response) && 'data' in Object(response) ? response.data : response;
-      return projectRedditComments(data, postId, bounded.limit);
-    }
     if (site === 'weibo') {
       // The upstream display projection discards both comment and user IDs.
       // Read the same fixed endpoint once, preserving those native identities.

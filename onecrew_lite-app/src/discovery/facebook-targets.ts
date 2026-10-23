@@ -1,8 +1,9 @@
 import type { DatabaseSync } from "node:sqlite";
+import { discoveryReadBusySql } from "./read-capacity.ts";
 import { isDeepStrictEqual } from "node:util";
 import { z } from "zod";
 import { parseApplicationJson, stringifyApplicationJson } from "../contracts/application-json.ts";
-import { validateCreatorSchema } from "../storage/creator-schema.ts";
+import { assertValidatedCreatorConnection } from "../storage/creator-schema.ts";
 import { DiscoveryProfileRepository, discoveryProfileClaim, type DiscoveryProfileClaim } from "./profile-repository.ts";
 import { validateDiscoveryContentResult } from "./content-result.ts";
 import { discoveryReadPlatformStatus, sourceLocalReadFailure } from "./stops.ts";
@@ -12,7 +13,7 @@ export interface DiscoveryFacebookTargetsRead { claim: DiscoveryProfileClaim; st
 export const discoveryFacebookReelValid = (source: string) => /^https:\/\/www\.facebook\.com\/reel\/[1-9]\d{0,24}$/u.test(source);
 export class DiscoveryFacebookTargetsRepository {
   readonly #db: DatabaseSync;
-  constructor(database: DatabaseSync) { validateCreatorSchema(database); this.#db = database; }
+  constructor(database: DatabaseSync) { assertValidatedCreatorConnection(database); this.#db = database; }
   #transaction<T>(body: () => T): T { this.#db.exec("BEGIN IMMEDIATE"); let committed = false; try { const value = body(); this.#db.exec("COMMIT"); committed = true; return value; } finally { if (!committed) this.#db.exec("ROLLBACK"); } }
   next(campaign: string): string | null {
     const row = this.#db.prepare(`SELECT p.search_hit_id FROM discovery_profile_reads p
@@ -20,7 +21,7 @@ export class DiscoveryFacebookTargetsRepository {
       JOIN discovery_campaign_revisions v ON v.discovery_campaign_id=c.id AND v.revision=c.current_revision
       JOIN discovery_search_hits h ON h.id=p.search_hit_id JOIN discovery_search_authors a ON a.search_hit_id=h.id
       JOIN discovery_platform_runs r ON r.discovery_campaign_id=c.id AND r.platform=p.platform AND r.profile_ref=p.profile_ref
-      WHERE c.id=? AND c.phase='active' AND v.approved_at IS NOT NULL AND(c.max_calls IS NULL OR c.used_calls<c.max_calls)
+      WHERE c.id=? AND c.phase='active' AND v.approved_at IS NOT NULL
         AND p.platform='facebook' AND p.expected_revision=c.current_revision AND p.status='completed' AND p.stop_code IS NULL
         AND h.discovery_campaign_id=c.id AND h.platform=p.platform AND h.profile_ref=p.profile_ref AND a.author_id=p.author_id
         AND a.author_url='https://www.facebook.com/profile.php?id='||p.author_id
@@ -29,7 +30,7 @@ export class DiscoveryFacebookTargetsRepository {
           AND EXISTS(SELECT 1 FROM discovery_facebook_identity_reads i WHERE i.search_hit_id=h.id AND i.status='completed' AND i.discovery_campaign_id=c.id AND i.profile_ref=p.profile_ref AND i.expected_revision=c.current_revision AND i.source_url=h.source_url AND json_extract(i.native_identity_json,'$.id')=p.author_id)))
         AND json_extract(p.native_profile_json,'$.id')=p.author_id AND r.status='completed'
         AND NOT EXISTS(SELECT 1 FROM discovery_facebook_content_targets t WHERE t.search_hit_id=h.id)
-        AND NOT EXISTS(SELECT 1 FROM discovery_platform_runs b WHERE b.discovery_campaign_id=c.id AND b.status='searching')
+        AND NOT ${discoveryReadBusySql(this.#db, campaign, "h.platform")}
       ORDER BY h.captured_at,COALESCE((SELECT position FROM discovery_search_positions WHERE search_hit_id=h.id),9223372036854775807),h.id LIMIT 1`).get(campaign);
     return row === undefined ? null : text.parse(row.search_hit_id);
   }
@@ -39,7 +40,7 @@ export class DiscoveryFacebookTargetsRepository {
       if (this.next(campaign) !== hit) throw new Error("Facebook targets require an unattempted, approved completed profile");
       const profile = new DiscoveryProfileRepository(this.#db).get(campaign, hit);
       if (profile.claim.expected_revision !== revision) throw new Error("Facebook target revision changed");
-      const timestamp = Math.floor(Date.now() / 1000), updated = this.#db.prepare("UPDATE discovery_campaigns SET used_calls=used_calls+1,updated_at=? WHERE id=? AND current_revision=? AND phase='active' AND(max_calls IS NULL OR used_calls<max_calls) RETURNING used_calls").get(timestamp, campaign, revision);
+      const timestamp = Math.floor(Date.now() / 1000), updated = this.#db.prepare("UPDATE discovery_campaigns SET used_calls=used_calls+1,updated_at=? WHERE id=? AND current_revision=? AND phase='active' RETURNING used_calls").get(timestamp, campaign, revision);
       const claim = { ...profile.claim, call_number: u32.parse(updated?.used_calls) };
       this.#db.prepare("INSERT INTO discovery_facebook_content_targets VALUES(?,?,'facebook',?,?,?,?,?,'reading',NULL,NULL,?)").run(hit, campaign, claim.profile_ref, claim.author_id, claim.author_url, revision, claim.call_number, timestamp);
       this.#db.prepare("UPDATE discovery_platform_runs SET status='searching',active_query=?,stop_code=NULL,updated_at=? WHERE discovery_campaign_id=? AND platform='facebook' AND profile_ref=? AND status='completed'").run(`targets:${hit}:${claim.call_number}`, timestamp, campaign, claim.profile_ref);

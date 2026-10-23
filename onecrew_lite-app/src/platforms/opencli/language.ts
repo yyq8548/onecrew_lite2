@@ -71,7 +71,7 @@ export function bilibiliLanguagePlan(mid: string, source: string | null) {
   } } satisfies ReviewedOpenCliRead<unknown>;
 }
 export function instagramRecentOriginalsPlan(username: string, authorId: string, query = "", sourceUrl?: string) {
-  if (!/^[a-z\d_.]{1,30}$/u.test(username) || !numeric(authorId, 25)) input();
+  if (!/^[a-z\d_.]{1,30}$/u.test(username) || !numeric(authorId, 25) && authorId !== `https://www.instagram.com/${username}/`) input();
   if (Buffer.byteLength(query) > 2000 || /[\p{Cc}&&[^\n\r\t]]/v.test(query)) input();
   if (sourceUrl && !new RegExp(`^https://www\\.instagram\\.com/${username.replaceAll(".", "\\.")}/(?:p|reel)/[A-Za-z\\d_-]{1,32}/$`, "u").test(sourceUrl)) input();
   const row = z.object({ post_id: text.regex(/^[A-Za-z\d_-]{1,32}$/u), author_id: z.literal(authorId), source_url: text.regex(/^https:\/\/www\.instagram\.com\/(?:p|reel)\/[A-Za-z\d_-]{1,32}\/$/u), text: text.refine(value => Buffer.byteLength(value) <= 8000 && !value.includes("\0")), text_truncated: z.boolean(), observations: nativeContentObservations.optional() }).strict();

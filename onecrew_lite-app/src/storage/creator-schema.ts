@@ -12,10 +12,23 @@ import { migrateCreatorFacebookContentEdge } from "./creator-facebook-content-ed
 import { migrateCreatorTikTokEdge } from "./creator-tiktok-edge.ts";
 import { migrateCreatorTaskOriginEdge } from "./creator-task-origin-edge.ts";
 import { migrateCreatorPublicContactEdge } from "./creator-public-contact-edge.ts";
+import { migrateCreatorWebProfileEdge } from "./creator-web-profile-edge.ts";
+import { migrateCreatorInstagramDomEdge } from "./creator-instagram-dom-edge.ts";
 
 const schemaSql = () => ["creator-schema90.sql", "creator-indexes90.sql", "creator-triggers90.sql"]
   .map(readStorageSql).join("\n");
 const asciiLower = (value: string) => value.replace(/[A-Z]/g, (character) => character.toLowerCase());
+type CreatorSchemaStamp = { userVersion: number; schemaVersion: number };
+const validatedConnections = new WeakMap<DatabaseSync, CreatorSchemaStamp>();
+function creatorSchemaStamp(db: DatabaseSync): CreatorSchemaStamp {
+  return { userVersion: Number(db.prepare("PRAGMA user_version").get()!.user_version), schemaVersion: Number(db.prepare("PRAGMA schema_version").get()!.schema_version) };
+}
+
+export function assertValidatedCreatorConnection(db: DatabaseSync): void {
+  const current = creatorSchemaStamp(db), validated = validatedConnections.get(db);
+  if (validated?.userVersion === current.userVersion && validated.schemaVersion === current.schemaVersion) return;
+  validateCreatorSchema(db);
+}
 
 // 使用成熟 SQLite CST 解析器比较结构，保留带引号的标识符与字面值。
 export function normalizeCreatorSchemaSql(sql: string): string {
@@ -72,8 +85,9 @@ export function validateCreatorSchema90(db: DatabaseSync): void {
   validateCreatorSchemaVersion(db, 90);
 }
 export function validateCreatorSchema(db: DatabaseSync): void {
+  validatedConnections.delete(db);
   const version = Number(db.prepare("PRAGMA user_version").get()!.user_version);
-  if (version !== 90 && version !== 91 && version !== 92) throw new Error(`Creator current schema is unsupported: ${version}`);
+  if (version !== 90 && version !== 91 && version !== 92 && version !== 93 && version !== 94 && version !== 95 && version !== 96) throw new Error(`Creator current schema is unsupported: ${version}`);
   validateCreatorSchemaVersion(db, version);
 }
 
@@ -98,7 +112,8 @@ export function rebuildCreatorTableChanges(db: DatabaseSync, table: string, repl
 }
 
 export function validateCreatorSchemaVersion(db: DatabaseSync, expectedVersion: number): void {
-  if (!Number.isInteger(expectedVersion) || expectedVersion < 27 || expectedVersion > 92) throw new Error(`Creator version ${expectedVersion} frozen validation is not implemented`);
+  validatedConnections.delete(db);
+  if (!Number.isInteger(expectedVersion) || expectedVersion < 27 || expectedVersion > 96) throw new Error(`Creator version ${expectedVersion} frozen validation is not implemented`);
   const version = Number(db.prepare("PRAGMA user_version").get()!.user_version);
   if (version !== expectedVersion) throw new Error(`Creator schema validation requires version ${expectedVersion}; found ${version}`);
   const checks = db.prepare("PRAGMA integrity_check").all();
@@ -108,6 +123,10 @@ export function validateCreatorSchemaVersion(db: DatabaseSync, expectedVersion: 
     reference.exec(schemaSql());
     if (expectedVersion >= 91) migrateCreatorPublicContactEdge(reference);
     if (expectedVersion >= 92) reference.exec(readStorageSql("creator-91-to-92.sql"));
+    if (expectedVersion >= 93) { reference.exec(readStorageSql("creator-92-to-93.sql")); migrateCreatorWebProfileEdge(reference); }
+    if (expectedVersion >= 94) reference.exec(readStorageSql("creator-93-to-94.sql"));
+    if (expectedVersion >= 95) reference.exec(readStorageSql("creator-94-to-95.sql"));
+    if (expectedVersion >= 96) migrateCreatorInstagramDomEdge(reference);
     if (expectedVersion < 90) reference.exec("DROP TABLE discovery_query_rounds");
     if (expectedVersion < 89) rebuildCreatorTable(reference, "discovery_target_increases", "new_target_count != previous_target_count", "new_target_count > previous_target_count");
     if (expectedVersion < 88) {
@@ -194,6 +213,7 @@ export function validateCreatorSchemaVersion(db: DatabaseSync, expectedVersion: 
   if (expectedVersion >= 35) validateStoredTags(db);
   if (db.prepare("SELECT thread.id FROM email_threads thread WHERE thread.archived_at IS NOT NULL AND NOT EXISTS (SELECT 1 FROM emails email WHERE email.thread_id = thread.id AND email.direction = 'inbound') LIMIT 1").get()) throw new Error("Email archive marker has no inbound message");
   if (db.prepare("SELECT locator_id FROM creator_contact_routes GROUP BY locator_id HAVING COUNT(DISTINCT creator_id) > 1 LIMIT 1").get()) throw new Error("Contact locator belongs to multiple Creators");
+  if (expectedVersion >= 90) validatedConnections.set(db, creatorSchemaStamp(db));
 }
 
 export async function initializeNewCreatorDatabase(path: string): Promise<void> {
@@ -209,7 +229,12 @@ export async function initializeNewCreatorDatabase(path: string): Promise<void> 
     db.exec(schemaSql());
     migrateCreatorPublicContactEdge(db);
     db.exec(readStorageSql("creator-91-to-92.sql"));
-    db.exec("PRAGMA user_version = 92");
+    db.exec(readStorageSql("creator-92-to-93.sql"));
+    migrateCreatorWebProfileEdge(db);
+    db.exec(readStorageSql("creator-93-to-94.sql"));
+    db.exec(readStorageSql("creator-94-to-95.sql"));
+    migrateCreatorInstagramDomEdge(db);
+    db.exec("PRAGMA user_version = 96");
     validateCreatorSchema(db);
     await verifyPrivateFile(absolute);
     db.exec("COMMIT");

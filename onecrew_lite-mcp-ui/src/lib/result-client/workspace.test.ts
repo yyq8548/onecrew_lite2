@@ -3,7 +3,7 @@ import type { App } from "@modelcontextprotocol/ext-apps";
 import { readWorkspaceActivity } from "./workspace";
 
 const first = { campaign_id: "first", brief: "旧计划", stage: "paused", qualified: 0,
-  pending: 1, target: 4, attempted: 1, total: 2, used: 3, max: 20,
+  pending: 1, target: 4, attempted: 1, total: 2, used: 3,
   login_required: 0, read_errors: 0, restricted: 0, stale: false };
 const second = { ...first, campaign_id: "second", brief: "新计划", used: 0 };
 function app(history: unknown): App {
@@ -24,9 +24,9 @@ describe("service-owned task display history", () => {
     }
   });
   it("accepts unlimited read statistics without changing explicit pause", async () => {
-    const unlimited = { ...first, campaign_id: "unlimited", max: null, used: 10001 };
+    const unlimited = { ...first, campaign_id: "unlimited", used: 10001 };
     const result = await readWorkspaceActivity(app([unlimited]));
-    expect(result.history[0].max).toBeNull();
+    expect(result.history[0]).not.toHaveProperty("max");
     expect(result.history[0].used).toBe(10001);
     expect(result.history[0].stage).toBe("paused");
   });

@@ -1,8 +1,7 @@
 import { expect, it } from "vitest";
 import { checkpointExecution, loadRunCheckpoint, loadRunHistory, saveRunCheckpoint } from "./discovery-run-checkpoint";
-import type { DiscoveryCampaign } from "./opencli-discovery";
 
-const campaign = { id: "phone", revision: 1, used_calls: 11, max_calls: 200 } as DiscoveryCampaign;
+const campaign = { id: "phone", revision: 1, used_calls: 11 };
 function storage() {
   const data = new Map<string, string>();
   return { data, getItem: (key: string) => data.get(key) ?? null, setItem: (key: string, value: string) => { data.set(key, value); } };
@@ -10,7 +9,7 @@ function storage() {
 it("retains the exact stop checkpoint on reload without restoring execution or authority", () => {
   const store = storage();
   saveRunCheckpoint(store, campaign, "page_closed", 100);
-  expect(loadRunCheckpoint(store, "phone")).toEqual({ campaign_id: "phone", revision: 1, used: 11, max: 200, reason: "page_closed", recorded_at: 100 });
+  expect(loadRunCheckpoint(store, "phone")).toEqual({ campaign_id: "phone", revision: 1, used: 11, reason: "page_closed", recorded_at: 100 });
   expect(checkpointExecution(loadRunCheckpoint(store, "phone")?.reason)).toBe("paused");
   expect(loadRunCheckpoint(store, "water")).toBeNull();
   saveRunCheckpoint(store, campaign, null, 101);
@@ -31,10 +30,20 @@ it("keeps uncertain execution separate from source failures and does not save er
 });
 it("retains unlimited reads and explicit pause across reload", () => {
   const store = storage();
-  saveRunCheckpoint(store, { ...campaign, max_calls: null, used_calls: 10001 }, "user_paused", 100);
-  expect(loadRunCheckpoint(store, "phone")?.max).toBeNull();
+  saveRunCheckpoint(store, { ...campaign, used_calls: 10001 }, "user_paused", 100);
+  expect(loadRunCheckpoint(store, "phone")).not.toHaveProperty("max");
   expect(loadRunCheckpoint(store, "phone")?.used).toBe(10001);
   expect(checkpointExecution(loadRunCheckpoint(store, "phone")?.reason)).toBe("paused");
+});
+it("loads historical checkpoints without restoring the retired limit", () => {
+  const store = storage();
+  store.setItem("onecrew-discovery-run-checkpoints-v1", JSON.stringify({ format: 1, entries: [
+    { campaign_id: "phone", revision: 1, used: 11, max: 11, reason: "budget_exhausted", recorded_at: 100 },
+  ] }));
+  expect(loadRunCheckpoint(store, "phone")).toEqual({ campaign_id: "phone", revision: 1, used: 11, reason: "execution_interrupted", recorded_at: 100 });
+  saveRunCheckpoint(store, { ...campaign, used_calls: 12 }, "user_paused", 101);
+  expect(loadRunHistory(store, "phone")).toHaveLength(2);
+  expect(store.getItem("onecrew-discovery-run-checkpoints-v1")).not.toContain('"max"');
 });
 it("refuses corrupt or future journals and surfaces unavailable storage", () => {
   const store = storage();

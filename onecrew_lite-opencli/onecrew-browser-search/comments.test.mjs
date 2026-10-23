@@ -2,8 +2,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { boundedCommentArgs, readComments, captureZhihuCommentAuthors, projectWeiboComments, fetchWeiboComments } from './comments.mjs';
 test('comment reads cannot expand arbitrary nested trees', () => {
-  assert.deepEqual(boundedCommentArgs('reddit', {limit: 10, depth: 99, 'expand-more': true}),
-    {limit: 10, depth: 1, replies: 1, 'max-length': 2000, 'expand-more': false});
   assert.equal(boundedCommentArgs('zhihu', {'replies-limit': 100})['replies-limit'], 0);
   assert.throws(() => boundedCommentArgs('weibo', {limit: 21}));
 });

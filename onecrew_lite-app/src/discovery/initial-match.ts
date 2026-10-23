@@ -1,10 +1,8 @@
 import { z } from "zod";
 import { discoveryReviewCriterion } from "@onecrew/runtime-contracts/discovery";
-import { containsDiscoveryCitation, matchedDiscoveryLanguageSource, type DiscoveryReviewMaterial } from "./review-material.ts";
-import { discoveryScale } from "./qualification.ts";
+import { matchedDiscoveryLanguageSource, type DiscoveryReviewMaterial } from "./review-material.ts";
 
 export const INITIAL_MATCH_REVIEWER = "onecrew-match-evaluation-0cebf122-initial-v1";
-export const INITIAL_MATCH_POLICY = "initial-match-evaluation-v1";
 const text = z.string().refine(value => value.isWellFormed());
 const quote = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("description"), quote: text }), z.strictObject({ kind: z.literal("search_caption"), quote: text }), z.strictObject({ kind: z.literal("native_content"), quote: text }),
@@ -14,7 +12,6 @@ const quote = z.discriminatedUnion("kind", [
 export const discoveryReviewFinding = z.strictObject({ criterion: discoveryReviewCriterion, outcome: z.enum(["supported", "contradicted", "insufficient"]), rationale: text, citations: z.array(quote), tool: z.strictObject({ name: text, requested_url: text }).nullish(), country_code: text.nullish(), match_level: z.enum(["excellent", "good", "medium", "low"]).nullish() });
 export type DiscoveryReviewFinding = z.infer<typeof discoveryReviewFinding>;
 const object = (value: unknown): Record<string, unknown> => value !== null && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
-const u64 = (value: unknown): bigint | null => typeof value === "bigint" && value >= 0n && value <= 18446744073709551615n ? value : typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? BigInt(value) : null;
 
 export function validateAudienceLanguage(material: DiscoveryReviewMaterial, finding: DiscoveryReviewFinding, selectionOnly = false) {
   if (finding.outcome !== "supported" || !selectionOnly && finding.match_level === "low") return;
@@ -38,31 +35,4 @@ export function validateAudienceLanguage(material: DiscoveryReviewMaterial, find
     return cited >= 3;
   });
   if (!enough) throw new Error("initial_match_audience_sample_insufficient");
-}
-
-// 仅验证已冻结材料中的判断；持久审核收据和账号身份由仓储事务另行提交。
-export function applyInitialDiscoveryMatch(material: DiscoveryReviewMaterial, rawFindings: unknown, rawEvidence: unknown, reviewId: string): Record<string, unknown> {
-  const findings = z.array(discoveryReviewFinding).parse(rawFindings).filter(finding => typeof finding.criterion === "string"), finding = findings[0];
-  if (!finding || findings.length > 2) throw new Error("initial_match_single_finding_required");
-  const criteria = object(material.criteria), evidence = object(rawEvidence), language = criteria.language, secondary = findings[1];
-  if (secondary && (finding.outcome !== "insufficient" || secondary.criterion !== "content_language" || secondary.outcome !== "insufficient" || secondary.match_level != null || secondary.tool != null || secondary.country_code != null || !secondary.rationale.trim() || Buffer.byteLength(secondary.rationale) > 4000 || secondary.citations.length > 8 || !(typeof language === "string" && language.trim()) || !secondary.citations.every(citation => containsDiscoveryCitation(material, citation)))) throw new Error("initial_match_language_request_invalid");
-  const supported = finding.outcome === "supported";
-  if (finding.criterion !== "match_fit") throw new Error("initial_match_criterion_invalid");
-  if (finding.outcome === "contradicted") throw new Error("initial_match_outcome_invalid");
-  if (supported !== (finding.match_level != null)) throw new Error("initial_match_level_invalid");
-  if (!finding.rationale.trim()) throw new Error("initial_match_rationale_empty");
-  if (Buffer.byteLength(finding.rationale) > 4000) throw new Error("initial_match_rationale_too_large");
-  if (finding.tool != null || finding.country_code != null) throw new Error("initial_match_auxiliary_field_invalid");
-  if (finding.citations.length > 8) throw new Error("initial_match_citation_count_invalid");
-  if (!finding.citations.every(citation => containsDiscoveryCitation(material, citation))) throw new Error("initial_match_citation_not_saved");
-  const count = u64(material.native_followers) ?? u64(object(evidence.assessment).subscribers_normalized), estimate = material.native_follower_estimate;
-  const scale = discoveryScale(criteria, estimate ? { nominal: BigInt(estimate.nominal), lower: BigInt(estimate.lower), upper: BigInt(estimate.upper) } : count === null ? null : { nominal: count, lower: count, upper: count }, material.hit.platform === "pinterest" ? material.native_profile?.monthly_views_raw ?? null : undefined);
-  const below = scale.state === "failed", unknown = scale.state === "unknown";
-  if (secondary && unknown) throw new Error("initial_match_language_request_invalid");
-  if (below && finding.match_level !== "low") throw new Error("initial_match_required_failure_must_be_low");
-  if (!below && unknown && supported && finding.match_level !== "low") throw new Error("initial_match_required_count_unknown");
-  if (supported && !below && !finding.citations.some(citation => ["description", "search_caption", "transcript", "native_content", "native_profile"].includes(citation.kind))) throw new Error("initial_match_author_evidence_required");
-  if (supported && !below && finding.match_level !== "low" && typeof language === "string" && language.trim() && finding.citations.some(citation => citation.kind === "native_profile") && !finding.citations.some(citation => ["description", "search_caption", "transcript", "native_content"].includes(citation.kind))) throw new Error("initial_match_content_language_unavailable");
-  validateAudienceLanguage(material, finding);
-  return { ...evidence, reviewed_match: { verified: true, native_author_id: material.native_author_id, source_url: material.hit.source_url, review_id: reviewId, material_hash: material.material_hash, policy_version: INITIAL_MATCH_POLICY, outcome: finding.outcome, level: finding.match_level ?? null, reason: finding.rationale, language_only_pending: secondary !== undefined } };
 }

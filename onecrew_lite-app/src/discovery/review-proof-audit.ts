@@ -41,7 +41,7 @@ export function stripUnauditedDiscoveryProofs(database: DatabaseSync, raw: unkno
                 OR (json_extract(r.material_json,'$.format_version')=2 AND h.platform='bilibili')))
           OR (r.policy_version IN ('category-content-review-v1','language-match-review-v1') AND ?8='category_content'
               AND ((json_extract(r.material_json,'$.format_version')=2
-                AND h.platform IN ('reddit','facebook','instagram','weibo','bluesky','zhihu','hackernews','pinterest','pixiv','linkedin','douyin'))
+                AND h.platform IN ('facebook','instagram','weibo','bluesky','zhihu','hackernews','pixiv','linkedin','douyin'))
                 OR ${webProfileProof})))
         AND json_extract(f.value,'$.criterion')=?8
         AND json_extract(f.value,'$.outcome')='supported'
@@ -61,7 +61,7 @@ export function stripUnauditedDiscoveryProofs(database: DatabaseSync, raw: unkno
         AND r.criteria_revision=?4 AND r.native_author_id=?5 AND r.material_hash=?6
         AND h.source_url=?7 AND r.policy_version=?13
         AND ((h.platform='youtube' AND json_extract(r.material_json,'$.format_version')=1)
-          OR (h.platform IN ('twitter','tiktok','bilibili','reddit','facebook','instagram','weibo','bluesky','zhihu','hackernews','pinterest','pixiv','linkedin','douyin') AND json_extract(r.material_json,'$.format_version')=2)
+          OR (h.platform IN ('twitter','tiktok','bilibili','facebook','instagram','weibo','bluesky','zhihu','hackernews','pixiv','linkedin','douyin') AND json_extract(r.material_json,'$.format_version')=2)
           OR (h.platform IN ('google','yahoo') AND json_extract(r.material_json,'$.format_version')=2
             AND json_extract(r.material_json,'$.native_platform') IN ('youtube','twitter','douyin') AND EXISTS(
               SELECT 1 FROM discovery_web_source_reads web WHERE web.search_hit_id=h.id

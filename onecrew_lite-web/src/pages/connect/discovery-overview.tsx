@@ -8,20 +8,23 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import type { DiscoveryCampaign, DiscoveryCandidateCounts, syncDiscoveryLibrary } from "@/lib/opencli-discovery";
 import type { WorkspaceStage } from "@/lib/discovery-workspace";
 import type { discoveryLibraryFailureKey } from "@/lib/discovery-library-error";
+import type { ExecutionStatus } from "@onecrew/runtime-contracts/discovery";
 
 const scoreReasons = ["initial_match_citation_not_saved", "initial_match_rationale_too_large", "initial_match_level_invalid", "initial_match_criterion_invalid", "initial_match_outcome_invalid", "initial_match_rationale_empty", "initial_match_auxiliary_field_invalid", "initial_match_citation_count_invalid"] as const;
 type ExclusionReason = "unchecked" | "signedOut" | "permission" | "failed" | "unverified" | "expired";
 
-export function DiscoveryOverview({ campaign, counts, stage, running, busy, profileChanged, syncing, library, libraryLoading, libraryReadFailed, syncFailed, syncPending = false, syncErrorKey, syncedAt, failurePhase, failureCode, deferredHits = [], excludedSources = [], onSync, onStart, onPause, onAnother, onExpanded, canExpand, onIssues, onFailure }: {
+export function DiscoveryOverview({ campaign, counts, stage, running, busy, profileChanged, syncing, library, libraryLoading, libraryReadFailed, syncFailed, syncPending = false, syncErrorKey, syncedAt, failurePhase, failureCode, pipeline, deferredHits = [], excludedSources = [], onSync, onStart, onPause, onAnother, onExpanded, canExpand, onIssues, onFailure }: {
   campaign: DiscoveryCampaign; counts: DiscoveryCandidateCounts | undefined; stage: WorkspaceStage;
   running: boolean; busy: boolean; profileChanged: boolean; syncing: boolean;
   library: Awaited<ReturnType<typeof syncDiscoveryLibrary>> | null; syncFailed: boolean;
   libraryLoading?: boolean; libraryReadFailed?: boolean;
   syncPending?: boolean; syncErrorKey?: ReturnType<typeof discoveryLibraryFailureKey>; syncedAt?: number | bigint | null; failurePhase?: string; failureCode?: string;
+  pipeline?: ExecutionStatus["pipeline"];
   deferredHits?: readonly { reason: string }[]; excludedSources?: readonly { name: string; reason: ExclusionReason }[];
   onSync: () => void; onStart: () => void; onPause: () => void; onAnother: () => void; onExpanded: () => void; canExpand: boolean; onIssues: () => void; onFailure?: () => void;
 }) {
   const { t, i18n } = useTranslation("shell");
+  const zh = i18n.language.startsWith("zh");
   const n = (value: number | bigint | undefined) => value === undefined ? "—" : new Intl.NumberFormat(i18n.resolvedLanguage).format(value);
   const runs = campaign.platform_runs;
   const executionErrorKey = discoveryExecutionFailureKey(failureCode);
@@ -49,10 +52,20 @@ export function DiscoveryOverview({ campaign, counts, stage, running, busy, prof
       </div>
       <dl className="grid grid-cols-2 gap-x-6 gap-y-4 border-y py-4 lg:grid-cols-4">
         {[ [t("opencliPilot.qualifiedAccounts"), `${n(counts?.qualified)}/${n(campaign.target_count)}`],
-          [t("opencliPilot.pendingAccounts"), n(counts?.pending)], [t("opencliPilot.attemptedSources"), `${n(attempted)}/${n(campaign.scopes.length)}`],
+          [pipeline ? (zh ? "待核实记录（含已结束）" : "Review records (including ended)") : t("opencliPilot.pendingAccounts"), n(counts?.pending)], [t("opencliPilot.attemptedSources"), `${n(attempted)}/${n(campaign.scopes.length)}`],
           [t("opencliPilot.readCount"), n(campaign.used_calls)] ].map(([label, value]) =>
           <div key={label} className="min-w-0 space-y-1"><dt className="text-sm text-muted-foreground">{label}</dt><dd className="text-xl font-semibold tabular-nums">{value}</dd></div>)}
       </dl>
+      {pipeline && <div className="space-y-2 text-sm text-muted-foreground">
+        <p>{zh
+          ? `活跃待核实 ${n(pipeline.active_pending)} · 评分排队 ${n(pipeline.queued_scores)} · 等待当前对话评估／提交 ${n(pipeline.running_scores)}`
+          : `Active reviews ${n(pipeline.active_pending)} · Scores queued ${n(pipeline.queued_scores)} · Awaiting current conversation evaluation/submission ${n(pipeline.running_scores)}`}</p>
+        {pipeline.running_scores > 0 && <p>{zh ? "这些材料尚未完成模型评估和提交。后台可并发读取和同步；对话中断或额度用完时保留断点。" : "These materials still await completed model evaluation and submission. Background reads and sync can run concurrently; progress is saved if the conversation stops or reaches its usage limit."}</p>}
+        {pipeline.contact_pending && <p>{zh ? "仍有公开联系方式待补充" : "Public contact details still need supplementing"}</p>}
+        {pipeline.discovery_held && <p role="status">{zh
+          ? "待核实累计达到 10 人，已暂停发现新账号；优先完成现有核实，降至 5 人后继续搜索。"
+          : "Reviews reached 10. New account discovery is on hold while existing reviews finish; search resumes at 5."}</p>}
+      </div>}
       <p className="text-sm leading-relaxed text-muted-foreground">{t("opencliPilot.dedupNote")}</p>
       {deferredHits.length > 0 && <details className="text-sm text-warning"><summary>{t("opencliPilot.deferredScores", { count: deferredHits.length })}</summary>
         <ul>{[...new Set(deferredHits.map(hit => hit.reason))].map(reason => {

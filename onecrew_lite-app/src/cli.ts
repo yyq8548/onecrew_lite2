@@ -12,6 +12,7 @@ import { createPrivateDirectory, verifyPrivateDirectory, verifyPrivateFile } fro
 import { getPackagedRuntime, runtimeAssetPath, runtimeExecutablePath } from "./packaging/runtime-context.ts";
 import { codexClientCommands, executeCodexClientCommand, type CodexClientCommand } from "./client-adapters/commands.ts";
 import { startWindowsServiceHost, removeWindowsServiceHost, abortWindowsServiceHost, retainWindowsServiceBinary } from "./service/windows-host.ts";
+import { rememberServiceStart, repairInstallation } from "./service/installation-repair.ts";
 
 function publicStatus(value: RuntimeDescriptor) {
   return { service: value.service, state: "running", instance_id: value.instance_id, pid: value.pid,
@@ -35,7 +36,7 @@ async function runningOwner(directory: string): Promise<RuntimeDescriptor | unde
 
 export async function runCli(args: string[]): Promise<void> {
   const { values, positionals } = parseArgs({ args, allowPositionals: true, strict: true,
-    options: { "data-dir": { type: "string" }, vault: { type: "string" }, "master-key": { type: "string" }, "legacy-port": { type: "string" }, "web-assets": { type: "string" }, "library-web-assets": { type: "string" }, stdio: { type: "boolean" }, "codex-home": { type: "string" }, "codex-executable": { type: "string" }, "plugin-directory": { type: "string" }, refresh: { type: "boolean" } } });
+    options: { "data-dir": { type: "string" }, vault: { type: "string" }, "master-key": { type: "string" }, "legacy-port": { type: "string" }, "web-assets": { type: "string" }, "library-web-assets": { type: "string" }, stdio: { type: "boolean" }, "codex-home": { type: "string" }, "codex-executable": { type: "string" }, "plugin-directory": { type: "string" }, refresh: { type: "boolean" }, client: { type: "string" } } });
   if (positionals.length === 1 && positionals[0] === "installation-discover") {
     for (const name of Object.keys(values)) if (!["data-dir", "codex-home"].includes(name)) throw new CliError("Installation discovery accepts only data-dir and codex-home");
     const { discoverInstallation, InstallationDiscoveryError } = await import("./service/installation-discovery.ts");
@@ -45,7 +46,7 @@ export async function runCli(args: string[]): Promise<void> {
     }));
     return;
   }
-  if (positionals.length !== 1 || !["start", "serve", "status", "stop", "workspace", "mcp", ...codexClientCommands].includes(positionals[0]!)) throw new CliError("Usage: onecrew_lite <installation-discover|start|serve|status|stop|workspace|mcp|connect-codex|disconnect-codex|codex-status|codex-config|codex-package> --data-dir <private directory>");
+  if (positionals.length !== 1 || !["start", "serve", "status", "stop", "repair", "data-upgrade", "workspace", "mcp", ...codexClientCommands].includes(positionals[0]!)) throw new CliError("Usage: onecrew_lite <installation-discover|start|serve|status|stop|repair|data-upgrade|workspace|mcp|connect-codex|disconnect-codex|codex-status|codex-config|codex-package> --data-dir <private directory>");
   if (!values["data-dir"]) throw new CliError("An explicit data directory is required");
   if (values["web-assets"] !== undefined && !values["web-assets"].trim()) throw new CliError("Web assets directory must not be empty");
   if (values["library-web-assets"] !== undefined && !values["library-web-assets"].trim()) throw new CliError("Library web assets directory must not be empty");
@@ -56,6 +57,7 @@ export async function runCli(args: string[]): Promise<void> {
   if (portText !== undefined && (!/^\d{1,5}$/u.test(portText) || Number(portText) < 1 || Number(portText) > 65535)) throw new CliError("Legacy port must be an integer from 1 through 65535");
   const legacyPort = portText === undefined ? undefined : Number(portText);
   const command = positionals[0]!;
+  if (values.client !== undefined && (command !== "repair" || !["codex", "mcp"].includes(values.client))) throw new CliError("--client accepts codex or mcp with repair only");
   if (values.stdio && command !== "mcp") throw new CliError("--stdio requires the mcp command");
   const directory = resolve(values["data-dir"]);
   if ((codexClientCommands as readonly string[]).includes(command)) {
@@ -70,6 +72,26 @@ export async function runCli(args: string[]): Promise<void> {
     if (!lstatSync(directory, { throwIfNoEntry: false })) await createPrivateDirectory(directory);
   }
   await verifyPrivateDirectory(directory);
+  if (command === "repair") {
+    for (const name of Object.keys(values)) if (!["data-dir", "client"].includes(name)) throw new CliError("Repair uses the saved original service configuration; only data-dir and client are accepted");
+    const result = await repairInstallation(directory, values.client === "codex" ? "codex" : "mcp");
+    output(result); if (result.state === "needs_action") process.exitCode = 1;
+    return;
+  }
+  if (command === "data-upgrade") {
+    for (const name of Object.keys(values)) if (name !== "data-dir") throw new CliError("Data upgrade accepts only data-dir");
+    const { upgradeLocalAccountDatabases, LocalAccountUpgradeError } = await import("./storage/local-account-upgrade.ts");
+    const lease = await acquireInstanceLock(directory);
+    try {
+      const result = await upgradeLocalAccountDatabases(lease).catch(error => {
+        if (error instanceof LocalAccountUpgradeError) throw new CliError(error.message, error.code);
+        throw error;
+      });
+      output({ service: "onecrew_lite", ...result });
+    }
+    finally { await lease.close(); }
+    return;
+  }
   if (command === "mcp") {
     const { serveMcpStdio } = await import("./service/mcp-adapter.ts");
     await serveMcpStdio(directory);
@@ -124,11 +146,14 @@ export async function runCli(args: string[]): Promise<void> {
     process.once("SIGINT", stop);
     process.once("SIGTERM", stop);
     try {
+      await rememberServiceStart({ format: 1, directory: runtime.descriptor.data_dir, vaultPath: resolve(values.vault!), masterKeyPath: resolve(values["master-key"]!), port: runtime.descriptor.port,
+        ...(values["web-assets"] && webAssetsDirectory ? { webAssetsDirectory } : {}), ...(values["library-web-assets"] && libraryWebAssetsDirectory ? { libraryWebAssetsDirectory } : {}) });
       output(publicStatus(runtime.descriptor));
       await runtime.stopped;
     } finally {
       process.removeListener("SIGINT", stop);
       process.removeListener("SIGTERM", stop);
+      await runtime.close();
     }
     return;
   }
@@ -164,8 +189,8 @@ export async function runCli(args: string[]): Promise<void> {
     await verifyPrivateFile(logPath);
     const childArgs = [...(packaged ? [] : [fileURLToPath(import.meta.url)]), "serve", "--data-dir", directory, "--vault", resolve(values.vault!), "--master-key", resolve(values["master-key"]!)];
     if (legacyPort !== undefined) childArgs.push("--legacy-port", String(legacyPort));
-    if (webAssetsDirectory) childArgs.push("--web-assets", webAssetsDirectory);
-    if (libraryWebAssetsDirectory) childArgs.push("--library-web-assets", libraryWebAssetsDirectory);
+    if (values["web-assets"] && webAssetsDirectory) childArgs.push("--web-assets", webAssetsDirectory);
+    if (values["library-web-assets"] && libraryWebAssetsDirectory) childArgs.push("--library-web-assets", libraryWebAssetsDirectory);
     let failure: Error | undefined;
     const child = process.platform === "win32" ? undefined : spawn(process.execPath, childArgs, { detached: true, windowsHide: true, stdio: ["ignore", log.fd, log.fd] });
     if (child) {

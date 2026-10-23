@@ -1,7 +1,8 @@
 import type { DatabaseSync } from "node:sqlite";
+import { discoveryReadBusy, discoveryReadBusySql } from "./read-capacity.ts";
 import { z } from "zod";
 import { stringifyApplicationJson } from "../contracts/application-json.ts";
-import { validateCreatorSchema } from "../storage/creator-schema.ts";
+import { assertValidatedCreatorConnection } from "../storage/creator-schema.ts";
 import { discoveryPublicPageInput, discoveryEligibleContactAuthor, discoveryNativeLinkSource, discoveryLinkedinContactPage, nextDiscoveryNativeContactLink, observeDiscoveryHiddenEmail, observeDiscoveryPublicPageContacts, type DiscoveryPublicPageInput } from "./contact-native.ts";
 import { discoveryCommunityInvite, discoveryObservesLink } from "./contact-navigation.ts";
 import { discoveryReadPlatformStatus, sourceLocalReadFailure } from "./stops.ts";
@@ -35,7 +36,7 @@ export function validateDiscoveryPublicPageResult(raw: unknown, emptyNativeConta
 
 export class DiscoveryPublicPageRepository {
   readonly #db: DatabaseSync;
-  constructor(database: DatabaseSync) { validateCreatorSchema(database); this.#db = database; }
+  constructor(database: DatabaseSync) { assertValidatedCreatorConnection(database); this.#db = database; }
   #transaction<T>(write: boolean, body: () => T): T {
     this.#db.exec(write ? "BEGIN IMMEDIATE" : "BEGIN DEFERRED");
     let committed = false;
@@ -47,7 +48,7 @@ export class DiscoveryPublicPageRepository {
     if (!row) throw new Error("Public page candidate not found");
     return row.verdict === "pending" || discoveryEligibleContactAuthor(this.#db, input.campaign_id, input.expected_revision, input.candidate_id) !== null;
   }
-  next(campaign: string, excludedPlatforms: readonly string[] = []): DiscoveryPublicPageInput | null {
+  next(campaign: string, excludedPlatforms: readonly string[] = [], requiredOnly = false): DiscoveryPublicPageInput | null {
     return this.#transaction(false, () => {
       const rows = this.#db.prepare(`SELECT c.id,c.source_profile_ref,c.criteria_revision,l.value,json_extract(c.evidence_json,'$.video_description') AS description,c.verdict
         FROM discovery_candidates c JOIN discovery_campaigns d ON d.id=c.discovery_campaign_id
@@ -57,7 +58,7 @@ export class DiscoveryPublicPageRepository {
         JOIN discovery_video_completions v ON v.search_hit_id=h.id
         JOIN discovery_video_identity_bindings b ON b.search_hit_id=h.id AND b.candidate_id=c.id AND b.discovery_campaign_id=d.id AND b.criteria_revision=d.current_revision AND b.native_author_id=c.platform_account_id
         JOIN json_each(c.evidence_json,'$.public_links') l
-        WHERE d.id=? AND d.phase='active' AND (d.max_calls IS NULL OR d.used_calls<d.max_calls) AND a.approved_at IS NOT NULL AND c.criteria_revision=d.current_revision
+        WHERE d.id=? AND d.phase='active' AND a.approved_at IS NOT NULL AND c.criteria_revision=d.current_revision
           AND NOT EXISTS(SELECT 1 FROM json_each(?) excluded WHERE excluded.value=c.platform)
           AND ((c.verdict='pending' AND (COALESCE(json_extract(a.criteria_json,'$.requires_public_tool_url'),1)=1 OR json_extract(a.criteria_json,'$.region')='中国大陆以外'
             OR (json_array_length(json_extract(a.criteria_json,'$.requirements'))>0 AND (SELECT COUNT(*) FROM discovery_public_page_reads page WHERE page.candidate_id=c.id)<2)))
@@ -65,7 +66,7 @@ export class DiscoveryPublicPageRepository {
               AND NOT EXISTS(SELECT 1 FROM discovery_contact_observations contact WHERE contact.candidate_id=c.id AND contact.criteria_revision=c.criteria_revision AND (COALESCE(json_extract(a.criteria_json,'$.contact_preference'),'')!='public_email_first' OR contact.kind='email'))
               AND (COALESCE(json_extract(a.criteria_json,'$.contact_preference'),'')!='public_email_first' OR NOT EXISTS(SELECT 1 FROM discovery_public_page_reads page WHERE page.candidate_id=c.id))))
           AND json_type(c.evidence_json,'$.video_description')='text' AND l.type='text'
-          AND NOT EXISTS(SELECT 1 FROM discovery_platform_runs r WHERE r.discovery_campaign_id=d.id AND r.status='searching')
+          AND NOT ${discoveryReadBusySql(this.#db, campaign, "c.platform")}
           AND ((p.status='completed' AND NOT EXISTS(SELECT 1 FROM discovery_public_page_reads r WHERE r.candidate_id=c.id AND r.requested_url=l.value))
             OR(p.status='technical_stop' AND p.stop_code='interrupted_public_page_read' AND EXISTS(SELECT 1 FROM discovery_public_page_reads r WHERE r.candidate_id=c.id AND r.requested_url=l.value AND r.status='reading' AND r.search_hit_id=h.id AND r.source_excerpt=json_extract(c.evidence_json,'$.video_description') AND p.active_query='page:'||c.id||':'||r.call_number)))
         ORDER BY c.id,l.key`).all(campaign, stringifyApplicationJson(excludedPlatforms));
@@ -75,17 +76,15 @@ export class DiscoveryPublicPageRepository {
         const input = { campaign_id: campaign, expected_revision: row.criteria_revision, profile_ref: row.source_profile_ref, candidate_id: row.id, requested_url: row.value };
         if (Buffer.byteLength(row.value) <= 2048 && row.value.startsWith("https://") && !discoveryCommunityInvite(row.value) && discoveryObservesLink(row.description, row.value) && this.#scoreValid(input)) return input;
       }
-      return nextDiscoveryNativeContactLink(this.#db, campaign, excludedPlatforms);
+      return nextDiscoveryNativeContactLink(this.#db, campaign, excludedPlatforms, requiredOnly);
     });
   }
   claim(raw: DiscoveryPublicPageInput): DiscoveryPublicPageClaim {
     const input = discoveryPublicPageInput.parse(raw);
     return this.#transaction(true, () => {
-      const head = this.#db.prepare(`SELECT d.used_calls,d.max_calls FROM discovery_campaigns d JOIN discovery_campaign_revisions a ON a.discovery_campaign_id=d.id AND a.revision=d.current_revision WHERE d.id=? AND d.current_revision=? AND d.phase='active' AND a.approved_at IS NOT NULL`).get(input.campaign_id, input.expected_revision);
+      const head = this.#db.prepare(`SELECT d.used_calls FROM discovery_campaigns d JOIN discovery_campaign_revisions a ON a.discovery_campaign_id=d.id AND a.revision=d.current_revision WHERE d.id=? AND d.current_revision=? AND d.phase='active' AND a.approved_at IS NOT NULL`).get(input.campaign_id, input.expected_revision);
       if (!head) throw new Error("Public page read is not approved at this Campaign revision");
-      const budget = z.object({ used_calls: u32, max_calls: u32.nullable() }).parse(head);
-      if (budget.max_calls !== null && budget.used_calls >= budget.max_calls) throw new Error("Campaign read budget is exhausted");
-      if (this.#db.prepare("SELECT 1 FROM discovery_platform_runs WHERE discovery_campaign_id=? AND status='searching' LIMIT 1").get(input.campaign_id)) throw new Error("A Campaign read is active");
+      const counter = z.object({ used_calls: u32 }).parse(head);
       const saved = this.#db.prepare(`SELECT h.id,h.source_url,json_extract(c.evidence_json,'$.video_description') AS description,c.platform
         FROM discovery_candidates c JOIN discovery_search_hits h ON h.discovery_campaign_id=c.discovery_campaign_id AND h.platform=c.platform AND h.profile_ref=c.source_profile_ref AND h.source_url=json_extract(c.evidence_json,'$.source_urls[0]')
         JOIN discovery_video_completions v ON v.search_hit_id=h.id
@@ -98,6 +97,7 @@ export class DiscoveryPublicPageRepository {
       const source = row ? [row.id, row.source_url, row.description, row.platform] as const : discoveryNativeLinkSource(this.#db, input);
       if (!source) throw new Error("Public link has no pending metadata source in this Campaign scope");
       const [hit, sourceUrl, description, platform] = source;
+      if (discoveryReadBusy(this.#db, input.campaign_id, [platform])) throw new Error("A Campaign read is active");
       if (Buffer.byteLength(input.requested_url) > 2048 || !input.requested_url.startsWith("https://") || discoveryCommunityInvite(input.requested_url) || (!discoveryObservesLink(description, input.requested_url) && stringifyApplicationJson(discoveryNativeLinkSource(this.#db, input)) !== stringifyApplicationJson(source))) throw new Error("Public link is not an eligible exact token in the observed source description");
       if (!this.#scoreValid(input)) throw new Error("contact_lookup_score_not_audited");
       const run = z.object({ status: text, stop_code: text.nullable(), active_query: text.nullable() }).parse(this.#db.prepare("SELECT status,stop_code,active_query FROM discovery_platform_runs WHERE discovery_campaign_id=? AND platform=? AND profile_ref=?").get(input.campaign_id, platform, input.profile_ref));
@@ -105,14 +105,37 @@ export class DiscoveryPublicPageRepository {
       const prior = priorRaw === undefined ? null : z.object({ call_number: u32, status: text, search_hit_id: text, source_excerpt: text }).parse(priorRaw);
       const interrupted = prior !== null && prior.status === "reading" && prior.search_hit_id === hit && prior.source_excerpt === description && run.status === "technical_stop" && run.stop_code === "interrupted_public_page_read" && run.active_query === `page:${input.candidate_id}:${prior.call_number}`;
       if (!interrupted && (run.status !== "completed" || prior !== null)) throw new Error("Public page already attempted or platform stopped");
-      const call = u32.parse(budget.used_calls + 1), timestamp = Math.floor(Date.now() / 1000);
+      const call = u32.parse(counter.used_calls + 1), timestamp = Math.floor(Date.now() / 1000);
       this.#db.prepare("UPDATE discovery_campaigns SET used_calls=?,updated_at=? WHERE id=?").run(call, timestamp, input.campaign_id);
       this.#db.prepare("UPDATE discovery_platform_runs SET status='searching',active_query=?,stop_code=NULL,updated_at=? WHERE discovery_campaign_id=? AND platform=? AND profile_ref=?").run(`page:${input.candidate_id}:${call}`, timestamp, input.campaign_id, platform, input.profile_ref);
       this.#db.prepare(`INSERT INTO discovery_public_page_reads VALUES(?,?,?,?,'reading',?,NULL,'','',0,NULL,?) ON CONFLICT(candidate_id,requested_url) DO UPDATE SET call_number=excluded.call_number,updated_at=excluded.updated_at`).run(input.candidate_id, input.requested_url, hit, call, description, timestamp);
       return { input, search_hit_id: hit, source_url: sourceUrl, call_number: call };
     });
   }
+  reuse(raw: DiscoveryPublicPageClaim) {
+    const claim = discoveryPublicPageClaim.parse(raw), scope = claim.input;
+    const source = this.#transaction(false, () => {
+      const row = this.#db.prepare(`SELECT old.discovery_campaign_id,p.candidate_id,p.requested_url
+        FROM discovery_candidates current JOIN discovery_candidates old
+          ON old.id<>current.id AND old.platform=current.platform AND old.platform_account_id=current.platform_account_id
+          AND old.profile_url=current.profile_url AND old.source_profile_ref=current.source_profile_ref
+        JOIN discovery_public_page_reads p ON p.candidate_id=old.id
+        JOIN discovery_search_hits h ON h.id=p.search_hit_id AND h.discovery_campaign_id=old.discovery_campaign_id
+          AND h.platform=old.source_platform AND h.profile_ref=old.source_profile_ref
+        WHERE current.id=? AND current.discovery_campaign_id=? AND current.criteria_revision=? AND current.source_profile_ref=?
+          AND p.requested_url=? AND p.status='completed' AND p.stop_code IS NULL
+        ORDER BY p.updated_at DESC,p.candidate_id LIMIT 1`).get(scope.candidate_id, scope.campaign_id, scope.expected_revision, scope.profile_ref, scope.requested_url);
+      if (!row) return null;
+      return getDiscoverySavedPublicPage(this.#db, text.parse(row.discovery_campaign_id), text.parse(row.candidate_id), text.parse(row.requested_url));
+    });
+    if (source === null) return null;
+    if (source.profile_ref !== scope.profile_ref || source.requested_url !== scope.requested_url || source.status !== "completed" || source.stop_code !== null) throw new Error("discovery_public_page_reuse_source_mismatch");
+    return this.#finish({ hidden_email_available: false, claim, document_url: source.document_url, title: source.title, markdown_excerpt: source.markdown_excerpt, truncated: source.truncated, stop_code: null }, source.captured_at);
+  }
   finish(raw: FinishDiscoveryPublicPageInput) {
+    return this.#finish(raw, null);
+  }
+  #finish(raw: FinishDiscoveryPublicPageInput, capturedAt: number | bigint | null) {
     const parsed = finishDiscoveryPublicPageInput.parse(raw), claim = parsed.claim, scope = claim.input;
     return this.#transaction(true, () => {
       const input = validateDiscoveryPublicPageResult(parsed, parsed.stop_code === null && parsed.truncated && discoveryLinkedinContactPage(this.#db, scope, parsed.document_url));
@@ -133,11 +156,12 @@ export class DiscoveryPublicPageRepository {
           AND EXISTS(SELECT 1 FROM discovery_search_hits h JOIN discovery_candidates c ON c.id=:candidate LEFT JOIN discovery_video_identity_bindings b ON b.search_hit_id=h.id AND b.candidate_id=c.id AND b.discovery_campaign_id=:campaign AND b.criteria_revision=:revision AND b.native_author_id=c.platform_account_id
             WHERE h.id=:hit AND h.discovery_campaign_id=:campaign AND c.discovery_campaign_id=:campaign AND c.criteria_revision=:revision AND(c.platform!='youtube' OR b.search_hit_id IS NOT NULL) AND h.platform=discovery_platform_runs.platform AND c.source_platform=h.platform AND c.source_profile_ref=:profile AND h.profile_ref=:profile AND h.source_url=:source)`).run({ status: localFailure ? "completed" : discoveryReadPlatformStatus(input.stop_code), stop: localFailure ? null : input.stop_code, now: timestamp, campaign: scope.campaign_id, profile: scope.profile_ref, active: `page:${scope.candidate_id}:${claim.call_number}`, revision: scope.expected_revision, candidate: scope.candidate_id, hit: claim.search_hit_id, source: claim.source_url });
       if (changed.changes !== 1) throw new Error("Public page claim is stale or authorization changed");
-      const receipt = this.#db.prepare("UPDATE discovery_public_page_reads SET status=?,document_url=?,title=?,markdown_excerpt=?,truncated=?,stop_code=?,updated_at=? WHERE candidate_id=? AND requested_url=? AND search_hit_id=? AND call_number=? AND status='reading'").run(input.stop_code === null ? "completed" : "failed", input.document_url, input.title, input.markdown_excerpt, input.truncated ? 1 : 0, input.stop_code, timestamp, scope.candidate_id, scope.requested_url, claim.search_hit_id, claim.call_number);
+      const receipt = this.#db.prepare("UPDATE discovery_public_page_reads SET status=?,document_url=?,title=?,markdown_excerpt=?,truncated=?,stop_code=?,updated_at=? WHERE candidate_id=? AND requested_url=? AND search_hit_id=? AND call_number=? AND status='reading'").run(input.stop_code === null ? "completed" : "failed", input.document_url, input.title, input.markdown_excerpt, input.truncated ? 1 : 0, input.stop_code, capturedAt ?? timestamp, scope.candidate_id, scope.requested_url, claim.search_hit_id, claim.call_number);
       if (receipt.changes !== 1) throw new Error("Public page receipt is stale");
       const result = getDiscoverySavedPublicPage(this.#db, scope.campaign_id, scope.candidate_id, scope.requested_url);
       observeDiscoveryPublicPageContacts(this.#db, scope.campaign_id, scope.expected_revision, result);
-      if (input.hidden_email_available) observeDiscoveryHiddenEmail(this.#db, scope.campaign_id, scope.expected_revision, result);
+      const ownChannel = `https://www.youtube.com/channel/${result.platform_account_id}`;
+      if (input.hidden_email_available && result.requested_url === ownChannel && result.document_url === ownChannel) observeDiscoveryHiddenEmail(this.#db, scope.campaign_id, scope.expected_revision, result);
       return result;
     });
   }

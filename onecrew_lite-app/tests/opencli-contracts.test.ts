@@ -15,12 +15,14 @@ import { resolveOpenCliInstallation } from "../src/platforms/opencli/installatio
 
 const bundled = fileURLToPath(new URL("../../onecrew_lite-opencli/", import.meta.url));
 
-test("当前13来源使用审核后的只读入口，YouTube绑定独立页面，Pinterest搜索账号", async () => {
+test("当前11来源使用审核后的只读入口，YouTube绑定独立页面", async () => {
   const fixture = z.object({ sources: z.array(z.object({ platform: z.string(), command: z.string(), browser_required: z.literal(true), registered: z.literal(true) })) }).parse(JSON.parse(await readFile(new URL("./fixtures/registered-sources.json", import.meta.url), "utf8")));
   const sources = Object.entries(CREATOR_SEARCH_SOURCES).filter(([, source]) => source.discovery).map(([platform, source]) => ({ platform, command: `${source.site}/${source.name}`, browser_required: true, registered: true }));
-  const expected = fixture.sources.map(source => source.platform === "pinterest" ? { ...source, command: "onecrew-pinterest-reader/search-pins" } : source.platform === "youtube" ? { ...source, command: "onecrew-search-youtube/search" } : source.platform === "yahoo" ? { ...source, command: "onecrew-search-yahoo/search" } : source);
+  const expected = fixture.sources.map(source => source.platform === "youtube" ? { ...source, command: "onecrew-search-youtube/search" } : source.platform === "yahoo" ? { ...source, command: "onecrew-search-yahoo/search" } : source);
+  assert.equal(sources.length, 11);
   assert.deepEqual(sources, expected);
   for (const source of RETIRED_CREATOR_SOURCES) assert.throws(() => creatorSearchSource(source), { code: "opencli_read_command_unavailable" });
+  for (const source of ["reddit", "pinterest", "google", "yahoo"]) assert.throws(() => creatorSearchArguments("profile", source, "query", 1), { code: "opencli_read_command_unavailable" });
   assert.throws(() => creatorSearchArguments("profile", "__proto__", "query", 1));
   assert.throws(() => creatorSearchArguments("profile", "twitter", "query", 0));
   assert.throws(() => creatorSearchArguments("profile", "linkedin", "query", 11));
@@ -53,7 +55,7 @@ test("原搜索结果合同保留原生ID和来源，拒绝错属、重复卡片
   assert.throws(() => decodeCreatorSearch("google", [{ title: "unreviewed transport", url: "http://example.org/" }], 1));
   assert.throws(() => decodeCreatorSearch("google", [{ title: "credential", url: "http://name@www.youtube.com/@TheSoftwareCreators" }], 1));
   const twitter = { id: "123", author: "@Owner", text: "original", url: "https://x.com/Owner/status/123" };
-  assert.deepEqual(decodeCreatorSearch("twitter", [twitter, twitter], 3), [{ source_url: twitter.url, title: "original", author_label: "@Owner", author_id: "owner", author_url: "https://x.com/owner" }]);
+  assert.deepEqual(decodeCreatorSearch("twitter", [twitter, twitter], 3), [{ source_url: twitter.url, title: "original", author_label: "@Owner", author_id: "owner", author_url: "https://x.com/owner", material: { source_url: twitter.url, author_id: "owner", author_url: "https://x.com/owner", native_author_id: null, body_text: twitter.text, body_completeness: "unknown", bio: null } }]);
 });
 
 test("原bundled适配器清单每个文件实际存在，不包含测试或发送入口", async () => {

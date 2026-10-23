@@ -3,6 +3,7 @@
 import { parseApplicationJson, stringifyApplicationJson } from "@onecrew/runtime-contracts/json";
 import { bootstrapCommands } from "@onecrew/runtime-contracts/bootstrap";
 import { withBrowserSessionLock } from "@onecrew/runtime-contracts/browser-session-lock";
+import { recordRepairError, setRepairOwner } from "./repair-context.ts";
 
 type Session = { csrf: string; version: string; transport: "local_http" } & (
   { protocol_version?: 1; scope?: "bootstrap" } | { protocol_version: 2; accountId: string; epoch: string }
@@ -33,6 +34,7 @@ function invalidateSession(reason: RuntimeConnectionState = "session_required", 
   if (expected && session !== expected) return;
   generation++;
   session = null;
+  setRepairOwner(null);
   connecting = null;
   upgrading = null;
   connectionState = reason;
@@ -90,6 +92,7 @@ export async function connectLocalRuntime(refresh = false): Promise<Session> {
         throw new Error("access.account_changed");
       }
       session = next;
+      setRepairOwner(unifiedAccountSessionKey());
       connectionState = "connected";
       changed();
       return session;
@@ -144,5 +147,6 @@ export async function runtimeRequest<T>(path: string, body: BodyInit, headers: R
 
 export async function invoke<T>(command: string, arguments_: Record<string, unknown> = {}): Promise<T> {
   if (!/^[a-z][a-z0-9_]*$/.test(command)) throw new Error("invalid_command_name");
-  return runtimeRequest<T>(`/api/commands/${command}`, stringifyApplicationJson(arguments_), { "Content-Type": "application/json" });
+  return runtimeRequest<T>(`/api/commands/${command}`, stringifyApplicationJson(arguments_), { "Content-Type": "application/json" })
+    .then(value => value, error => { recordRepairError(command, error); throw error; });
 }

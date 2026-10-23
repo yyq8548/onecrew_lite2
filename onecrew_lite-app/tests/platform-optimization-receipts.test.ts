@@ -2,61 +2,31 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { randomUUID } from "node:crypto";
-import { pinterestProfilePlan } from "../src/platforms/opencli/pinterest.ts";
 import { facebookProfilePlan, facebookContactPlan } from "../src/platforms/opencli/facebook-profile.ts";
 import { linkedinContactPlan, linkedinContentPlan } from "../src/platforms/opencli/linkedin.ts";
 import { assessDiscoveryProfile } from "../src/discovery/qualification.ts";
 import { extractDiscoveryContacts } from "../src/discovery/contacts.ts";
 import { tiktokProfilePlan } from "../src/platforms/opencli/profiles.ts";
-import { validateDiscoveryContentResult } from "../src/discovery/content-result.ts";
-import { discoveryReadPlatformStatus } from "../src/discovery/stops.ts";
-import { discoveryOperationStopped } from "../src/discovery/read-health.ts";
 import { applyDiscoveryReviewFindings } from "../src/discovery/review-findings.ts";
-import { discoveryJsonValue } from "../src/discovery/library-material.ts";
+import { applyDiscoverySelectionQuality } from "../src/discovery/selection-quality.ts";
 
 const receipts = JSON.parse(readFileSync(new URL("./fixtures/platform-optimization-20261019.json", import.meta.url), "utf8"));
-
-test("真实 Pinterest 月浏览量样本的相同审核条件跨 JSON 对象形式仍然有效", () => {
-  const { criteria, candidate } = JSON.parse(readFileSync(new URL("./fixtures/pinterest-monthly-role-review-20261019.json", import.meta.url), "utf8"));
-  const assess = (value: unknown) => assessDiscoveryProfile(value, candidate.evidence, candidate.platform_account_id, candidate.evidence.assessment.subscribers_normalized, candidate.evidence.pinterest_monthly_views_raw);
-  assert.equal(assess(criteria).verdict, "qualified");
-  const result = assess(discoveryJsonValue(criteria));
-  assert.equal(result.verdict, "qualified");
-  assert.deepEqual(result.pinterest_scale?.passed_by, ["monthly_views"]);
-  assert.deepEqual(result.reasons, []);
-  const changed = structuredClone(criteria);
-  changed.requirements[0].description += "需要作者原创。";
-  assert.deepEqual(assess(discoveryJsonValue(changed)).reasons, ["requirement_unverified"]);
-});
 
 test("真实 Google 转读 Instagram 的账号绑定作品预览支持主题匹配，简介和预览均不冒充作者语言证据", () => {
   const material = JSON.parse(readFileSync(new URL("./fixtures/google-instagram-native-review-20261019.json", import.meta.url), "utf8"));
   const bio = { kind: "native_profile" as const, profile_url: material.native_profile.profile_url, quote: "Makeup Artist\nMUA | Masshole | Pug Mom | Founder @povbeauty" };
   const preview = { kind: "native_profile" as const, profile_url: material.native_profile.profile_url, quote: "TRACE IT! Coming to @povbeauty Oct 22." };
   const category = { criterion: "category_content" as const, outcome: "supported" as const, rationale: "已核实账号简介为 Makeup Artist，作者发布的可见作品预览包含其品牌新品；仅用于确认美妆主题。", citations: [bio, preview] };
-  const fit = { criterion: "match_fit" as const, outcome: "supported" as const, match_level: "good" as const, rationale: "美妆专业身份与本人发布的作品预览共同支持需求匹配，未声称已核实完整正文或全部发布历史。", citations: [bio, preview] };
-  const evidence = applyDiscoveryReviewFindings(material, [category, fit], { source_urls: [material.hit.source_url, material.native_profile.profile_url] }, randomUUID());
+  const selection = { criterion: "selection_fit" as const, outcome: "supported" as const, rationale: "美妆专业身份与本人发布的作品预览共同支持需求匹配，未声称已核实完整正文或全部发布历史。", citations: [bio, preview] };
+  const quality = { criterion: "quality_rating" as const, outcome: "supported" as const, match_level: "low" as const, rationale: "已保存的简介和短篇作品预览支持主题匹配，缺少深入内容和教学质量证据，质量评分为 low。", citations: [bio, preview] };
+  const reviewId = randomUUID();
+  const categoryEvidence = applyDiscoveryReviewFindings(material, [category], { source_urls: [material.hit.source_url, material.native_profile.profile_url] }, reviewId);
+  const evidence = applyDiscoverySelectionQuality(material, [selection, quality], categoryEvidence, reviewId);
   assert.equal(assessDiscoveryProfile(material.criteria, evidence, material.native_author_id, material.native_followers).verdict, "qualified");
-  assert.throws(() => applyDiscoveryReviewFindings(material, [{ ...category, citations: [bio] }, { ...fit, citations: [bio] }], {}, randomUUID()), /review_first_hand_evidence_required/);
+  assert.equal((evidence.reviewed_selection as Record<string, unknown>).outcome, "supported");
+  assert.equal((evidence.reviewed_quality as Record<string, unknown>).level, "low");
+  assert.throws(() => applyDiscoveryReviewFindings(material, [{ ...category, citations: [bio] }], {}, randomUUID()), /review_first_hand_evidence_required/);
   assert.throws(() => applyDiscoveryReviewFindings({ ...material, criteria: { ...material.criteria, language: "English" } }, [{ criterion: "content_language", outcome: "supported", rationale: "边界验证：作品预览不足以核实作者语言，本项应被拒绝。", citations: [preview] }], {}, randomUUID()), /review_first_hand_evidence_required/);
-});
-
-test("真实 Pinterest Pin 的结构失败可以保存，重复同一作者的失败不停止整个平台", () => {
-  const row = receipts.pinterest_content_failure;
-  assert.equal(validateDiscoveryContentResult(row.claim, null, row.code), null);
-  assert.equal(discoveryReadPlatformStatus(row.code), "completed");
-  assert.equal(discoveryOperationStopped(Array.from({ length: 3 }, () => ({ author: row.claim.author_id, code: row.code }))), false);
-  assert.throws(() => validateDiscoveryContentResult(row.claim, {}, row.code));
-});
-
-test("真实 Pinterest 主页保留月浏览量，低粉丝通过规模条件且仍须核实美妆条件", () => {
-  const row = receipts.pinterest_profile;
-  assert.deepEqual(pinterestProfilePlan(row.author_id, row.username).decode([row]), row);
-  const result = assessDiscoveryProfile({ min_subscribers: 2000, pinterest_min_monthly_views_exclusive: 50000, category: "美妆", requires_ai_tool_demo: false, requires_public_tool_url: false }, {}, row.author_id, row.follower_count, row.monthly_views_raw);
-  assert.equal(result.pinterest_scale?.state, "passed");
-  assert.deepEqual(result.pinterest_scale?.passed_by, ["monthly_views"]);
-  assert.equal(result.verdict, "pending");
-  assert.deepEqual(result.reasons, ["category_unverified"]);
 });
 
 test("真实 Facebook 数字主页和联系页采用实际目录地址，缺失简介和圆整粉丝分别保存", () => {

@@ -1,4 +1,4 @@
-export const DISCOVERY_SCORE_CONCURRENCY = 2;
+export const DISCOVERY_SCORE_CONCURRENCY = 3;
 export interface DiscoveryScorePermit { release(): void }
 
 export class DiscoveryScoreGate {

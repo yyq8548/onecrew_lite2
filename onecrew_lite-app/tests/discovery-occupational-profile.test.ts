@@ -25,7 +25,7 @@ test("真实Affiliate Manager主页缺少简介和帖子时可独立通过，85�
   await initializeNewCreatorDatabase(path);
   const db = new DatabaseSync(path); t.after(() => db.close());
   const repository = new DiscoveryRepository(db), campaign = material.campaign_id;
-  repository.create({ id: campaign, brief: "在LinkedIn搜索币安、OKX、Bitget、Bybit或Gate.io的商务、BD或Marketing人员。成功的账号不重复读取。币安（Binance）、OKX、Bitget、Bybit、Gate.io 的商务、BD 或 Marketing 人员", opencli_version: "1.8.8", criteria: material.criteria, scopes: material.approved_scopes, target_count: 30, max_calls: null });
+  repository.create({ id: campaign, brief: "在LinkedIn搜索币安、OKX、Bitget、Bybit或Gate.io的商务、BD或Marketing人员。成功的账号不重复读取。币安（Binance）、OKX、Bitget、Bybit、Gate.io 的商务、BD 或 Marketing 人员", opencli_version: "1.8.8", criteria: material.criteria, scopes: material.approved_scopes, target_count: 30 });
   repository.approve(campaign, 1);
   db.prepare("UPDATE discovery_campaign_revisions SET approved_at=? WHERE discovery_campaign_id=?").run(material.approved_at, campaign);
   db.prepare("UPDATE discovery_platform_runs SET status='completed' WHERE discovery_campaign_id=?").run(campaign);

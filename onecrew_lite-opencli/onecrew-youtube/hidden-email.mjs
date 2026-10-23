@@ -24,6 +24,10 @@ export function hiddenEmailPageState(channel) {
     text: panel.querySelector('#view-email-button-container')?.closest('tr')?.innerText.slice(0,20000) ?? '',
     viewAvailable: visible(panel.querySelector('#view-email-button-container button')),
     submitAvailable: visible(panel.querySelector('#submit-btn')),
+    challengeAvailable: [...document.querySelectorAll('iframe[src]')].some(element => {
+      const url = new URL(element.src);
+      return visible(element) && getComputedStyle(element).visibility !== 'hidden' && ['www.google.com','www.recaptcha.net'].includes(url.hostname) && url.pathname.endsWith('/bframe');
+    }),
     frame: rect ? { url: frame.src, left: rect.left, top: rect.top } : null,
   };
 }
@@ -70,6 +74,7 @@ export async function enrichYoutubeHiddenEmail(page, channel, result, task, dire
         if (!youtubePublicEmails(observed.email).includes(observed.email)) throw new Error('ONECREW_CHANNEL_EMAIL_INVALID');
         return complete('revealed', observed.email);
       }
+      if (observed.challengeAvailable) return complete('verification_required', null, 'captcha_challenge_skipped');
       if (observed.frame && !submitted) {
         const frames = await page.frames();
         const frame = frames.find(frame => frame.url === observed.frame.url);
@@ -89,7 +94,7 @@ export async function enrichYoutubeHiddenEmail(page, channel, result, task, dire
       }
       await page.wait(0.4);
     }
-    return complete('verification_required', null, submitted ? 'email_reveal_not_completed' : 'captcha_requires_user');
+    return complete('verification_required', null, submitted ? 'email_reveal_not_completed' : 'captcha_skipped');
   } finally {
     if (lease !== null) store.release(lease);
     store.close();

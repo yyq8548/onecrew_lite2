@@ -1,15 +1,17 @@
 import { randomUUID } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
+import { discoveryReadBusy } from "./read-capacity.ts";
+import { discoveryWebSourceTarget } from "./web-source-contracts.ts";
 import { z } from "zod";
 import { parseStoredJson } from "../contracts/stored-json.ts";
 import { stringifyApplicationJson } from "../contracts/application-json.ts";
 import { parseApplicationJson } from "../contracts/application-json.ts";
-import type { CreatorSearchHit } from "../platforms/opencli/search-results.ts";
-import { discoveryPlanInput, discoveryScope, assertRegisteredDiscoveryScopes, appendDiscoveryQueries, type DiscoveryScope } from "./contracts.ts";
-import { browserConnectionRecoveryCodes, canAdvanceSearchAfterStop, nextDiscoverySearchKeyword, repairedSearchRecoveryCodes, type DiscoverySearchRecovery } from "./stops.ts";
+import { creatorSearchMaterial, type CreatorSearchHit } from "../platforms/opencli/search-results.ts";
+import { discoveryPlanInput, discoveryScope, discoverySourceTargets, assertRegisteredDiscoveryScopes, appendDiscoveryQueries, type DiscoveryScope } from "./contracts.ts";
+import { browserConnectionRecoveryCodes, canAdvanceSearchAfterStop, nextDiscoverySearchKeyword, readDiscoverySearchProgress, repairedSearchRecoveryCodes, type DiscoverySearchRecovery } from "./stops.ts";
 import { DiscoveryLibraryRepository } from "./library-repository.ts";
 import { DiscoveryReviewRepository } from "./review-repository.ts";
-import { loadDiscoveryReviewBasis } from "./review-basis.ts";
+import { findDiscoveryReviewBasis, loadDiscoveryReviewBasis } from "./review-basis.ts";
 import { buildDiscoveryReviewMaterial } from "./review-material.ts";
 import { assessDiscoveryYoutube } from "./qualification.ts";
 import { DiscoveryCandidateRepository, type DiscoveryCandidatePageInput } from "./candidate-repository.ts";
@@ -20,7 +22,6 @@ import { discoverySearchHit } from "./library-material.ts";
 import { recoverDiscoveryReads } from "./recovery.ts";
 import { DiscoveryVideoRepository, type DiscoveryVideoClaim } from "./video-repository.ts";
 import { getDiscoverySavedContent, getDiscoverySavedPublicPage, getDiscoverySavedTranscript, getDiscoverySavedIdentity } from "./saved-read-repository.ts";
-import { DiscoveryTranscriptRepository, type DiscoveryTranscriptClaim } from "./transcript-repository.ts";
 import { DiscoveryContentRepository } from "./content-repository.ts";
 import { pendingReview, pendingReviewLabels, type PendingReviewState } from "./pending-review.ts";
 import type { DiscoveryContentClaim } from "./content-result.ts";
@@ -38,28 +39,71 @@ import { DiscoveryWebSourceRepository } from "./web-source-repository.ts";
 import type { DiscoveryWebSourceClaim } from "./web-source-contracts.ts";
 import { DiscoveryFacebookIdentityRepository, type DiscoveryFacebookIdentityClaim } from "./facebook-identity.ts";
 import { DiscoveryFacebookTargetsRepository } from "./facebook-targets.ts";
-import { planDiscoveryStep, type DiscoveryStep } from "./step.ts";
+import { planDiscoveryStep, type DiscoveryStep, type DiscoverySchedulingPolicy, type DiscoveryPlanningSnapshot } from "./step.ts";
 import { loadDiscoveryReadStops } from "./read-health.ts";
 import { DiscoveryLinkedinExperienceRepository } from "./linkedin-experience.ts";
+import { DiscoveryWebAuthorRepository, type DiscoveryWebAuthorClaim } from "./web-author-repository.ts";
+import type { PublicOpenCliWebRead } from "../platforms/opencli/web.ts";
+import { validateDiscoveryWebAuthorResolution } from "./web-author-material.ts";
+import { readDiscoveryQueryFeedback, discoveryLowYieldUnreadHits } from "./query-feedback.ts";
 
 export interface DiscoverySearchClaim { planId: string; expectedRevision: number; platform: string; profileRef: string; callNumber: number; query: string }
-const runSchema = z.object({ status: z.enum(["unsearched", "searching", "completed", "technical_stop", "risk_control_stop", "unauthorized", "budget_exhausted"]), stop_code: z.string().nullable(), active_query: z.string().nullable(), calls_used: z.number().int().nonnegative(), updated_at: z.number().int().safe() });
+const runSchema = z.object({ status: z.enum(["unsearched", "searching", "completed", "technical_stop", "risk_control_stop", "unauthorized"]), stop_code: z.string().nullable(), active_query: z.string().nullable(), cursor: z.string().nullable(), calls_used: z.number().int().nonnegative(), updated_at: z.number().int().safe() });
 const storedScopes = z.array(z.object({ platform: z.string(), profile_ref: z.string(), keywords: z.array(z.string()) }).strict());
-const headSchema = z.object({ max_calls: z.number().int().positive().nullable(), used_calls: z.number().int().nonnegative(), scope_json: z.string() });
+const headSchema = z.object({ used_calls: z.number().int().nonnegative(), scope_json: z.string() });
+type ScoringBases = Map<string, ReturnType<typeof buildDiscoveryReviewMaterial>>;
 // 数据库由统一账号仓储持有；调用方必须在每次操作前后校验当前账号与租约。
 export class DiscoveryRepository {
   readonly #db: DatabaseSync;
   constructor(database: DatabaseSync) { this.#db = database; }
   recoverInterruptedReads() { return recoverDiscoveryReads(this.#db); }
-  readStops(campaign: string) { return [...loadDiscoveryReadStops(this.#db, campaign, "profile"), ...loadDiscoveryReadStops(this.#db, campaign, "content")]; }
-  remainingSlots(campaign: string, excluded: readonly string[] = []) { return Math.max(0, this.getPlan(campaign).target_count - this.countCandidates(campaign, excluded).qualified); }
+  nextWebAuthor(campaign: string, excluded: readonly string[] = []) { return new DiscoveryWebAuthorRepository(this.#db).next(campaign, excluded); }
+  webAuthorReady(campaign: string, revision: number, excluded: readonly string[] = []) { return new DiscoveryWebAuthorRepository(this.#db).ready(campaign, revision, excluded); }
+  claimWebAuthor(campaign: string, revision: number, hit: string) { return new DiscoveryWebAuthorRepository(this.#db).claim(campaign, revision, hit); }
+  assertWebAuthorClaim(claim: DiscoveryWebAuthorClaim) { return new DiscoveryWebAuthorRepository(this.#db).assertClaim(claim); }
+  finishWebAuthorRead(claim: DiscoveryWebAuthorClaim, page: PublicOpenCliWebRead) { return new DiscoveryWebAuthorRepository(this.#db).finishRead(claim, page); }
+  finishWebAuthor(claim: DiscoveryWebAuthorClaim, page: PublicOpenCliWebRead | null, resolution: unknown, stop: string | null) { return new DiscoveryWebAuthorRepository(this.#db).finish(claim, page, resolution, stop); }
+  resolveWebAuthor(campaign: string, revision: number, hit: string, hash: string, resolution: unknown) {
+    const repository = new DiscoveryWebAuthorRepository(this.#db), saved = repository.ready(campaign, revision).find(row => row.claim.search_hit_id === hit && row.material_hash === hash);
+    if (!saved) throw new Error("web_author_material_changed");
+    // 先验证，失败不会领取阶段或改变保存材料。
+    const checked = validateDiscoveryWebAuthorResolution(saved.page, resolution, saved.claim.expected_author ?? undefined);
+    repository.beginResolution(campaign, revision, hit, hash);
+    return repository.finish(saved.claim, saved.page, checked, null);
+  }
+  rejectWebAuthorResolution(campaign: string, revision: number, hit: string, hash: string, code: string) {
+    return new DiscoveryWebAuthorRepository(this.#db).rejectResolution(campaign, revision, hit, hash, code);
+  }
+  readStops(campaign: string) { return (["profile", "content", "web_source", "facebook_identity"] as const).flatMap(kind => loadDiscoveryReadStops(this.#db, campaign, kind)); }
+  remainingSlots(campaign: string, excluded: readonly string[] = []) {
+    const plan = this.getPlan(campaign), targets = this.sourceProgress(campaign);
+    return targets.length ? targets.filter(target => !excluded.includes(target.platform)).reduce((sum, target) => sum + Math.max(0, target.target_count - target.qualified), 0) : Math.max(0, plan.target_count - this.countCandidates(campaign, excluded).qualified);
+  }
+  sourceProgress(campaign: string) {
+    if (!this.#db.prepare("SELECT 1 FROM sqlite_schema WHERE type='table' AND name='discovery_source_targets'").get()) return [];
+    return this.#db.prepare(`SELECT t.source_platform AS platform,t.target_count,COUNT(c.id) AS qualified FROM discovery_source_targets t JOIN discovery_campaigns d ON d.id=t.discovery_campaign_id AND d.current_revision=t.criteria_revision
+      LEFT JOIN discovery_candidates c ON c.discovery_campaign_id=d.id AND c.criteria_revision=d.current_revision AND c.source_platform=t.source_platform AND c.verdict='qualified'
+      WHERE d.id=? GROUP BY t.source_platform,t.target_count ORDER BY t.source_platform`).all(campaign).map(row => z.object({ platform: z.string(), target_count: z.number().int().positive(), qualified: z.number().int().nonnegative() }).parse(row));
+  }
+  reachedSources(campaign: string): string[] { return this.sourceProgress(campaign).filter(item => item.qualified >= item.target_count).map(item => item.platform); }
+  setSourceTargets(campaign: string, revision: number, raw: unknown): void {
+    const targets = discoverySourceTargets.parse(raw), plan = this.getPlan(campaign);
+    if (plan.revision !== revision || !["draft", "active", "paused"].includes(plan.phase) || plan.platform_runs.some(run => run.status === "searching")) throw new Error("discovery_source_targets_campaign_changed");
+    if (Object.keys(targets).some(source => !plan.scopes.some(scope => scope.platform === source)) || Object.values(targets).reduce((sum, count) => sum + count, 0) !== plan.target_count) throw new Error("discovery_source_targets_outside_approval");
+    this.#transaction(() => {
+      const row = this.#db.prepare("SELECT current_revision,target_count FROM discovery_campaigns WHERE id=?").get(campaign);
+      if (row?.current_revision !== revision || row.target_count !== plan.target_count) throw new Error("discovery_source_targets_campaign_changed");
+      this.#db.prepare("DELETE FROM discovery_source_targets WHERE discovery_campaign_id=? AND criteria_revision=?").run(campaign, revision);
+      for (const [source, count] of Object.entries(targets)) this.#db.prepare("INSERT INTO discovery_source_targets VALUES(?,?,?,?,?)").run(campaign, revision, source, count, Math.floor(Date.now() / 1000));
+    });
+  }
   candidateIsQualified(campaign: string, candidate: string): boolean { return this.#db.prepare("SELECT EXISTS(SELECT 1 FROM discovery_candidates c JOIN discovery_campaigns d ON d.id=c.discovery_campaign_id WHERE c.id=?1 AND d.id=?2 AND c.criteria_revision=d.current_revision AND c.verdict='qualified') qualified").get(candidate, campaign)!.qualified === 1; }
   recommendedCandidateIds(campaign: string): string[] {
     return this.#db.prepare(`SELECT c.id FROM discovery_candidates c JOIN discovery_campaigns d ON d.id=c.discovery_campaign_id
       WHERE d.id=?1 AND c.criteria_revision=d.current_revision AND c.verdict='qualified' ORDER BY c.id`).all(campaign).map(row => z.string().parse(row.id));
   }
   recordYoutubeContactObservation(input: z.infer<typeof youtubeContactObservation>) { return this.#transaction(() => recordYoutubeContactObservation(this.#db, input)); }
-  nextFacebookIdentity(campaign: string, excluded: readonly string[] = []) { return new DiscoveryFacebookIdentityRepository(this.#db).next(campaign, excluded); }
+  nextFacebookIdentity(campaign: string, excluded: readonly string[] = [], held: readonly string[] = []) { return new DiscoveryFacebookIdentityRepository(this.#db).next(campaign, excluded, held); }
   claimFacebookIdentity(campaign: string, revision: number, hit: string) { return new DiscoveryFacebookIdentityRepository(this.#db).claim(campaign, revision, hit); }
   finishFacebookIdentity(claim: DiscoveryFacebookIdentityClaim, native: Record<string, unknown> | null, stop: string | null) { return new DiscoveryFacebookIdentityRepository(this.#db).settle(claim, native, stop); }
   getFacebookIdentity(campaign: string, hit: string) { return new DiscoveryFacebookIdentityRepository(this.#db).get(campaign, hit); }
@@ -69,19 +113,53 @@ export class DiscoveryRepository {
   finishFacebookTargets(claim: DiscoveryProfileClaim, urls: readonly string[] | null, stop: string | null) { return new DiscoveryFacebookTargetsRepository(this.#db).finish(claim, urls, stop); }
   getFacebookTargets(campaign: string, hit: string) { return new DiscoveryFacebookTargetsRepository(this.#db).get(campaign, hit); }
   interruptFacebookTargets(claim: DiscoveryProfileClaim) { return new DiscoveryFacebookTargetsRepository(this.#db).interrupt(claim); }
-  planStep(campaign: string, revision: number, excluded: readonly string[] = [], deferred: readonly string[] = []): DiscoveryStep { return planDiscoveryStep(this, campaign, revision, excluded, deferred); }
-  planStepScoring(campaign: string, revision: number, excluded: readonly string[], deferred: readonly string[], scoring: readonly string[]): DiscoveryStep {
-    const held = scoring.map(hit => this.#transaction(() => buildDiscoveryReviewMaterial(loadDiscoveryReviewBasis(this.#db, campaign, revision, hit)), true));
+  queryFeedback(campaign: string) { return readDiscoveryQueryFeedback(this.#db, campaign); }
+  lowYieldUnreadHits(campaign: string) { return discoveryLowYieldUnreadHits(this.#db, campaign); }
+  combinedPostReady(campaign: string, hit: string): boolean {
+    return Number(this.#db.prepare("PRAGMA user_version").get()!.user_version) >= 95 && this.#db.prepare("SELECT 1 FROM discovery_identity_observations observation JOIN discovery_content_reads content ON content.search_hit_id=observation.search_hit_id WHERE content.discovery_campaign_id=? AND observation.search_hit_id=? AND content.status='completed'").get(campaign, hit) !== undefined;
+  }
+  readResources(campaign: string, step: DiscoveryStep): string[] {
+    if (step.kind === "search") return [step.platform];
+    if ("search_hit_id" in step) {
+      const source = z.object({ platform: z.string(), source_url: z.string() }).parse(this.#db.prepare("SELECT platform,source_url FROM discovery_search_hits WHERE discovery_campaign_id=? AND id=?").get(campaign, step.search_hit_id));
+      const target = step.kind === "read_web_source" ? discoveryWebSourceTarget(source.source_url)?.platform : null;
+      const candidate = step.kind === "read_content" ? this.#db.prepare("SELECT platform FROM discovery_candidates WHERE discovery_campaign_id=? AND json_extract(evidence_json,'$.source_urls[0]')=?").get(campaign, source.source_url)?.platform : null;
+      return [...new Set([source.platform, ...(target ? [target] : []), ...(typeof candidate === "string" ? [candidate] : [])])];
+    }
+    if (step.kind === "read_public_page") {
+      const candidate = z.object({ platform: z.string(), source_platform: z.string() }).parse(this.#db.prepare("SELECT platform,source_platform FROM discovery_candidates WHERE discovery_campaign_id=? AND id=?").get(campaign, step.candidate_id));
+      return [...new Set([candidate.platform, candidate.source_platform])];
+    }
+    return [];
+  }
+  readPlatforms(campaign: string): string[] { return this.#db.prepare("SELECT DISTINCT platform FROM discovery_search_hits WHERE discovery_campaign_id=?").all(campaign).map(row => z.string().parse(row.platform)); }
+  #planningSnapshot(campaign: string, excluded: readonly string[]): DiscoveryPlanningSnapshot {
+    return { campaign: this.getPlan(campaign), counts: this.countCandidates(campaign, excluded), progress: this.sourceProgress(campaign), platforms: this.readPlatforms(campaign) };
+  }
+  planStep(campaign: string, revision: number, excluded: readonly string[] = [], deferred: readonly string[] = [], policy: DiscoverySchedulingPolicy = {}): DiscoveryStep {
+    const blocked = [...new Set([...excluded, ...this.readStops(campaign).map(stop => stop.platform)])];
+    return planDiscoveryStep(this, campaign, revision, blocked, deferred, { ...policy, heldQueryHits: policy.heldQueryHits ?? this.lowYieldUnreadHits(campaign) }, this.#planningSnapshot(campaign, blocked));
+  }
+  planStepScoring(campaign: string, revision: number, excluded: readonly string[], deferred: readonly string[], scoring: readonly string[], policy: DiscoverySchedulingPolicy = {}): DiscoveryStep {
+    policy = { ...policy, heldQueryHits: policy.heldQueryHits ?? this.lowYieldUnreadHits(campaign) };
+    const bases = this.#scoringBases(campaign, revision, scoring), held = [...bases.values()];
+    const stopped = [...new Set([...excluded, ...this.readStops(campaign).map(stop => stop.platform)])], snapshot = this.#planningSnapshot(campaign, stopped);
+    const unavailable = [...new Set([...stopped, ...snapshot.progress.filter(source => source.qualified >= source.target_count).map(source => source.platform)])];
     const blocked = new Set(deferred);
     for (const material of held) {
       for (const platform of ["google", "yahoo"]) blocked.add(platform);
-      if (["google", "yahoo"].includes(material.hit.platform)) for (const scope of this.getPlan(campaign).scopes) blocked.add(scope.platform);
-      else blocked.add(material.hit.platform);
+      blocked.add(material.hit.platform);
+      blocked.add(material.native_platform ?? material.hit.platform);
     }
-    const fallback = this.planStep(campaign, revision, excluded, [...blocked]);
-    if (fallback.kind === "target_reached" || fallback.kind === "budget_exhausted") return fallback;
-    if (this.getPlan(campaign).platform_runs.some(run => run.status === "searching")) return { kind: "busy" };
-    const page = scoring.length > 0 ? this.nextPublicPage(campaign, excluded) : null;
+    const fallback = planDiscoveryStep(this, campaign, revision, stopped, [...blocked], policy, snapshot);
+    if (fallback.kind === "target_reached") return fallback;
+    for (const hit of scoring) {
+      const basis = bases.get(hit)!;
+      if (!unavailable.includes(basis.hit.platform)) { const independent = this.#independentRead(campaign, hit, bases, policy); if (independent) return independent; }
+    }
+    const targetReached = snapshot.progress.length > 0 ? snapshot.progress.every(source => source.qualified >= source.target_count) : (stopped.every(platform => excluded.includes(platform)) ? snapshot.counts : this.countCandidates(campaign, excluded)).qualified >= snapshot.campaign.target_count;
+    const matchingRead = fallback.kind.startsWith("read_") || fallback.kind === "resolve_article";
+    const page = scoring.length > 0 ? this.nextPublicPage(campaign, [...excluded, ...policy.busyPlatforms ?? []], !targetReached && (policy.holdDiscovery === true || matchingRead)) : null;
     if (page !== null) {
       const independent = this.#transaction(() => {
         const contact = loadDiscoveryNativeContactMaterial(this.#db, page);
@@ -92,19 +170,20 @@ export class DiscoveryRepository {
       }, true);
       if (independent) return { kind: "read_public_page", profile_ref: page.profile_ref, candidate_id: page.candidate_id, requested_url: page.requested_url };
     }
-    for (const hit of scoring) {
-      const basis = this.#transaction(() => loadDiscoveryReviewBasis(this.#db, campaign, revision, hit), true);
-      if (!excluded.includes(basis.hit.platform)) { const independent = this.nextIndependentRead(campaign, revision, hit, scoring); if (independent) return independent; }
-    }
     return fallback;
   }
-  nextIndependentRead(campaign: string, revision: number, scoringHit: string, scoring: readonly string[]): DiscoveryStep | null {
-    const basis = this.#transaction(() => loadDiscoveryReviewBasis(this.#db, campaign, revision, scoringHit), true), platform = basis.hit.platform;
-    if (!["twitter", "bilibili", "facebook", "reddit", "instagram", "weibo", "pinterest", "linkedin", "tiktok", "youtube"].includes(platform)) return null;
-    const held = new Set<string>();
-    for (const hit of scoring) {
-      const source = this.#transaction(() => loadDiscoveryReviewBasis(this.#db, campaign, revision, hit), true);
-      if (["google", "yahoo"].includes(source.hit.platform)) return null;
+  nextIndependentRead(campaign: string, revision: number, scoringHit: string, scoring: readonly string[], policy: DiscoverySchedulingPolicy = {}): DiscoveryStep | null {
+    return this.#independentRead(campaign, scoringHit, this.#scoringBases(campaign, revision, [...new Set([scoringHit, ...scoring])]), policy);
+  }
+  #scoringBases(campaign: string, revision: number, scoring: readonly string[]): ScoringBases {
+    return new Map(scoring.map(hit => [hit, this.#transaction(() => buildDiscoveryReviewMaterial(loadDiscoveryReviewBasis(this.#db, campaign, revision, hit)), true)]));
+  }
+  #independentRead(campaign: string, scoringHit: string, bases: ScoringBases, policy: DiscoverySchedulingPolicy): DiscoveryStep | null {
+    const basis = bases.get(scoringHit)!, platform = basis.native_platform ?? basis.hit.platform;
+    if (policy.busyPlatforms?.includes(platform) || discoveryReadBusy(this.#db, campaign, [platform])) return null;
+    if (!["twitter", "bilibili", "facebook", "instagram", "weibo", "linkedin", "tiktok", "youtube"].includes(platform)) return null;
+    const held = new Set<string>(policy.heldQueryHits ?? this.lowYieldUnreadHits(campaign));
+    for (const [hit, source] of bases) {
       const rows = this.#db.prepare(`SELECT h.id FROM discovery_search_hits h LEFT JOIN discovery_search_authors a ON a.search_hit_id=h.id LEFT JOIN discovery_search_authors held ON held.search_hit_id=?2 LEFT JOIN discovery_identity_reads i ON i.search_hit_id=h.id
         WHERE h.discovery_campaign_id=?1 AND(h.platform!=?3 OR h.id=?2 OR a.author_id=held.author_id OR a.author_id=?4 OR i.account_id=?4
         OR EXISTS(SELECT 1 FROM discovery_video_identity_bindings b WHERE b.search_hit_id=h.id AND b.native_author_id=?4) OR h.source_url IN(SELECT source_url FROM discovery_search_hits WHERE id=?2))`).all(campaign, hit, platform, source.native_author_id);
@@ -112,23 +191,28 @@ export class DiscoveryRepository {
     }
     const excludedHits = [...held].sort((left, right) => Buffer.compare(Buffer.from(left), Buffer.from(right)));
     if (platform === "youtube") {
-      const transcript = this.nextTranscriptHit(campaign, excludedHits); if (transcript) return { kind: "read_transcript", profile_ref: transcript.profile_ref, search_hit_id: transcript.id };
       const language = this.nextLanguage(campaign, platform, excludedHits); return language ? { kind: "read_content", search_hit_id: language } : null;
     }
-    if (platform === "linkedin") {
+    const content = this.nextContentHit(campaign, platform, excludedHits); if (content) return { kind: "read_content", search_hit_id: content };
+    if (platform === "linkedin" && !policy.holdDiscovery) {
       const profile = this.nextProfileHit(campaign, [], excludedHits, platform); if (profile) return { kind: "read_profile", search_hit_id: profile };
     }
-    const content = this.nextContentHit(campaign, platform, excludedHits); if (content) return { kind: "read_content", search_hit_id: content };
-    const profile = this.nextProfileHit(campaign, [], excludedHits); if (profile) return { kind: this.profileNeedsIdentity(campaign, profile) ? "read_identity" : "read_profile", search_hit_id: profile };
-    if (platform === "facebook") { const identity = this.nextFacebookIdentity(campaign); if (identity && !held.has(identity)) return { kind: "read_facebook_identity", search_hit_id: identity }; }
+    for (let profile = this.nextProfileHit(campaign, [], excludedHits); profile; profile = this.nextProfileHit(campaign, [], excludedHits)) {
+      const identity = this.profileNeedsIdentity(campaign, profile);
+      if (identity || !policy.holdDiscovery) return { kind: identity ? "read_identity" : "read_profile", search_hit_id: profile };
+      excludedHits.push(profile);
+    }
+    if (platform === "facebook") { const identity = this.nextFacebookIdentity(campaign, [], excludedHits); if (identity) return { kind: "read_facebook_identity", search_hit_id: identity }; }
     return null;
   }
   nextWebSource(campaign: string, excluded: readonly string[] = [], held: readonly string[] = []) { return new DiscoveryWebSourceRepository(this.#db).next(campaign, excluded, held); }
+  savedNativeProfile(campaign: string, revision: number, profile: string, platform: string, source: string) { return new DiscoveryWebSourceRepository(this.#db).savedProfile(campaign, revision, profile, platform, source); }
   webSourceSource(campaign: string, hit: string) { return new DiscoveryWebSourceRepository(this.#db).source(campaign, hit); }
   claimWebSource(campaign: string, revision: number, hit: string) { return new DiscoveryWebSourceRepository(this.#db).claim(campaign, revision, hit); }
   finishWebSource(claim: DiscoveryWebSourceClaim, native: unknown, stop: string | null) { return new DiscoveryWebSourceRepository(this.#db).finish(claim, native, stop); }
   getWebSource(campaign: string, hit: string) { return new DiscoveryWebSourceRepository(this.#db).get(campaign, hit); }
   nextContentHit(campaign: string, platform: string, held: readonly string[] = []) {
+    if (platform === "instagram") new DiscoveryWebSourceRepository(this.#db).retainInstagramProfiles(campaign);
     if (platform === "linkedin") { const experience = this.nextLinkedinExperience(campaign, held); if (experience) return experience; }
     if (["tiktok", "douyin", "google", "yahoo"].includes(platform)) return this.nextLanguage(campaign, platform, held);
     return this.nextNativeContentHit(campaign, platform, held) ?? this.nextLanguage(campaign, platform, held);
@@ -138,8 +222,10 @@ export class DiscoveryRepository {
   claimLinkedinExperience(campaign: string, revision: number, hit: string) { return new DiscoveryLinkedinExperienceRepository(this.#db).claim(campaign,revision,hit); }
   linkedinExperienceAccount(claim: DiscoveryContentClaim) { return new DiscoveryLinkedinExperienceRepository(this.#db).account(claim); }
   finishLinkedinExperience(claim: DiscoveryContentClaim, native: unknown, stop: string | null) { return new DiscoveryLinkedinExperienceRepository(this.#db).finish(claim,native,stop); }
+  reuseLinkedinExperience(claim: DiscoveryContentClaim) { return new DiscoveryLinkedinExperienceRepository(this.#db).reuse(claim); }
   nextSearchKeyword(campaign: string, scope: DiscoveryScope) { return this.#next(campaign, scope); }
-  nextSourceAuthor(campaign: string, excluded: readonly string[] = []) { return new DiscoverySourceAuthorRepository(this.#db).next(campaign, excluded); }
+  nextSourceAuthor(campaign: string, excluded: readonly string[] = [], held: readonly string[] = []) { return new DiscoverySourceAuthorRepository(this.#db).next(campaign, excluded, held); }
+  savedSourceAuthorProfile(claim: DiscoverySourceAuthorClaim, author: string) { return new DiscoverySourceAuthorRepository(this.#db).savedProfile(claim, author); }
   claimSourceAuthor(campaign: string, revision: number, hit: string) { return new DiscoverySourceAuthorRepository(this.#db).claim(campaign, revision, hit); }
   finishSourceAuthor(claim: DiscoverySourceAuthorClaim, profile: unknown, content: unknown, stop: string | null) { return new DiscoverySourceAuthorRepository(this.#db).finish(claim, profile, content, stop); }
   getSourceAuthor(campaign: string, hit: string) { return new DiscoverySourceAuthorRepository(this.#db).get(campaign, hit); }
@@ -157,9 +243,10 @@ export class DiscoveryRepository {
   nextContactLookup(campaign: string, excluded: readonly string[] = []) { return new DiscoveryContactLookupRepository(this.#db).next(campaign, excluded); }
   claimContactLookup(input: DiscoveryContactLookup) { return new DiscoveryContactLookupRepository(this.#db).claim(input); }
   finishContactLookup(input: DiscoveryContactLookup) { return new DiscoveryContactLookupRepository(this.#db).settle(input); }
-  nextPublicPage(campaign: string, excluded: readonly string[] = []) { return new DiscoveryPublicPageRepository(this.#db).next(campaign, excluded); }
+  nextPublicPage(campaign: string, excluded: readonly string[] = [], requiredOnly = false) { return new DiscoveryPublicPageRepository(this.#db).next(campaign, excluded, requiredOnly); }
   claimPublicPage(input: DiscoveryPublicPageInput) { return new DiscoveryPublicPageRepository(this.#db).claim(input); }
   finishPublicPage(input: FinishDiscoveryPublicPageInput) { return new DiscoveryPublicPageRepository(this.#db).settle(input); }
+  reusePublicPage(claim: DiscoveryPublicPageClaim) { return new DiscoveryPublicPageRepository(this.#db).reuse(claim); }
   reprojectCompletedContacts(campaign: string, revision: number) { return new DiscoveryPublicPageRepository(this.#db).reprojectCompleted(campaign, revision); }
   interruptPublicPage(claim: DiscoveryPublicPageClaim) { return new DiscoveryPublicPageRepository(this.#db).interrupt(claim); }
   nextNativeContentHit(campaign: string, platform: string, held: readonly string[] = []) { return new DiscoveryContentRepository(this.#db).nextNative(campaign, platform, held); }
@@ -167,23 +254,21 @@ export class DiscoveryRepository {
   finishContent(claim: DiscoveryContentClaim, native: unknown, stop: string | null) { return new DiscoveryContentRepository(this.#db).finish(claim, native, stop); }
   interruptContent(claim: DiscoveryContentClaim) { return new DiscoveryContentRepository(this.#db).interrupt(claim); }
   contentNativeIdentity(claim: DiscoveryContentClaim) { return new DiscoveryContentRepository(this.#db).nativeIdentity(claim); }
-  nextTranscriptHit(campaign: string, held: readonly string[] = []) { return new DiscoveryTranscriptRepository(this.#db).next(campaign, held); }
-  claimTranscript(campaign: string, revision: number, profile: string, hit: string) { return new DiscoveryTranscriptRepository(this.#db).claim(campaign, revision, profile, hit); }
-  finishTranscript(claim: DiscoveryTranscriptClaim, result: unknown) { return new DiscoveryTranscriptRepository(this.#db).finish(claim, result); }
-  interruptTranscript(claim: DiscoveryTranscriptClaim) { return new DiscoveryTranscriptRepository(this.#db).interrupt(claim); }
   getContent(campaign: string, hit: string) { return getDiscoverySavedContent(this.#db, campaign, hit); }
   getIdentity(campaign: string, hit: string) { return getDiscoverySavedIdentity(this.#db, campaign, hit); }
   getTranscript(campaign: string, hit: string) { return getDiscoverySavedTranscript(this.#db, campaign, hit); }
   getPublicPage(campaign: string, candidate: string, url: string) { return getDiscoverySavedPublicPage(this.#db, campaign, candidate, url); }
-  nextVideoHit(campaign: string) { return new DiscoveryVideoRepository(this.#db).next(campaign); }
+  nextVideoHit(campaign: string, held: readonly string[] = []) { return new DiscoveryVideoRepository(this.#db).next(campaign, held); }
   claimVideo(campaign: string, revision: number, profile: string, hit: string) { return new DiscoveryVideoRepository(this.#db).claim(campaign, revision, profile, hit); }
   finishVideo(claim: DiscoveryVideoClaim, candidate: unknown, stop: string | null) { new DiscoveryVideoRepository(this.#db).finish(claim, candidate, stop); return this.getPlan(claim.campaign_id); }
+  reuseVideo(claim: DiscoveryVideoClaim) { return new DiscoveryVideoRepository(this.#db).reuse(claim) ? this.getPlan(claim.campaign_id) : null; }
   interruptVideo(claim: DiscoveryVideoClaim) { return new DiscoveryVideoRepository(this.#db).interrupt(claim); }
   claimProfile(campaign: string, revision: number, hit: string) { return new DiscoveryProfileRepository(this.#db).claim(campaign, revision, hit); }
   getProfileSource(campaign: string, hit: string) { return new DiscoveryProfileRepository(this.#db).source(campaign, hit); }
   nextProfileHit(campaign: string, excluded: readonly string[] = [], held: readonly string[] = [], platform: string | null = null) { return new DiscoveryProfileRepository(this.#db).next(campaign, excluded, held, platform); }
   recoverInterruptedProfiles() { return new DiscoveryProfileRepository(this.#db).recoverInterrupted(); }
   finishProfile(claim: DiscoveryProfileClaim, native: unknown, stop: string | null) { return new DiscoveryProfileRepository(this.#db).finish(claim, native, stop); }
+  reuseProfile(claim: DiscoveryProfileClaim) { return new DiscoveryProfileRepository(this.#db).reuse(claim); }
   interruptProfile(claim: DiscoveryProfileClaim) { return new DiscoveryProfileRepository(this.#db).interrupt(claim); }
   getProfile(campaign: string, hit: string) { return new DiscoveryProfileRepository(this.#db).get(campaign, hit); }
   listSearchHits(input: DiscoveryCandidatePageInput) {
@@ -195,11 +280,11 @@ export class DiscoveryRepository {
   }
   recentPlans() {
     return this.#transaction(() => {
-      const statement = this.#db.prepare(`SELECT c.id,r.brief_json,c.phase,c.target_count,c.used_calls,c.max_calls,c.updated_at FROM discovery_campaigns c JOIN discovery_campaign_revisions r ON r.discovery_campaign_id=c.id AND r.revision=c.current_revision ORDER BY c.updated_at DESC,c.created_at DESC,c.id DESC LIMIT 5`);
+      const statement = this.#db.prepare(`SELECT c.id,r.brief_json,c.phase,c.target_count,c.used_calls,c.updated_at FROM discovery_campaigns c JOIN discovery_campaign_revisions r ON r.discovery_campaign_id=c.id AND r.revision=c.current_revision ORDER BY c.updated_at DESC,c.created_at DESC,c.id DESC LIMIT 5`);
       statement.setReadBigInts(true);
       return statement.all().map(raw => {
         const value = Object.fromEntries(Object.entries(raw).map(([key, item]) => [key, typeof item === "bigint" && item >= BigInt(Number.MIN_SAFE_INTEGER) && item <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(item) : item]));
-        const { brief_json, ...row } = z.object({ id: z.string(), brief_json: z.string(), phase: z.string(), target_count: z.number().int(), used_calls: z.number().int(), max_calls: z.number().int().nullable(), updated_at: z.union([z.number().int().safe(), z.bigint().min(-9223372036854775808n).max(9223372036854775807n)]) }).parse(value);
+        const { brief_json, ...row } = z.object({ id: z.string(), brief_json: z.string(), phase: z.string(), target_count: z.number().int(), used_calls: z.number().int(), updated_at: z.union([z.number().int().safe(), z.bigint().min(-9223372036854775808n).max(9223372036854775807n)]) }).parse(value);
         return { ...row, brief: z.string().parse(parseApplicationJson(brief_json)) };
       });
     }, true);
@@ -213,6 +298,33 @@ export class DiscoveryRepository {
       WHERE d.id=?1 AND d.current_revision=?2 AND d.phase='active' AND c.verdict='pending'
         AND NOT EXISTS(SELECT 1 FROM json_each(?3) e WHERE e.value=h.platform OR e.value=c.platform)
       ORDER BY h.id`).all(campaign, revision, stringifyApplicationJson(excludedPlatforms)).map(row => z.string().parse(row.id));
+  }
+  readyReviews(campaign: string, revision: number, excluded: readonly string[] = []) {
+    return this.#transaction(() => this.pendingScoreHits(campaign, revision, [...excluded, ...this.reachedSources(campaign)]).flatMap(hit => {
+      const basis = findDiscoveryReviewBasis(this.#db, campaign, revision, hit);
+      if (!basis) return [];
+      const pending = pendingReview(this.#db, campaign, revision, basis.candidate_id);
+      return pending?.state === "awaiting_score" ? [{ search_hit_id: hit, candidate_id: basis.candidate_id, ...pending }] : [];
+    }), true);
+  }
+  activePendingCount(campaign: string, revision: number, excludedPlatforms: readonly string[] = [], excludedHits: readonly string[] = []): number {
+    return this.#transaction(() => {
+      const excluded = new Set(excludedHits), candidates = new Set<string>();
+      for (const hit of this.pendingScoreHits(campaign, revision, [...excludedPlatforms, ...this.reachedSources(campaign)])) {
+        if (excluded.has(hit)) continue;
+        const basis = findDiscoveryReviewBasis(this.#db, campaign, revision, hit);
+        const rows = basis ? [{ id: basis.candidate_id }] : this.#db.prepare(`SELECT c.id FROM discovery_candidates c JOIN discovery_search_hits h
+          ON h.discovery_campaign_id=c.discovery_campaign_id AND h.profile_ref=c.source_profile_ref AND h.source_url=json_extract(c.evidence_json,'$.source_urls[0]')
+          WHERE c.discovery_campaign_id=?1 AND c.criteria_revision=?2 AND c.verdict='pending' AND h.id=?3`).all(campaign, revision, hit);
+        for (const row of rows) {
+          const candidate = z.string().parse(row.id);
+          if (candidates.has(candidate)) continue;
+          const pending = pendingReview(this.#db, campaign, revision, candidate);
+          if (pending && ["awaiting_score", "needs_content", "needs_identity", "needs_requirement"].includes(pending.state)) candidates.add(candidate);
+        }
+      }
+      return candidates.size;
+    }, true);
   }
   pendingReviewCounts(campaign: string, revision: number): Record<PendingReviewState, number> {
     return this.#transaction(() => {
@@ -247,7 +359,8 @@ export class DiscoveryRepository {
     const basis = this.#transaction(() => loadDiscoveryReviewBasis(this.#db, campaign, revision, hit), true), evidence = z.record(z.string(), z.unknown()).parse(parseApplicationJson(Buffer.from(basis.evidence_json)));
     const reviewed = evidence.reviewed_selection !== null && typeof evidence.reviewed_selection === "object" && !Array.isArray(evidence.reviewed_selection) ? evidence.reviewed_selection as Record<string, unknown> : {};
     const assessment = assessDiscoveryYoutube(parseApplicationJson(Buffer.from(basis.criteria_json)), evidence, basis.native_author_id);
-    return { material: buildDiscoveryReviewMaterial(basis), count: basis.native_followers ?? assessment.subscribers, preserve: reviewed.policy_version === "selection-quality-evaluation-v2" && reviewed.outcome === "supported" && assessment.verdict === "qualified" };
+    const rejectedScale = basis.hit.platform === "youtube" && assessment.reasons.includes("below_min_subscribers") && this.#db.prepare("SELECT 1 FROM discovery_candidates WHERE id=? AND criteria_revision=? AND verdict='rejected'").get(basis.candidate_id, revision) !== undefined;
+    return { material: buildDiscoveryReviewMaterial(basis), count: basis.native_followers ?? assessment.subscribers, preserve: rejectedScale || reviewed.policy_version === "selection-quality-evaluation-v2" && reviewed.outcome === "supported" && assessment.verdict === "qualified" };
   }
   submitReview(account: string, input: unknown) { return new DiscoveryReviewRepository(this.#db).submit(account, input); }
   getReview(account: string, campaign: string, request: string) { return new DiscoveryReviewRepository(this.#db).get(account, campaign, request); }
@@ -267,21 +380,21 @@ export class DiscoveryRepository {
     return scopes;
   }
   #head(id: string, revision: number) {
-    const row = this.#db.prepare("SELECT c.max_calls,c.used_calls,r.scope_json FROM discovery_campaigns c JOIN discovery_campaign_revisions r ON r.discovery_campaign_id=c.id AND r.revision=c.current_revision WHERE c.id=? AND c.phase='active' AND c.current_revision=? AND r.approved_at IS NOT NULL").get(id, revision);
+    const row = this.#db.prepare("SELECT c.used_calls,r.scope_json FROM discovery_campaigns c JOIN discovery_campaign_revisions r ON r.discovery_campaign_id=c.id AND r.revision=c.current_revision WHERE c.id=? AND c.phase='active' AND c.current_revision=? AND r.approved_at IS NOT NULL").get(id, revision);
     if (!row) throw new Error("discovery_plan_revision_changed"); return headSchema.parse(row);
   }
-  #run(id: string, platform: string, profile: string) { return runSchema.parse(this.#db.prepare("SELECT status,stop_code,active_query,calls_used,updated_at FROM discovery_platform_runs WHERE discovery_campaign_id=? AND platform=? AND profile_ref=?").get(id, platform, profile)); }
+  #run(id: string, platform: string, profile: string) { return runSchema.parse(this.#db.prepare("SELECT status,stop_code,active_query,cursor,calls_used,updated_at FROM discovery_platform_runs WHERE discovery_campaign_id=? AND platform=? AND profile_ref=?").get(id, platform, profile)); }
   #next(id: string, scope: DiscoveryScope) {
     const completed = new Set(this.#db.prepare("SELECT search_keyword FROM discovery_search_completions WHERE discovery_campaign_id=? AND platform=? AND profile_ref=?").all(id, scope.platform, scope.profile_ref).map(row => z.string().parse(row.search_keyword)));
     return nextDiscoverySearchKeyword(scope.keywords, this.#run(id, scope.platform, scope.profile_ref), completed);
   }
   getPlan(id: string) {
     return this.#transaction(() => {
-      const row = this.#db.prepare("SELECT c.id,c.phase,c.current_revision,c.target_count,c.max_calls,c.used_calls,c.created_at,c.updated_at,r.brief_json,r.opencli_version,r.criteria_json,r.scope_json,r.approved_at FROM discovery_campaigns c JOIN discovery_campaign_revisions r ON r.discovery_campaign_id=c.id AND r.revision=c.current_revision WHERE c.id=?").get(id);
+      const row = this.#db.prepare("SELECT c.id,c.phase,c.current_revision,c.target_count,c.used_calls,c.created_at,c.updated_at,r.brief_json,r.opencli_version,r.criteria_json,r.scope_json,r.approved_at FROM discovery_campaigns c JOIN discovery_campaign_revisions r ON r.discovery_campaign_id=c.id AND r.revision=c.current_revision WHERE c.id=?").get(id);
       if (!row) throw new Error("discovery_plan_missing");
-      const value = z.object({ id: z.string(), phase: z.enum(["draft", "active", "paused", "completed", "archived"]), current_revision: z.number().int().positive(), target_count: z.number().int().positive(), max_calls: z.number().int().positive().nullable(), used_calls: z.number().int().nonnegative(), created_at: z.number().int().safe(), updated_at: z.number().int().safe(), brief_json: z.string(), opencli_version: z.string(), criteria_json: z.string(), scope_json: z.string(), approved_at: z.number().int().safe().nullable() }).parse(row);
+      const value = z.object({ id: z.string(), phase: z.enum(["draft", "active", "paused", "completed", "archived"]), current_revision: z.number().int().positive(), target_count: z.number().int().positive(), used_calls: z.number().int().nonnegative(), created_at: z.number().int().safe(), updated_at: z.number().int().safe(), brief_json: z.string(), opencli_version: z.string(), criteria_json: z.string(), scope_json: z.string(), approved_at: z.number().int().safe().nullable() }).parse(row);
       const runs = this.#db.prepare("SELECT platform,profile_ref,status,cursor,calls_used,stop_code,updated_at,active_query FROM discovery_platform_runs WHERE discovery_campaign_id=? ORDER BY platform,profile_ref").all(id).map(item => z.object({ platform: z.string(), profile_ref: z.string(), status: z.string(), cursor: z.string().nullable(), calls_used: z.number().int().nonnegative(), stop_code: z.string().nullable(), updated_at: z.number().int().safe(), active_query: z.string().nullable() }).parse(item));
-      return { id: value.id, phase: value.phase, revision: value.current_revision, brief: z.string().parse(parseApplicationJson(Buffer.from(value.brief_json))), opencli_version: value.opencli_version, criteria: z.record(z.string(), z.unknown()).parse(parseApplicationJson(Buffer.from(value.criteria_json))), scopes: this.#scopes(id, value.current_revision, value.scope_json), platform_runs: runs, target_count: value.target_count, max_calls: value.max_calls, used_calls: value.used_calls, approved_at: value.approved_at, created_at: value.created_at, updated_at: value.updated_at };
+      return { id: value.id, phase: value.phase, revision: value.current_revision, brief: z.string().parse(parseApplicationJson(Buffer.from(value.brief_json))), opencli_version: value.opencli_version, criteria: z.record(z.string(), z.unknown()).parse(parseApplicationJson(Buffer.from(value.criteria_json))), scopes: this.#scopes(id, value.current_revision, value.scope_json), platform_runs: runs, target_count: value.target_count, source_targets: Object.fromEntries(this.sourceProgress(id).map(item => [item.platform, item.target_count])), used_calls: value.used_calls, approved_at: value.approved_at, created_at: value.created_at, updated_at: value.updated_at };
     }, true);
   }
   findPlan(id: string) { return this.#db.prepare("SELECT id FROM discovery_campaigns WHERE id=?").get(id) === undefined ? null : this.getPlan(id); }
@@ -290,8 +403,9 @@ export class DiscoveryRepository {
     return this.#transaction(() => {
       this.#refinementSource(input.criteria);
       const now = Math.floor(Date.now() / 1000);
-      this.#db.prepare("INSERT INTO discovery_campaigns(id,phase,current_revision,target_count,max_calls,used_calls,created_at,updated_at) VALUES (?,'draft',1,?,?,0,?,?)").run(input.id, input.target_count, input.max_calls, now, now);
+      this.#db.prepare("INSERT INTO discovery_campaigns(id,phase,current_revision,target_count,used_calls,created_at,updated_at) VALUES (?,'draft',1,?,0,?,?)").run(input.id, input.target_count, now, now);
       this.#db.prepare("INSERT INTO discovery_campaign_revisions(discovery_campaign_id,revision,brief_json,opencli_version,criteria_json,scope_json,approved_at) VALUES (?,1,?,?,?,?,NULL)").run(input.id, stringifyApplicationJson(input.brief), input.opencli_version, stringifyApplicationJson(input.criteria), stringifyApplicationJson(input.scopes));
+      for (const [source, count] of Object.entries(input.source_targets ?? {})) this.#db.prepare("INSERT INTO discovery_source_targets VALUES(?,1,?,?,?)").run(input.id, source, count, now);
       this.#db.prepare("INSERT INTO discovery_recommendation_policies VALUES (?,1,'score_and_contact_v1')").run(input.id); return input.id;
     });
   }
@@ -331,7 +445,8 @@ export class DiscoveryRepository {
   }
   claimSearch(id: string, revision: number, platform: string, profile: string, explicitRecovery = false, recovery: DiscoverySearchRecovery | null = null): DiscoverySearchClaim {
     return this.#transaction(() => {
-      const head = this.#head(id, revision); if (head.max_calls !== null && head.used_calls >= head.max_calls) throw new Error("discovery_budget_exhausted");
+      const head = this.#head(id, revision);
+      if (discoveryReadBusy(this.#db, id, [platform])) throw new Error("discovery_read_active");
       const scope = this.#scopes(id, revision, head.scope_json).find(value => value.platform === platform && value.profile_ref === profile); if (!scope) throw new Error("discovery_search_outside_scope"); assertRegisteredDiscoveryScopes([scope]);
       const run = this.#run(id, platform, profile), interrupted = run.status === "technical_stop" && run.stop_code === "interrupted_read";
       if (recovery !== null && (run.status !== "technical_stop" || !repairedSearchRecoveryCodes.has(recovery.expected_stop_code) || run.stop_code !== recovery.expected_stop_code || run.updated_at !== recovery.expected_stopped_at)) throw new Error("discovery_repair_checkpoint_changed");
@@ -360,16 +475,26 @@ export class DiscoveryRepository {
       const url = URL.parse(hit.source_url);
       if (!url || url.protocol !== "https:" || Buffer.byteLength(hit.source_url) > 2048 || !hit.title.trim() || [...hit.title].length > 500 || [...hit.author_label].length > 200 || /\p{Cc}/u.test(hit.title + hit.author_label) || seen.has(hit.source_url) || (hit.author_id === null) !== (hit.author_url === null)) throw new Error("discovery_search_hit_invalid");
       seen.add(hit.source_url);
+      if (hit.material) {
+        const material = creatorSearchMaterial.parse(hit.material);
+        if (material.source_url !== hit.source_url || material.author_id !== hit.author_id || material.author_url !== hit.author_url || Buffer.byteLength(stringifyApplicationJson(material)) > 64000) throw new Error("discovery_search_material_invalid");
+      }
     }
     this.#transaction(() => {
       const now = Math.floor(Date.now() / 1000), preserve = status === "technical_stop" && (canAdvanceSearchAfterStop(stopCode) || stopCode !== null && repairedSearchRecoveryCodes.has(stopCode));
-      const changed = this.#db.prepare("UPDATE discovery_platform_runs SET status=?5,stop_code=?6,active_query=CASE WHEN ?10 THEN ?9 ELSE NULL END,updated_at=?7 WHERE discovery_campaign_id=?1 AND platform=?2 AND profile_ref=?3 AND calls_used=?4 AND status='searching' AND active_query=?9 AND EXISTS(SELECT 1 FROM discovery_campaigns c WHERE c.id=?1 AND c.phase='active' AND c.current_revision=?8)").run(claim.planId, claim.platform, claim.profileRef, claim.callNumber, status, stopCode, now, claim.expectedRevision, claim.query, Number(preserve));
+      const progress = readDiscoverySearchProgress(this.#run(claim.planId, claim.platform, claim.profileRef).cursor);
+      const retryable = status === "technical_stop" && canAdvanceSearchAfterStop(stopCode);
+      const consecutive = status === "completed" ? 0 : retryable ? Math.min(3, progress.consecutive_failures + 1) : progress.consecutive_failures;
+      const cursor = status === "completed" || retryable ? stringifyApplicationJson({ last_query: claim.query, consecutive_failures: consecutive }) : stringifyApplicationJson(progress);
+      const savedStatus = retryable && consecutive < 3 ? "completed" : status;
+      const changed = this.#db.prepare("UPDATE discovery_platform_runs SET status=?5,stop_code=?6,active_query=CASE WHEN ?10 THEN ?9 ELSE NULL END,updated_at=?7,cursor=?11 WHERE discovery_campaign_id=?1 AND platform=?2 AND profile_ref=?3 AND calls_used=?4 AND status='searching' AND active_query=?9 AND EXISTS(SELECT 1 FROM discovery_campaigns c WHERE c.id=?1 AND c.phase='active' AND c.current_revision=?8)").run(claim.planId, claim.platform, claim.profileRef, claim.callNumber, savedStatus, stopCode, now, claim.expectedRevision, claim.query, Number(preserve), cursor);
       if (changed.changes !== 1) throw new Error("discovery_search_claim_stale");
       if (status === "completed") this.#db.prepare("INSERT INTO discovery_search_completions VALUES (?,?,?,?,?)").run(claim.planId, claim.platform, claim.profileRef, claim.query, now);
       for (const hit of hits) {
         const id = randomUUID();
         const inserted = this.#db.prepare("INSERT INTO discovery_search_hits(id,discovery_campaign_id,platform,profile_ref,search_keyword,source_url,title,author_label,captured_at) VALUES (?,?,?,?,?,?,?,?,?) ON CONFLICT(discovery_campaign_id,platform,profile_ref,source_url) DO NOTHING").run(id, claim.planId, claim.platform, claim.profileRef, claim.query, hit.source_url, hit.title, hit.author_label, now);
         if (inserted.changes === 1) this.#db.prepare("INSERT INTO discovery_search_positions(search_hit_id) VALUES (?)").run(id);
+        if (inserted.changes === 1 && hit.material) this.#db.prepare("INSERT INTO discovery_search_materials VALUES(?,?)").run(id, stringifyApplicationJson(hit.material));
         if (hit.author_id !== null && hit.author_url !== null) {
           const saved = this.#db.prepare("SELECT id FROM discovery_search_hits WHERE discovery_campaign_id=? AND platform=? AND profile_ref=? AND source_url=?").get(claim.planId, claim.platform, claim.profileRef, hit.source_url); if (typeof saved?.id !== "string") throw new Error("discovery_search_hit_missing");
           const prior = this.#db.prepare("SELECT author_id,author_url FROM discovery_search_authors WHERE search_hit_id=?").get(saved.id);
@@ -383,7 +508,7 @@ export class DiscoveryRepository {
   appendQueries(accountId: string, id: string, revision: number, expected: readonly DiscoveryScope[], additions: readonly DiscoveryScope[]): void {
     if (!accountId.trim()) throw new Error("query_round_invalid"); appendDiscoveryQueries(expected, additions);
     this.#transaction(() => {
-      const row = this.#db.prepare("SELECT r.scope_json,c.used_calls FROM discovery_campaigns c JOIN discovery_campaign_revisions r ON r.discovery_campaign_id=c.id AND r.revision=c.current_revision WHERE c.id=? AND c.current_revision=? AND c.phase='active' AND r.approved_at IS NOT NULL AND json_extract(r.criteria_json,'$.automatic_query_expansion')=1 AND (c.max_calls IS NULL OR c.used_calls<c.max_calls) AND NOT EXISTS(SELECT 1 FROM discovery_platform_runs p WHERE p.discovery_campaign_id=c.id AND p.status='searching')").get(id, revision);
+      const row = this.#db.prepare("SELECT r.scope_json,c.used_calls FROM discovery_campaigns c JOIN discovery_campaign_revisions r ON r.discovery_campaign_id=c.id AND r.revision=c.current_revision WHERE c.id=? AND c.current_revision=? AND c.phase='active' AND r.approved_at IS NOT NULL AND NOT EXISTS(SELECT 1 FROM discovery_platform_runs p WHERE p.discovery_campaign_id=c.id AND p.status='searching')").get(id, revision);
       if (!row || typeof row.scope_json !== "string" || typeof row.used_calls !== "number") throw new Error("query_round_plan_changed");
       if (stringifyApplicationJson(this.#scopes(id, revision, row.scope_json)) !== stringifyApplicationJson(expected)) throw new Error("query_round_plan_changed");
       for (const addition of additions) {
@@ -392,23 +517,6 @@ export class DiscoveryRepository {
         if (this.#run(id, addition.platform, addition.profile_ref).status !== "completed") throw new Error("query_round_platform_stopped");
       }
       this.#db.prepare("INSERT INTO discovery_query_rounds(discovery_campaign_id,revision,round,operator_account_id,scopes_json,used_calls,created_at) SELECT ?1,?2,COALESCE(MAX(round),0)+1,?3,?4,?5,?6 FROM discovery_query_rounds WHERE discovery_campaign_id=?1 AND revision=?2").run(id, revision, accountId, stringifyApplicationJson(additions), row.used_calls, Math.floor(Date.now() / 1000));
-    });
-  }
-  increaseBudget(accountId: string, input: Readonly<{ decisionId: string; planId: string; expectedRevision: number; expectedMaxCalls: number; newMaxCalls: number }>): void {
-    if (!accountId.trim() || Buffer.byteLength(accountId) > 256 || !input.planId.length || Buffer.byteLength(input.planId) > 128 || !input.decisionId.trim() || Buffer.byteLength(input.decisionId) > 128 || !Number.isInteger(input.expectedRevision) || input.expectedRevision < 1 || !Number.isInteger(input.expectedMaxCalls) || input.expectedMaxCalls < 1 || !Number.isInteger(input.newMaxCalls) || input.newMaxCalls <= input.expectedMaxCalls || input.newMaxCalls > 10000) throw new Error("budget_increase_input_invalid");
-    this.#transaction(() => {
-      const prior = this.#db.prepare("SELECT operator_account_id,discovery_campaign_id,criteria_revision,previous_max_calls,new_max_calls FROM discovery_budget_increases WHERE id=?").get(input.decisionId);
-      if (prior) {
-        if (prior.operator_account_id !== accountId || prior.discovery_campaign_id !== input.planId || prior.criteria_revision !== input.expectedRevision || prior.previous_max_calls !== input.expectedMaxCalls || prior.new_max_calls !== input.newMaxCalls) throw new Error("budget_increase_idempotency_conflict");
-        return;
-      }
-      const head = this.#head(input.planId, input.expectedRevision);
-      if (head.max_calls === null) throw new Error("budget_increase_requires_finite_approval");
-      const active = this.#db.prepare("SELECT COUNT(*) AS n FROM discovery_platform_runs WHERE discovery_campaign_id=? AND status='searching'").get(input.planId);
-      if (head.max_calls !== input.expectedMaxCalls || head.used_calls > head.max_calls || active?.n !== 0) throw new Error("budget_increase_plan_changed");
-      const now = Math.floor(Date.now() / 1000);
-      this.#db.prepare("INSERT INTO discovery_budget_increases(id,operator_account_id,discovery_campaign_id,criteria_revision,previous_max_calls,new_max_calls,used_calls_at_decision,created_at) VALUES (?,?,?,?,?,?,?,?)").run(input.decisionId, accountId, input.planId, input.expectedRevision, head.max_calls, input.newMaxCalls, head.used_calls, now);
-      if (this.#db.prepare("UPDATE discovery_campaigns SET max_calls=?,updated_at=? WHERE id=?").run(input.newMaxCalls, now, input.planId).changes !== 1) throw new Error("discovery_plan_missing");
     });
   }
   adjustTarget(accountId: string, input: Readonly<{ decisionId: string; planId: string; expectedRevision: number; expectedTargetCount: number; newTargetCount: number }>): void {

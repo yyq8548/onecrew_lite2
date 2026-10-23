@@ -12,7 +12,6 @@ export function DiscoveryCandidateCard({ item, campaign, reasonLabels }: {
   const { met, reasons } = candidateConditions(item, campaign.criteria);
   const gaps = candidateRequirementGaps(item, campaign.criteria);
   const requirementLabels: Record<string, string> = {
-    below_pinterest_scale: t("opencliPilot.pinterestScaleFailed"), pinterest_scale_unverified: t("opencliPilot.pinterestScaleUnknown"),
     related_alternative: t("opencliPilot.relatedAlternative"),
     requirement_unverified: t("opencliPilot.reason.requirement"), requirement_contradicted: t("opencliPilot.reason.requirementConflict"),
     linkedin_current_employment_evidence_exhausted: t("opencliPilot.reason.experienceExhausted"),
@@ -34,7 +33,6 @@ export function DiscoveryCandidateCard({ item, campaign, reasonLabels }: {
     {!rating && assessment?.selection && <p className="mt-1">{t("opencliPilot.qualityUnrated")}</p>}
     {assessment?.selection && <p className="mt-1">{t(`opencliPilot.selectionState.${assessment.selection.state}`)}</p>}
     {met.length > 0 && <p className="mt-1 text-muted-foreground">{met.map(key => t(`opencliPilot.${key}`)).join(" · ")}</p>}
-    {item.platform === "pinterest" && typeof item.evidence.pinterest_monthly_views_raw === "string" && <p className="mt-1 text-muted-foreground">{item.evidence.pinterest_monthly_views_raw}</p>}
     <p className="mt-1 text-muted-foreground">{rating?.reason || (reasons.length
       ? reasons.map(reason => requirementLabels[reason] ?? reasonLabels[reason] ?? reason).join(" · ")
       : t(item.verdict === "qualified" ? "opencliPilot.autoRecommended" : "opencliPilot.matchUnknown"))}</p>

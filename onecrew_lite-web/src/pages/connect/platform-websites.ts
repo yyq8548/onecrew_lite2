@@ -3,7 +3,6 @@ const websites: Record<string, string> = {
   youtube: "https://www.youtube.com/", tiktok: "https://www.tiktok.com/",
   instagram: "https://www.instagram.com/", twitter: "https://x.com/",
   linkedin: "https://www.linkedin.com/", facebook: "https://www.facebook.com/",
-  pinterest: "https://www.pinterest.com/", reddit: "https://www.reddit.com/",
   bilibili: "https://www.bilibili.com/", weixin: "https://weixin.sogou.com/",
   douyin: "https://www.douyin.com/",
   weibo: "https://weibo.com/", medium: "https://medium.com/",
@@ -23,5 +22,5 @@ const websites: Record<string, string> = {
 };
 
 export function platformWebsite(platform: string): string | undefined {
-  return websites[platform] ?? websites[platform.replace(/-(pins|boards|salesnav|shots|designers|images|users|books|music|node|subreddit|tag|hot|posts|spaces|models|datasets)$/, "")];
+  return websites[platform] ?? websites[platform.replace(/-(salesnav|shots|designers|images|users|books|music|node|tag|hot|posts|spaces|models|datasets)$/, "")];
 }

@@ -42,7 +42,6 @@ const columns = [
   { name: "Source URL", data_type: "website" }, { name: "Search keyword", data_type: "string" },
   { name: "Status", data_type: "string" }, { name: "Captured at (Unix s)", data_type: "string" },
   { name: "Match evaluation", data_type: "score" }, { name: "Content category", data_type: "string" },
-  { name: "Pinterest monthly views", data_type: "string" }, { name: "Pinterest scale passed by", data_type: "string" },
   { name: "Biography status", data_type: "string" },
 ] as const;
 type Tables = Awaited<ReturnType<typeof createEmbeddedTables>>;
@@ -89,10 +88,11 @@ export function createDiscoveryLibraryProjection(accounts: AccountContextService
       const snapshot = publication.material.sources;
       const plan = resolved.repository.getPlan(campaign);
       if (plan.revision !== revision) throw new LibraryProjectionError("library_source_stale");
-      if (snapshot.rows.length > 10_000 || new Set(snapshot.rows.map(row => row.hit.id)).size !== snapshot.rows.length) throw new LibraryProjectionError("library_capacity_exceeded");
+      if (snapshot.rows.length > 10_000) throw new LibraryProjectionError("library_capacity_exceeded");
+      if (new Set(snapshot.rows.map(row => row.hit.id)).size !== snapshot.rows.length) throw new LibraryProjectionError("library_projection_conflict");
       const name = resolved.repository.getLibraryTableName(campaign);
       const existing = await libraryCall(() => tables.data.getDiscoveryCampaignTable(selected, campaign)); assertCurrent();
-      const repairValues = existing !== null && ["Content category", "Followers", "Pinterest monthly views", "Pinterest scale passed by", "Biography status"].some(field => !existing.columns.some(column => column.name === field));
+      const repairValues = existing !== null && ["Content category", "Followers", "Biography status"].some(field => !existing.columns.some(column => column.name === field));
       const table = await libraryCall(() => tables.data.ensureDiscoveryCampaignTable(selected, { campaign_id: campaign, name: name.name, previous_auto_name: name.previous_auto_name, columns: columns.map(column => ({ ...column })) }), true); assertCurrent();
       const fields = new Map<string, string>();
       for (const column of columns) {
@@ -121,11 +121,24 @@ export function createDiscoveryLibraryProjection(accounts: AccountContextService
       const expected = new Set(snapshot.rows.map(row => row.hit.id));
       if ([...known.keys()].some(id => !expected.has(id))) throw new LibraryProjectionError("library_foreign_source_row");
       const matches = (source: typeof snapshot.rows[number], saved: SavedRow | undefined) => saved !== undefined && saved.criteria_revision === snapshot.criteria_revision && saved.source_revision === snapshot.source_revision && saved.candidate_id === source.candidate_id && saved.native_author_id === source.native_author_id && saved.verdict === source.verdict && saved.evidence_version === source.evidence_version && isDeepStrictEqual(saved.reasons, source.reasons) && isDeepStrictEqual(saved.contacts, source.contacts ?? []);
+      const currentMaterial = () => {
+        assertCurrent();
+        const current = resolved.repository.readLibraryMaterial(campaign, revision);
+        if (current.sources.snapshot_hash !== snapshot.snapshot_hash || current.identity.snapshot_hash !== publication.material.identity.snapshot_hash) throw new LibraryProjectionError("library_source_stale");
+      };
+      const identity = publication.material.identity;
+      const projection = { table_id: table.id, campaign_id: campaign, projection_format: 1 as const, criteria_revision: snapshot.criteria_revision, source_revision: snapshot.source_revision, source_hash: snapshot.snapshot_hash, identity_revision: publication.identity_revision, identity_hash: identity.snapshot_hash, source_rows: snapshot.rows.map(row => ({ search_hit_id: row.hit.id, candidate_id: row.candidate_id, native_author_id: row.native_author_id, evidence_version: row.evidence_version })), groups: identity.groups.map(group => ({ group_id: group.group_id, has_same_author_review: group.has_same_author_review, decision_ids: group.decision_ids, members: group.members.map(member => ({ candidate_id: member.candidate_id, platform: member.platform, native_author_id: member.native_author_id, display_name: member.display_name, profile_url: member.profile_url, source_hit_ids: member.sources.map(row => row.hit.id) })) })) };
+      const expectedIdentity = { state: "current", projection };
+      if (!repairValues && known.size === snapshot.rows.length && snapshot.rows.every(row => matches(row, known.get(row.hit.id)))) {
+        currentMaterial();
+        const savedIdentity = await libraryCall(() => tables.data.getDiscoveryIdentity(selected, { table_id: table.id, campaign_id: campaign }));
+        assertCurrent(); currentMaterial();
+        if (isDeepStrictEqual(savedIdentity, expectedIdentity)) return { campaign_id: campaign, table_id: table.id, web_url: `${origin}/library/${encodeURIComponent(table.id)}`, total_hits: snapshot.rows.length, inserted_rows: 0 };
+      }
       for (let offset = 0; offset < snapshot.rows.length; offset += 100) {
         assertCurrent();
         const batch = snapshot.rows.slice(offset, offset + 100);
-        const enrichment = batch.some(row => row.pinterest_scale_passed_by !== undefined || row.bio_status !== undefined);
-        if (!repairValues && !enrichment && batch.every(row => matches(row, known.get(row.hit.id)))) continue;
+        if (!repairValues && batch.every(row => matches(row, known.get(row.hit.id)))) continue;
         const rows: IngestRow[] = batch.map(row => {
           const hit = row.hit;
           const values: IngestRow["values"] = {
@@ -135,8 +148,6 @@ export function createDiscoveryLibraryProjection(accounts: AccountContextService
             "Search keyword": hit.search_keyword, "Status": row.verdict === "qualified" ? "Recommended candidate" : row.verdict === "rejected" ? "Does not meet requirements" : row.verdict === "pending" ? "Awaiting required evidence" : "Awaiting account read", "Captured at (Unix s)": String(hit.captured_at),
             "Match evaluation": "quality_rating" in row ? row.quality_rating == null ? null : { level: row.quality_rating.level, reason: row.quality_rating.reason } : "match_rating" in row ? row.match_rating ?? null : null,
             "Content category": typeof plan.criteria.category === "string" ? plan.criteria.category : "",
-            "Pinterest monthly views": row.pinterest_monthly_views_raw ?? null,
-            "Pinterest scale passed by": row.pinterest_scale_passed_by?.join(",") ?? null,
             "Biography status": row.bio_status ?? null,
           };
           return { search_hit_id: hit.id, candidate_id: row.candidate_id, native_author_id: row.native_author_id, verdict: row.verdict as IngestRow["verdict"], reasons: row.reasons, evidence_version: row.evidence_version, contacts: (row.contacts ?? []).map(contact => ({ ...contact, captured_at: timestamp(contact.captured_at) })), values: Object.fromEntries(Object.entries(values).map(([key, value]) => [fields.get(key)!, value])) };
@@ -145,15 +156,7 @@ export function createDiscoveryLibraryProjection(accounts: AccountContextService
       }
       const finalRows = await state();
       if (finalRows.size !== snapshot.rows.length || snapshot.rows.some(row => !matches(row, finalRows.get(row.hit.id))) || [...known].some(([id, row]) => finalRows.get(id)?.row_id !== row.row_id)) throw new LibraryProjectionError("library_readback_incomplete");
-      const currentMaterial = () => {
-        assertCurrent();
-        const current = resolved.repository.readLibraryMaterial(campaign, revision);
-        if (current.sources.snapshot_hash !== snapshot.snapshot_hash || current.identity.snapshot_hash !== publication.material.identity.snapshot_hash) throw new LibraryProjectionError("library_source_stale");
-      };
       currentMaterial();
-      const identity = publication.material.identity;
-      const projection = { table_id: table.id, campaign_id: campaign, projection_format: 1 as const, criteria_revision: snapshot.criteria_revision, source_revision: snapshot.source_revision, source_hash: snapshot.snapshot_hash, identity_revision: publication.identity_revision, identity_hash: identity.snapshot_hash, source_rows: snapshot.rows.map(row => ({ search_hit_id: row.hit.id, candidate_id: row.candidate_id, native_author_id: row.native_author_id, evidence_version: row.evidence_version })), groups: identity.groups.map(group => ({ group_id: group.group_id, has_same_author_review: group.has_same_author_review, decision_ids: group.decision_ids, members: group.members.map(member => ({ candidate_id: member.candidate_id, platform: member.platform, native_author_id: member.native_author_id, display_name: member.display_name, profile_url: member.profile_url, source_hit_ids: member.sources.map(row => row.hit.id) })) })) };
-      const expectedIdentity = { state: "current", projection };
       const receipt = await libraryCall(() => tables.data.publishDiscoveryIdentity(selected, projection), true); assertCurrent();
       if (!isDeepStrictEqual(receipt, expectedIdentity)) throw new LibraryProjectionError("library_readback_incomplete");
       const readback = await libraryCall(() => tables.data.getDiscoveryIdentity(selected, { table_id: table.id, campaign_id: campaign })); assertCurrent();

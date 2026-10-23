@@ -22,8 +22,6 @@ export type CreatorAccount = {
   authorUrl: string;
   verdict: string;
   followers: string | null;
-  pinterestMonthlyViews?: string | null;
-  pinterestScalePassedBy?: Array<'followers' | 'monthly_views'>;
   bioStatus?: string;
 };
 export type CreatorGroup = {
@@ -48,8 +46,6 @@ const sourceColumns = new Set([
   'Platform',
   'Author label',
   'Followers',
-  'Pinterest monthly views',
-  'Pinterest scale passed by',
   'Biography status',
   'Author ID',
   'Author URL',
@@ -101,15 +97,12 @@ export function groupedCreators(table: Table, material: CreatorMaterial) {
       const observedCounts = [...new Set(member.source_hit_ids.map(hit =>
         text(sources.get(hit)!.row.values, 'Followers')).filter(value => /^(?:\d+|~.{1,40})$/.test(value)))];
       const first = verdicts[0];
-      const monthlyViews = [...new Set(member.source_hit_ids.map(hit => text(sources.get(hit)!.row.values, 'Pinterest monthly views')).filter(Boolean))];
-      const scaleBranches = [...new Set(member.source_hit_ids.flatMap(hit => text(sources.get(hit)!.row.values, 'Pinterest scale passed by').split(',')))].filter((branch): branch is 'followers' | 'monthly_views' => branch === 'followers' || branch === 'monthly_views');
       return {
         platform: member.platform,
         nativeId: member.native_author_id,
         label: member.display_name || member.native_author_id,
         followers: observedCounts.length === 1 ? observedCounts[0] : null,
         bioStatus: [...new Set(member.source_hit_ids.map(hit => text(sources.get(hit)!.row.values, 'Biography status')).filter(Boolean))].join(','),
-        ...(member.platform === 'pinterest' ? { pinterestMonthlyViews: monthlyViews.length === 1 ? monthlyViews[0] : null, pinterestScalePassedBy: scaleBranches } : {}),
         authorUrl: profileUrl(member.platform, member.native_author_id, member.profile_url),
         verdict:
           verdicts.every((verdict) => verdict === first) &&

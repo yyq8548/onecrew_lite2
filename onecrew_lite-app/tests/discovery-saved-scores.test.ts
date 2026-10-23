@@ -12,6 +12,7 @@ import { resolveDiscoveryScoreDirectory, SavedDiscoveryScores } from "../src/dis
 import { DiscoveryExecutionSupervisor } from "../src/discovery/execution-supervisor.ts";
 import { DiscoveryAdmissionGate } from "../src/discovery/admission-gate.ts";
 import { setImmediate } from "node:timers/promises";
+import { discoveryScoreCapacity } from "../src/discovery/projection-lane.ts";
 
 test("真实账号私有目录只恢复未启动评分，串行写入不丢失且账号/修订隔离", async () => {
   const root = await mkdtemp(fileURLToPath(new URL("../../.scratch/discovery-score-queue-", import.meta.url))), directory = await createPrivateDirectory(join(root, "private"));
@@ -29,12 +30,13 @@ test("真实账号私有目录只恢复未启动评分，串行写入不丢失�
     assert.deepEqual(await new SavedDiscoveryScores(owned, "../campaign", 2).load(), []);
     const next = accounts.activate({ ...principal, user: { id: "account-b", email: "b@example.com" } }); await databases.createNewAccount(next);
     assert.deepEqual(await new SavedDiscoveryScores(await resolveDiscoveryScoreDirectory(databases, next), "../campaign", 1).load(), []);
-    for (const hit of ["third", "fourth", "fifth", "sixth"]) await queue.add({ hit, deferred_platforms: [] });
+    for (const hit of ["third", "fourth", "fifth", "sixth", "seventh"]) await queue.add({ hit, deferred_platforms: [] });
+    assert.equal((await same.load()).length, discoveryScoreCapacity(20));
     const before = await readFile(queue.path); await assert.rejects(queue.add({ hit: "overflow", deferred_platforms: [] }), /exceeds_capacity/);
     assert.deepEqual(await readFile(queue.path), before);
     await queue.defer({ hit: "second", deferred_platforms: ["bilibili"] }, "review_requirement_citation_invalid");
     await queue.add({ hit: "overflow", deferred_platforms: [] });
-    assert.equal((await queue.load()).length, 5);
+    assert.equal((await queue.load()).length, 6);
     assert.deepEqual(await same.loadDeferred(), [{ hit: "second", deferred_platforms: ["bilibili"], reason: "review_requirement_citation_invalid" }]);
     await queue.remove("overflow");
     await queue.add({ hit: "second", deferred_platforms: ["bilibili"] });
@@ -56,7 +58,7 @@ test("真实队列容量错误显示后，同一账号任务首次续跑可释�
   try {
     await databases.createNewAccount(context);
     const queue = new SavedDiscoveryScores(await resolveDiscoveryScoreDirectory(databases, context), "6b434f43-3da3-4957-8ada-46042ac36fd3", 1);
-    const hits = ["f086f397-a0b8-4397-b7f2-636870ea6606", "3e0f8fe5-18cb-410f-a753-9bcaf558ed93", "99ef38df-01c9-46ce-82a4-3c313429f4dd", "c0bb14eb-c59c-4c1e-ac77-933e4532eb68"];
+    const hits = ["f086f397-a0b8-4397-b7f2-636870ea6606", "3e0f8fe5-18cb-410f-a753-9bcaf558ed93", "99ef38df-01c9-46ce-82a4-3c313429f4dd", "c0bb14eb-c59c-4c1e-ac77-933e4532eb68", "60b01078-67d2-4b36-b7ef-ecb05f50e91a"];
     for (const hit of hits) await queue.add({ hit, deferred_platforms: ["linkedin"] });
     const ray = JSON.parse(await readFile(new URL("./fixtures/linkedin-profile-or-post-20261020.json", import.meta.url), "utf8")).hit.id as string;
     await queue.add({ hit: ray, deferred_platforms: ["linkedin"] });

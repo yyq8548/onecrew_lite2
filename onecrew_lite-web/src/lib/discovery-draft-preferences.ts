@@ -3,15 +3,15 @@ import { isU64 } from "@onecrew/runtime-contracts/result-wire";
 import { parseApplicationJson, stringifyApplicationJson } from "@onecrew/runtime-contracts/json";
 import { CATEGORY_SEARCH_PLATFORMS, TAG_SEARCH_PLATFORMS } from "./opencli-discovery";
 
-export const DISCOVERY_DEFAULTS = { minSubscribers: 2000, targetCount: 30, maxCalls: null } as const;
+export const DISCOVERY_DEFAULTS = { minSubscribers: 2000, targetCount: 30 } as const;
 const text = z.string().max(4000);
 const labels = z.record(z.string(), text);
 const preferencesSchema = z.object({
   format: z.literal(1), brief: text, region: text, language: text, category: text,
   minSubscribers: z.custom<number | bigint>(isU64),
   followersEdited: z.boolean(), targetCount: z.number().int().min(1).max(10000),
-  maxCalls: z.number().int().min(1).max(10000).nullable(), keywords: text, v2exNodes: text,
-  redditCommunities: text, tagInputs: labels, categoryInputs: labels,
+  keywords: text, v2exNodes: text,
+  tagInputs: labels, categoryInputs: labels,
   platforms: z.array(z.string()).max(100), requireDemo: z.boolean(), requireToolLink: z.boolean(),
 });
 export type DiscoveryDraftPreferences = z.infer<typeof preferencesSchema>;
@@ -46,7 +46,7 @@ export function discoveryPlanningBrief(input: Pick<DiscoveryDraftPreferences, "b
 // exact (a community, node, tag or category is not a translatable query).
 export function discoveryPlanningScopeOverrides<T extends { platform: string; keywords: string[] }>(scopes: T[]): T[] {
   return scopes.filter(scope => scope.keywords.length > 0 && (
-    scope.platform === "v2ex-node" || scope.platform === "reddit-subreddit"
+    scope.platform === "v2ex-node"
     || TAG_SEARCH_PLATFORMS.some(platform => platform === scope.platform)
     || CATEGORY_SEARCH_PLATFORMS.some(platform => platform === scope.platform)));
 }
@@ -64,7 +64,7 @@ export function discoveryEditedScopes(
 ) {
   if (!previous || keywords !== [...new Set(previous.flatMap(scope => scope.keywords))].slice(0, 20).join(", ")) return scopes;
   return scopes.map(scope => {
-    const scoped = scope.platform === "v2ex-node" || scope.platform === "reddit-subreddit"
+    const scoped = scope.platform === "v2ex-node"
       || TAG_SEARCH_PLATFORMS.some(platform => platform === scope.platform)
       || CATEGORY_SEARCH_PLATFORMS.some(platform => platform === scope.platform);
     const saved = previous.find(item => item.platform === scope.platform);

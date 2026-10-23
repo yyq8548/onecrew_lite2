@@ -3,6 +3,7 @@ import { isU64 } from "@onecrew/runtime-contracts/result-wire";
 import { stringifyApplicationJson } from "@onecrew/runtime-contracts/json";
 const u64 = z.custom<number | bigint>(isU64);
 import { invoke } from "./local-runtime";
+import { recordFailedRepairDraft, recordRepairError } from "./repair-context";
 import { additionalNativeContentSchema, additionalNativePlatforms, additionalNativeContentBound, linkedinAccount } from "./discovery-native-content";
 
 const runSchema = z.object({ platform: z.string(), profile_ref: z.string(), status: z.string(), calls_used: z.number(), stop_code: z.string().nullable(), updated_at: z.number().int().optional() });
@@ -10,7 +11,7 @@ const campaignSchema = z.object({
   id: z.string(), phase: z.string(), revision: z.number(), brief: z.string(),
   opencli_version: z.string(),
   criteria: z.object({ min_subscribers: u64.optional(), min_followers: u64.optional(), region: z.string().optional(), language: z.string().optional(), category: z.string().optional(), requires_ai_tool_demo: z.boolean().optional(), requires_public_tool_url: z.boolean().optional() }).passthrough(),
-  target_count: z.number(), max_calls: z.number().nullable(), used_calls: z.number(),
+  target_count: z.number(), used_calls: z.number(),
   scopes: z.array(z.object({ platform: z.string(), profile_ref: z.string(), keywords: z.array(z.string()) })),
   platform_runs: z.array(runSchema),
 });
@@ -36,7 +37,6 @@ const candidateSchema = z.object({
     source_urls: z.array(z.string().url()),
     public_links: z.array(z.string().url()).optional(),
     assessment: z.object({ reasons: z.array(z.string()), subscribers_normalized: u64.nullable(),
-      pinterest_scale: z.object({ state: z.enum(["passed", "failed", "unknown"]), passed_by: z.array(z.enum(["followers", "monthly_views"])).optional() }).optional(),
       match_rating: z.object({ level: z.enum(["excellent", "good", "medium", "low"]), reason: z.string(), source_url: z.string().url() }).nullable().optional(),
       selection: z.object({ state: z.enum(["matched", "unmatched", "unverified"]), reason: z.string(), source_url: z.string().url() }).optional(),
       quality_rating: z.object({ level: z.enum(["excellent", "good", "medium", "low"]), score: z.union([z.literal(95), z.literal(85), z.literal(70), z.literal(40)]), reason: z.string(), source_url: z.string().url() }).nullable().optional(),
@@ -51,7 +51,7 @@ export type DiscoveryCandidateCounts = z.infer<typeof countsSchema>;
 const campaignSummarySchema = z.object({
   id: z.string().min(1), brief: z.string(), phase: z.string(),
   target_count: z.number().int().nonnegative(), used_calls: z.number().int().nonnegative(),
-  max_calls: z.number().int().nonnegative().nullable(), updated_at: z.number().int(),
+  updated_at: z.number().int(),
 }).strict();
 export type DiscoveryCampaignSummary = z.infer<typeof campaignSummarySchema>;
 // Same bounded ASCII identity accepted by the Campaign owner, including MCP IDs.
@@ -63,14 +63,29 @@ export async function listRecentDiscoveryCampaigns(): Promise<DiscoveryCampaignS
 }
 export async function prepareDiscoveryDraft(input: {
   id: string; brief: string; profile_ref: string; opencli_version: string;
-  target_count: number | null; max_calls: number | null;
-  read_budget?: { mode: "default" | "explicit"; limit: number | null };
+  target_count: number | null;
   min_followers_override?: number | bigint | null;
   scope_overrides?: { platform: string; keywords: string[] }[];
   refinement?: { campaign_id: string; expected_revision: number } | null;
   criteria_overrides?: { region: string | null; language: string | null; category: string | null; requires_ai_tool_demo: boolean; requires_public_tool_url: boolean };
 }): Promise<DiscoveryCampaign> {
-  return campaignSchema.parse(await invoke<unknown>("onecrew_discovery_draft_prepare", { input }));
+  const run = async () => {
+  let result = await invoke<unknown>("onecrew_discovery_draft_prepare", { input });
+  const operation = z.object({ operation_id: z.string(), state: z.enum(["pending", "completed", "failed"]), value: z.unknown().optional(), error: z.string().optional() });
+  let status = operation.safeParse(result);
+  while (status.success) {
+    if (status.data.state === "failed") throw new Error(status.data.error ?? "host_operation_failed");
+    if (status.data.state === "completed") { result = status.data.value; break; }
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    result = await invoke<unknown>("onecrew_discovery_host_operation_get", { input: { operation_id: status.data.operation_id } });
+    status = operation.safeParse(result);
+    if (!status.success) throw new Error("host_operation_response_invalid");
+  }
+  return campaignSchema.parse(result);
+  };
+  return run().then(result => { recordFailedRepairDraft(null); return result; }, error => {
+    recordFailedRepairDraft(input); recordRepairError("onecrew_discovery_draft_prepare", error); throw error;
+  });
 }
 const librarySyncSchema = z.object({
   campaign_id: z.string(), table_id: z.string(), web_url: z.string().url(),
@@ -90,7 +105,7 @@ export async function syncDiscoveryLibrary(campaignId: string): Promise<Discover
   return result;
 }
 
-/** Keep node, community, tag and category scopes separate from free-text search. */
+/** Keep node, tag and category scopes separate from free-text search. */
 export const TAG_SEARCH_PLATFORMS = ["devto-tag", "lesswrong-tag", "lobsters-tag", "medium-tag", "stackoverflow-tag"] as const;
 export const CATEGORY_SEARCH_PLATFORMS = ["juejin-hot", "producthunt-posts"] as const;
 
@@ -99,10 +114,9 @@ const categoryValues: Record<string, string[]> = {
   "producthunt-posts": ["ai-agents", "ai-coding-agents", "ai-code-editors", "ai-chatbots", "ai-workflow-automation", "vibe-coding", "developer-tools", "productivity", "design-creative", "marketing-sales", "no-code-platforms", "llms", "finance", "social-community", "engineering-development"],
 };
 
-export function discoveryScopeKeywords(platform: string, keywords: string, v2exNodes: string, redditCommunities: string, tags: Record<string, string> = {}, categories: Record<string, string> = {}): string[] {
+export function discoveryScopeKeywords(platform: string, keywords: string, v2exNodes: string, tags: Record<string, string> = {}, categories: Record<string, string> = {}): string[] {
   const input = platform === "v2ex-node" ? v2exNodes
-    : platform === "reddit-subreddit" ? redditCommunities
-      : TAG_SEARCH_PLATFORMS.some(source => source === platform) ? tags[platform] ?? ""
+    : TAG_SEARCH_PLATFORMS.some(source => source === platform) ? tags[platform] ?? ""
         : CATEGORY_SEARCH_PLATFORMS.some(source => source === platform) ? categories[platform] ?? "" : keywords;
   return input.split(/[,，\n]/).map(value => value.trim()).filter(Boolean);
 }
@@ -111,12 +125,6 @@ export function validV2exNodes(nodes: string[]): boolean {
   return nodes.length > 0 && nodes.length <= 20
     && new Set(nodes).size === nodes.length
     && nodes.every(node => /^[a-z0-9][a-z0-9_-]{0,63}$/.test(node));
-}
-
-export function validRedditCommunities(communities: string[]): boolean {
-  return communities.length > 0 && communities.length <= 20
-    && new Set(communities.map(name => name.toLowerCase())).size === communities.length
-    && communities.every(name => /^[A-Za-z0-9_]{1,64}$/.test(name));
 }
 
 export function validScopedTags(tags: string[]): boolean {
@@ -134,8 +142,7 @@ export function validCategoryScopes(platform: string, categories: string[]): boo
 /** Blank scope fields are optional; supplied fields still use native validators. */
 export function validDiscoveryScope(platform: string, values: string[]): boolean {
   return platform === "v2ex-node" ? validV2exNodes(values)
-    : platform === "reddit-subreddit" ? validRedditCommunities(values)
-      : CATEGORY_SEARCH_PLATFORMS.some(source => source === platform) ? validCategoryScopes(platform, values)
+    : CATEGORY_SEARCH_PLATFORMS.some(source => source === platform) ? validCategoryScopes(platform, values)
         : validScopedTags(values);
 }
 
@@ -158,7 +165,7 @@ const stepSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("read_content_targets"), search_hit_id: z.string() }),
   z.object({ kind: z.literal("read_contact_lookup"), lookup:contactLookupSchema }),
   z.object({ kind: z.literal("read_public_page"), profile_ref: z.string(), candidate_id: z.string(), requested_url: z.string().url() }),
-  z.object({ kind: z.enum(["busy", "target_reached", "budget_exhausted", "needs_evidence", "search_exhausted"]) }),
+  z.object({ kind: z.enum(["busy", "target_reached", "needs_evidence", "search_exhausted"]) }),
 ]);
 const transcriptSchema = z.object({
   search_hit_id: z.string(), candidate_id: z.string(), source_url: z.string().url(),
@@ -179,7 +186,7 @@ const contentSchema = z.object({
   language_sample: z.object({ author_id: z.string(), source_url: z.string().url(), text: z.string().max(16000),
     comments: z.array(z.object({ source_url: z.string().url(), text: z.string().max(2000) }).strict()).max(5) }).strict().optional(),
   claim: z.object({ campaign_id: z.string(), expected_revision: z.number().int().positive(), search_hit_id: z.string(),
-    platform: z.enum(["bilibili", "twitter", "reddit", "facebook", "youtube", "tiktok", "douyin", "instagram", "weibo", "zhihu", "pinterest", "pixiv", "linkedin", "google", "yahoo"]), profile_ref: z.string(), author_id: z.string(), source_url: z.string().url(),
+    platform: z.enum(["bilibili", "twitter", "facebook", "youtube", "tiktok", "douyin", "instagram", "weibo", "zhihu", "pixiv", "linkedin", "google", "yahoo"]), profile_ref: z.string(), author_id: z.string(), source_url: z.string().url(),
     call_number: z.number().int().positive() }),
   status: z.enum(["reading", "completed", "failed"]), native_content: z.union([additionalNativeContentSchema, z.object({
     bvid: z.string(), author_id: z.string(), author: z.string(), source_url: z.string().url(),
@@ -483,7 +490,7 @@ export async function runDiscoveryCampaign(
     await onStep(result);
     if (result.step.kind !== "search" && result.step.kind !== "read_video" && result.step.kind !== "read_transcript" && result.step.kind !== "read_profile" && result.step.kind !== "read_content" && result.step.kind !== "read_content_targets" && result.step.kind !== "read_identity" && result.step.kind !== "read_facebook_identity" && result.step.kind !== "read_source_author" && result.step.kind !== "read_web_source" && result.step.kind !== "read_public_page" && result.step.kind !== "read_contact_lookup") return result.step.kind;
     // A repeated or uncertain response cannot start an unbounded read loop.
-    if (result.campaign.used_calls <= usedCalls || result.campaign.max_calls !== initial.max_calls) {
+    if (result.campaign.used_calls <= usedCalls) {
       throw new Error("discovery_progress_unconfirmed");
     }
     usedCalls = result.campaign.used_calls;
@@ -496,7 +503,6 @@ export function canSearchDiscovery(campaign: DiscoveryCampaign, profileRef: stri
   const scope = campaign.scopes.find(item => item.platform === platform && item.profile_ref === profileRef);
   const firstRoundBlocked = run?.status !== "unsearched" && campaign.platform_runs.some(item => item.status === "unsearched");
   return campaign.phase === "active"
-    && (campaign.max_calls === null || campaign.used_calls < campaign.max_calls)
     && !!scope && !!run && !firstRoundBlocked
     && (run.calls_used < scope.keywords.length || run.stop_code === "interrupted_read")
     && (run.status === "unsearched" || run.status === "completed"
@@ -506,7 +512,7 @@ export function canSearchDiscovery(campaign: DiscoveryCampaign, profileRef: stri
 export function canVerifyDiscovery(campaign: DiscoveryCampaign, profileRef: string): boolean {
   const run = campaign.platform_runs.find(item => item.platform === "youtube" && item.profile_ref === profileRef);
   const retryableTechnicalStop = ["interrupted_video_read", "opencli_timeout", "opencli_command_failed", "opencli_invalid_output", "opencli_daemon_unavailable", "opencli_extension_unavailable", "opencli_profile_unavailable"];
-  return campaign.phase === "active" && (campaign.max_calls === null || campaign.used_calls < campaign.max_calls)
+  return campaign.phase === "active"
     && !!run && (run.status === "completed"
       || (run.status === "technical_stop" && !!run.stop_code && retryableTechnicalStop.includes(run.stop_code)))
     && campaign.platform_runs.every(item => item.status !== "unsearched");
@@ -517,7 +523,7 @@ export function canRecoverDiscoverySearch(campaign: DiscoveryCampaign, profileRe
   const run = campaign.platform_runs.find(item => item.platform === platform && item.profile_ref === profileRef);
   const scope = campaign.scopes.find(item => item.platform === platform && item.profile_ref === profileRef);
   const repairedCodes = ["provider_endpoint_not_found", "provider_response_invalid_json", "provider_response_shape_invalid", "provider_response_http_error", "provider_source_unavailable", "opencli_command_unavailable", "opencli_command_failed", "opencli_invalid_output", "opencli_output_too_large", "opencli_timeout"];
-  return campaign.phase === "active" && (campaign.max_calls === null || campaign.used_calls < campaign.max_calls) && run?.status === "technical_stop" && !!scope
+  return campaign.phase === "active" && run?.status === "technical_stop" && !!scope
     && !campaign.platform_runs.some(item => item.status === "searching" || item.status === "unsearched")
     && (run.stop_code === "interrupted_read" || typeof run.updated_at === "number" && !!run.stop_code && repairedCodes.includes(run.stop_code) && run.calls_used < scope.keywords.length);
 }
@@ -526,10 +532,9 @@ export type DiscoveryDraft = {
   id: string;
   brief: string;
   opencli_version: string;
-  criteria: { min_subscribers: number | bigint; region: string; language: string; category?: string; requires_ai_tool_demo: boolean; requires_public_tool_url: boolean; pinterest_min_monthly_views_exclusive?: number; contact_preference?: "public_email_first"; requirements?: { description: string; excerpt: string }[] };
+  criteria: { min_subscribers: number | bigint; region: string; language: string; category?: string; requires_ai_tool_demo: boolean; requires_public_tool_url: boolean; contact_preference?: "public_email_first"; requirements?: { description: string; excerpt: string }[] };
   scopes: { platform: string; profile_ref: string; keywords: string[] }[];
   target_count: number;
-  max_calls: number | null;
 };
 
 export async function createDiscoveryCampaign(input: DiscoveryDraft): Promise<DiscoveryCampaign> {
@@ -556,12 +561,6 @@ export async function increaseDiscoveryTarget(input: DiscoveryTargetIncrease): P
   return result;
 }
 
-export async function increaseDiscoveryBudget(input: {
-  campaign_id: string; expected_revision: number; expected_max_calls: number | null;
-  new_max_calls: number | null; decision_id: string;
-}): Promise<DiscoveryCampaign> {
-  return campaignSchema.parse(await invoke<unknown>("onecrew_discovery_budget_increase", { input }));
-}
 
 export async function searchDiscoveryYoutubeOnce(id: string, expectedRevision: number, profileRef: string): Promise<DiscoveryCampaign> {
   const result = await invoke<unknown>("onecrew_discovery_youtube_search_once", { id, expectedRevision, profileRef, limit: 10 });

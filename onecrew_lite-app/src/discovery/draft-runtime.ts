@@ -2,6 +2,7 @@ import { z } from "zod";
 import { stringifyApplicationJson } from "../contracts/application-json.ts";
 import { AccountChangedError, type AccountContext, type AccountContextService } from "../identity/account-context.ts";
 import { OpenCliError } from "../platforms/opencli/errors.ts";
+import { TEMPORARILY_DISABLED_CREATOR_SOURCES } from "../platforms/opencli/sources.ts";
 import { prepareDiscoveryDraftInput, DiscoveryDraftError } from "./draft.ts";
 import { DiscoveryDraftProgressState } from "./draft-progress.ts";
 import type { DiscoveryDependencyResolver } from "./dependencies.ts";
@@ -9,16 +10,15 @@ import type { DiscoveryRepository } from "./repository.ts";
 import type { DiscoveryRepositoryResolver, OwnedDiscoveryRepository } from "./search-execution.ts";
 import { DiscoverySemanticPlanner, loadBundledDiscoveryQueryGuidance } from "./semantic-planner.ts";
 import { DiscoverySemanticError } from "./semantic-client.ts";
+import { HostOperationRuns, hostWorkOwner } from "./host-work.ts";
 
 export function discoveryDraftMatchesRequest(campaign: ReturnType<DiscoveryRepository["getPlan"]>, input: z.output<typeof prepareDiscoveryDraftInput>): boolean {
   const criteria = campaign.criteria;
-  if (campaign.scopes.some(scope => scope.platform === "pinterest") && typeof criteria.pinterest_min_monthly_views_exclusive !== "number") return false;
   return campaign.id === input.id && campaign.brief === input.brief && (input.refinement === null || JSON.stringify(criteria.refinement) === JSON.stringify(input.refinement)) && campaign.opencli_version === input.opencli_version && campaign.phase === "draft" && criteria.region === "" && campaign.used_calls === 0
-    && (input.target_count === null || campaign.target_count === input.target_count) && (input.max_calls === null || campaign.max_calls === input.max_calls)
-    && (input.read_budget?.mode !== "explicit" || campaign.max_calls === input.read_budget.limit)
+    && (input.target_count === null || campaign.target_count === input.target_count)
     && (input.min_followers_override === null || BigInt(input.min_followers_override) === (typeof criteria.min_subscribers === "bigint" ? criteria.min_subscribers : typeof criteria.min_subscribers === "number" && Number.isSafeInteger(criteria.min_subscribers) ? BigInt(criteria.min_subscribers) : null))
     && (input.criteria_overrides === null || ["language", "category"].every(key => input.criteria_overrides![key as "language" | "category"] === null || criteria[key] === input.criteria_overrides![key as "language" | "category"]) && criteria.requires_ai_tool_demo === input.criteria_overrides.requires_ai_tool_demo && criteria.requires_public_tool_url === input.criteria_overrides.requires_public_tool_url)
-    && campaign.scopes.length > 0 && input.scope_overrides.every(requested => campaign.scopes.some(scope => scope.platform === requested.platform && (JSON.stringify(scope.keywords) === JSON.stringify(requested.keywords) || typeof criteria.language === "string" && !!criteria.language.trim() && !/-tag$|-node$|-subreddit$/u.test(requested.platform) && scope.keywords.length > 0 && scope.keywords.length <= requested.keywords.length)))
+    && campaign.scopes.length > 0 && input.scope_overrides.every(requested => campaign.scopes.some(scope => scope.platform === requested.platform && (JSON.stringify(scope.keywords) === JSON.stringify(requested.keywords) || typeof criteria.language === "string" && !!criteria.language.trim() && !/-tag$|-node$/u.test(requested.platform) && scope.keywords.length > 0 && scope.keywords.length <= requested.keywords.length)))
     && campaign.scopes.every(scope => scope.profile_ref === input.profile_ref);
 }
 function draftFailure(error: unknown): DiscoveryDraftError {
@@ -32,14 +32,18 @@ function draftFailure(error: unknown): DiscoveryDraftError {
 export class DiscoveryDraftRuntime {
   readonly #accounts: AccountContextService; readonly #repositories: DiscoveryRepositoryResolver; readonly #dependencies: DiscoveryDependencyResolver | undefined;
   #busy = false; #progress: DiscoveryDraftProgressState | undefined; readonly #shutdown = new AbortController(); readonly #tasks = new Set<Promise<unknown>>();
-  constructor(accounts: AccountContextService, repositories: DiscoveryRepositoryResolver, dependencies?: DiscoveryDependencyResolver) { this.#accounts = accounts; this.#repositories = repositories; this.#dependencies = dependencies; }
+  readonly #runs: HostOperationRuns;
+  constructor(accounts: AccountContextService, repositories: DiscoveryRepositoryResolver, dependencies?: DiscoveryDependencyResolver, runs = new HostOperationRuns()) { this.#accounts = accounts; this.#repositories = repositories; this.#dependencies = dependencies; this.#runs = runs; }
+  launch(context: AccountContext, raw: unknown) { this.#accounts.assertCurrent(context); const input = prepareDiscoveryDraftInput.parse(raw); return { id: input.id, ...this.#runs.start(hostWorkOwner(context), { kind: "draft", input }, () => this.prepare(context, input), input.id) }; }
   progress(context: AccountContext, id: string) { this.#accounts.assertCurrent(context); return this.#progress?.snapshot(context, id) ?? null; }
   #assert(context: AccountContext, owned: OwnedDiscoveryRepository): void {
     this.#accounts.assertCurrent(context); owned.assertOwned();
     if (owned.owner.accountId !== context.principal.user.id || owned.owner.tenantId !== context.principal.tenantId || owned.owner.baseId !== context.principal.baseId) throw new Error("discovery_draft_repository_owner_mismatch");
   }
   async prepare(context: AccountContext, raw: unknown) {
-    const input = prepareDiscoveryDraftInput.parse(raw); this.#accounts.assertCurrent(context); this.#shutdown.signal.throwIfAborted();
+    const input = prepareDiscoveryDraftInput.parse(raw);
+    input.scope_overrides = input.scope_overrides.filter(scope => !TEMPORARILY_DISABLED_CREATOR_SOURCES.includes(scope.platform));
+    this.#accounts.assertCurrent(context); this.#shutdown.signal.throwIfAborted();
     if (this.#busy) throw new DiscoveryDraftError("discovery_draft_busy");
     this.#busy = true; const progress = new DiscoveryDraftProgressState(context, input.id); this.#progress = progress;
     const signal = AbortSignal.any([context.signal, this.#shutdown.signal]);
@@ -50,7 +54,7 @@ export class DiscoveryDraftRuntime {
       if (input.refinement !== null) {
         if (!previous) throw new DiscoveryDraftError("discovery_draft_conflict");
         if (previous.revision !== input.refinement.expected_revision || previous.approved_at === null || previous.id === input.id) throw new DiscoveryDraftError("discovery_draft_conflict");
-        input.brief = `原任务需求：\n${previous.brief}\n已确认的计划设定：\n${stringifyApplicationJson({ criteria: previous.criteria, target_count: previous.target_count, scopes: previous.scopes, max_calls: previous.max_calls })}\n本次修改（仅覆盖明确修改的条件）：\n${input.brief}`;
+        input.brief = `原任务需求：\n${previous.brief}\n已确认的计划设定：\n${stringifyApplicationJson({ criteria: previous.criteria, target_count: previous.target_count, scopes: previous.scopes })}\n本次修改（仅覆盖明确修改的条件）：\n${input.brief}`;
         prepareDiscoveryDraftInput.parse(input);
       }
       const prior = owned.repository.findPlan(input.id);
@@ -61,7 +65,7 @@ export class DiscoveryDraftRuntime {
       await environment.reader.checkBrowserProfile(browser); await assertCurrent();
       if (environment.reader.version !== input.opencli_version) throw new DiscoveryDraftError("discovery_draft_browser_unavailable");
       const capabilities = await environment.reader.creatorSearchCapabilities(); await assertCurrent();
-      const sources = capabilities.map(source => ({ platform: source.platform, registered: source.registered, command: source.command, allowed_values: [] as string[] }));
+      const sources = capabilities.filter(source => !TEMPORARILY_DISABLED_CREATOR_SOURCES.includes(source.platform)).map(source => ({ platform: source.platform, registered: source.registered, command: source.command, allowed_values: [] as string[] }));
       progress.phase("checking_codex"); const client = await this.#dependencies.semantic(context), planner = new DiscoverySemanticPlanner(client, await loadBundledDiscoveryQueryGuidance()); await assertCurrent();
       const draft = await planner.prepare(input, sources, signal, assertCurrent, phase => progress.phase(phase), previous);
       await assertCurrent(); progress.phase("saving_plan");

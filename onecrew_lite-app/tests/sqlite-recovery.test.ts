@@ -36,7 +36,7 @@ test("private recovery records real consistent Creator/Vault backups without act
     const journal = JSON.parse(await readFile(join(result.directory, "journal.json"), "utf8"));
     assert.equal(journal.state, "sqlite_recovery_ready");
     assert.equal(journal.activated, false);
-    assert.equal(journal.creator.inspection.version, 91);
+    assert.equal(journal.creator.inspection.version, 96);
     const future = new DatabaseSync(vault);
     future.exec("PRAGMA user_version=5");
     future.close();

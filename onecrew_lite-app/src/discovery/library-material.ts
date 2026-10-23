@@ -1,7 +1,6 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import { parseApplicationJson, stringifyApplicationJson } from "../contracts/application-json.ts";
-import { discoveryScale, parseDiscoverySubscribers } from "./qualification.ts";
 import { SELECTION_QUALITY_POLICY } from "./quality-policy.ts";
 import { discoveryQualityScore, type DiscoveryQualityLevel } from "@onecrew/runtime-contracts/discovery";
 
@@ -68,11 +67,8 @@ export function buildDiscoveryLibrarySnapshot(raw: unknown) {
     if (verdict === "pending" && candidate?.pending_details.length) reasons = [...reasons, ...candidate.pending_details];
     const assessment = object(object(evidence).assessment), ratingValue = Object.hasOwn(assessment, "quality_rating") ? assessment.quality_rating : assessment.match_rating;
     const rating = candidate !== null && candidate.manual_approved_at !== null && candidate.verdict !== "qualified" ? null : ratingValue !== null && typeof ratingValue === "object" && !Array.isArray(ratingValue) ? matchRating.parse(ratingValue) : null;
-    const pinterest = (candidate?.native_platform ?? source.hit.platform) === "pinterest" && candidate !== null;
-    const monthlyRaw = pinterest && typeof object(evidence).pinterest_monthly_views_raw === "string" ? object(evidence).pinterest_monthly_views_raw as string : null;
-    const scale = pinterest ? discoveryScale(criteria, candidate.followers ? parseDiscoverySubscribers(candidate.followers) : null, monthlyRaw) : null;
     const bioStatus = object(evidence).profile_bio_status;
-    return { hit: source.hit, ...(candidate?.followers !== null && candidate?.followers !== undefined ? { followers: candidate.followers } : {}), ...(candidate?.native_platform !== null && candidate?.native_platform !== undefined ? { native_platform: candidate.native_platform } : {}), candidate_id: candidateId, native_author_id: authorId, verdict, reasons, evidence_version: evidenceVersion, ...(Object.hasOwn(assessment, "selection") ? { selection: assessment.selection, quality_rating: rating === null ? null : { ...rating, score: discoveryQualityScore(rating.level as DiscoveryQualityLevel) } } : rating !== null ? { match_rating: rating } : {}), ...(typeof bioStatus === "string" && ["complete", "truncated", "missing", "unavailable", "unknown"].includes(bioStatus) ? { bio_status: bioStatus } : {}), ...(scale !== null ? { pinterest_monthly_views_raw: monthlyRaw, pinterest_scale_passed_by: scale.passed_by } : {}), ...(candidate !== null && candidate.contacts.length ? { contacts: candidate.contacts } : {}) };
+    return { hit: source.hit, ...(candidate?.followers !== null && candidate?.followers !== undefined ? { followers: candidate.followers } : {}), ...(candidate?.native_platform !== null && candidate?.native_platform !== undefined ? { native_platform: candidate.native_platform } : {}), candidate_id: candidateId, native_author_id: authorId, verdict, reasons, evidence_version: evidenceVersion, ...(Object.hasOwn(assessment, "selection") ? { selection: assessment.selection, quality_rating: rating === null ? null : { ...rating, score: discoveryQualityScore(rating.level as DiscoveryQualityLevel) } } : rating !== null ? { match_rating: rating } : {}), ...(typeof bioStatus === "string" && ["complete", "truncated", "missing", "unavailable", "unknown"].includes(bioStatus) ? { bio_status: bioStatus } : {}), ...(candidate !== null && candidate.contacts.length ? { contacts: candidate.contacts } : {}) };
   });
   if (object(criteria).contact_preference === "public_email_first") rows.sort((left, right) => Number(left.verdict !== "qualified") - Number(right.verdict !== "qualified") || Number(!left.contacts?.some(contact => contact.kind === "email")) - Number(!right.contacts?.some(contact => contact.kind === "email")));
   const snapshotBasis = [1, basis.campaign_id, basis.revision, criteria, scopes, rows];

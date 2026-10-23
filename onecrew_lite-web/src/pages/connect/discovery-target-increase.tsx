@@ -44,7 +44,7 @@ export function DiscoveryTargetIncrease({ campaign, busy }: { campaign: Discover
   return <div className="discovery-adjustment space-y-2">
     <p className="font-medium">{t("opencliPilot.targetDecisionTitle")}</p>
     <p>{t("opencliPilot.targetDecisionCurrent", { target: campaign.target_count })}</p>
-    <p className="text-sm text-muted-foreground">{t("opencliPilot.targetDecisionScope", { used: campaign.used_calls, max: campaign.max_calls ?? "∞" })}</p>
+    <p className="text-sm text-muted-foreground">{t("opencliPilot.targetDecisionScope", { used: campaign.used_calls })}</p>
     <div className="flex flex-wrap items-end gap-2">
       <div className="grid gap-1"><Label htmlFor="discovery-target-new">{t("opencliPilot.targetDecisionNew")}</Label>
         <Input id="discovery-target-new" className="w-36" type="number" min={1} max={10000}

@@ -25,6 +25,7 @@ import { OwnerReviewContext, type PeerResumePayload } from "../results/owner-con
 import { stringifyApplicationJson } from "../contracts/application-json.ts";
 import { batchInput } from "../creators/batch.ts";
 import { McpJsonSchemaValidator } from "../service/mcp-json-schema.ts";
+import { discoveryExecutionFailureCode } from "../discovery/execution-failure.ts";
 
 // GitHub 0.7.1 production registry 的实际输入合同版本；不接受客户端自行选择版本。
 export const ownerOperationRevisions = Object.freeze({
@@ -173,17 +174,19 @@ export class OwnerResults {
     }
     return { output, continue_batch: true, outcome, presentation: { kind: entry.operation.view_kind, title: "Execution result", summary, sections }, terminal: { kind: "resolved", code: "execution_completed", summary }, continuation: null };
   }
-  #failedCompletion(entry: ExecutionCall, unknown: boolean, before: boolean): OwnerCallCompletion {
-    const kind = unknown ? "unknown" as const : "failed" as const, code = unknown ? "mcp_operation_outcome_unknown" : "mcp_operation_failed", summary = unknown ? "The operation outcome could not be determined. Inspect its existing receipt before retrying." : before ? "The operation failed before invocation." : "The operation did not complete.";
+  #failedCompletion(entry: ExecutionCall, unknown: boolean, before: boolean, error?: unknown): OwnerCallCompletion {
+    const classified = discoveryExecutionFailureCode(error);
+    unknown = !before && (unknown || classified.endsWith("_outcome_unknown") || classified === "opencli_cancel_pending");
+    const kind = unknown ? "unknown" as const : "failed" as const, code = classified !== "execution_failed" ? classified : unknown ? "mcp_operation_outcome_unknown" : "mcp_operation_failed", summary = unknown ? "The operation outcome could not be determined. Inspect its existing receipt before retrying." : before ? "The operation failed before invocation." : "The operation did not complete.";
     const outcome: ExecutedCallOutcome = { call_id: entry.call.call_id, operation_id: entry.call.operation_id, disposition: { kind, code }, summary, resource_refs: [] };
     return { output: null, continue_batch: false, outcome, presentation: { kind: entry.operation.view_kind, title: "Execution result", summary, sections: [{ kind: "notice", heading: null, body: summary, tone: unknown ? "warning" : "critical" }] }, terminal: unknown ? { kind: "unknown", code, summary } : { kind: "failed", code, summary, retryable: false }, continuation: null };
   }
   async #invokeCall(entry: ExecutionCall, account: AccountContext, batchSize: number, present: boolean): Promise<OwnerCallCompletion> {
     let output: unknown;
     try { output = await entry.handler!.invoke(entry.call, account); }
-    catch {
+    catch (error) {
       this.#accounts.assertCurrent(account);
-      return this.#failedCompletion(entry, entry.operation.effect !== "read_local" && entry.operation.effect !== "read_open_world", false);
+      return this.#failedCompletion(entry, entry.operation.effect !== "read_local" && entry.operation.effect !== "read_open_world", false, error);
     }
     this.#accounts.assertCurrent(account);
     return this.#ordinaryCompletion(entry, output, batchSize, present);
@@ -213,7 +216,7 @@ export class OwnerResults {
       if (!entry.handler || entry.operation.approval === "attended_prompt") {
         let prepared: PreparedOwnerReview | OwnerCallCompletion;
         try { prepared = await this.#reviewCall(entry, account); }
-        catch { this.#accounts.assertCurrent(account); this.#recordCompletion(chain, entry, this.#failedCompletion(entry, false, true), true); break; }
+        catch (error) { this.#accounts.assertCurrent(account); this.#recordCompletion(chain, entry, this.#failedCompletion(entry, false, true, error), true); break; }
         if (!("action" in prepared)) { this.#recordCompletion(chain, entry, prepared); continue; }
         chain.frame.outcomes[chain.index] = { ...chain.frame.outcomes[chain.index]!, disposition: { kind: "not_run", reason: "confirmation_required" }, summary: "The operation awaits user review. It has not run." };
         if (chain.reference === undefined) {

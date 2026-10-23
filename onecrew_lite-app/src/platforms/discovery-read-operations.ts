@@ -5,6 +5,7 @@ import { discoveryIntentProposal, validateDiscoveryIntent } from "../discovery/i
 import { stringifyApplicationJson } from "../contracts/application-json.ts";
 import { readLinkHubExtraction } from "./candidates/link-hub.ts";
 import { VERIFIED_OPENCLI_VERSION } from "./opencli/installation.ts";
+import { TEMPORARILY_DISABLED_CREATOR_SOURCES } from "./opencli/sources.ts";
 import { readWorkflowGuide, workflowGuideInput } from "../service/workflow-guides.ts";
 
 export const discoveryReadOperationIds = ["onecrew.discovery.intent.validate", "onecrew.discovery.sources.get", "onecrew.link_hub.extract", "onecrew.workflow.guide"] as const;
@@ -12,7 +13,7 @@ const reportSchema = z.object({ version: z.string().nullable(), daemon_running: 
 export interface DiscoveryReadDependencies { setupReport(context: AccountContext): Promise<unknown> }
 export function projectDiscoverySources(raw: unknown) {
   const report = reportSchema.parse(raw);
-  return { version: report.version, daemon_running: report.daemon_running, extension_connected: report.extension_connected, profiles: report.profiles.map(({ context_id, alias }) => ({ context_id, alias })), sources: report.search_capabilities.map(source => ({ ...source, scope_kind: "query", allowed_values: [] as string[] })), issue: report.issue };
+  return { version: report.version, daemon_running: report.daemon_running, extension_connected: report.extension_connected, profiles: report.profiles.map(({ context_id, alias }) => ({ context_id, alias })), sources: report.search_capabilities.filter(source => !TEMPORARILY_DISABLED_CREATOR_SOURCES.includes(source.platform)).map(source => ({ ...source, scope_kind: "query", allowed_values: [] as string[] })), issue: report.issue };
 }
 export const discoveryIntentValidateInput = z.strictObject({ request: z.string(), proposal: discoveryIntentProposal });
 export function registerDiscoveryReadOperations(registry: OperationRegistry, accounts: AccountContextService, dependencies: DiscoveryReadDependencies): void {

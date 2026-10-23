@@ -1,12 +1,14 @@
 import { z } from "zod";
 import type { AccountContext, AccountContextService } from "../identity/account-context.ts";
 import type { DiscoveryAdmissionGate } from "./admission-gate.ts";
+import type { DiscoveryPipelineStatus } from "./backpressure.ts";
 
 const text = z.string().refine(value => value.isWellFormed());
 export const discoveryExecutionInput = z.strictObject({ campaign_id: text, expected_revision: z.number().int().min(0).max(4294967295), profile_ref: text.min(1), excluded_platforms: z.array(text.regex(/^[a-z0-9-]{1,80}$/u)).max(64).default([]) });
 export type DiscoveryExecutionInput = z.infer<typeof discoveryExecutionInput>;
-export type DiscoveryExecutionStage = "ready" | "searching" | "verifying" | "pausing" | "paused" | "finished" | "budget_exhausted" | "needs_evidence" | "error";
+export type DiscoveryExecutionStage = "ready" | "searching" | "verifying" | "pausing" | "paused" | "finished" | "needs_evidence" | "error";
 export interface DiscoveryExecutionLibrary { campaign_id: string; table_id: string; web_url: string; total_hits: number; inserted_rows: number }
+export interface DiscoveryExecutionStatus { pipeline?: DiscoveryPipelineStatus }
 export interface DiscoveryExecutionStatus { campaign_id: string; revision: number; stage: DiscoveryExecutionStage; updated_at: number; used: number; reason: string | null; failure_phase: string | null; failure_code: string | null; sync_error: string | null; synced_at: number | null; deferred_scores: number; sync_pending: boolean; excluded_platforms: string[]; deferred_hits: { search_hit_id: string; reason: string }[]; library: DiscoveryExecutionLibrary | null }
 export interface DiscoveryExecutionOwner { readonly context: AccountContext; readonly input: DiscoveryExecutionInput; readonly signal: AbortSignal; change(edit: (status: DiscoveryExecutionStatus) => void): void }
 interface ActiveExecution { context: AccountContext; input: DiscoveryExecutionInput; cancel: AbortController; status: DiscoveryExecutionStatus; failure?: unknown }

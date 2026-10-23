@@ -14,10 +14,6 @@ const fixtures = [
     root: "https://www.linkedin.com/in/creator/", source: "https://www.linkedin.com/in/creator/",
     body: { account_id: account, author_handle: "creator", profile_url: "https://www.linkedin.com/in/creator/", post_id: "456",
       source_url: "https://www.linkedin.com/feed/update/urn:li:activity:456/", text: "Original Activity text", text_truncated: true, evidence_source: "visible_author_activity" } },
-  { platform: "pinterest", author: "123", locator: "123", profile: "https://www.pinterest.com/creator/",
-    root: "https://www.pinterest.com/creator/", source: "https://www.pinterest.com/creator/",
-    body: { pin_id: "456", author_id: "123", author_username: "creator", profile_url: "https://www.pinterest.com/creator/",
-      source_url: "https://www.pinterest.com/pin/456/", text: "Original Pin caption", text_truncated: true } },
   { platform: "pixiv", author: "123", locator: "123", profile: "https://www.pixiv.net/users/123",
     root: "https://www.pixiv.net/artworks/456", source: "https://www.pixiv.net/artworks/456", body: caption("123", "https://www.pixiv.net/artworks/456") },
   { platform: "weibo", author: "123", locator: "123", profile: "https://weibo.com/u/123",
@@ -31,8 +27,6 @@ const fixtures = [
     root: "https://www.instagram.com/creator/", source: "https://www.instagram.com/creator/", body: caption("123", "https://www.instagram.com/p/Original1/") },
   { platform: "facebook", author: "123", locator: "123", profile: "https://www.facebook.com/profile.php?id=123",
     root: "https://www.facebook.com/profile.php?id=123", source: "https://www.facebook.com/reel/456", body: caption("123", "https://www.facebook.com/reel/456") },
-  { platform: "reddit", author: "t2_abc", locator: "t2_abc", profile: "https://www.reddit.com/user/creator/",
-    root: "https://www.reddit.com/comments/abc/", source: "https://www.reddit.com/comments/abc/", body: caption("t2_abc", "https://www.reddit.com/comments/abc/", "abc") },
 ];
 
 describe("native platform receipts reach the original-text review", () => {

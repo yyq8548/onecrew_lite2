@@ -18,16 +18,12 @@ export async function observeCurrentAccount(site, allowRequest = true) {
   if (site === 'linkedin-learning') site = 'linkedin';
   const origins = { bilibili: 'https://www.bilibili.com', tiktok: 'https://www.tiktok.com', instagram: 'https://www.instagram.com', facebook: 'https://www.facebook.com', zhihu: 'https://www.zhihu.com', douyin: 'https://www.douyin.com', linkedin: 'https://www.linkedin.com', weibo: 'https://weibo.com', tieba: 'https://tieba.baidu.com', medium: 'https://medium.com', nowcoder: 'https://www.nowcoder.com', douban: 'https://www.douban.com', pixiv: 'https://www.pixiv.net' };
   origins.twitter = 'https://x.com';
-  origins.pinterest = 'https://www.pinterest.com';
   origins.youtube = 'https://www.youtube.com';
   if (/\/challenge\/|\/checkpoint\/|captcha|security\/check/.test(location.pathname)) return {};
   const visible = selector => Array.from(document.querySelectorAll(selector)).some(node => node.getClientRects().length > 0);
   const visibleText = (selector, pattern) => Array.from(document.querySelectorAll(selector)).some(node => node.getClientRects().length > 0 && pattern.test((node.textContent || '').trim()));
   const validId = value => (typeof value === 'string' && /^[1-9]\d{0,31}$/.test(value)) || (typeof value === 'number' && Number.isSafeInteger(value) && value > 0);
-  // Pinterest 常驻的 reCAPTCHA anchor 是标识，实际挑战使用 bframe。
-  const captchaSelector = site === 'pinterest'
-    ? 'iframe[src*="captcha"][src*="/bframe"], #captcha, .captcha-container'
-    : 'iframe[src*="captcha"], #captcha, .captcha-container';
+  const captchaSelector = 'iframe[src*="captcha"], #captcha, .captcha-container';
   if (visible(captchaSelector)) return {};
   if (site === 'douban' && location.origin === 'https://accounts.douban.com' && location.pathname.startsWith('/passport/login') && visible('input[name="username"], input[name="phone"]')) return { authenticated: false };
   if (location.origin !== origins[site]) return {};
@@ -38,20 +34,6 @@ export async function observeCurrentAccount(site, allowRequest = true) {
     const login = visible('ytd-masthead a[href*="ServiceLogin"]');
     if (loggedIn === true && account && !login) return { authenticated: true };
     if (loggedIn === false && login && !account) return { authenticated: false };
-    return {};
-  }
-  if (site === 'pinterest') {
-    const login = visible('a[href="/login/"], [data-test-id="simple-login-button"]');
-    const own = Array.from(document.querySelectorAll('a[data-test-id="header-profile"], [data-test-id="header-profile"] a, a[aria-label="你的个人资料"]')).some(node => {
-      if (!node.getClientRects().length) return false;
-      const url = new URL(node.href, location.origin);
-      return url.origin === origins.pinterest && /^\/[A-Za-z0-9_]+\/?$/.test(url.pathname)
-        && !/^\/(login|signup|search|ideas|settings|today)\/?$/.test(url.pathname);
-    });
-    const account = visible('[data-test-id="header-accounts-options-button"]');
-    // 只接受当前账号导航；公开作者卡片和 Cookie 均不能证明登录。
-    if (own && account && !login) return { authenticated: true };
-    if (login && !own && !account) return { authenticated: false };
     return {};
   }
   if (site === 'twitter') {
@@ -214,11 +196,10 @@ export async function observeCurrentAccount(site, allowRequest = true) {
 export async function readSiteLogin(page, site) {
   const urls = { bilibili: 'https://www.bilibili.com/', tiktok: 'https://www.tiktok.com/explore', instagram: 'https://www.instagram.com/', facebook: 'https://www.facebook.com/me', zhihu: 'https://www.zhihu.com/', douyin: 'https://www.douyin.com/user/self', linkedin: 'https://www.linkedin.com/feed/', 'linkedin-learning': 'https://www.linkedin.com/learning/', weibo: 'https://weibo.com/', tieba: 'https://tieba.baidu.com/', medium: 'https://medium.com/', nowcoder: 'https://www.nowcoder.com/', douban: 'https://www.douban.com/mine/', pixiv: 'https://www.pixiv.net/' };
   urls.twitter = 'https://x.com/home';
-  urls.pinterest = 'https://www.pinterest.com/';
   urls.youtube = 'https://www.youtube.com/';
   if (!urls[site]) throw new Error('Unsupported authentication site');
   const target = await openProbePage(page, urls[site]);
-  const attempts = site === 'pinterest' ? 8 : site === 'tiktok' ? 5 : 3;
+  const attempts = site === 'tiktok' ? 5 : 3;
   for (let attempt = 0; attempt < attempts; attempt += 1) {
     // wait(n) can return as soon as the DOM is quiet, before account navigation
     // hydrates. Poll at fixed intervals so those early returns cannot exhaust it.

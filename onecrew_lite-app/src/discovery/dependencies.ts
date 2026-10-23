@@ -1,6 +1,4 @@
-import { lstat } from "node:fs/promises";
 import { homedir } from "node:os";
-import { join } from "node:path";
 import type { AccountContext, AccountContextService } from "../identity/account-context.ts";
 import type { VerifiedMailIdentityProvider } from "../mail/gmail-access.ts";
 import { runtimeAssetPath } from "../packaging/runtime-context.ts";
@@ -9,13 +7,12 @@ import type { PlatformVaultReader } from "../platforms/browser/platform-vault.ts
 import { OpenCliAddons } from "../platforms/opencli/addons.ts";
 import { OpenCliError } from "../platforms/opencli/errors.ts";
 import { OpenCliReader } from "../platforms/opencli/reader.ts";
-import { createPrivateDirectory, verifyPrivateDirectory } from "../storage/private-backup.ts";
-import { resolveCodexCli } from "./codex-installation.ts";
-import { CodexSemanticClient, type SemanticStructuredClient } from "./semantic-client.ts";
+import type { SemanticStructuredClient } from "./semantic-client.ts";
+import { HostSemanticClient, type HostWorkNotice } from "./host-work.ts";
 import type { DiscoveryBrowserResolver } from "./search-execution.ts";
 
 export interface DiscoveryReadEnvironment { readonly reader: OpenCliReader; readonly browsers: DiscoveryBrowserResolver }
-export interface DiscoveryDependencyResolver { reads(context: AccountContext): Promise<DiscoveryReadEnvironment>; semantic(context: AccountContext): Promise<SemanticStructuredClient> }
+export interface DiscoveryDependencyResolver { reads(context: AccountContext): Promise<DiscoveryReadEnvironment>; semantic(context: AccountContext): Promise<SemanticStructuredClient>; stopSemantic?(): void }
 export interface TrustedDiscoveryConfiguration {
   openCliHome?(context: AccountContext): Promise<string>;
   accounts: AccountContextService;
@@ -24,21 +21,13 @@ export interface TrustedDiscoveryConfiguration {
   browsers?: DiscoveryBrowserResolver;
   vault?: PlatformVaultReader;
   extensionProofs?: TrustedExtensionContextProofVerifier;
-  codexExecutable?: string;
-}
-let semanticDirectories: Promise<void> = Promise.resolve();
-function prepareSemanticDirectory(path: string, assertOwned: () => void): Promise<void> {
-  const work = semanticDirectories.then(async () => {
-    assertOwned();
-    const existing = await lstat(path).then(value => value, error => { if ((error as NodeJS.ErrnoException).code === "ENOENT") return null; throw error; });
-    if (existing === null) await createPrivateDirectory(path); else await verifyPrivateDirectory(path);
-    assertOwned();
-  });
-  semanticDirectories = work.then(() => undefined, () => undefined); return work;
+  onHostWork?(context: AccountContext, notice: HostWorkNotice, active: () => boolean): (cancelled?: boolean) => void;
 }
 // 创建工厂不探测CLI、读取凭据、安装扩展或打开浏览器。配置只由受信主程序提供。
 export function createDefaultDiscoveryDependencies(configuration: TrustedDiscoveryConfiguration): DiscoveryDependencyResolver {
+  const semanticClients = new WeakMap<AccountContext, Promise<HostSemanticClient>>(), shutdown = new AbortController();
   return Object.freeze({
+    stopSemantic() { shutdown.abort(new Error("discovery_semantic_stopping")); },
     async reads(context: AccountContext): Promise<DiscoveryReadEnvironment> {
       configuration.accounts.assertCurrent(context);
       let browsers = configuration.browsers;
@@ -56,12 +45,19 @@ export function createDefaultDiscoveryDependencies(configuration: TrustedDiscove
     },
     async semantic(context: AccountContext): Promise<SemanticStructuredClient> {
       configuration.accounts.assertCurrent(context);
+      let client = semanticClients.get(context);
+      if (!client) {
+      client = (async () => {
       const owned = await configuration.directories.accountDirectory(context); owned.assertOwned();
       if (owned.owner.accountId !== context.principal.user.id || owned.owner.tenantId !== context.principal.tenantId || owned.owner.baseId !== context.principal.baseId) throw new Error("discovery_semantic_directory_owner_mismatch");
-      const executable = await resolveCodexCli(configuration.codexExecutable); configuration.accounts.assertCurrent(context); owned.assertOwned();
-      const working = join(owned.directory, "discovery-semantic");
-      await prepareSemanticDirectory(working, () => { configuration.accounts.assertCurrent(context); owned.assertOwned(); });
-      configuration.accounts.assertCurrent(context); owned.assertOwned(); return new CodexSemanticClient(executable, working);
+      configuration.accounts.assertCurrent(context); owned.assertOwned();
+      return new HostSemanticClient(owned, AbortSignal.any([context.signal, shutdown.signal]),
+        configuration.onHostWork ? (notice, active) => { configuration.accounts.assertCurrent(context); return configuration.onHostWork!(context, notice, active); } : undefined);
+      })();
+      semanticClients.set(context, client);
+      void client.then(() => undefined, () => { if (semanticClients.get(context) === client) semanticClients.delete(context); });
+      }
+      const resolved = await client; configuration.accounts.assertCurrent(context); return resolved;
     },
   });
 }

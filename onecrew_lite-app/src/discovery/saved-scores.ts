@@ -7,12 +7,14 @@ import { parseApplicationJson, stringifyApplicationJson } from "../contracts/app
 import { createPrivateDirectory, verifyPrivateDirectory, verifyPrivateFile } from "../storage/private-backup.ts";
 import type { AccountDatabases } from "../identity/account-databases.ts";
 import type { AccountContext } from "../identity/account-context.ts";
+import { discoveryScoreCapacity } from "./projection-lane.ts";
 
+const activeCapacity = discoveryScoreCapacity(Number.MAX_SAFE_INTEGER);
 const text = z.string().refine(value => value.isWellFormed());
 export const savedDiscoveryScore = z.object({ hit: text, deferred_platforms: z.array(text) });
 export type SavedDiscoveryScore = z.infer<typeof savedDiscoveryScore>;
 const deferredScore = savedDiscoveryScore.extend({ reason: text.min(1) });
-const scoreState = z.strictObject({ version: z.literal(2), active: z.array(savedDiscoveryScore).max(5), deferred: z.array(deferredScore) });
+const scoreState = z.strictObject({ version: z.literal(2), active: z.array(savedDiscoveryScore).max(activeCapacity), deferred: z.array(deferredScore) });
 type ScoreState = z.infer<typeof scoreState>;
 export interface OwnedDiscoveryQueueDirectory { readonly directory: string; readonly owner: Readonly<{ accountId: string; tenantId: string; baseId: string }>; assertOwned(): void }
 export async function resolveDiscoveryScoreDirectory(databases: AccountDatabases, context: AccountContext): Promise<OwnedDiscoveryQueueDirectory> {
@@ -46,7 +48,7 @@ export class SavedDiscoveryScores {
     const bytes = await readFile(this.#path); this.#owned.assertOwned();
     const value = parseApplicationJson(bytes);
     const state = Array.isArray(value) ? { version: 2 as const, active: z.array(savedDiscoveryScore).parse(value), deferred: [] } : scoreState.parse(value);
-    if (state.active.length > 5) throw new Error("score_queue_exceeds_capacity");
+    if (state.active.length > activeCapacity) throw new Error("score_queue_exceeds_capacity");
     const hits = [...state.active, ...state.deferred].map(row => row.hit);
     if (new Set(hits).size !== hits.length) throw new Error("score_queue_file_invalid");
     return state;
@@ -56,7 +58,7 @@ export class SavedDiscoveryScores {
   async #update(edit: (state: ScoreState) => ScoreState): Promise<void> {
     const before = await this.#read(), state = edit(before);
     if (isDeepStrictEqual(before, state)) return;
-    if (state.active.length > 5) throw new Error("score_queue_exceeds_capacity");
+    if (state.active.length > activeCapacity) throw new Error("score_queue_exceeds_capacity");
     const metadata = await lstat(this.#directory).then(value => value, error => { if ((error as NodeJS.ErrnoException).code === "ENOENT") return null; throw error; });
     if (metadata === null) await createPrivateDirectory(this.#directory); else await verifyPrivateDirectory(this.#directory);
     this.#owned.assertOwned();

@@ -6,19 +6,14 @@ export type OpenCliAuthState = "logged_in" | "session_detected" | "not_logged_in
 export interface OpenCliAuthObservation { platform: string; profile_ref: string; status: OpenCliAuthState; checked_at: number; method: "full" | "quick" | "skipped"; issue: string | null }
 export function creatorAuthProbe(platform: string) {
   const source = creatorSearchSource(platform);
-  const native = ["bilibili", "tiktok", "instagram", "facebook", "douyin", "linkedin", "weibo", "tieba", "twitter", "pinterest", "youtube"].includes(platform);
-  const site = native ? `onecrew-${platform}-auth` : platform === "reddit" ? "reddit" : source.site;
-  return { site, full: native || platform === "reddit", addon: native, ...(platform === "pinterest" ? { foregroundBrowser: true } : {}) };
+  const native = ["bilibili", "tiktok", "instagram", "facebook", "douyin", "linkedin", "weibo", "tieba", "twitter", "youtube"].includes(platform);
+  const site = native ? `onecrew-${platform}-auth` : source.site;
+  return { site, full: native, addon: native };
 }
 export function creatorAuthArguments(platform: string, profile: string): string[] {
   const probe = creatorAuthProbe(platform);
   // auth status 的完整检测在 OpenCLI 内部固定使用后台窗口。
-  if (probe.foregroundBrowser) return ["--profile", profile, probe.site, "whoami", "--window", "foreground", "--site-session", "ephemeral", "--keep-tab", "false", "-f", "json"];
   return ["--profile", profile, "auth", "status", "--site", probe.site, "--concurrency", "1", "--timeout", probe.full ? "20" : "5", "-f", "json", ...(probe.full ? ["--full"] : [])];
-}
-export function decodeCreatorWhoami(value: unknown) {
-  if (!z.array(z.strictObject({ verified: z.literal(true) })).length(1).safeParse(value).success) throw new OpenCliError("opencli_invalid_output");
-  return { status: "logged_in", method: "full", issue: null } as const;
 }
 function issue(error: string) {
   const message = error.toLowerCase();

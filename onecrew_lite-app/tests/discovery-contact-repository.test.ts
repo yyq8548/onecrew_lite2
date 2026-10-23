@@ -16,6 +16,7 @@ import { discoveryEligibleContactAuthor, loadDiscoveryNativeContactMaterial, nex
 import { discoveryReviewRequestHash, submitDiscoveryReviewInput } from "../src/discovery/review-submission.ts";
 import { upgradeCreatorStagingCopy } from "../src/storage/creator-upgrade.ts";
 import { backupLegacyDatabase } from "../src/storage/legacy-sqlite.ts";
+import { SELECTION_QUALITY_REVIEWER } from "../src/discovery/quality-policy.ts";
 
 const root = fileURLToPath(new URL("./fixtures/discovery-contacts/", import.meta.url));
 async function database(name: string) {
@@ -33,7 +34,11 @@ function currentInput(db: DatabaseSync, raw: unknown) {
   db.exec("BEGIN DEFERRED");
   try {
     const material = buildDiscoveryReviewMaterial(loadDiscoveryReviewBasis(db, input.campaign_id, input.expected_revision, input.search_hit_id));
-    return { ...input, material_hash: material.material_hash };
+    const original = input.findings.find(finding => finding.criterion === "match_fit")!;
+    return { ...input, material_hash: material.material_hash, reviewer: { kind: "agent" as const, label: SELECTION_QUALITY_REVIEWER }, findings: [
+      { criterion: "selection_fit" as const, outcome: "supported" as const, rationale: original.rationale, citations: original.citations },
+      { criterion: "quality_rating" as const, outcome: "supported" as const, match_level: "low" as const, rationale: "保存的短文可以证明主题，缺少深入内容的质量证据。", citations: original.citations },
+    ] };
   } finally { db.exec("COMMIT"); }
 }
 test("原Rust native与DOM真实SQLite升级后保存联系人及来源", async () => {

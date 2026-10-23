@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { DatabaseSync, SQLInputValue } from "node:sqlite";
 import { z } from "zod";
 import { parseApplicationJson } from "@onecrew/runtime-contracts/json";
-import { validateCreatorSchema } from "../storage/creator-schema.ts";
+import { assertValidatedCreatorConnection } from "../storage/creator-schema.ts";
 import { trim } from "./contracts.ts";
 import { historyChannel, historyConversationListInput, historyCursor, historyExcerpt, historyPage, historyTriage, historyTriageListInput, historyTriageRecordInput, historyU64 } from "./history-contracts.ts";
 import { historyActionStatus } from "./history-status.ts";
@@ -20,7 +20,7 @@ function account(row: Row) {
 const triageColumns = "id,channel,email_id,message_id,intent,summary,suggested_reply,created_at,acknowledged_at";
 export class CreatorHistoryRepository {
   readonly #db: DatabaseSync;
-  constructor(db: DatabaseSync) { validateCreatorSchema(db); this.#db = db; }
+  constructor(db: DatabaseSync) { assertValidatedCreatorConnection(db); this.#db = db; }
   #rows(sql: string, ...parameters: SQLInputValue[]): Row[] { const statement = this.#db.prepare(sql); statement.setReadBigInts(true); return statement.all(...parameters); }
   #row(sql: string, ...parameters: SQLInputValue[]): Row | undefined { return this.#rows(sql, ...parameters)[0]; }
   #snapshot<T>(write: boolean, operation: () => T): T {

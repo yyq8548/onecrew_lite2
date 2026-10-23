@@ -27,7 +27,7 @@ import { checkOpenCliSitesAuth, openOpenCliLoginPage, readOpenCliAuthObservation
 import { formatDate } from "@/lib/creator";
 import { openCliPlatformIsGreen, openCliPlatformNeedsSignIn, orderOpenCliPlatforms } from "@/lib/opencli-platform-presentation";
 import type { LocalServiceStatus } from "@onecrew/runtime-contracts/status";
-import { openCliSearchAccess, openCliSearchNeedsLoginCheck } from "@/lib/opencli-search-access";
+import { openCliSearchAccess, openCliAccountNeedsLoginCheck } from "@/lib/opencli-search-access";
 import { hasUnifiedAccountSession, unifiedAccountSessionKey } from "@/lib/local-runtime";
 
 const CODEX_USE_ACKNOWLEDGMENT_KEY = "onecrew:codex-use-acknowledgment:v1";
@@ -174,7 +174,7 @@ export function OpenCliPlatformCapabilities({ capabilities, profileRef = null, c
         <h3 className="text-xl font-semibold">{t("opencli.platformsTitle")}</h3>
         <p className="max-w-prose text-sm text-muted-foreground">{t("opencli.platformsHelp")}</p>
       </div>
-      <Button className="min-h-10 self-start" disabled={!profileRef || checking !== null || !capabilities.some(item => openCliSearchNeedsLoginCheck(item.platform, item.browser_required) && item.registered)} onClick={() => { void checkSites(capabilities.filter(item => openCliSearchNeedsLoginCheck(item.platform, item.browser_required) && item.registered).map(item => item.platform), true); }}>
+      <Button className="min-h-10 self-start" disabled={!profileRef || checking !== null || !capabilities.some(item => openCliAccountNeedsLoginCheck(item.platform, item.browser_required) && item.registered)} onClick={() => { void checkSites(capabilities.filter(item => openCliAccountNeedsLoginCheck(item.platform, item.browser_required) && item.registered).map(item => item.platform), true); }}>
         {checking === "batch" ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <RefreshCw className="size-4" aria-hidden />}{t("opencli.authCheckAll")}
       </Button>
     </div>
@@ -187,7 +187,7 @@ export function OpenCliPlatformCapabilities({ capabilities, profileRef = null, c
         {orderOpenCliPlatforms(capabilities).map(item => {
           const observation = observations[item.platform];
           const access = openCliSearchAccess(item.platform, item.browser_required);
-          const needsLoginCheck = openCliSearchNeedsLoginCheck(item.platform, item.browser_required);
+          const needsLoginCheck = openCliAccountNeedsLoginCheck(item.platform, item.browser_required);
           const failed = sharedObservations.isError || (checkFailed.scope === scope && checkFailed.platforms.includes(item.platform));
           const green = openCliPlatformIsGreen(item, profileRef, observation, failed);
           return <li key={item.platform} className="grid grid-cols-[90px_minmax(0,1fr)] items-start gap-x-4 gap-y-3 py-5 lg:grid-cols-[130px_minmax(0,1fr)_auto] lg:items-center lg:gap-x-6">
@@ -197,7 +197,7 @@ export function OpenCliPlatformCapabilities({ capabilities, profileRef = null, c
                 {green && <CheckCircle2 className="mr-1 inline size-4" aria-hidden />}
                 {!item.registered ? t("opencli.commandMissing") : needsLoginCheck ? (failed ? t("opencli.authCheckFailed")
                   : observation?.status === "logged_in" && profileRef && !isFreshOpenCliAuthObservation(observation, profileRef) ? t("opencli.authExpired")
-                  : observation ? t(`opencli.authState.${observation.status}`) : t("opencli.authNotChecked"))
+                  : observation && observation.status !== "public_read" ? t(`opencli.authState.${observation.status}`) : t("opencli.authNotChecked"))
                   : t(access === "public_browser" ? "opencli.authPublicBrowser" : "opencli.authPublicRead")}
               </p>
               {item.registered && (access === "extra_entitlement" || access === "conditional") && <p className="text-xs text-muted-foreground">{t(`opencli.searchAccess.${access}`)}</p>}

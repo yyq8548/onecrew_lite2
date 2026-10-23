@@ -2,7 +2,7 @@ import { api, request } from '@/lib/api';
 import { query } from '@/lib/router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Download, LockKeyhole, Pencil, Plus, Table2 } from 'lucide-react';
+import { ArrowLeft, Download, LockKeyhole, Pencil, Table2 } from 'lucide-react';
 import {
   useTable,
   type Column as TanStackColumn,
@@ -36,7 +36,7 @@ import { isDiscoveryTable } from '@/features/tables/creator-view';
 import { subscribeCreatorRefresh } from '@/features/tables/creator-refresh';
 import { watchCreatorUpdates } from '@/features/tables/creator-updates';
 import { AppShell } from '@/layout/AppShell';
-import type { CellValue, DataType, PeopleValue, ScoreValue } from '@onecrew/contracts/tables';
+import type { CellValue, PeopleValue, ScoreValue } from '@onecrew/contracts/tables';
 import type { Column, Row, Table } from '@/features/tables/model';
 import { canSort, cellValue, isHttpUrl, isStructured } from '@/features/tables/model';
 import type {
@@ -117,9 +117,6 @@ export function TableDetailPage({
   } | null>(null);
   const [structuredDraft, setStructuredDraft] = useState<StructuredDraft>(emptyStructuredDraft);
   const [structuredError, setStructuredError] = useState('');
-  const [addColumnOpen, setAddColumnOpen] = useState(false);
-  const [newColumnName, setNewColumnName] = useState('');
-  const [newColumnType, setNewColumnType] = useState<DataType>('string');
   const [busy, setBusy] = useState(false);
   const skipBlur = useRef(false);
   const nextPageRef = useRef(1);
@@ -378,29 +375,6 @@ export function TableDetailPage({
     });
     setStructuredEdit(null);
   };
-  const addColumn = () =>
-    void run(async () => {
-      const value = await request(
-        api['dynamic-tables'][':tableId'].columns.$post({
-          param: { tableId },
-          json: { columns: [{ name: newColumnName.trim(), data_type: newColumnType }] },
-        }),
-      );
-      setTable(value);
-      setNewColumnName('');
-      setNewColumnType('string');
-      setAddColumnOpen(false);
-    });
-  const addRow = () =>
-    void run(async () => {
-      await request(
-        api['dynamic-tables'][':tableId'].rows.$post({
-          param: { tableId },
-          json: { rows: [{ values: {} }] },
-        }),
-      );
-      await loadRows(true);
-    });
   const onSortingChange: OnChangeFn<SortingState> = (updater) => {
     const next = typeof updater === 'function' ? updater(sorting) : updater;
     const first = next[0];
@@ -618,12 +592,6 @@ export function TableDetailPage({
                 <Button variant="outline" onClick={exportTable} disabled={!table || busy}>
                   <Download size={14} /> {t('detail.exportXlsx')}
                 </Button>
-                <Button variant="outline" onClick={() => setAddColumnOpen(true)} disabled={!table}>
-                  <Plus size={14} /> {t('detail.addColumn')}
-                </Button>
-                <Button onClick={addRow} disabled={!table || busy}>
-                  <Plus size={14} /> {t('detail.addRow')}
-                </Button>
               </div>
             </div>
             {error && <div className="error-banner">{error}</div>}
@@ -675,13 +643,6 @@ export function TableDetailPage({
           </>
         )}
         <TableDialogs
-          addColumnOpen={addColumnOpen}
-          setAddColumnOpen={setAddColumnOpen}
-          newColumnName={newColumnName}
-          setNewColumnName={setNewColumnName}
-          newColumnType={newColumnType}
-          setNewColumnType={setNewColumnType}
-          addColumn={addColumn}
           busy={busy}
           structuredEdit={structuredEdit}
           setStructuredEdit={setStructuredEdit}

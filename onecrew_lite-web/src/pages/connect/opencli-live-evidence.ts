@@ -3,12 +3,12 @@ export const OPENCLI_EVIDENCE_DATE = "2026-09-28";
 export const OPENCLI_EVIDENCE_VERSION = "1.8.8";
 
 const passed = new Set([
-  "youtube", "tiktok", "instagram", "twitter", "linkedin", "facebook", "pinterest", "reddit",
+  "youtube", "tiktok", "instagram", "twitter", "linkedin", "facebook",
   "bilibili", "weixin", "douyin", "medium", "substack", "apple-podcasts", "tieba",
   "bluesky", "jike", "hackernews", "nowcoder", "hupu", "stackoverflow",
-  "pinterest-pins", "pinterest-boards", "linkedin-learning", "archive", "weread", "brave",
+  "linkedin-learning", "archive", "weread", "brave",
   "duckduckgo", "yahoo", "dribbble-shots", "dribbble-designers", "google-images",
-  "stackoverflow-users", "v2ex-node", "reddit-subreddit", "devto-tag", "lesswrong-tag",
+  "stackoverflow-users", "v2ex-node", "devto-tag", "lesswrong-tag",
   "lobsters-tag", "medium-tag", "stackoverflow-tag", "juejin-hot", "producthunt-posts",
   "hf-spaces", "hf-models", "hf-datasets",
 ]);

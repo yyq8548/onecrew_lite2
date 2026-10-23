@@ -1,13 +1,13 @@
 import { z } from "zod";
 import type { DiscoveryCampaign } from "./opencli-discovery";
 
-export const stopReasons = ["user_paused", "search_page_left", "page_closed", "request_failed", "revision_changed", "progress_unconfirmed", "busy", "needs_evidence", "search_exhausted", "target_reached", "budget_exhausted", "execution_interrupted"] as const;
+export const stopReasons = ["user_paused", "search_page_left", "page_closed", "request_failed", "revision_changed", "progress_unconfirmed", "busy", "needs_evidence", "search_exhausted", "target_reached", "execution_interrupted"] as const;
 export type DiscoveryStopReason = typeof stopReasons[number];
 const checkpointSchema = z.object({
   campaign_id: z.string().min(1).max(100), revision: z.number().int().positive(),
-  used: z.number().int().nonnegative(), max: z.number().int().positive().nullable(),
-  reason: z.enum(stopReasons).nullable(), recorded_at: z.number().int().positive().max(8_640_000_000_000_000),
-}).strict().refine(value => value.max === null || value.used <= value.max);
+  used: z.number().int().nonnegative(),
+  reason: z.union([z.enum(stopReasons), z.literal("budget_exhausted")]).nullable().transform(value => value === "budget_exhausted" ? "execution_interrupted" as const : value), recorded_at: z.number().int().positive().max(8_640_000_000_000_000),
+});
 export type DiscoveryRunCheckpoint = z.infer<typeof checkpointSchema>;
 const journalSchema = z.object({ format: z.literal(1), entries: z.array(checkpointSchema).max(20) }).strict();
 const KEY = "onecrew-discovery-run-checkpoints-v1";
@@ -29,10 +29,10 @@ export function loadRunHistory(storage: Pick<Storage, "getItem">, id: string): D
       .filter(item => item.campaign_id === id && item.reason !== null).slice(0, 5);
   } catch { return []; }
 }
-export function saveRunCheckpoint(storage: StoragePort, campaign: DiscoveryCampaign, reason: DiscoveryStopReason | null, now = Date.now()): DiscoveryRunCheckpoint | null {
+export function saveRunCheckpoint(storage: StoragePort, campaign: Pick<DiscoveryCampaign, "id" | "revision" | "used_calls">, reason: DiscoveryStopReason | null, now = Date.now()): DiscoveryRunCheckpoint | null {
   try {
     const journal = journalSchema.parse(JSON.parse(storage.getItem(KEY) ?? '{"format":1,"entries":[]}'));
-    const entry = checkpointSchema.parse({ campaign_id: campaign.id, revision: campaign.revision, used: campaign.used_calls, max: campaign.max_calls, reason, recorded_at: now });
+    const entry = checkpointSchema.parse({ campaign_id: campaign.id, revision: campaign.revision, used: campaign.used_calls, reason, recorded_at: now });
     const previous = journal.entries[0];
     const updating = previous?.campaign_id === campaign.id && previous.revision === campaign.revision
       && (previous.reason === null || previous.reason === reason);

@@ -11,12 +11,12 @@ export const discoveryScope = z.strictObject({
   profile_ref: text.regex(/^[A-Za-z\d_.-]{1,64}$/u),
   keywords: z.array(text.refine(value => !!value.trim() && chars(value) <= 160 && !control(value))).min(1).max(20),
 });
+export const discoverySourceTargets = z.record(text.regex(/^[a-z\d-]{1,64}$/u), z.number().int().min(1).max(10000));
 export const discoveryCriteria = z.record(z.string(), z.unknown()).superRefine((value, context) => {
   const fail = (path: string, message: string) => context.addIssue({ code: "custom", path: [path], message });
   if (Buffer.byteLength(stringifyApplicationJson(value)) > 16384) fail("", "criteria_too_large");
   if (Object.hasOwn(value, "min_subscribers") && Object.hasOwn(value, "min_followers")) fail("min_followers", "competing_follower_thresholds");
   for (const key of ["min_subscribers", "min_followers"]) if (Object.hasOwn(value, key) && !z.union([z.number().int().safe().nonnegative(), z.bigint().min(0n).max(18446744073709551615n)]).safeParse(value[key]).success) fail(key, "invalid_follower_threshold");
-  if (Object.hasOwn(value, "pinterest_min_monthly_views_exclusive") && !z.number().int().safe().nonnegative().safeParse(value.pinterest_min_monthly_views_exclusive).success) fail("pinterest_min_monthly_views_exclusive", "invalid_monthly_views_threshold");
   for (const key of ["requires_ai_tool_demo", "requires_public_tool_url"]) if (Object.hasOwn(value, key) && typeof value[key] !== "boolean") fail(key, "invalid_evidence_requirement");
   for (const key of ["region", "language"]) if (Object.hasOwn(value, key) && (typeof value[key] !== "string" || !value[key].isWellFormed() || chars(value[key]) > 160 || control(value[key]))) fail(key, "invalid_criteria_text");
   if (value.contact_preference !== undefined && value.contact_preference !== "public_email_first") fail("contact_preference", "invalid_contact_preference");
@@ -39,10 +39,11 @@ export const discoveryPlanInput = z.strictObject({
   criteria: discoveryCriteria,
   scopes: z.array(discoveryScope).min(1).max(64),
   target_count: z.number().int().min(1).max(4294967295),
-  max_calls: z.number().int().min(1).max(10000).nullable(),
+  source_targets: discoverySourceTargets.optional(),
 }).refine(value => new Set(value.scopes.map(scope => `${scope.platform}\0${scope.profile_ref}`)).size === value.scopes.length, "duplicate_platform_profile_scope")
   .refine(value => [...value.brief].length <= (value.criteria.refinement === undefined ? 4000 : 32000), "brief_too_large")
   .superRefine((value, context) => {
+    if (value.source_targets && (Object.keys(value.source_targets).some(platform => !value.scopes.some(scope => scope.platform === platform)) || Object.values(value.source_targets).reduce((sum, count) => sum + count, 0) !== value.target_count)) context.addIssue({ code: "custom", path: ["source_targets"], message: "source_targets_must_match_approved_scopes_and_total" });
     for (const key of ["requirements", "excluded_accounts"]) {
       const items = value.criteria[key];
       if (Array.isArray(items) && items.some(item => !value.brief.includes((item as { excerpt: string }).excerpt))) context.addIssue({ code: "custom", path: ["criteria", key], message: "customer_quotation_required" });

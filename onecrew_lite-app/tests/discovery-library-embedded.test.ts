@@ -14,7 +14,7 @@ import { createLibraryCaptureSource } from "../src/sync/library-capture.ts";
 import { validateTableSyncArchive } from "../src/sync/table-sync-integrity.ts";
 import { randomUUID } from "node:crypto";
 
-for (const fixture of ["discovery-identity/merged.sqlite", "discovery-contacts/native-before.sqlite"]) test(`original Rust ${fixture} publishes into real embedded Library, replays exact row IDs and rejects an old account`, async () => {
+for (const fixture of ["discovery-identity/merged.sqlite", "discovery-contacts/native-before.sqlite", ...(process.env.ONECREW_QUERY_FEEDBACK_DATABASE ? ["current-account"] : [])]) test(`real SQLite ${fixture} publishes into embedded Library, replays exact row IDs and rejects an old account`, async () => {
   const scratch = fileURLToPath(new URL("../../.scratch/discovery-library-embedded/", import.meta.url));
   await mkdir(scratch, { recursive: true });
   const root = await mkdtemp(join(scratch, "projection-"));
@@ -30,10 +30,10 @@ for (const fixture of ["discovery-identity/merged.sqlite", "discovery-contacts/n
     const directories = (await readdir(directory)).filter(name => /^account-[a-f0-9]{64}$/u.test(name));
     assert.equal(directories.length, 1);
     const path = join(directory, directories[0]!, "creator.sqlite");
-    await copyFile(fileURLToPath(new URL(`./fixtures/${fixture}`, import.meta.url)), path);
+    await copyFile(fixture === "current-account" ? process.env.ONECREW_QUERY_FEEDBACK_DATABASE! : fileURLToPath(new URL(`./fixtures/${fixture}`, import.meta.url)), path);
     if (process.platform !== "win32") await chmod(path, 0o600);
     using original = new DatabaseSync(path, { readOnly: true });
-    const plan = original.prepare("SELECT id,current_revision FROM discovery_campaigns ORDER BY id LIMIT 1").get()!;
+    const plan = fixture === "current-account" ? original.prepare("SELECT id,current_revision FROM discovery_campaigns WHERE id=?").get("b29b55fa-1131-4d00-9d92-ecad85d3f8f7")! : original.prepare("SELECT id,current_revision FROM discovery_campaigns ORDER BY id LIMIT 1").get()!;
     assert.equal(typeof plan.id, "string"); assert.equal(typeof plan.current_revision, "number");
     const projection = createDiscoveryLibraryProjection(accounts, databases, tables, "http://127.0.0.1:33333");
     await projection.readiness(context);

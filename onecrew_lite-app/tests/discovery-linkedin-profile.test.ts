@@ -13,7 +13,8 @@ import { DiscoveryRepository } from "../src/discovery/repository.ts";
 import { DiscoveryContentRepository } from "../src/discovery/content-repository.ts";
 import { pendingReview } from "../src/discovery/pending-review.ts";
 import { containsDiscoveryCitation, discoveryReviewBasis } from "../src/discovery/review-material.ts";
-import { prepareDiscoveryReview } from "../src/discovery/review-submission.ts";
+import { prepareDiscoveryReview, submitDiscoveryReviewInput } from "../src/discovery/review-submission.ts";
+import { SELECTION_QUALITY_REVIEWER } from "../src/discovery/quality-policy.ts";
 import { buildDiscoveryMatchPrompt, discoveryMatchEvidenceKey, discoveryMatchPromptMaterial, loadBundledDiscoveryMatchRubric } from "../src/discovery/semantic-match.ts";
 import { linkedinConnections, linkedinProfilePlan, linkedinContactPlan } from "../src/platforms/opencli/linkedin.ts";
 import { DiscoveryPublicPageRepository, validateDiscoveryPublicPageResult } from "../src/discovery/public-page-repository.ts";
@@ -23,6 +24,17 @@ const row = z.record(z.string(), z.union([z.string(), z.number(), z.null()]));
 const captured = z.object({ plan: row, hit: row, author: row, profile: row, content: row, candidate: row }).parse(parseApplicationJson(readFileSync(new URL("./fixtures/linkedin-profile-or-post-20261020.json", import.meta.url))));
 const campaign = z.string().parse(captured.plan.discovery_campaign_id), hit = z.string().parse(captured.hit.id), candidate = z.string().parse(captured.candidate.id);
 
+// 复用真实历史模型的判断和引文，仅转换已经停用的提交格式。
+function separatedCapturedInput(raw: unknown) {
+  const input = submitDiscoveryReviewInput.parse(raw), match = input.findings.find(finding => finding.criterion === "match_fit");
+  assert.ok(match);
+  return { ...input, reviewer: { kind: "agent" as const, label: SELECTION_QUALITY_REVIEWER }, findings: [
+    { ...match, criterion: "selection_fit" as const, match_level: null },
+    { ...match, criterion: "quality_rating" as const },
+    ...input.findings.filter(finding => finding.criterion !== "match_fit"),
+  ] };
+}
+
 async function replay(t: TestContext, failedContent: boolean, observations = captured, excludedAccounts?: Array<{ native_author_id: string; profile_url: string; excerpt: string }>) {
   const directory = await mkdtemp(fileURLToPath(new URL("../../.scratch/linkedin-profile-", import.meta.url))), path = join(directory, "creator.sqlite");
   await initializeNewCreatorDatabase(path);
@@ -30,7 +42,7 @@ async function replay(t: TestContext, failedContent: boolean, observations = cap
   const repository = new DiscoveryRepository(db);
   const originalBrief = z.string().parse(parseApplicationJson(Buffer.from(String(captured.plan.brief_json))));
   const criteria = z.record(z.string(), z.unknown()).parse(parseApplicationJson(Buffer.from(String(captured.plan.criteria_json))));
-  repository.create({ id: campaign, brief: excludedAccounts ? `${originalBrief}\n不要重复读取已经成功的账号。` : originalBrief, opencli_version: "1.8.8", criteria: { ...criteria, ...(excludedAccounts ? { excluded_accounts: excludedAccounts } : {}) }, scopes: parseApplicationJson(Buffer.from(String(captured.plan.scope_json))), target_count: 30, max_calls: null });
+  repository.create({ id: campaign, brief: excludedAccounts ? `${originalBrief}\n不要重复读取已经成功的账号。` : originalBrief, opencli_version: "1.8.8", criteria: { ...criteria, ...(excludedAccounts ? { excluded_accounts: excludedAccounts } : {}) }, scopes: parseApplicationJson(Buffer.from(String(captured.plan.scope_json))), target_count: 30 });
   repository.approve(campaign, 1);
   db.prepare("UPDATE discovery_campaign_revisions SET approved_at=? WHERE discovery_campaign_id=?").run(captured.plan.approved_at!, campaign);
   db.prepare("UPDATE discovery_platform_runs SET status='completed' WHERE discovery_campaign_id=?").run(campaign);
@@ -91,6 +103,26 @@ test("真实Ray主页职位可独立审核，空简介和没有近期帖子不�
   assert.throws(() => repository.prepareReviewMaterial(campaign, 1, hit), /author_binding_unavailable/);
 });
 
+test("跨任务复用真实LinkedIn主页，保留采集时间并按新门槛重新判断", async t => {
+  const { db, repository } = await replay(t, false);
+  const original = repository.getProfile(campaign, hit), nextCampaign = `${campaign}-reuse`, nextHit = `${hit}-reuse`;
+  const criteria = z.record(z.string(), z.unknown()).parse(parseApplicationJson(String(captured.plan.criteria_json)));
+  repository.create({ id: nextCampaign, brief: `${String(parseApplicationJson(String(captured.plan.brief_json)))}\nLinkedIn 粉丝至少2000000`, opencli_version: "1.8.8", criteria: { ...criteria, min_subscribers: 2000000, min_subscribers_source: "explicit" }, scopes: parseApplicationJson(String(captured.plan.scope_json)), target_count: 30 });
+  repository.approve(nextCampaign, 1);
+  db.prepare("UPDATE discovery_platform_runs SET status='completed' WHERE discovery_campaign_id=?").run(nextCampaign);
+  for (const [table, value] of Object.entries({ discovery_search_hits: { ...captured.hit, id: nextHit, discovery_campaign_id: nextCampaign }, discovery_search_authors: { ...captured.author, search_hit_id: nextHit } })) {
+    const columns = Object.keys(value);
+    db.prepare(`INSERT INTO ${table}(${columns.join(",")}) VALUES(${columns.map(() => "?").join(",")})`).run(...Object.values(value));
+  }
+  const claim = repository.claimProfile(nextCampaign, 1, nextHit), reused = repository.reuseProfile(claim);
+  assert.ok(reused);
+  assert.equal(reused.captured_at, original.captured_at);
+  assert.deepEqual(reused.native_profile, original.native_profile);
+  assert.deepEqual(repository.getProfile(campaign, hit), original);
+  assert.equal(db.prepare("SELECT verdict FROM discovery_candidates WHERE discovery_campaign_id=?").get(nextCampaign)?.verdict, "rejected");
+  assert.equal(repository.nextProfileHit(nextCampaign), null);
+});
+
 test("真实LinkedIn资料领取后可保存页面超时回执，保留错误码并停止重复读取该账号", async t => {
   const { db, repository } = await replay(t, false);
   db.prepare("DELETE FROM discovery_profile_reads WHERE search_hit_id=?").run(hit);
@@ -140,13 +172,14 @@ test("真实LinkedIn帖子继续参与审核，已经推荐的原生账号不再
   assert.throws(() => repository.prepareReviewMaterial(campaign, 1, postHit), /content_binding_unavailable/);
 });
 
-test("真实历史匹配回执保留推荐，独立评分规则重新评估已存材料且不再读取帖子", async t => {
+test("真实旧模型提交被拒绝，既有判断转换独立评分后不再读取帖子", async t => {
   const { db, repository } = await replay(t, true);
   const real = z.object({ operator_account_id: z.string(), input: z.unknown() }).parse(parseApplicationJson(readFileSync(new URL("./fixtures/linkedin-profile-review-20261020.json", import.meta.url))));
-  const receipt = repository.submitReview(real.operator_account_id, real.input);
+  assert.throws(() => repository.submitReview(real.operator_account_id, real.input), /legacy_match_scoring_retired/);
+  const receipt = repository.submitReview(real.operator_account_id, separatedCapturedInput(real.input));
   assert.equal(receipt.verdict, "qualified");
   assert.equal(db.prepare("SELECT verdict FROM discovery_candidates WHERE id=?").get(candidate)?.verdict, "qualified");
-  assert.equal(repository.prepareInitialMatchMaterial(campaign, 1, hit).preserve, false);
+  assert.equal(repository.prepareInitialMatchMaterial(campaign, 1, hit).preserve, true);
   assert.equal(new DiscoveryContentRepository(db).nextNative(campaign, "linkedin"), null);
   assert.equal(repository.getPlan(campaign).used_calls, 0);
 });
@@ -154,7 +187,7 @@ test("真实历史匹配回执保留推荐，独立评分规则重新评估已�
 test("真实Ray联系浮层没有公开联系方式仍完成，普通空网页继续拒绝，完成后不再读取", async t => {
   const { repository, db } = await replay(t, false);
   const real = z.object({ operator_account_id: z.string(), input: z.unknown() }).parse(parseApplicationJson(readFileSync(new URL("./fixtures/linkedin-profile-review-20261020.json", import.meta.url))));
-  repository.submitReview(real.operator_account_id, real.input);
+  repository.submitReview(real.operator_account_id, separatedCapturedInput(real.input));
   const actual = parseApplicationJson(readFileSync(new URL("./fixtures/linkedin-empty-contact-20261020.json", import.meta.url)));
   const page = linkedinContactPlan("ray-yee-liew", String(captured.candidate.platform_account_id)).decode(actual);
   const pages = new DiscoveryPublicPageRepository(db);
@@ -171,7 +204,7 @@ test("真实Ray联系浮层没有公开联系方式仍完成，普通空网页�
 test("真实LinkedIn联系领取后保留原始超时分类，失败回执不再次读取且不重复计费", async t => {
   const { repository, db } = await replay(t, false);
   const real = z.object({ operator_account_id: z.string(), input: z.unknown() }).parse(parseApplicationJson(readFileSync(new URL("./fixtures/linkedin-profile-review-20261020.json", import.meta.url))));
-  repository.submitReview(real.operator_account_id, real.input);
+  repository.submitReview(real.operator_account_id, separatedCapturedInput(real.input));
   const pages = new DiscoveryPublicPageRepository(db), input = pages.next(campaign);
   assert.ok(input);
   const claim = pages.claim(input), used = repository.getPlan(campaign).used_calls;
@@ -186,22 +219,24 @@ test("真实LinkedIn联系领取后保留原始超时分类，失败回执不再
   assert.throws(() => pages.claim(input), /attempted/u);
 });
 
-test("真实模型对Ex-Binance保留现任雇主缺口，仅此时安排帖子且等待新证据评分", async t => {
+test("真实模型对Ex-Binance保留现任雇主缺口，优先读取Experience且不领取帖子", async t => {
   const gap = z.object({ hit: row, author: row, profile: row, candidate: row }).parse(parseApplicationJson(readFileSync(new URL("./fixtures/linkedin-profile-gap-20261020.json", import.meta.url))));
   const { db, repository } = await replay(t, false, { ...captured, ...gap });
   const real = z.object({ operator_account_id: z.string(), input: z.unknown() }).parse(parseApplicationJson(readFileSync(new URL("./fixtures/linkedin-gap-review-20261020.json", import.meta.url))));
   const gapHit = String(gap.hit.id);
   assert.equal(new DiscoveryContentRepository(db).nextNative(campaign, "linkedin"), null);
-  assert.equal(repository.submitReview(real.operator_account_id, real.input).verdict, "pending");
+  assert.equal(repository.submitReview(real.operator_account_id, separatedCapturedInput(real.input)).verdict, "pending");
   assert.equal(repository.prepareInitialMatchMaterial(campaign, 1, gapHit).preserve, false);
-  assert.equal(new DiscoveryContentRepository(db).nextNative(campaign, "linkedin"), gapHit);
+  assert.equal(new DiscoveryContentRepository(db).nextNative(campaign, "linkedin"), null);
+  assert.equal(repository.nextLinkedinExperience(campaign), gapHit);
+  assert.throws(() => repository.claimContent(campaign, 1, gapHit), /discovery_linkedin_experience_required/);
   db.exec("BEGIN DEFERRED");
-  assert.equal(pendingReview(db, campaign, 1, String(gap.candidate.id))?.state, "awaiting_score");
+  assert.equal(pendingReview(db, campaign, 1, String(gap.candidate.id))?.state, "needs_content");
   db.exec("COMMIT");
   assert.equal(repository.getPlan(campaign).used_calls, 0);
 });
 
-test("真实LinkedIn候选先读未读主页，普通和评分期间调度均保留待补证动态且不重读评分作者", async t => {
+test("真实LinkedIn候选优先补当前经历且不重读评分作者", async t => {
   const { db, repository } = await replay(t, false);
   const gap = z.object({ hit: row, author: row, profile: row, candidate: row }).parse(parseApplicationJson(readFileSync(new URL("./fixtures/linkedin-profile-gap-20261020.json", import.meta.url))));
   const post = z.object({ hit: row, author: row, profile: row }).parse(parseApplicationJson(readFileSync(new URL("./fixtures/linkedin-post-control-20261020.json", import.meta.url))));
@@ -212,11 +247,16 @@ test("真实LinkedIn候选先读未读主页，普通和评分期间调度均保
     }
   }
   const review = z.object({ operator_account_id: z.string(), input: z.unknown() }).parse(parseApplicationJson(readFileSync(new URL("./fixtures/linkedin-gap-review-20261020.json", import.meta.url))));
-  assert.equal(repository.submitReview(review.operator_account_id, review.input).verdict, "pending");
-  const unread = String(post.hit.id), gapHit = String(gap.hit.id), expected = { kind: "read_profile", search_hit_id: unread };
+  assert.equal(repository.submitReview(review.operator_account_id, separatedCapturedInput(review.input)).verdict, "pending");
+  const unread = String(post.hit.id), gapHit = String(gap.hit.id), expected = { kind: "read_content", search_hit_id: gapHit };
   assert.equal(repository.nextContentHit(campaign, "linkedin"), gapHit);
   assert.deepEqual(repository.planStep(campaign, 1), expected);
   assert.deepEqual(repository.planStepScoring(campaign, 1, [], [], [hit]), expected);
+  assert.deepEqual(repository.planStep(campaign, 1, [], [], { holdDiscovery: true }), expected);
+  assert.deepEqual(repository.planStepScoring(campaign, 1, [], [], [hit], { holdDiscovery: true }), expected);
+  assert.equal(repository.nextIndependentRead(campaign, 1, hit, [hit, gapHit], { holdDiscovery: true }), null);
+  assert.deepEqual(repository.planStepScoring(campaign, 1, [], [], [hit, gapHit], { holdDiscovery: true }), { kind: "busy" });
+  assert.equal(repository.nextProfileHit(campaign), unread);
   assert.equal(repository.getPlan(campaign).used_calls, 0);
   const claim = repository.claimProfile(campaign, 1, unread);
   repository.finishProfile(claim, parseApplicationJson(String(post.profile.native_profile_json)), null);
@@ -235,9 +275,43 @@ test("真实OpenCLI读取分别保留1548位followers和500+connections，拒绝
   assert.throws(() => linkedinProfilePlan("ray-yee-liew").decode([{ ...profile, connections: { ...profile.connections, upper: 500 } }]), /opencli_invalid_output/);
 });
 
+test("真实Dylan经历补读结束后从活动等待排除，失败任务排除表独立生效", async t => {
+  const fixture = z.object({ rows: z.record(z.string(), row) }).parse(parseApplicationJson(readFileSync(new URL("./fixtures/linkedin-experience-dylan-rows-20261021.json", import.meta.url))));
+  const live = z.object({ native: z.unknown() }).parse(parseApplicationJson(readFileSync(new URL("./fixtures/linkedin-experience-live-dylan-20261021.json", import.meta.url))));
+  const materials = z.object({ records: z.array(z.object({ material: z.object({ campaign_id: z.string(), criteria: z.unknown(), approved_scopes: z.unknown() }) })) }).parse(parseApplicationJson(readFileSync(new URL("./fixtures/linkedin-occupational-headlines-20261021.json", import.meta.url))));
+  const material = materials.records[0]!.material;
+  const directory = await mkdtemp(fileURLToPath(new URL("../../.scratch/linkedin-active-pending-", import.meta.url))), path = join(directory, "creator.sqlite");
+  await initializeNewCreatorDatabase(path);
+  const db = new DatabaseSync(path); t.after(() => db.close());
+  const repository = new DiscoveryRepository(db), campaign = material.campaign_id, hit = String(fixture.rows.discovery_search_hits!.id);
+  repository.create({ id: campaign, brief: "在LinkedIn搜索币安、OKX、Bitget、Bybit或Gate.io的商务、BD或Marketing人员。成功的账号不重复读取。币安（Binance）、OKX、Bitget、Bybit、Gate.io 的商务、BD 或 Marketing 人员", opencli_version: "1.8.8", criteria: material.criteria, scopes: material.approved_scopes, target_count: 30 });
+  repository.approve(campaign, 1);
+  db.prepare("UPDATE discovery_platform_runs SET status='completed' WHERE discovery_campaign_id=?").run(campaign);
+  db.prepare("UPDATE discovery_campaigns SET used_calls=70 WHERE id=?").run(campaign);
+  for (const [table, value] of Object.entries(fixture.rows)) {
+    const columns = Object.keys(value);
+    db.prepare(`INSERT INTO ${table}(${columns.join(",")}) VALUES(${columns.map(() => "?").join(",")})`).run(...Object.values(value));
+  }
+  assert.equal(repository.activePendingCount(campaign, 1), 1);
+  assert.equal(repository.activePendingCount(campaign, 1, [], [hit]), 0);
+  const claim = repository.claimLinkedinExperience(campaign, 1, hit);
+  repository.finishLinkedinExperience(claim, live.native, null);
+  db.exec("BEGIN DEFERRED");
+  assert.equal(pendingReview(db, campaign, 1, String(fixture.rows.discovery_candidates!.id))?.state, "insufficient_after_read");
+  db.exec("COMMIT");
+  assert.equal(repository.activePendingCount(campaign, 1), 0);
+  assert.equal(repository.nextLinkedinExperience(campaign), null);
+});
+
 for (const logic of ["or", "and"] as const) test(`真实模型审核${logic}：同一份1548 followers、500+ connections资料按完整条件得到不同结论`, () => {
   const actual = z.object({ operator_account_id: z.string(), basis: discoveryReviewBasis, input: z.unknown() }).parse(parseApplicationJson(readFileSync(new URL(`./fixtures/linkedin-metric-${logic}-review-20261020.json`, import.meta.url))));
-  const prepared = prepareDiscoveryReview(actual.operator_account_id, actual.input, actual.basis);
+  const input = separatedCapturedInput(actual.input);
+  if (logic === "and") {
+    const contradicted = input.findings.find(finding => typeof finding.criterion === "object" && finding.outcome === "contradicted");
+    assert.ok(contradicted);
+    input.findings[0] = { ...contradicted, criterion: "selection_fit", match_level: null };
+  }
+  const prepared = prepareDiscoveryReview(actual.operator_account_id, input, actual.basis);
   assert.equal(prepared.receipt.verdict, logic === "or" ? "qualified" : "rejected");
   assert.equal(actual.basis.native_followers, 1548);
   assert.deepEqual(actual.basis.native_profile?.connections, { raw: "500+connections", lower: 500, upper: null });

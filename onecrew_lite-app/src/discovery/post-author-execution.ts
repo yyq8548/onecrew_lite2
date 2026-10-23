@@ -15,10 +15,10 @@ export class DiscoveryPostAuthorExecutor {
       if (campaign.opencli_version !== "1.8.8" || this.reader.version !== campaign.opencli_version) throw new OpenCliError("opencli_version_changed");
       const browser = await this.browsers.resolve(context, claim.profile_ref); await browser.assertCurrent();
       if (browser.profile !== claim.profile_ref) throw new Error("discovery_browser_profile_mismatch");
-      this.accounts.assertCurrent(context); owned.assertOwned(); return this.reader.twitterPostIdentity(browser, claim.author_handle, claim.post_id);
+      this.accounts.assertCurrent(context); owned.assertOwned(); return this.reader.twitterPostEvidence(browser, claim.author_handle, claim.post_id);
     })().then(value => ({ ok: true as const, value }), error => ({ ok: false as const, error: error as unknown }));
     owned.assertOwned();
-    if (observed.ok) return owned.repository.finishPostAuthor(claim, { account_id: observed.value.account_id, observed_source_url: observed.value.source_url, stop_code: null });
+    if (observed.ok) return owned.repository.finishPostAuthor(claim, { account_id: observed.value.content.identity.account_id, observed_source_url: observed.value.content.identity.source_url, stop_code: null, native_content: observed.value.content, native_profile: observed.value.profile });
     if (observed.error instanceof OpenCliError && observed.error.code !== "opencli_cancelled") return owned.repository.finishPostAuthor(claim, { account_id: null, observed_source_url: null, stop_code: observed.error.code === "opencli_read_command_unavailable" ? "opencli_command_unavailable" : observed.error.code });
     const interrupted = await Promise.resolve().then(() => owned.repository.interruptPostAuthor(claim)).then(() => ({ ok: true as const }), error => ({ ok: false as const, error: error as unknown }));
     if (!interrupted.ok) throw new AggregateError([observed.error, interrupted.error], "discovery_post_author_read_and_interrupt_failed"); throw observed.error;

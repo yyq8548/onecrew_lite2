@@ -18,7 +18,7 @@ test("真实历史计划修改复用原始搜索资料，重新评估资格并�
     const scopes = source.scopes;
     const original = db.prepare("SELECT source_url,title,author_label,captured_at FROM discovery_search_hits WHERE discovery_campaign_id=? ORDER BY source_url").all(source.id);
     assert.ok(original.length > 0);
-    const input = { id: "refined", brief: source.brief, opencli_version: source.opencli_version, criteria: { ...source.criteria, refinement: { campaign_id: source.id, expected_revision: source.revision } }, scopes, target_count: source.target_count, max_calls: source.max_calls };
+    const input = { id: "refined", brief: source.brief, opencli_version: source.opencli_version, criteria: { ...source.criteria, refinement: { campaign_id: source.id, expected_revision: source.revision } }, scopes, target_count: source.target_count };
     repository.create(input);
     assert.equal(db.prepare("SELECT COUNT(*) n FROM discovery_search_hits WHERE discovery_campaign_id=?").get(input.id)?.n, 0);
     repository.approve(input.id, 1);

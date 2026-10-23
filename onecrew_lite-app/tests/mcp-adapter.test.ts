@@ -36,7 +36,7 @@ test("SDK adapter uses the real unified service for logged-out status and local 
     assert.notEqual(retiredContent.text, currentContent.text);
     await assert.rejects(client.readResource({ uri: "file:///private" }));
     const manifest = (await client.listTools()).tools;
-    assert.deepEqual(manifest.map(tool => tool.name), ["onecrew_status", "onecrew_login", "onecrew_login_cancel", "onecrew_logout", "onecrew_web", "onecrew_workspace_open", "onecrew_workspace_card_request", "onecrew_connection_list", "onecrew_result_present", "onecrew_result_state", "onecrew_tool_execute", "onecrew_tool_get", "onecrew_tool_search"]);
+    assert.deepEqual(manifest.map(tool => tool.name), ["onecrew_status", "onecrew_login", "onecrew_login_cancel", "onecrew_logout", "onecrew_web", "onecrew_repair", "onecrew_workspace_open", "onecrew_workspace_card_request", "onecrew_connection_list", "onecrew_result_present", "onecrew_result_state", "onecrew_tool_execute", "onecrew_tool_get", "onecrew_tool_search"]);
     assert.deepEqual(manifest.find(tool => tool.name === "onecrew_workspace_open")?._meta?.ui, { visibility: ["app"] });
     assert.deepEqual(manifest.find(tool => tool.name === "onecrew_result_state")?._meta?.ui, { visibility: ["app"] });
     assert.equal((manifest.find(tool => tool.name === "onecrew_result_present")?._meta?.ui as { resourceUri: string }).resourceUri, resource.uri);

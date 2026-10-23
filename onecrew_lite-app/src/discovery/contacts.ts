@@ -4,7 +4,7 @@ import { isIP } from "node:net";
 
 export type DiscoveryContact = z.infer<typeof discoveryContact>;
 const host = (value: string): string | null => { const name = URL.parse(value)?.hostname.replace(/^www\./u, ""); return name === "twitter.com" ? "x.com" : name === "space.bilibili.com" ? "bilibili.com" : name === "m.facebook.com" ? "facebook.com" : name ?? null; };
-export function discoveryContactPlatform(value: string): string | null { return ({ "youtube.com": "youtube", "bilibili.com": "bilibili", "x.com": "twitter", "instagram.com": "instagram", "facebook.com": "facebook", "tiktok.com": "tiktok", "douyin.com": "douyin", "linkedin.com": "linkedin", "reddit.com": "reddit", "bsky.app": "bluesky" } as Record<string, string>)[host(value) ?? ""] ?? null; }
+export function discoveryContactPlatform(value: string): string | null { return ({ "youtube.com": "youtube", "bilibili.com": "bilibili", "x.com": "twitter", "instagram.com": "instagram", "facebook.com": "facebook", "tiktok.com": "tiktok", "douyin.com": "douyin", "linkedin.com": "linkedin", "bsky.app": "bluesky" } as Record<string, string>)[host(value) ?? ""] ?? null; }
 export function discoverySocialProfile(value: string): boolean {
   const url = URL.parse(value); if (!url) return false;
   const hostname = url.hostname.replace(/^www\./u, ""), path = url.pathname;
@@ -17,7 +17,6 @@ export function discoverySocialProfile(value: string): boolean {
   if (hostname === "youtube.com") return parts.length === 1 && parts[0]!.startsWith("@") && handle(parts[0]!.slice(1)) || parts.length === 2 && parts[0] === "channel" && parts[1]!.startsWith("UC") && Buffer.byteLength(parts[1]!) === 24;
   if (hostname === "space.bilibili.com") return parts.length === 1 && /^[0-9]+$/u.test(parts[0]!);
   if (hostname === "linkedin.com") return parts.length === 2 && parts[0] === "in" && handle(parts[1]!);
-  if (hostname === "reddit.com") return parts.length === 2 && ["user", "u"].includes(parts[0]!) && handle(parts[1]!);
   if (hostname === "facebook.com") return parts.length === 1 && handle(parts[0]!) && !["groups", "watch", "login", "share", "reel", "marketplace"].includes(parts[0]!);
   return hostname === "bsky.app" && parts.length === 2 && parts[0] === "profile" && handle(parts[1]!);
 }
@@ -32,7 +31,6 @@ export function discoveryNonContact(source: string): boolean {
     || name === "instagram.com" && ["/p/", "/reel/", "/reels/"].some(prefix => path.startsWith(prefix))
     || name === "tiktok.com" && (path.includes("/video/") || path.startsWith("/discover/"))
     || name === "linkedin.com" && ["/posts/", "/feed/"].some(prefix => path.startsWith(prefix))
-    || name === "reddit.com" && (path.startsWith("/r/") || path.includes("/comments/"))
     || parts.some(part => ["form-submission-response", "checkout", "cart", "shop", "store", "stores", "product", "donate", "donation", "donations", "privacy-policy", "terms-of-service", "discord"].includes(part))
     || name === "bit.ly" && ["keychron", "k65plus", "hyper-next-drive"].some(slug => path.toLowerCase().includes(slug))
     || name === "youtube.com" && (["/watch", "/playlist"].includes(path) || path.startsWith("/shorts/") || path.endsWith("/join"))

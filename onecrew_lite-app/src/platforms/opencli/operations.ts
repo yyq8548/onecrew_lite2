@@ -24,7 +24,8 @@ export function registerOpenCliOperations(registry: OperationRegistry, accounts:
     }
     const { reader, installation } = inspected.value;
     const bridge = await reader.bridgeStatus(), profiles = bridge.daemon_running && bridge.extension_connected ? await reader.connectedProfiles() : [];
-    const result = { installed: true, version: reader.version, required_version: VERIFIED_OPENCLI_VERSION, command_path: installation.script ?? installation.executable, command_count: reader.inventory().command_count, ...bridge, profiles, search_capabilities: await reader.creatorSearchCapabilities(), addons: await addons.status(), issue: !bridge.daemon_running ? "daemon_unavailable" : !bridge.extension_connected ? "extension_unavailable" : null };
+    const addonStatus = await addons.status();
+    const result = { installed: true, version: reader.version, required_version: VERIFIED_OPENCLI_VERSION, command_path: installation.script ?? installation.executable, command_count: reader.inventory().command_count, ...bridge, profiles, search_capabilities: await reader.creatorSearchCapabilities(addonStatus), addons: addonStatus, issue: !bridge.daemon_running ? "daemon_unavailable" : !bridge.extension_connected ? "extension_unavailable" : null };
     accounts.assertCurrent(context); return result;
   }
   const observations = new Map<string, Map<string, Awaited<ReturnType<OpenCliReader["checkCreatorAuthStatus"]>>>>();

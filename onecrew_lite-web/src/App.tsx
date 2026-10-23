@@ -68,7 +68,7 @@ export function DisconnectedCard() {
   const [copied, setCopied] = useState<"idle" | "done" | "unavailable">("idle");
   const state = useSyncExternalStore(subscribeRuntimeAvailability, runtimeConnectionState, runtimeConnectionState);
   const [retrying, setRetrying] = useState(false);
-  const openRequest = t("service.openRequest");
+  const openRequest = t(state === "unreachable" ? "repair.offlineRequest" : "service.openRequest");
   const copy = useCallback(() => {
     const clipboard = navigator.clipboard;
     if (!clipboard) {
@@ -95,7 +95,7 @@ export function DisconnectedCard() {
           )}
         </CardContent>
         <CardFooter className="gap-2">
-          <Button onClick={copy}>{t("service.copyCommand")}</Button>
+          <Button onClick={copy}>{t(state === "unreachable" ? "repair.copy" : "service.copyCommand")}</Button>
           <Button variant="outline" disabled={retrying} onClick={() => {
             setRetrying(true);
             void connectLocalRuntime(true).then(() => setRetrying(false), () => setRetrying(false));

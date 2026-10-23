@@ -1,8 +1,9 @@
 import type { DatabaseSync } from "node:sqlite";
+import { discoveryReadBusy, discoveryReadBusySql } from "./read-capacity.ts";
 import { isDeepStrictEqual } from "node:util";
 import { z } from "zod";
 import { parseApplicationJson, stringifyApplicationJson } from "../contracts/application-json.ts";
-import { validateCreatorSchema } from "../storage/creator-schema.ts";
+import { assertValidatedCreatorConnection } from "../storage/creator-schema.ts";
 import { discoveryContentClaim } from "./review-material.ts";
 import { validateDiscoveryContentResult, type DiscoveryContentClaim } from "./content-result.ts";
 import { loadDiscoveryContentReceipt, loadDiscoveryProfileReceipt } from "./review-receipts.ts";
@@ -13,7 +14,7 @@ import { validateDiscoveryRetainedProfile } from "./native-material.ts";
 const text = z.string(), u32 = z.number().int().min(0).max(4294967295), object = z.record(text, z.unknown());
 export class DiscoveryContentRepository {
   readonly #db: DatabaseSync;
-  constructor(database: DatabaseSync) { validateCreatorSchema(database); this.#db = database; }
+  constructor(database: DatabaseSync) { assertValidatedCreatorConnection(database); this.#db = database; }
   #transaction<T>(body: () => T): T { this.#db.exec("BEGIN IMMEDIATE"); let committed = false; try { const value = body(); this.#db.exec("COMMIT"); committed = true; return value; } finally { if (!committed) this.#db.exec("ROLLBACK"); } }
   #twitterIdentity(claim: DiscoveryContentClaim): string {
     const saved = this.#db.prepare("SELECT status,expected_revision,profile_ref,author_handle,source_url,call_number,account_id FROM discovery_identity_reads WHERE discovery_campaign_id=? AND search_hit_id=?").get(claim.campaign_id, claim.search_hit_id);
@@ -36,27 +37,25 @@ export class DiscoveryContentRepository {
       JOIN discovery_profile_reads p ON p.discovery_campaign_id=h.discovery_campaign_id AND p.platform=h.platform AND p.profile_ref=h.profile_ref AND p.author_id=a.author_id
       JOIN discovery_campaigns c ON c.id=h.discovery_campaign_id JOIN discovery_platform_runs r ON r.discovery_campaign_id=c.id AND r.platform=h.platform AND r.profile_ref=h.profile_ref
       LEFT JOIN discovery_content_reads content ON content.search_hit_id=h.id
-      WHERE c.id=?1 AND c.phase='active' AND(c.max_calls IS NULL OR c.used_calls<c.max_calls) AND h.platform=?2 AND h.id NOT IN(SELECT value FROM json_each(?3)) AND p.status='completed' AND p.expected_revision=c.current_revision
+      WHERE c.id=?1 AND c.phase='active' AND h.platform=?2 AND h.id NOT IN(SELECT value FROM json_each(?3)) AND p.status='completed' AND p.expected_revision=c.current_revision
       AND(h.platform!='instagram' OR COALESCE(json_extract(p.native_profile_json,'$.private_account'),0)!=1)
+      AND(h.platform!='instagram' OR content.status='reading' OR EXISTS(SELECT 1 FROM discovery_candidates pending
+        JOIN discovery_evidence_reviews reviewed ON reviewed.id=json_extract(pending.evidence_json,'$.reviewed_selection.review_id')
+        WHERE pending.discovery_campaign_id=c.id AND pending.criteria_revision=c.current_revision AND pending.platform='instagram'
+          AND pending.source_profile_ref=h.profile_ref AND pending.platform_account_id=a.author_id AND pending.verdict='pending'
+          AND reviewed.discovery_campaign_id=c.id AND reviewed.criteria_revision=c.current_revision AND reviewed.search_hit_id=h.id
+          AND reviewed.candidate_id=pending.id AND reviewed.native_author_id=pending.platform_account_id AND reviewed.profile_ref=h.profile_ref
+          AND json_extract(reviewed.material_json,'$.native_profile.observed_at')=p.updated_at
+          AND(json_extract(pending.evidence_json,'$.reviewed_selection.outcome')='insufficient'
+            OR EXISTS(SELECT 1 FROM json_each(pending.evidence_json,'$.reviewed_requirements') requirement WHERE json_extract(requirement.value,'$.outcome')='insufficient'))))
       AND NOT EXISTS(SELECT 1 FROM discovery_candidates settled WHERE settled.discovery_campaign_id=c.id AND settled.criteria_revision=c.current_revision
         AND settled.source_profile_ref=h.profile_ref AND settled.platform=h.platform AND settled.verdict IN ('qualified','rejected')
         AND (settled.platform_account_id=a.author_id OR settled.platform_account_id=(SELECT account_id FROM discovery_profile_identity_matches WHERE search_hit_id=h.id)
           OR h.platform='linkedin' AND settled.platform_account_id=json_extract(p.native_profile_json,'$.account_id')))
-      AND(h.platform!='linkedin' OR(p.search_hit_id=h.id AND p.stop_code IS NULL AND (
-        content.status='reading'
-        OR EXISTS(SELECT 1 FROM discovery_campaign_revisions v WHERE v.discovery_campaign_id=c.id AND v.revision=c.current_revision AND length(trim(json_extract(v.criteria_json,'$.language')))>0)
-        OR EXISTS(SELECT 1 FROM discovery_candidates pending JOIN discovery_evidence_reviews reviewed
-          ON reviewed.id=COALESCE(json_extract(pending.evidence_json,'$.reviewed_selection.review_id'),json_extract(pending.evidence_json,'$.reviewed_match.review_id')) AND reviewed.discovery_campaign_id=c.id
-          AND reviewed.criteria_revision=c.current_revision AND reviewed.search_hit_id=h.id AND reviewed.candidate_id=pending.id
-          AND reviewed.native_author_id=pending.platform_account_id AND reviewed.profile_ref=h.profile_ref
-          AND json_extract(reviewed.material_json,'$.native_profile.observed_at')=p.updated_at
-          WHERE pending.discovery_campaign_id=c.id AND pending.criteria_revision=c.current_revision AND pending.platform='linkedin'
-            AND pending.source_profile_ref=h.profile_ref AND pending.platform_account_id=json_extract(p.native_profile_json,'$.account_id') AND pending.verdict='pending'
-            AND(COALESCE(json_extract(pending.evidence_json,'$.reviewed_selection.outcome'),json_extract(pending.evidence_json,'$.reviewed_match.outcome'))='insufficient'
-              OR EXISTS(SELECT 1 FROM json_each(pending.evidence_json,'$.reviewed_requirements') requirement WHERE json_extract(requirement.value,'$.outcome')='insufficient'))))))
+      AND(h.platform!='linkedin' OR(p.search_hit_id=h.id AND p.stop_code IS NULL AND content.status='reading'))
       AND(h.platform!='twitter' OR(p.search_hit_id=h.id AND EXISTS(SELECT 1 FROM discovery_profile_identity_matches m JOIN discovery_identity_reads i ON i.search_hit_id=m.identity_search_hit_id WHERE m.search_hit_id=h.id AND i.status='completed' AND i.account_id=m.account_id AND i.expected_revision=c.current_revision AND i.profile_ref=h.profile_ref AND i.discovery_campaign_id=c.id AND i.author_handle=a.author_id AND i.source_url=h.source_url AND i.call_number<p.call_number)))
       AND h.id=(SELECT h2.id FROM discovery_search_hits h2 JOIN discovery_search_authors a2 ON a2.search_hit_id=h2.id WHERE h2.discovery_campaign_id=h.discovery_campaign_id AND h2.platform=h.platform AND h2.profile_ref=h.profile_ref AND a2.author_id=a.author_id ORDER BY h2.captured_at,COALESCE((SELECT position FROM discovery_search_positions WHERE search_hit_id=h2.id),9223372036854775807),h2.id LIMIT 1)
-      AND NOT EXISTS(SELECT 1 FROM discovery_platform_runs busy WHERE busy.discovery_campaign_id=c.id AND busy.status='searching')
+      AND NOT ${discoveryReadBusySql(this.#db, campaign, "h.platform")}
       AND(h.platform!='facebook' OR EXISTS(SELECT 1 FROM discovery_facebook_content_targets t WHERE t.search_hit_id=h.id AND t.discovery_campaign_id=c.id AND t.expected_revision=c.current_revision AND t.profile_ref=h.profile_ref AND t.author_id=a.author_id AND t.profile_url=a.author_url AND t.status='completed' AND(json_extract(p.native_profile_json,'$.adapter_version')!='2.0.0' OR EXISTS(SELECT 1 FROM json_each(t.source_urls_json) l WHERE NOT EXISTS(SELECT 1 FROM discovery_facebook_original_attempts f WHERE f.search_hit_id=h.id AND f.source_url=l.value)))))
       AND NOT EXISTS(SELECT 1 FROM discovery_facebook_original_attempts f WHERE f.search_hit_id=h.id AND f.expected_revision=c.current_revision AND f.status='failed' AND f.stop_code IN('opencli_invalid_output','opencli_output_too_large'))
       AND((r.status='completed' AND(content.search_hit_id IS NULL OR(h.platform='facebook' AND content.status='failed' AND json_extract(p.native_profile_json,'$.adapter_version')='2.0.0' AND EXISTS(SELECT 1 FROM discovery_facebook_original_attempts f WHERE f.search_hit_id=h.id AND f.call_number=content.call_number AND f.status='failed' AND f.stop_code IN('opencli_command_failed','opencli_timeout','interrupted_content_read')))))
@@ -68,16 +67,15 @@ export class DiscoveryContentRepository {
     u32.parse(revision);
     return this.#transaction(() => {
       assertDiscoveryReadHealthy(this.#db, campaign, "content", hit);
-      const head = this.#db.prepare("SELECT c.used_calls,c.max_calls FROM discovery_campaigns c JOIN discovery_campaign_revisions v ON v.discovery_campaign_id=c.id AND v.revision=c.current_revision WHERE c.id=? AND c.current_revision=? AND c.phase='active' AND v.approved_at IS NOT NULL").get(campaign, revision);
-      if (!head) throw new Error("discovery_content_not_approved"); const budget = z.object({ used_calls: u32, max_calls: u32.nullable() }).parse(head);
-      if (budget.max_calls !== null && budget.used_calls >= budget.max_calls) throw new Error("discovery_budget_exhausted");
-      if (this.#db.prepare("SELECT EXISTS(SELECT 1 FROM discovery_platform_runs WHERE discovery_campaign_id=? AND status='searching') busy").get(campaign)!.busy === 1) throw new Error("discovery_read_active");
+      const head = this.#db.prepare("SELECT c.used_calls FROM discovery_campaigns c JOIN discovery_campaign_revisions v ON v.discovery_campaign_id=c.id AND v.revision=c.current_revision WHERE c.id=? AND c.current_revision=? AND c.phase='active' AND v.approved_at IS NOT NULL").get(campaign, revision);
+      if (!head) throw new Error("discovery_content_not_approved"); const counter = z.object({ used_calls: u32 }).parse(head);
       const row = this.#db.prepare(`SELECT h.platform,h.profile_ref,a.author_id,h.source_url FROM discovery_search_hits h JOIN discovery_search_authors a ON a.search_hit_id=h.id
         JOIN discovery_profile_reads p ON p.discovery_campaign_id=h.discovery_campaign_id AND p.platform=h.platform AND p.profile_ref=h.profile_ref AND p.author_id=a.author_id AND p.status='completed' AND p.expected_revision=?3
-        WHERE h.id=?1 AND h.discovery_campaign_id=?2 AND h.platform IN('bilibili','twitter','reddit','facebook','instagram','weibo','bluesky','zhihu','hackernews','pixiv','pinterest','linkedin')
+        WHERE h.id=?1 AND h.discovery_campaign_id=?2 AND h.platform IN('bilibili','twitter','facebook','instagram','weibo','bluesky','zhihu','hackernews','pixiv','linkedin')
         AND(h.platform!='instagram' OR COALESCE(json_extract(p.native_profile_json,'$.private_account'),0)!=1)
         AND h.id=(SELECT h2.id FROM discovery_search_hits h2 JOIN discovery_search_authors a2 ON a2.search_hit_id=h2.id WHERE h2.discovery_campaign_id=h.discovery_campaign_id AND h2.platform=h.platform AND h2.profile_ref=h.profile_ref AND a2.author_id=a.author_id ORDER BY h2.captured_at,COALESCE((SELECT position FROM discovery_search_positions WHERE search_hit_id=h2.id),9223372036854775807),h2.id LIMIT 1)`).get(hit, campaign, revision);
       if (!row) throw new Error("discovery_content_profile_observation_missing");
+      if (discoveryReadBusy(this.#db, campaign, [text.parse(row.platform)])) throw new Error("discovery_read_active");
       const claim = discoveryContentClaim.parse({ ...row, campaign_id: campaign, expected_revision: revision, search_hit_id: hit, call_number: 0 }); let nativeFacebook = false;
       if (claim.platform === "facebook") {
         const target = this.#db.prepare("SELECT t.*,h.source_url FROM discovery_facebook_content_targets t JOIN discovery_search_hits h ON h.id=t.search_hit_id WHERE t.discovery_campaign_id=? AND t.search_hit_id=? AND h.discovery_campaign_id=t.discovery_campaign_id AND h.platform=t.platform AND h.profile_ref=t.profile_ref").get(campaign, hit);
@@ -90,11 +88,12 @@ export class DiscoveryContentRepository {
       }
       const run = z.object({ status: text, stop_code: text.nullable(), active_query: text.nullable() }).parse(this.#db.prepare("SELECT status,stop_code,active_query FROM discovery_platform_runs WHERE discovery_campaign_id=? AND platform=? AND profile_ref=?").get(campaign, claim.platform, claim.profile_ref));
       const prior = this.#db.prepare("SELECT call_number,status,expected_revision FROM discovery_content_reads WHERE search_hit_id=? AND discovery_campaign_id=?").get(hit, campaign);
+      if (claim.platform === "linkedin" && prior?.status !== "reading") throw new Error("discovery_linkedin_experience_required");
       const interrupted = prior !== undefined && prior.status === "reading" && prior.expected_revision === revision && run.status === "technical_stop" && run.stop_code === "interrupted_content_read" && run.active_query === `content:${hit}:${u32.parse(prior.call_number)}`;
       const nativeRetry = nativeFacebook && run.status === "completed" && this.#db.prepare(`SELECT EXISTS(SELECT 1 FROM discovery_content_reads c JOIN discovery_facebook_original_attempts f ON f.search_hit_id=c.search_hit_id AND f.call_number=c.call_number AND f.source_url=c.source_url WHERE c.search_hit_id=? AND c.status='failed' AND f.status='failed' AND f.stop_code IN('opencli_command_failed','opencli_timeout','interrupted_content_read')) retry`).get(hit)!.retry === 1;
       if (nativeFacebook && interrupted) throw new Error("discovery_content_facebook_interrupted_no_replay");
       if (!interrupted && (run.status !== "completed" || prior !== undefined && !nativeRetry)) throw new Error("discovery_content_already_attempted_or_stopped");
-      claim.call_number = u32.parse(budget.used_calls + 1);
+      claim.call_number = u32.parse(counter.used_calls + 1);
       const nativeAccount = claim.platform === "twitter" ? this.#twitterIdentity(claim) : null;
       if (nativeAccount !== null && interrupted && this.#binding(claim) !== nativeAccount) throw new Error("discovery_content_native_binding_changed");
       const now = Math.floor(Date.now() / 1000);
@@ -115,10 +114,9 @@ export class DiscoveryContentRepository {
       }
       const prior = loadDiscoveryContentReceipt(this.#db, claim.campaign_id, claim.search_hit_id);
       if (!isDeepStrictEqual(prior.claim, claim) || prior.status !== "reading") throw new Error("discovery_content_claim_stale");
-      if (native !== null && ["pinterest", "linkedin"].includes(claim.platform)) {
+      if (native !== null && claim.platform === "linkedin") {
         const profile = loadDiscoveryProfileReceipt(this.#db, claim.campaign_id, claim.search_hit_id);
         if (profile.status !== "completed" || profile.stop_code !== null || profile.claim.expected_revision !== claim.expected_revision || profile.claim.platform !== claim.platform || profile.claim.profile_ref !== claim.profile_ref || profile.claim.author_id !== claim.author_id || profile.claim.call_number >= claim.call_number) throw new Error("discovery_content_profile_identity_changed");
-        if (claim.platform === "pinterest" && (profile.claim.source_url !== claim.source_url || native.profile_url !== profile.claim.author_url)) throw new Error("discovery_content_profile_identity_changed");
         if (claim.platform === "linkedin") { const original = validateDiscoveryRetainedProfile("linkedin", profile.claim.author_id, profile.claim.author_url, profile.claim.source_url, profile.native_profile); if (profile.claim.author_url !== claim.source_url || !isDeepStrictEqual(original.account_id, native.account_id)) throw new Error("discovery_content_profile_identity_changed"); }
       }
       if (claim.platform === "twitter") { const expected = this.#twitterIdentity(claim); if (this.#binding(claim) !== expected || native !== null && object.parse(native.identity).account_id !== expected) throw new Error("discovery_content_native_binding_changed"); }

@@ -71,10 +71,6 @@ export function validDiscoveryLanguageSample(raw: unknown, claim: DiscoveryLangu
     const commentPrefix = `${sample.source_url}?comment_id=`;
     return /^https:\/\/www\.facebook\.com\/reel\/[1-9][0-9]{0,24}$/u.test(sample.source_url) && claim.saved_content_urls.includes(sample.source_url) && bounded(sample.text, 8000) && (!!sample.text.trim() || comments.length > 0) && unique(comments.map(comment => comment.source_url)) && comments.every(comment => bounded(comment.text, 2000, true) && comment.source_url.startsWith(commentPrefix) && numeric(comment.source_url.slice(commentPrefix.length), 25));
   }
-  if (platform === "reddit") {
-    const commentPrefix = `${sample.source_url}_/`;
-    return /^t2_[a-z0-9]{1,15}$/u.test(sample.author_id) && /^https:\/\/www\.reddit\.com\/comments\/[a-z0-9]{1,15}\/$/u.test(sample.source_url) && bounded(sample.text, 8000) && (!!sample.text.trim() || comments.length > 0) && unique(comments.map(comment => comment.source_url)) && comments.every(comment => bounded(comment.text, 2000, true) && comment.source_url.startsWith(commentPrefix) && /^[a-z0-9]{1,15}\/$/u.test(comment.source_url.slice(commentPrefix.length)));
-  }
   if (platform === "tiktok") return numeric(sample.author_id, 25) && /^[A-Za-z0-9_.]{1,24}$/u.test(claim.author_handle) && sample.source_url.startsWith(`https://www.tiktok.com/@${claim.author_handle}/video/`) && numeric(sample.source_url.slice(`https://www.tiktok.com/@${claim.author_handle}/video/`.length), 25) && bounded(sample.text, 8000) && (!!sample.text.trim() || comments.length > 0) && unique(comments.map(comment => comment.text)) && comments.every(comment => comment.source_url === sample.source_url && bounded(comment.text, 2000, true));
   if (platform === "bilibili") {
     const commentPrefix = `${sample.source_url}#reply`;

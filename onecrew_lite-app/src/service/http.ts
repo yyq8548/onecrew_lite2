@@ -37,7 +37,7 @@ export async function listenLocalServer(options: LocalServerOptions) {
   const token = Buffer.from(`Bearer ${options.controlToken}`);
   const app = new Hono();
   const packaged = getPackagedRuntime();
-  const productVersion = packaged ? packaged.manifest.productVersion : "0.9.0";
+  const productVersion = packaged ? packaged.manifest.productVersion : "0.9.1";
   const libraryAssetPath = (path: string): string | null => {
     if (!options.libraryWebAssets) return null;
     if (["/library", "/library/", "/connections", "/login", "/auth/complete"].includes(path)) return "/";

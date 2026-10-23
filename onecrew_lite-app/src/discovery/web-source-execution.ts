@@ -1,9 +1,11 @@
 import type { AccountContext, AccountContextService } from "../identity/account-context.ts";
 import { OpenCliError } from "../platforms/opencli/errors.ts";
+import { TEMPORARILY_DISABLED_CREATOR_SOURCES } from "../platforms/opencli/sources.ts";
 import type { OpenCliReader } from "../platforms/opencli/reader.ts";
 import type { DiscoveryBrowserResolver, DiscoveryRepositoryResolver } from "./search-execution.ts";
 import { discoveryWebSourceTarget } from "./web-source-contracts.ts";
 import type { DiscoveryContactAudit } from "./public-page-audit.ts";
+import { discoveryWebProfileTarget, readDiscoveryWebProfile, validateDiscoveryWebProfile } from "./web-profile.ts";
 
 export class DiscoveryWebSourceExecutor {
   readonly accounts: AccountContextService; readonly repositories: DiscoveryRepositoryResolver; readonly browsers: DiscoveryBrowserResolver; readonly reader: OpenCliReader; readonly audit: DiscoveryContactAudit | undefined;
@@ -12,6 +14,7 @@ export class DiscoveryWebSourceExecutor {
     this.accounts.assertCurrent(context); const owned = await this.repositories.resolve(context); owned.assertOwned(); this.accounts.assertCurrent(context);
     if (owned.owner.accountId !== context.principal.user.id || owned.owner.tenantId !== context.principal.tenantId || owned.owner.baseId !== context.principal.baseId) throw new Error("discovery_web_source_repository_owner_mismatch");
     const campaign = owned.repository.getPlan(input.campaign_id), source = owned.repository.webSourceSource(input.campaign_id, input.search_hit_id), target = discoveryWebSourceTarget(source.source_url);
+    if (TEMPORARILY_DISABLED_CREATOR_SOURCES.includes(source.platform)) throw new OpenCliError("opencli_read_command_unavailable");
     if (!target) throw new OpenCliError("opencli_invalid_input");
     if (this.reader.version !== "1.8.8" || campaign.opencli_version !== this.reader.version) throw new OpenCliError("opencli_version_changed");
     const browser = await this.browsers.resolve(context, source.profile_ref); await browser.assertCurrent();
@@ -27,24 +30,33 @@ export class DiscoveryWebSourceExecutor {
     };
     const observed = await (async () => {
       if (claim.profile_ref !== browser.profile || claim.source_url !== source.source_url || claim.target_platform !== target.platform || claim.video_id !== target.id) throw new OpenCliError("opencli_invalid_output");
+      const directProfile = discoveryWebProfileTarget(claim.source_url);
+      if (directProfile) {
+        const saved = owned.repository.savedNativeProfile(claim.campaign_id, claim.expected_revision, claim.profile_ref, directProfile.platform, directProfile.profile_url);
+        return saved ? validateDiscoveryWebProfile(claim.source_url, saved) : timed("profile_ms", () => readDiscoveryWebProfile(this.reader, browser, claim.source_url));
+      }
       if (claim.target_platform === "tiktok") {
+        const saved = owned.repository.savedNativeProfile(claim.campaign_id, claim.expected_revision, claim.profile_ref, "tiktok", `https://www.tiktok.com/@${claim.video_id}`);
+        if (saved) return { identity: saved, profile: saved };
         const profile = await timed("identity_ms", () => this.reader.tiktokProfileIdentity(browser, claim.video_id));
         return { identity: profile, profile };
       }
       if (claim.target_platform === "instagram") {
+        const saved = owned.repository.savedNativeProfile(claim.campaign_id, claim.expected_revision, claim.profile_ref, "instagram", `https://www.instagram.com/${claim.video_id}/`);
+        if (saved) return { identity: saved, profile: saved };
         const profile = await timed("profile_ms", () => this.reader.instagramProfileIdentity(browser, claim.video_id));
         return { identity: profile, profile };
       }
       if (claim.target_platform === "douyin") {
         const content = await timed("content_ms", () => this.reader.douyinOriginalContent(browser, claim.video_id));
-        const profile = await timed("profile_ms", () => this.reader.douyinPublicProfile(browser, content.author_id));
+        const profile = owned.repository.savedNativeProfile(claim.campaign_id, claim.expected_revision, claim.profile_ref, "douyin", `https://www.douyin.com/user/${content.author_id}`) ?? await timed("profile_ms", () => this.reader.douyinPublicProfile(browser, content.author_id));
         return { profile, content };
       }
       if (claim.target_platform === "twitter") {
         const handle = target.handle;
         if (!handle) throw new OpenCliError("opencli_invalid_output");
         const identity = await timed("identity_ms", () => this.reader.twitterPostIdentity(browser, handle, claim.video_id));
-        const profile = await timed("profile_ms", () => this.reader.twitterIdentityProfile(browser, handle));
+        const profile = owned.repository.savedNativeProfile(claim.campaign_id, claim.expected_revision, claim.profile_ref, "twitter", `https://x.com/${handle}`) ?? await timed("profile_ms", () => this.reader.twitterIdentityProfile(browser, handle));
         if (identity.account_id !== profile.account_id) throw new OpenCliError("opencli_invalid_output");
         const content = await timed("content_ms", () => this.reader.twitterPostContent(browser, handle, claim.video_id, identity.account_id));
         return { identity, profile, content };

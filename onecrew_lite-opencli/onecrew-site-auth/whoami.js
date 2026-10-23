@@ -2,9 +2,8 @@ import { cli, Strategy } from '@jackwener/opencli/registry';
 import { AuthRequiredError, CommandExecutionError } from '@jackwener/opencli/errors';
 import { readSiteLogin } from './probe.mjs';
 
-const domains = { bilibili: 'www.bilibili.com', tiktok: 'www.tiktok.com', instagram: 'www.instagram.com', facebook: 'www.facebook.com', zhihu: 'www.zhihu.com', douyin: 'www.douyin.com', linkedin: 'www.linkedin.com', 'linkedin-learning': 'www.linkedin.com', weibo: 'weibo.com', tieba: 'tieba.baidu.com', medium: 'medium.com', nowcoder: 'www.nowcoder.com', douban: 'www.douban.com', pixiv: 'www.pixiv.net' };
+const domains = { bilibili: 'www.bilibili.com', tiktok: 'www.tiktok.com', instagram: 'www.instagram.com', facebook: 'www.facebook.com', douyin: 'www.douyin.com', linkedin: 'www.linkedin.com', weibo: 'weibo.com', tieba: 'tieba.baidu.com' };
 domains.twitter = 'x.com';
-domains.pinterest = 'www.pinterest.com';
 domains.youtube = 'www.youtube.com';
 for (const provider of Object.keys(domains)) {
   cli({

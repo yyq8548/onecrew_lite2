@@ -9,7 +9,7 @@ test('真实可见搜索保留五个账号的页面顺序并明确身份待独�
   const rows=projectInstagramVisibleSearch(receipt,5);
   assert.equal(rows.length,5);
   assert.deepEqual(rows.map(row=>row.username),receipt.map(row=>row.username));
-  assert.ok(rows.every(row=>row.execution_mode==='computer_use'&&!('author_id' in row)));
+  assert.ok(rows.every(row=>row.execution_mode==='opencli_dom'&&!('author_id' in row)));
   assert.deepEqual(projectInstagramVisibleSearch(receipt,2).map(row=>row.url),receipt.slice(0,2).map(row=>row.url));
 });
 

@@ -1,5 +1,4 @@
 import { z } from "zod";
-export const PINTEREST_MIN_MONTHLY_VIEWS_EXCLUSIVE = 50000;
 import { creatorU64 } from "./creators.ts";
 
 export const DISCOVERY_QUALITY_SCORES = Object.freeze({ excellent: 95, good: 85, medium: 70, low: 40 } as const);
@@ -33,7 +32,7 @@ export const discoveryReviewMaterial = z.object({
   native_content: z.object({ claim, status: text, native_content: z.unknown(), stop_code: nullableText, captured_at: signedTimestamp, language_sample: languageSample.nullish() }).passthrough().nullish(),
   native_follower_estimate: z.object({ display: text, lower: creatorU64, nominal: creatorU64, upper: creatorU64 }).passthrough().nullish(),
   native_followers: creatorU64.nullish(), native_platform: nullableText.optional(),
-  native_profile: z.object({ profile_url: text, observed_at: signedTimestamp, bio: nullableText.optional(), self_declared_location: nullableText.optional(), web_text: nullableText.optional(), monthly_views_raw: nullableText.optional(), bio_status: z.enum(["complete", "truncated", "missing", "unknown", "unavailable"]).optional() }).passthrough().nullish(),
+  native_profile: z.object({ profile_url: text, observed_at: signedTimestamp, bio: nullableText.optional(), self_declared_location: nullableText.optional(), web_text: nullableText.optional(), bio_status: z.enum(["complete", "truncated", "missing", "unknown", "unavailable"]).optional() }).passthrough().nullish(),
 }).passthrough().refine(value => Object.hasOwn(value, "criteria"));
 export const discoveryReviewCriterion = z.union([z.enum(["own_ai_tool_demo", "public_tool_url", "apparel_business_content", "category_content", "creator_residence_outside_mainland", "content_language", "match_fit", "selection_fit", "quality_rating"]), z.object({ requirement: z.number().int().min(0).max(31) }).strict()]);
 export type DiscoveryReviewCriterion = z.infer<typeof discoveryReviewCriterion>;
@@ -50,7 +49,8 @@ export type DiscoveryIdentityMergeMaterial = z.infer<typeof discoveryIdentityMer
 const draftPhase = z.enum(["checking_connection", "checking_codex", "planning", "validating_plan", "saving_plan", "finished", "failed"]);
 export const discoveryDraftProgress = z.object({ id: text, phase: draftPhase, elapsed_ms: creatorU64, phase_elapsed_ms: creatorU64, timings: z.array(z.object({ phase: draftPhase, elapsed_ms: creatorU64 }).strict()), error_code: nullableText, unsupported_conditions: strings }).strict();
 export const discoveryExecutionStatus = z.object({
-  campaign_id: text, revision: u32, stage: z.enum(["ready", "searching", "verifying", "pausing", "paused", "finished", "budget_exhausted", "needs_evidence", "error"]), used: u32,
+  pipeline: z.object({ active_pending: u32, queued_scores: u32, running_scores: u32, discovery_held: z.boolean(), contact_pending: z.boolean() }).strict().optional(),
+  campaign_id: text, revision: u32, stage: z.enum(["ready", "searching", "verifying", "pausing", "paused", "finished", "needs_evidence", "error"]), used: u32,
   deferred_hits: z.array(z.object({ reason: text, search_hit_id: text }).strict()), deferred_scores: u32, excluded_platforms: strings,
   failure_code: nullableText, failure_phase: nullableText, reason: nullableText, sync_error: nullableText, sync_pending: z.boolean(), synced_at: creatorU64.nullable(), updated_at: creatorU64,
   library: z.object({ campaign_id: text, table_id: text, web_url: text, total_hits: creatorU64, inserted_rows: creatorU64 }).strict().nullable(),

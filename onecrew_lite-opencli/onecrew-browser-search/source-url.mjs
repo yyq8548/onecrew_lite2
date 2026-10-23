@@ -6,7 +6,7 @@ export function equivalentSourceUrl(actual, expected) {
     if (!URL.canParse(input)) return null;
     const url = new URL(input);
     if (url.protocol !== 'https:' || url.username || url.password || url.port) return null;
-    const domains = ['linkedin.com','facebook.com','instagram.com','pinterest.com','youtube.com','twitter.com','x.com','tiktok.com','reddit.com','bilibili.com','douyin.com','weibo.com','zhihu.com','pixiv.net','bsky.app'];
+    const domains = ['linkedin.com','facebook.com','instagram.com','youtube.com','twitter.com','x.com','tiktok.com','bilibili.com','douyin.com','weibo.com','zhihu.com','pixiv.net','bsky.app'];
     let host = url.hostname;
     const apex = host.startsWith('www.') ? host.slice(4) : host;
     const known = domains.includes(apex) || ['space.bilibili.com','news.ycombinator.com'].includes(host);

@@ -30,10 +30,8 @@ test("所有平台共同入口只忽略格式与跟踪参数，保留账号、�
   const cases: Array<[string, string]> = [
     ["https://twitter.com/person/?utm_source=profile", "https://x.com/person"],
     ["https://facebook.com/profile.php?fbclid=tracking&id=123&sk=directory_links", "https://www.facebook.com/profile.php?sk=directory_links&id=123"],
-    ["https://pinterest.com/person?utm_source=profile", "https://www.pinterest.com/person/"],
     ["https://youtube.com/watch?utm_source=profile&v=abcdefghijk", "https://www.youtube.com/watch?v=abcdefghijk"],
     ["https://tiktok.com/@person?utm_source=profile", "https://www.tiktok.com/@person/"],
-    ["https://reddit.com/user/person?utm_source=profile", "https://www.reddit.com/user/person/"],
     ["https://space.bilibili.com/123?utm_source=profile", "https://space.bilibili.com/123/"],
     ["https://douyin.com/user/person?utm_source=profile", "https://www.douyin.com/user/person/"],
     ["https://weibo.com/u/123?utm_source=profile", "https://www.weibo.com/u/123/"],
@@ -47,7 +45,6 @@ test("所有平台共同入口只忽略格式与跟踪参数，保留账号、�
     ["https://facebook.com/profile.php?id=124&sk=directory_links", "https://www.facebook.com/profile.php?id=123&sk=directory_links"],
     ["https://facebook.com/profile.php?id=123&sk=about", "https://www.facebook.com/profile.php?id=123&sk=directory_links"],
     ["https://youtube.com/watch?v=abcdefghijk&list=other", "https://www.youtube.com/watch?v=abcdefghijk"],
-    ["https://pinterest.com/pin/124", "https://www.pinterest.com/pin/123"],
     ["https://news.ycombinator.com/user?id=another", "https://news.ycombinator.com/user?id=person"],
     ["https://example.com/#account/2", "https://example.com/#account/1"],
     ["https://linkedin.com.evil.test/in/person/", "https://www.linkedin.com/in/person/"],

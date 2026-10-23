@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { DISCOVERY_DEFAULTS, loadDiscoveryPreferences, saveDiscoveryPreferences, discoveryPlanningBrief, discoveryProductBrief, discoveryPlanningScopeOverrides, discoveryEditedScopes, discoveryEditIsComplete } from "./discovery-draft-preferences";
 
 const emptyDraft = { format: 1 as const, brief: "", region: "", language: "", category: "", ...DISCOVERY_DEFAULTS,
-  followersEdited: false, keywords: "", v2exNodes: "", redditCommunities: "", tagInputs: {}, categoryInputs: {}, platforms: [], requireDemo: false, requireToolLink: false };
+  followersEdited: false, keywords: "", v2exNodes: "", tagInputs: {}, categoryInputs: {}, platforms: [], requireDemo: false, requireToolLink: false };
 describe("Optional search draft settings", () => {
   it("passes the whole sentence to AI and distinguishes defaults from explicit platform edits", () => {
     const brief = "在tiktok上搜索美妆博主5人";
@@ -29,7 +29,6 @@ describe("Optional search draft settings", () => {
     const scopes = [
       { platform: "youtube", keywords: ["keyboard review"] },
       { platform: "bilibili", keywords: ["键盘测评"] },
-      { platform: "reddit-subreddit", keywords: ["MechanicalKeyboards"] },
       { platform: "devto-tag", keywords: ["hardware"] },
     ];
     expect(discoveryPlanningScopeOverrides(scopes)).toEqual(scopes.slice(2));
@@ -45,9 +44,9 @@ describe("Optional search draft settings", () => {
     const storage = { setItem: (_key: string, value: string) => { stored = value; }, getItem: () => stored };
     expect(saveDiscoveryPreferences(storage, { ...emptyDraft, minSubscribers: 10000, followersEdited: true })).toBe(true);
     expect(loadDiscoveryPreferences(storage)).toEqual({ ...emptyDraft, minSubscribers: 10000, followersEdited: true });
-    expect(loadDiscoveryPreferences(storage)?.maxCalls).toBeNull();
+    expect(loadDiscoveryPreferences(storage)).not.toHaveProperty("maxCalls");
     stored = JSON.stringify({ ...emptyDraft, maxCalls: 200 });
-    expect(loadDiscoveryPreferences(storage)?.maxCalls).toBe(200);
+    expect(loadDiscoveryPreferences(storage)).not.toHaveProperty("maxCalls");
   });
   it("accepts an entirely blank draft and rejects corrupt or future formats", () => {
     expect(saveDiscoveryPreferences({ setItem: () => {} }, emptyDraft)).toBe(true);

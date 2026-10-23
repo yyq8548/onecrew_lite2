@@ -1,6 +1,7 @@
 import { invoke } from "./local-runtime";
 import type { ExecutionInput } from "./generated/discovery-contracts";
 import { discoveryExecutionStatus, type ExecutionStatus } from "@onecrew/runtime-contracts/discovery";
+import { discoveryReadFailures } from "@onecrew/runtime-contracts/status";
 
 export function parseExecution(value: unknown): ExecutionStatus | null {
   if (value === null) return null;
@@ -17,6 +18,9 @@ export function parseExecution(value: unknown): ExecutionStatus | null {
 }
 export async function getDiscoveryExecution() {
   return parseExecution(await invoke<unknown>("onecrew_discovery_execution_get"));
+}
+export async function getDiscoveryReadFailures(campaignId: string) {
+  return discoveryReadFailures.parse(await invoke<unknown>("onecrew_discovery_read_failures", { campaignId }));
 }
 export const discoveryExecutionKey = (credentialId: string | null) => ["discovery-execution", credentialId] as const;
 export async function startDiscoveryExecution(input: ExecutionInput) {

@@ -1,7 +1,7 @@
 import type { DatabaseSync } from "node:sqlite";
 import { isDeepStrictEqual } from "node:util";
 import { z } from "zod";
-import { validateCreatorSchema } from "../storage/creator-schema.ts";
+import { assertValidatedCreatorConnection } from "../storage/creator-schema.ts";
 import { loadDiscoveryLibraryBasis } from "./library-basis.ts";
 import { buildDiscoveryLibrarySnapshot } from "./library-material.ts";
 import { reserveDiscoverySourceVersionInTransaction } from "./library-repository.ts";
@@ -18,7 +18,7 @@ export function loadIdentityPublicationBasis(database: DatabaseSync, campaign: s
 export function buildIdentityLibraryMaterial(basis: IdentityGroupsBasis) { return { sources: buildDiscoveryLibrarySnapshot(basis.library), identity: buildIdentityGroups(basis) }; }
 export class DiscoveryIdentityPublicationRepository {
   readonly #database: DatabaseSync;
-  constructor(database: DatabaseSync) { validateCreatorSchema(database); this.#database = database; }
+  constructor(database: DatabaseSync) { assertValidatedCreatorConnection(database); this.#database = database; }
   readBasis(campaign: string, revision: number): IdentityGroupsBasis { return identityTransaction(this.#database, false, () => loadIdentityPublicationBasis(this.#database, campaign, revision)); }
   readMaterial(campaign: string, revision: number) { return buildIdentityLibraryMaterial(this.readBasis(campaign, revision)); }
   reservePublication(basis: IdentityGroupsBasis, sourceHash: string, identityHash: string): { source_revision: number; identity_revision: number } {

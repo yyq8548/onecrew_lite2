@@ -8,12 +8,6 @@
     {"username":"arinarad.makeup","name":"آرینا‌ | Beauty Creator| میکاپ آرتیست| LifeStyle💄","url":"https://www.instagram.com/arinarad.makeup/"},
     {"username":"oopsits_prachiii","name":"prachi bahadure | makeup & beauty creator","url":"https://www.instagram.com/oopsits_prachiii/"}
   ],
-  "pinterest_profile": {
-    "author_id": "1089237997285034121", "username": "Velourabeauty01_", "author_label": "Veloura Beauty Edit",
-    "profile_url": "https://www.pinterest.com/Velourabeauty01_/", "follower_count": 33,
-    "bio": "Beauty inspiration for skincare, makeup, nails & healthy hair. Daily beauty ideas, tutorials and product recommendations.",
-    "public_links": [], "monthly_views_raw": "119.8 万 月浏览量"
-  },
   "facebook_profile": {
     "adapter_version": "1.0.0", "id": "100077440782965", "display_name": "美妆师姐皮皮子", "follower_count": null,
     "follower_text": "13K followers", "profile_url": "https://www.facebook.com/profile.php?id=100077440782965",
@@ -57,10 +51,6 @@
       "reviewed_match": {"language": null, "level": "medium", "material_hash": "ab8ee217218b586da6b59e24b7558702fc4009c7ee401241b193ddb38c1ffb42", "native_author_id": "1890993902473109504", "outcome": "supported", "policy_version": "language-match-review-v1", "reason": "已保存内容是对他人妆容的简短赞美，能证明话题相关，无法据此核实账号的美妆博主身份。评为 medium，列入相关备选，不计入推荐人数；不据此否定账号其他尚未读取的内容。", "review_id": "9d66c1f6-e7ce-4878-ae91-83feb204b284", "source_url": "https://x.com/i/status/2110359286308384773", "verified": true},
       "reviewed_requirements": []
     }
-  },
-  "pinterest_content_failure": {
-    "claim": {"campaign_id":"494c9293-c79e-43bb-aec0-799c767557b1","expected_revision":1,"search_hit_id":"d9690cd6-75eb-4c6a-99ba-5de5108ce847","platform":"pinterest","profile_ref":"d5pskwub","author_id":"150870793675347190","source_url":"https://www.pinterest.com/pin/150870656261234516/","call_number":13},
-    "code": "provider_response_shape_invalid"
   },
   "tiktok_other_links": [
     {"profile_url": "https://www.tiktok.com/@erinjmonaghan", "author_id": "6808504042949739525", "link": "https://www.unicef.org.uk/donate/"},

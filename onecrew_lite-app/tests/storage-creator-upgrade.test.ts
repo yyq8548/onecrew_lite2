@@ -72,7 +72,7 @@ for (const legacyVersion of Array.from({ length: 11 }, (_, index) => 27 + index)
       }
     }
     finally { staged.close(); }
-    assert.deepEqual(await upgradeCreatorStagingCopy({ sourcePath, stagingPath }), { fromVersion: legacyVersion, toVersion: 92 });
+    assert.deepEqual(await upgradeCreatorStagingCopy({ sourcePath, stagingPath }), { fromVersion: legacyVersion, toVersion: 96 });
     const current = new DatabaseSync(stagingPath, { readOnly: true });
     try {
       validateCreatorSchema(current);
@@ -115,7 +115,7 @@ for (const legacyVersion of Array.from({ length: 11 }, (_, index) => 27 + index)
   } finally { await rm(directory, { recursive: true }); }
 });
 for (const version of Array.from({ length: 52 }, (_, index) => 38 + index)) {
-  test(`Creator v${version} isolated copy reaches v92 while preserving rows`, async () => {
+  test(`Creator v${version} isolated copy reaches current schema while preserving rows`, async () => {
     const directory = await mkdtemp(fileURLToPath(new URL("../../.scratch/storage-creator-upgrade-", import.meta.url)));
     try {
       const sourcePath = join(oracleDirectory, `creator-schema${version}-oracle.sqlite`);
@@ -194,7 +194,8 @@ for (const version of Array.from({ length: 52 }, (_, index) => 38 + index)) {
         preservedTables.push("gmail_bulk_batches", "gmail_bulk_items");
       }
       const preservedRows = preservedTables.map((table) => staged.prepare(`SELECT * FROM ${table}`).all().map((row) =>
-        table === "discovery_candidates" && version < 77 ? { ...row, source_platform: row.platform }
+        table === "discovery_campaigns" ? { ...row, max_calls: null }
+          : table === "discovery_candidates" && version < 77 ? { ...row, source_platform: row.platform }
           : table === "discovery_language_samples" && version < 61 ? { ...row, sample_format_version: 1 } : { ...row }));
       staged.exec("INSERT INTO idempotency_records(key,action,mailbox_ref_id,state,result_json,created_at,updated_at) VALUES('attempt-key','email_send','mailbox','remote_started','{}',1,2)");
       if (version === 86) {
@@ -208,7 +209,7 @@ for (const version of Array.from({ length: 52 }, (_, index) => 38 + index)) {
       validateCreatorSchemaVersion(staged, version);
       staged.close();
       stagedClosed = true;
-      assert.deepEqual(await upgradeCreatorStagingCopy({ sourcePath, stagingPath }), { fromVersion: version, toVersion: 92 });
+      assert.deepEqual(await upgradeCreatorStagingCopy({ sourcePath, stagingPath }), { fromVersion: version, toVersion: 96 });
       const current = new DatabaseSync(stagingPath, { readOnly: true });
       try {
         validateCreatorSchema(current);

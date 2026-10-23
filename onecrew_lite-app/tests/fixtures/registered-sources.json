@@ -51,22 +51,6 @@
     {
       "allowed_values": [],
       "browser_required": true,
-      "command": "onecrew-pinterest-reader/search-pins",
-      "platform": "pinterest",
-      "registered": true,
-      "scope_kind": "query"
-    },
-    {
-      "allowed_values": [],
-      "browser_required": true,
-      "command": "onecrew-search-reddit/search",
-      "platform": "reddit",
-      "registered": true,
-      "scope_kind": "query"
-    },
-    {
-      "allowed_values": [],
-      "browser_required": true,
       "command": "onecrew-bilibili/search",
       "platform": "bilibili",
       "registered": true,

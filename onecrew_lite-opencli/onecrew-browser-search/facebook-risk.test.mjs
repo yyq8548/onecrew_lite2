@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
+import {equivalentSourceUrl} from './source-url.mjs';
 import {readFacebookProfileHeader} from './facebook-profile.mjs';
 import {readFacebookRecentPage} from './facebook-recent.mjs';
 import {readFacebookCommentPage} from './facebook-comments.mjs';
@@ -12,7 +13,7 @@ for (const read of [readFacebookProfileHeader,readFacebookRecentPage,readFaceboo
       const unexpected=()=>assert.fail('must stop without DOM read, translation or retry');
       const run=vm.runInNewContext(`(${read.toString()})`,{
         location:new URL(`https://www.facebook.com${path}`),
-        document:{querySelectorAll:unexpected},setTimeout:unexpected,URL,
+        document:{querySelectorAll:unexpected},setTimeout:unexpected,URL,equivalentSourceUrl,
       });
       await assert.rejects(run('https://www.facebook.com/reel/123','123',5,unexpected,unexpected),/RISK/);
     }

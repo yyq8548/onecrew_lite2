@@ -9,7 +9,7 @@ const receipt = {
   status: "completed", account_id: "987", observed_source_url: "https://x.com/creator/status/123", stop_code: null, captured_at: 100,
 };
 const campaign: DiscoveryCampaign = { id: "c", revision: 1, phase: "active", brief: "AI tools", opencli_version: "1.8.8",
-  criteria: { min_followers: 10000 }, target_count: 30, used_calls: 1, max_calls: 3,
+  criteria: { min_followers: 10000 }, target_count: 30, used_calls: 1,
   scopes: [{ platform: "twitter", profile_ref: "dedicated", keywords: ["AI tools"] }],
   platform_runs: [{ platform: "twitter", profile_ref: "dedicated", status: "completed", calls_used: 1, stop_code: null }],
 };

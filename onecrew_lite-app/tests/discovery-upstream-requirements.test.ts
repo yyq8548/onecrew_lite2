@@ -35,8 +35,8 @@ test("真实已存作者材料的额外要求绑定索引、原生身份及引�
 });
 
 test("查询审查逐项对应当前平台、词序和全部条件", () => {
-  const scopes = [{ platform: "pinterest", keywords: ["makeup artist"] }];
-  const audit = { requirements_preserved: true, requirement_reason: "保留客户条件", queries: [{ platform: "pinterest", keyword: "makeup artist", suitable: true, reason: "账号搜索使用领域和角色词" }] };
+  const scopes = [{ platform: "instagram", keywords: ["makeup artist"] }];
+  const audit = { requirements_preserved: true, requirement_reason: "保留客户条件", queries: [{ platform: "instagram", keyword: "makeup artist", suitable: true, reason: "账号搜索使用领域和角色词" }] };
   validateDiscoveryQueryAudit(audit, scopes);
   assert.throws(() => validateDiscoveryQueryAudit({ ...audit, requirements_preserved: false }, scopes), /intent_invalid/);
   assert.throws(() => validateDiscoveryQueryAudit({ ...audit, queries: [] }, scopes), /scope_invalid/);

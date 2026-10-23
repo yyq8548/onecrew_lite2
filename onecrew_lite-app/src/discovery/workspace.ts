@@ -15,7 +15,7 @@ export interface DiscoveryWorkspaceDirectories { resolve(context: AccountContext
 type Selection = { session: string; campaign: string; account: string; stage: z.infer<typeof stage>; seen: number; stop: z.infer<typeof stop> | null };
 const key = (context: AccountContext) => JSON.stringify([context.principal.user.id, context.principal.tenantId, context.principal.baseId]);
 
-// 心跳仅租用显示位置，执行权与预算始终读取实际账号仓储。
+// 心跳仅租用显示位置，执行权与进度始终读取实际账号仓储。
 export class DiscoveryWorkspace {
   readonly #accounts: AccountContextService; readonly #repositories: DiscoveryRepositoryResolver; readonly #supervisor: DiscoveryExecutionSupervisor; readonly #directories: DiscoveryWorkspaceDirectories;
   #selected: Selection | null = null; #activated: number | null = null;
@@ -55,14 +55,17 @@ export class DiscoveryWorkspace {
     const owned = await this.#repositories.resolve(context); owned.assertOwned();
     if (owned.owner.accountId !== context.principal.user.id || owned.owner.tenantId !== context.principal.tenantId || owned.owner.baseId !== context.principal.baseId) throw new Error("workspace_account_changed");
     const campaign = owned.repository.getPlan(selection.campaign), counts = owned.repository.countCandidates(selection.campaign), stops = owned.repository.readStops(selection.campaign);
-    const failures = await (await this.metrics(context)).failureCount(campaign.id); owned.assertOwned(); this.#accounts.assertCurrent(context);
+    const metrics = await this.metrics(context), failures = await metrics.failureCount(campaign.id), readFailures = await metrics.recentFailures(campaign.id); owned.assertOwned(); this.#accounts.assertCurrent(context);
     if (!execution && (!this.#selected || this.#selected.session !== selection.session || this.#selected.campaign !== selection.campaign || this.#selected.account !== account)) throw new Error("workspace_selection_changed");
     const stale = !execution && performance.now() - selection.seen > 45000, reading = campaign.platform_runs.some(run => run.status === "searching");
     const reported = selection.stage;
-    const currentStage = execution?.stage ?? (!reading && counts.qualified >= campaign.target_count ? "finished" : ["pausing", "paused", "error"].includes(reported) ? reported : reading ? "searching" : stale ? "paused" : campaign.max_calls !== null && campaign.used_calls >= campaign.max_calls ? "budget_exhausted" : reported);
+    const targets = owned.repository.sourceProgress(campaign.id), reached = targets.length ? targets.every(source => source.qualified >= source.target_count) : counts.qualified >= campaign.target_count;
+    const currentStage = execution?.stage ?? (!reading && reached ? "finished" : ["pausing", "paused", "error"].includes(reported) ? reported : reading ? "searching" : stale ? "paused" : reported);
     const count = (status: string) => campaign.platform_runs.filter(run => run.status === status).length;
-    const activity = activitySchema.parse({ campaign_id: campaign.id, brief: campaign.brief, stage: currentStage, qualified: counts.qualified, pending: counts.pending, pending_breakdown: owned.repository.pendingReviewCounts(campaign.id, campaign.revision), target: campaign.target_count, attempted: campaign.platform_runs.length - count("unsearched"), total: campaign.scopes.length, used: campaign.used_calls, max: campaign.max_calls, login_required: count("unauthorized"), read_errors: BigInt(failures) > BigInt(counts.public_page_errors) ? failures : counts.public_page_errors, current_read_stops: count("technical_stop"), read_operation_stops: stops, restricted: count("risk_control_stop"), stale,
+    const pipeline = execution?.pipeline;
+    const activity = activitySchema.parse({ campaign_id: campaign.id, brief: campaign.brief, stage: currentStage, qualified: counts.qualified, pending: counts.pending, pending_breakdown: owned.repository.pendingReviewCounts(campaign.id, campaign.revision), target: campaign.target_count, attempted: campaign.platform_runs.length - count("unsearched"), total: campaign.scopes.length, used: campaign.used_calls, login_required: count("unauthorized"), read_errors: BigInt(failures) > BigInt(counts.public_page_errors) ? failures : counts.public_page_errors, read_failures: readFailures, current_read_stops: count("technical_stop"), read_operation_stops: stops, restricted: count("risk_control_stop"), stale,
       ...(execution ? { updated_at: execution.updated_at, deferred_scores: execution.deferred_scores, ...(execution.library || execution.sync_pending ? { library_sync_pending: execution.sync_pending } : {}), ...(execution.failure_phase !== null ? { failure_phase: execution.failure_phase } : {}), ...(execution.failure_code !== null ? { failure_code: execution.failure_code } : {}), ...(execution.sync_error !== null ? { library_sync_error: execution.sync_error } : {}), ...(execution.synced_at !== null ? { library_synced_at: execution.synced_at } : {}) } : {}),
+      ...(pipeline ? { pipeline } : {}),
       ...(!["searching", "verifying"].includes(currentStage) && selection.stop ? { stop: selection.stop } : {}) });
     const history = this.#history.get(account) ?? [], index = history.findIndex(item => item.campaign_id === activity.campaign_id);
     if (index >= 0) history[index] = structuredClone(activity); else history.push(structuredClone(activity)); this.#history.set(account, history);

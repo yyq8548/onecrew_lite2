@@ -14,6 +14,6 @@ export function configureWorkspaceCardRoutes(app: Hono, cards: WorkspaceCardRequ
   app.post("/_local/mcp/workspace/request", async context => {
     const input = workspaceCardRequest.parse(parseApplicationJson(new Uint8Array(await context.req.arrayBuffer())));
     const state = await readState();
-    return context.json(state.accountId === null || state.campaignId === null ? { kind: "none" as const } : cards.request(input, state.accountId, state.campaignId, state.chinese));
+    return context.json(state.accountId === null ? { kind: "none" as const } : cards.request(input, state.accountId, state.campaignId, state.chinese));
   });
 }

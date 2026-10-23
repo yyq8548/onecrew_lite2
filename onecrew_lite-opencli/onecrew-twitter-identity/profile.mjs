@@ -1,5 +1,5 @@
 // A profile's native ID is an observation, not proof of ownership of an older post.
-export function projectIdentity(result, expectedHandle) {
+export function projectIdentity(result, expectedHandle, evidenceSource = 'x_user_by_screen_name') {
   const fail = () => { throw new Error('ONECREW_X_IDENTITY_INVALID'); };
   if (result?.__typename !== 'User' || typeof result.rest_id !== 'string'
       || !/^[1-9][0-9]{0,19}$/.test(result.rest_id)) fail();
@@ -23,7 +23,7 @@ export function projectIdentity(result, expectedHandle) {
   return { adapter_version: '1.0.0', account_id: result.rest_id, handle: expectedHandle,
     profile_url: 'https://x.com/' + expectedHandle, name, bio,
     self_declared_location: location, follower_count: count ?? null,
-    identity_kind: 'native_id', evidence_source: 'x_user_by_screen_name' };
+    identity_kind: 'native_id', evidence_source: evidenceSource };
 }
 
 // Runs inside the selected Chrome tab. Cookies never leave this function.

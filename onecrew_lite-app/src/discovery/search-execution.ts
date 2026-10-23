@@ -1,6 +1,6 @@
 import type { AccountContext, AccountContextService } from "../identity/account-context.ts";
 import type { OpenCliReader, VerifiedOpenCliBrowserBinding } from "../platforms/opencli/reader.ts";
-import { creatorSearchSource } from "../platforms/opencli/sources.ts";
+import { creatorSearchSource, TEMPORARILY_DISABLED_CREATOR_SOURCES } from "../platforms/opencli/sources.ts";
 import { OpenCliError } from "../platforms/opencli/errors.ts";
 import type { DiscoveryRepository } from "./repository.ts";
 import { browserConnectionRecoveryCodes, type DiscoverySearchRecovery } from "./stops.ts";
@@ -19,7 +19,9 @@ export class DiscoverySearchExecutor {
   readonly #reader: OpenCliReader;
   constructor(accounts: AccountContextService, repositories: DiscoveryRepositoryResolver, browsers: DiscoveryBrowserResolver, reader: OpenCliReader) { this.#accounts = accounts; this.#repositories = repositories; this.#browsers = browsers; this.#reader = reader; }
   async searchOnce(context: AccountContext, input: Readonly<{ planId: string; revision: number; platform: string; profileRef: string; limit: number; explicitRecovery?: boolean; recovery?: DiscoverySearchRecovery | null }>) {
-    this.#accounts.assertCurrent(context); const source = creatorSearchSource(input.platform);
+    this.#accounts.assertCurrent(context);
+    if (TEMPORARILY_DISABLED_CREATOR_SOURCES.includes(input.platform)) throw new OpenCliError("opencli_read_command_unavailable");
+    const source = creatorSearchSource(input.platform);
     if (!source.discovery || !Number.isInteger(input.limit) || input.limit < 1 || input.limit > source.maximum) throw new Error("discovery_search_input_invalid");
     const owned = await this.#repositories.resolve(context); owned.assertOwned(); this.#accounts.assertCurrent(context);
     if (owned.owner.accountId !== context.principal.user.id || owned.owner.tenantId !== context.principal.tenantId || owned.owner.baseId !== context.principal.baseId) throw new Error("Discovery repository belongs to another account");
@@ -48,6 +50,6 @@ export class DiscoverySearchExecutor {
       throw commit.error;
     }
     this.#accounts.assertCurrent(context); await browser.assertCurrent();
-    return { search_claim: claim, returned_hits: result.hits.length, returned_sources: result.hits, plan: owned.repository.getPlan(input.planId) };
+    return { search_claim: claim, returned_hits: result.hits.length, returned_sources: result.hits.map(({ material: _material, ...hit }) => hit), plan: owned.repository.getPlan(input.planId) };
   }
 }

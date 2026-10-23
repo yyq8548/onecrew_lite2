@@ -8,7 +8,7 @@ import { validateCreatorSchema } from "./creator-schema.ts";
 export type LegacyDatabaseKind = "creator" | "vault";
 
 const versions = {
-  creator: { current: 92, earliest: 27 },
+  creator: { current: 96, earliest: 27 },
   vault: { current: 4, earliest: 2 },
 } as const;
 

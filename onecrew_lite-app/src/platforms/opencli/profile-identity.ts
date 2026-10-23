@@ -17,7 +17,7 @@ export function tiktokProfileIdentityPlan(username: string) {
 export function instagramProfileIdentityPlan(username: string) {
   if (!/^[a-z\d_.]{1,30}$/u.test(username)) throw new OpenCliError("opencli_invalid_input");
   const profile = instagramProfilePlan(username, `https://www.instagram.com/${username}/`);
-  return { site: "onecrew-instagram-profile", name: "identity", args: ["-f", "json", "--", username], addons: ["onecrew-browser-search"], maximumBytes: 16000, foregroundBrowser: true,
+  return { site: "onecrew-instagram-profile", name: "identity", args: ["-f", "json", "--", username], addons: ["onecrew-browser-search"], maximumBytes: 16000,
     decode(raw: unknown) {
       return profile.decode(raw);
     },

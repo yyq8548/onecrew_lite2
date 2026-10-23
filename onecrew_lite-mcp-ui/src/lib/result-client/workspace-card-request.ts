@@ -1,7 +1,7 @@
 import type { App } from "@modelcontextprotocol/ext-apps";
 import { parseCardRequest } from "@mcp-ui/lib/result-contract/workspace-card-request";
 
-/** Only the service authors messages. A rejected/uncertain delivery is not retried. */
+/** delivered 表示宿主接受消息；模型是否领取任务由后端记录确认。 */
 export async function requestWorkspaceCard(app: App, viewId: string, manual = false, baseline?: string): Promise<"none" | "delivered" | "unavailable" | "retryable"> {
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(viewId)
     || !app.getHostCapabilities()?.message?.text) return "retryable";

@@ -1,17 +1,19 @@
 import type { DatabaseSync } from "node:sqlite";
 import { z } from "zod";
+import { creatorSearchMaterial } from "../platforms/opencli/search-results.ts";
 import { retainedLinkedinExperience } from "./linkedin-experience.ts";
 import { parseApplicationJson, stringifyApplicationJson } from "../contracts/application-json.ts";
 import { discoveryReviewBasis, type DiscoveryReviewBasis } from "./review-material.ts";
 import { stripUnauditedDiscoveryProofs } from "./review-proof-audit.ts";
 import { loadDiscoveryContentReceipt, loadDiscoveryLanguageSamples, loadDiscoveryProfileReceipt, loadDiscoveryReviewReceipts } from "./review-receipts.ts";
 import { validateSavedDiscoveryInstagramProfile } from "./contact-profile-contracts.ts";
-import { validateDiscoveryPinterestProfile, validateDiscoveryPinterestContent } from "./pinterest-material.ts";
 import { loadDiscoveryWebSourceReceipt } from "./web-receipt.ts";
+import { discoveryWebProfileTarget } from "./web-profile.ts";
 import { validateDiscoveryRetainedContent, validateDiscoveryRetainedProfile } from "./native-material.ts";
 import { validateDiscoveryContentResult } from "./content-result.ts";
-import { linkedinConnectionObservation } from "../platforms/opencli/linkedin.ts";
-import { discoveryCriteriaForPlatform, parseDiscoveryDouyinFollowers, parseDiscoveryFacebookFollowers, parseDiscoveryInstagramFollowers } from "./qualification.ts";
+import { linkedinConnectionObservation, linkedinExperiencePlan } from "../platforms/opencli/linkedin.ts";
+import { sameYoutubeVideoSource } from "../platforms/opencli/youtube.ts";
+import { assessDiscoveryYoutube, discoveryCriteriaForPlatform, parseDiscoverySubscribers, parseDiscoveryDouyinFollowers, parseDiscoveryFacebookFollowers, parseDiscoveryInstagramFollowers } from "./qualification.ts";
 
 const scopesSchema = z.array(z.strictObject({ platform: z.string(), profile_ref: z.string(), keywords: z.array(z.string()) }));
 const object = (value: unknown): Record<string, unknown> => value !== null && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
@@ -37,7 +39,7 @@ export function loadDiscoveryReviewBasis(database: DatabaseSync, campaign: strin
   if (webSource) {
     sourceJoin = `JOIN discovery_web_source_reads web ON web.search_hit_id=h.id AND web.discovery_campaign_id=d.id
       AND web.expected_revision=d.current_revision AND web.origin_platform=h.platform AND web.profile_ref=h.profile_ref
-      AND web.source_url=h.source_url AND web.target_platform IN ('youtube','twitter','douyin','instagram','tiktok') AND web.status='completed' AND web.stop_code IS NULL
+      AND web.source_url=h.source_url AND web.target_platform IN ('youtube','twitter','douyin','instagram','tiktok','linkedin','bilibili','weibo') AND web.status='completed' AND web.stop_code IS NULL
       JOIN discovery_video_completions v ON v.search_hit_id=h.id
       JOIN discovery_video_identity_bindings b ON b.search_hit_id=h.id AND b.discovery_campaign_id=d.id
       AND b.criteria_revision=d.current_revision AND b.native_author_id=web.native_author_id`;
@@ -57,11 +59,11 @@ export function loadDiscoveryReviewBasis(database: DatabaseSync, campaign: strin
       JOIN discovery_content_identity_bindings b ON b.search_hit_id=h.id AND b.identity_search_hit_id=h.id AND b.profile_search_hit_id=h.id`;
     candidateJoin = `JOIN discovery_candidates c ON c.discovery_campaign_id=d.id AND c.criteria_revision=d.current_revision
       AND c.platform=h.platform AND c.source_profile_ref=h.profile_ref AND c.platform_account_id=b.account_id`;
-  } else if (["tiktok", "instagram", "pinterest"].includes(platform)) {
+  } else if (["tiktok", "instagram"].includes(platform)) {
     sourceJoin = `JOIN discovery_search_authors s ON s.search_hit_id=h.id
       JOIN discovery_profile_reads p ON p.search_hit_id=h.id AND p.discovery_campaign_id=d.id AND p.expected_revision=d.current_revision
       AND p.platform=h.platform AND p.profile_ref=h.profile_ref AND p.author_id=s.author_id
-      AND p.status='completed' AND p.stop_code IS NULL AND json_extract(p.native_profile_json,CASE WHEN h.platform='pinterest' THEN '$.author_id' ELSE '$.id' END)=s.author_id`;
+      AND p.status='completed' AND p.stop_code IS NULL AND json_extract(p.native_profile_json,'$.id')=s.author_id`;
     candidateJoin = `JOIN discovery_candidates c ON c.discovery_campaign_id=d.id AND c.criteria_revision=d.current_revision
       AND c.platform=h.platform AND c.source_profile_ref=h.profile_ref AND c.platform_account_id=s.author_id
       AND h.source_url=json_extract(c.evidence_json,'$.source_urls[0]')`;
@@ -85,7 +87,7 @@ export function loadDiscoveryReviewBasis(database: DatabaseSync, campaign: strin
       AND c.platform=h.platform AND c.source_platform=h.platform AND c.source_profile_ref=h.profile_ref
       AND c.platform_account_id=json_extract(p.native_profile_json,'$.account_id')
       AND h.source_url=json_extract(c.evidence_json,'$.source_urls[0]')`;
-  } else if (["reddit", "facebook", "weibo", "bluesky", "douyin", "zhihu", "hackernews", "pixiv"].includes(platform)) {
+  } else if (["facebook", "weibo", "bluesky", "douyin", "zhihu", "hackernews", "pixiv"].includes(platform)) {
     const authorKey = ["douyin", "zhihu", "hackernews", "pixiv"].includes(platform) ? "author_id" : platform === "bluesky" ? "did" : "id";
     const joint = platform === "douyin" ? `JOIN discovery_douyin_author_reads joint ON joint.search_hit_id=h.id AND joint.discovery_campaign_id=d.id
       AND joint.expected_revision=d.current_revision AND joint.platform=h.platform AND joint.profile_ref=h.profile_ref AND joint.source_url=h.source_url
@@ -124,41 +126,61 @@ export function loadDiscoveryReviewBasis(database: DatabaseSync, campaign: strin
     const admitted = database.prepare("SELECT scopes_json FROM discovery_query_rounds WHERE discovery_campaign_id=?1 AND revision=?2 ORDER BY round").all(campaign, revision).some(round => scopesSchema.parse(parse(z.string().parse(round.scopes_json))).some(value => value.platform === platform && value.profile_ref === scope.profile_ref && value.keywords.includes(basis.hit.search_keyword)));
     if (admitted) { scope.keywords.push(basis.hit.search_keyword); basis.scopes_json = stringifyApplicationJson(scopes); }
   }
+  if (platform === "youtube") {
+    const evidence = object(parse(basis.evidence_json)), sources = evidence.source_urls;
+    // 旧版回执没有视频标题字段，保留其材料结构及历史身份回执的摘要。
+    if (typeof evidence.video_title === "string" && Array.isArray(sources) && sameYoutubeVideoSource(sources[0], basis.hit.source_url) && assessDiscoveryYoutube({}, evidence, basis.native_author_id).subscribers !== null && typeof evidence.subscribers_raw === "string") {
+      const estimate = parseDiscoverySubscribers(evidence.subscribers_raw)!;
+      const profileUrl = `https://www.youtube.com/channel/${basis.native_author_id}`;
+      basis.native_followers = estimate.lower === estimate.upper ? estimate.nominal : null;
+      basis.native_follower_estimate = { display: evidence.subscribers_raw, ...estimate };
+      basis.native_profile = { profile_url: profileUrl, observed_at: z.number().int().positive().safe().parse(evidence.captured_at) };
+      basis.hit.author_id = basis.native_author_id; basis.hit.author_url = profileUrl; basis.hit.author_observed_at = basis.native_profile.observed_at;
+    }
+  }
   if (webSource) {
     const read = loadDiscoveryWebSourceReceipt(database, campaign, hit), evidence = object(parse(basis.evidence_json)), native = read.native, profile = object(native.profile), content = object(native.content);
     if (read.is_primary_source !== 1 || read.status !== "completed" || read.expected_revision !== revision || read.origin_platform !== platform || read.profile_ref !== basis.hit.profile_ref || read.source_url !== basis.hit.source_url || read.candidate_id !== basis.candidate_id || read.native_author_id !== basis.native_author_id || object(evidence.web_origin).target_platform !== read.target_platform) throw new Error("review_native_web_source_binding_unavailable");
-    const profileTarget = ["instagram", "tiktok"].includes(read.target_platform), social = ["twitter", "douyin", "instagram", "tiktok"].includes(read.target_platform), description = profileTarget ? null : social ? content.text : native.description;
+    const generic = discoveryWebProfileTarget(read.source_url), profileTarget = ["instagram", "tiktok"].includes(read.target_platform), social = generic !== null || ["twitter", "douyin", "instagram", "tiktok"].includes(read.target_platform), description = generic ? null : profileTarget ? null : social ? content.text : native.description;
     basis.source_description = typeof description === "string" ? description : null;
-    basis.hit.author_label = z.string().parse(read.target_platform === "douyin" ? profile.author_label : read.target_platform === "twitter" ? profile.name : profileTarget ? profile.display_name : native.author);
-    basis.hit.author_id = basis.native_author_id; basis.hit.author_url = social ? z.string().parse(profile.profile_url) : `https://www.youtube.com/channel/${basis.native_author_id}`; basis.hit.author_observed_at = read.updated_at;
+    basis.hit.author_label = z.string().parse(generic ? read.target_platform === "linkedin" ? profile.author_label : profile.name : read.target_platform === "douyin" ? profile.author_label : read.target_platform === "twitter" ? profile.name : profileTarget ? profile.display_name : native.author);
+    basis.hit.author_id = basis.native_author_id; basis.hit.author_url = generic?.profile_url ?? (social ? z.string().parse(profile.profile_url) : `https://www.youtube.com/channel/${basis.native_author_id}`); basis.hit.author_observed_at = read.updated_at;
     if (social) {
       basis.native_followers = typeof profile.follower_count === "number" || typeof profile.follower_count === "bigint" ? profile.follower_count : null;
-      const bio = profileTarget ? read.target_platform === "instagram" ? profile.biography : profile.signature : profile.bio;
+      const bio = generic ? read.target_platform === "bilibili" ? profile.sign : read.target_platform === "youtube" ? profile.description : profile.bio : profileTarget ? read.target_platform === "instagram" ? profile.biography : profile.signature : profile.bio;
       basis.native_profile = { web_text: typeof profile.web_text === "string" ? profile.web_text : null, profile_url: basis.hit.author_url, observed_at: read.updated_at, bio: typeof bio === "string" ? bio : null, bio_status: profile.bio_truncated === true ? "truncated" : profile.bio_truncated === false || read.target_platform === "tiktok" ? typeof bio === "string" && bio.trim() ? "complete" : "missing" : "unknown", self_declared_location: typeof profile.self_declared_location === "string" ? profile.self_declared_location : null };
+      if (read.target_platform === "instagram") {
+        if (basis.native_followers === null && typeof profile.follower_text === "string") basis.native_follower_estimate = parseDiscoveryInstagramFollowers(profile.follower_text);
+        if (database.prepare("SELECT 1 FROM discovery_content_reads WHERE discovery_campaign_id=? AND search_hit_id=?").get(campaign, hit)) {
+          const saved = loadDiscoveryContentReceipt(database, campaign, hit);
+          if (saved.claim.expected_revision !== revision || saved.claim.platform !== "instagram" || saved.claim.profile_ref !== read.profile_ref || saved.claim.author_id !== read.native_author_id || saved.claim.source_url !== read.source_url || saved.claim.call_number <= read.call_number) throw new Error("review_native_content_binding_unavailable");
+          if (saved.status === "completed" && saved.stop_code === null) { validateDiscoveryContentResult(saved.claim, saved.native_content, null); basis.native_content = saved; }
+        }
+      }
+      if (generic?.platform === "linkedin") {
+        basis.criteria_json = stringifyApplicationJson(discoveryCriteriaForPlatform(parse(basis.criteria_json), "linkedin"));
+        basis.native_profile.web_text = [profile.headline, bio].filter(value => typeof value === "string" && value.trim()).join("\n");
+      }
     }
   }
-  if (["pinterest", "instagram"].includes(platform) && !webSource) {
+  if (platform === "instagram" && !webSource) {
     const profile = loadDiscoveryProfileReceipt(database, campaign, hit), native = object(profile.native_profile), sources = object(parse(basis.evidence_json)).source_urls;
-    if (profile.status !== "completed" || profile.stop_code !== null || profile.claim.expected_revision !== revision || profile.claim.platform !== platform || profile.claim.profile_ref !== basis.hit.profile_ref || profile.claim.author_id !== basis.native_author_id || profile.claim.source_url !== basis.hit.source_url || platform === "instagram" && profile.claim.author_url !== basis.hit.source_url || !Array.isArray(sources) || sources[0] !== basis.hit.source_url) throw new Error("review_native_profile_binding_unavailable");
+    if (profile.status !== "completed" || profile.stop_code !== null || profile.claim.expected_revision !== revision || profile.claim.platform !== platform || profile.claim.profile_ref !== basis.hit.profile_ref || profile.claim.author_id !== basis.native_author_id || profile.claim.source_url !== basis.hit.source_url || profile.claim.author_url !== basis.hit.source_url || !Array.isArray(sources) || sources[0] !== basis.hit.source_url) throw new Error("review_native_profile_binding_unavailable");
     if (Buffer.byteLength(stringifyApplicationJson(native)) > 16000) throw new Error("review_native_profile_binding_unavailable");
-    if (platform === "instagram") validateSavedDiscoveryInstagramProfile(basis.native_author_id, native); else validateDiscoveryPinterestProfile(basis.native_author_id, profile.claim.author_url, native);
+    validateSavedDiscoveryInstagramProfile(basis.native_author_id, native);
     if (native.profile_url !== profile.claim.author_url) throw new Error("review_native_profile_binding_unavailable");
-    if (platform === "instagram" && native.private_account === true) throw new Error("review_source_unavailable");
+    if (native.private_account === true) throw new Error("review_source_unavailable");
     basis.native_followers = typeof native.follower_count === "number" ? native.follower_count : null;
-    if (platform === "instagram" && basis.native_followers === null && typeof native.follower_text === "string") basis.native_follower_estimate = parseDiscoveryInstagramFollowers(native.follower_text);
-    basis.native_profile = { web_text: bounded(native.web_text, 4000), profile_url: profile.claim.author_url, observed_at: profile.captured_at, bio: bounded(native[platform === "instagram" ? "biography" : "bio"], 8000), self_declared_location: null };
-    if (platform === "pinterest") basis.native_profile.monthly_views_raw = bounded(native.monthly_views_raw, 100);
-    if (platform === "instagram") basis.native_profile.bio_status = native.bio_status === "complete" || native.bio_status === "truncated" || native.bio_status === "missing" ? native.bio_status : "unknown";
+    if (basis.native_followers === null && typeof native.follower_text === "string") basis.native_follower_estimate = parseDiscoveryInstagramFollowers(native.follower_text);
+    basis.native_profile = { web_text: bounded(native.web_text, 4000), profile_url: profile.claim.author_url, observed_at: profile.captured_at, bio: bounded(native.biography, 8000), self_declared_location: null };
+    basis.native_profile.bio_status = native.bio_status === "complete" || native.bio_status === "truncated" || native.bio_status === "missing" ? native.bio_status : "unknown";
     if (database.prepare("SELECT EXISTS(SELECT 1 FROM discovery_content_reads WHERE discovery_campaign_id=?1 AND search_hit_id=?2) AS present").get(campaign, hit)?.present === 1) {
       const content = loadDiscoveryContentReceipt(database, campaign, hit);
       if (content.status === "completed" && content.stop_code === null) {
         const value = object(content.native_content);
-        if (content.claim.expected_revision !== revision || content.claim.platform !== platform || content.claim.profile_ref !== basis.hit.profile_ref || content.claim.author_id !== basis.native_author_id || content.claim.source_url !== profile.claim.source_url || content.claim.call_number <= profile.claim.call_number || platform === "pinterest" && value.profile_url !== profile.claim.author_url) throw new Error("review_native_content_binding_unavailable");
-        if (platform === "pinterest") validateDiscoveryPinterestContent(basis.native_author_id, content.claim.source_url, value);
-        else {
-          validateDiscoveryContentResult(content.claim, value, null);
-        }
-        if (Buffer.byteLength(stringifyApplicationJson(value)) > (platform === "pinterest" ? 24000 : 16000)) throw new Error("review_native_content_binding_unavailable"); basis.native_content = content;
+        if (content.claim.expected_revision !== revision || content.claim.platform !== platform || content.claim.profile_ref !== basis.hit.profile_ref || content.claim.author_id !== basis.native_author_id || content.claim.source_url !== profile.claim.source_url || content.claim.call_number <= profile.claim.call_number) throw new Error("review_native_content_binding_unavailable");
+        validateDiscoveryContentResult(content.claim, value, null);
+        if (Buffer.byteLength(stringifyApplicationJson(value)) > 16000) throw new Error("review_native_content_binding_unavailable"); basis.native_content = content;
       }
     }
     basis.hit.author_id = profile.claim.author_id; basis.hit.author_url = profile.claim.author_url; basis.hit.author_observed_at = profile.captured_at;
@@ -187,14 +209,17 @@ export function loadDiscoveryReviewBasis(database: DatabaseSync, campaign: strin
     const native = validateDiscoveryRetainedProfile(platform, profile.claim.author_id, authorUrl, profile.claim.source_url, profile.native_profile);
     if (native.account_id !== basis.native_author_id) throw new Error("review_native_profile_binding_unavailable");
     basis.native_followers = typeof native.follower_count === "number" || typeof native.follower_count === "bigint" ? native.follower_count : null;
-    basis.native_profile = { web_text: bounded(native.headline, 2000), profile_url: authorUrl, observed_at: profile.captured_at, bio: bounded(native.bio, 8000), bio_status: native.bio_truncated === true ? "truncated" : native.bio_truncated === false ? native.bio ? "complete" : "missing" : "unknown", self_declared_location: null };
+    const bioStatus = native.bio_status === "absent" ? "missing" : native.bio_status === "loading" || native.bio_status === "unknown" ? "unknown" : native.bio_status === "complete" || native.bio_status === "truncated" ? native.bio_status : native.bio_truncated === true ? "truncated" : native.bio_truncated === false ? native.bio ? "complete" : "missing" : "unknown";
+    basis.native_profile = { web_text: bounded(native.headline, 2000), profile_url: authorUrl, observed_at: profile.captured_at, bio: bounded(native.bio, 8000), bio_status: bioStatus, self_declared_location: null };
     if (native.connections !== undefined) {
       basis.native_profile.connections = linkedinConnectionObservation.parse(native.connections);
       basis.native_profile.web_text = [basis.native_profile.web_text, bounded(native.follower_text, 100), basis.native_profile.connections?.raw].filter(Boolean).join("\n") || null;
     }
+    const initialExperience = native.current_experience === undefined ? null : linkedinExperiencePlan(profile.claim.author_id,basis.native_author_id).decode([native.current_experience]);
     const experience = retainedLinkedinExperience(database,{...profile.claim,source_url:authorUrl},basis.native_author_id);
+    const entries = [...new Set([...(initialExperience?.entries ?? []),...(experience?.native.entries ?? [])].map(entry=>entry.text))];
+    if (entries.length) basis.native_profile.web_text = [basis.native_profile.web_text,"Experience",...entries].filter(Boolean).join("\n");
     if (experience) {
-      basis.native_profile.web_text = [basis.native_profile.web_text,"Experience",...experience.native.entries.map(entry=>entry.text)].filter(Boolean).join("\n");
       basis.native_profile.observed_at = Math.max(Number(profile.captured_at),experience.captured_at);
       basis.native_profile.experience_checked = true;
     }
@@ -209,11 +234,12 @@ export function loadDiscoveryReviewBasis(database: DatabaseSync, campaign: strin
       }
     }
   }
-  if (["reddit", "facebook", "weibo", "bluesky", "douyin", "zhihu", "hackernews", "pixiv"].includes(platform)) {
+  if (["facebook", "weibo", "bluesky", "douyin", "zhihu", "hackernews", "pixiv"].includes(platform)) {
     const profile = loadDiscoveryProfileReceipt(database, campaign, hit), content = loadDiscoveryContentReceipt(database, campaign, hit), sources = object(parse(basis.evidence_json)).source_urls;
     const authorUrl = profile.claim.author_url;
     if (profile.status !== "completed" || profile.stop_code !== null || content.status !== "completed" || content.stop_code !== null || profile.claim.expected_revision !== revision || content.claim.expected_revision !== revision || profile.claim.platform !== platform || content.claim.platform !== platform || profile.claim.profile_ref !== basis.hit.profile_ref || content.claim.profile_ref !== basis.hit.profile_ref || profile.claim.author_id !== basis.native_author_id || content.claim.author_id !== profile.claim.author_id || profile.claim.source_url !== basis.hit.source_url || platform !== "facebook" && content.claim.source_url !== basis.hit.source_url || (platform === "douyin" ? profile.claim.call_number !== content.claim.call_number : profile.claim.call_number >= content.claim.call_number) || !Array.isArray(sources) || sources[0] !== basis.hit.source_url || sources[1] !== authorUrl) throw new Error("review_native_content_binding_unavailable");
     const native = validateDiscoveryRetainedProfile(platform, profile.claim.author_id, authorUrl, profile.claim.source_url, profile.native_profile);
+    if (platform === "facebook" && native.follower_text === "") throw new Error("review_source_unavailable");
     validateDiscoveryRetainedContent(platform, content.claim.author_id, content.claim.source_url, content.native_content);
     basis.native_followers = typeof native.follower_count === "number" || typeof native.follower_count === "bigint" ? native.follower_count : null;
     if (platform === "douyin" && typeof native.follower_text === "string") basis.native_follower_estimate = parseDiscoveryDouyinFollowers(native.follower_text);
@@ -251,6 +277,17 @@ export function loadDiscoveryReviewBasis(database: DatabaseSync, campaign: strin
     basis.native_followers = followers;
     basis.native_profile = { web_text: null, profile_url: identity.profile_url, observed_at: z.number().int().safe().parse(stored.updated_at), bio: bounded(profile.bio, 1000), self_declared_location: bounded(profile.self_declared_location, 256) };
     basis.native_content = content;
+  }
+  if (Number(database.prepare("PRAGMA user_version").get()!.user_version) >= 95) {
+    const saved = database.prepare("SELECT material_json FROM discovery_search_materials WHERE search_hit_id=?").get(hit);
+    if (saved) {
+      const material = creatorSearchMaterial.parse(parse(z.string().parse(saved.material_json)));
+      if (material.source_url !== basis.hit.source_url || material.author_url !== (basis.hit.author_url ?? basis.native_profile?.profile_url) || material.native_author_id !== null && material.native_author_id !== basis.native_author_id) throw new Error("review_search_material_binding_changed");
+      if (material.native_author_id === basis.native_author_id && material.body_text.trim()) basis.source_description = [basis.source_description, `Search response (${material.body_completeness}): ${material.body_text}`].filter(Boolean).join("\n");
+      if (platform === "twitter" && basis.native_content?.status === "completed" && material.author_id === object(object(basis.native_content.native_content).identity).handle && !basis.native_profile?.bio && material.bio && basis.native_profile) {
+        basis.native_profile.bio = material.bio; basis.native_profile.bio_status = "unknown";
+      }
+    }
   }
   basis.evidence_json = stringifyApplicationJson(stripUnauditedDiscoveryProofs(database, parse(basis.evidence_json), basis.candidate_id, campaign, revision, basis.native_author_id));
   basis.language_samples = loadDiscoveryLanguageSamples(database, campaign, revision, basis.candidate_id);

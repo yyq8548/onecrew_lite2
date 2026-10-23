@@ -17,6 +17,8 @@ export class DiscoverySourceAuthorExecutor {
       let started = performance.now();
       const contentResult = await this.reader.douyinOriginalContent(browser, claim.post_id).then(value => ({ ok: true as const, value }), error => ({ ok: false as const, error: error as unknown })); timings.content_ms = Math.floor(performance.now() - started);
       if (!contentResult.ok) throw contentResult.error;
+      const saved = owned.repository.savedSourceAuthorProfile(claim, contentResult.value.author_id);
+      if (saved) return { profile: saved, content: contentResult.value };
       // 第二个原生读取仍须通过当前账号验证；两个观察只作为同一次逻辑claim提交。
       this.accounts.assertCurrent(context); owned.assertOwned(); await browser.assertCurrent(); started = performance.now();
       const profileResult = await this.reader.douyinPublicProfile(browser, contentResult.value.author_id).then(value => ({ ok: true as const, value }), error => ({ ok: false as const, error: error as unknown })); timings.profile_ms = Math.floor(performance.now() - started);

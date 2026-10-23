@@ -3,9 +3,11 @@ import { equivalentSourceUrl, sourceUrlScript } from './source-url.mjs';
 // Read only the observed profile's own sections. Never inspect the operator's
 // session, send a message, open an editor or return surrounding recommendation data.
 export function linkedinProfileTarget(handle) {
-  if (typeof handle !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/.test(handle)
-      || ['me', 'self'].includes(handle.toLowerCase())) throw new Error('ONECREW_LINKEDIN_INPUT');
-  return `https://www.linkedin.com/in/${handle}/`;
+  if (typeof handle !== 'string') throw new Error('ONECREW_LINKEDIN_INPUT');
+  const decoded = decodeURIComponent(handle);
+  if (!/^[\p{L}\p{N}][\p{L}\p{N}\p{M}_-]{0,127}$/u.test(decoded)
+      || ['me', 'self'].includes(decoded.toLowerCase())) throw new Error('ONECREW_LINKEDIN_INPUT');
+  return `https://www.linkedin.com/in/${encodeURIComponent(decoded)}/`;
 }
 
 export function linkedinConnections(raw) {
@@ -45,10 +47,20 @@ export function projectLinkedinProfile(data, handle) {
   const count = /^(0|[1-9]\d*|[1-9]\d{0,2}(?:,\d{3})+) followers?$/i.exec(data.follower_text.trim());
   const followers = count ? Number(count[1].replaceAll(',', '')) : null;
   if (followers !== null && !Number.isSafeInteger(followers)) invalid();
+  const experience = data.current_experience;
+  if (experience !== undefined && (experience?.author_handle !== handle || experience.account_id !== data.account_id
+      || experience.profile_url !== source || experience.evidence_source !== 'visible_current_experience'
+      || typeof experience.section_found !== 'boolean' || !['complete','unknown'].includes(experience.completeness)
+      || !Array.isArray(experience.entries) || experience.entries.length > 3
+      || (!experience.section_found && experience.entries.length)
+      || experience.entries.some(entry => !text(entry.text,4000) || !entry.text.trim() || !/(?:\bPresent\b|至今|现在|現在)/i.test(entry.text)))) invalid();
+  if (data.bio_status !== undefined && !['absent','loading','complete','truncated','unknown'].includes(data.bio_status)) invalid();
   return {adapter_version:'1.0.0', author_handle:handle, account_id:data.account_id,
     author_label:data.author_label.trim(), profile_url:source, follower_count:followers,
     follower_text:data.follower_text.trim(), headline:data.headline, bio:data.bio,
     ...(data.connection_text !== undefined ? {connections:linkedinConnections(data.connection_text)} : {}),
+    ...(experience !== undefined ? {current_experience:experience} : {}),
+    ...(data.bio_status !== undefined ? {bio_status:data.bio_status} : {}),
     public_links:[...new Set(data.public_links)], contact_links:data.contact_links,
     evidence_source:'visible_profile_header', bio_truncated:data.bio_truncated ?? true};
 }
@@ -148,12 +160,15 @@ export function observeLinkedinProfile(source, handle, contactOverlay = false) {
     return text.trim();
   };
   const bio = about ? [...about.querySelectorAll('p')].filter(visible).map(originalText).filter(Boolean).join('\n') : '';
+  const loading = scope => scope.matches('[aria-busy="true"]') || [...scope.querySelectorAll('[aria-busy="true"],[role="progressbar"]')].some(visible);
+  const bioTruncated = bio!==bounded(bio,8000) || !!about && [...about.querySelectorAll('button,[role="button"]')].some(node=>visible(node)&&/^(?:see more|show more|更多|展开|展開)$/i.test(node.textContent.trim()));
+  const bioStatus = loading(about || main) ? 'loading' : bioTruncated ? 'truncated' : about ? (bio ? 'complete' : 'absent') : 'unknown';
   const headline = paragraphs.find(text => text && text !== count && text !== connectionText && !/^·|^(?:She|He|They)\//.test(text)
     && !['Contact info','联系信息','聯絡資訊'].includes(text)) || '';
   return {author_handle:handle, account_id:[...ids][0], profile_url:source,
     author_label:bounded(name.textContent,512), headline:bounded(headline,2000), bio:bounded(bio,8000),
-    follower_text:bounded(count,100), connection_text:bounded(connectionText,100), public_links:[...new Set(links)], contact_links:[...new Set(contact)], about_pending:!about,
-    bio_truncated:!about || bio!==bounded(bio,8000) || [...about.querySelectorAll('button,[role="button"]')].some(node=>visible(node)&&/^(?:see more|show more|更多|展开|展開)$/i.test(node.textContent.trim()))};
+    follower_text:bounded(count,100), connection_text:bounded(connectionText,100), public_links:[...new Set(links)], contact_links:[...new Set(contact)], about_pending:bioStatus==='loading',
+    bio_status:bioStatus, bio_truncated:bioTruncated};
 }
 
 export async function readLinkedinProfile(page, handle, ownedPage) {
@@ -162,7 +177,13 @@ export async function readLinkedinProfile(page, handle, ownedPage) {
     await owned.goto(source, {settleMs:0});
     let latest;
     for (let attempt = 0; attempt < 12; attempt++) {
-      const raw = await owned.evaluate(sourceUrlScript(`(${observeLinkedinProfile.toString()})(${JSON.stringify(source)},${JSON.stringify(handle)})`));
+      const raw = await owned.evaluate(sourceUrlScript(`(() => {
+        const source=${JSON.stringify(source)},handle=${JSON.stringify(handle)};
+        const profile=(${observeLinkedinProfile.toString()})(source,handle);
+        if(!profile) return null;
+        profile.current_experience=(${observeLinkedinExperience.toString()})(source,handle,profile.account_id,()=>profile,false);
+        return profile;
+      })()`));
       const data = raw && 'session' in Object(raw) && 'data' in Object(raw) ? raw.data : raw;
       if (data) {
         latest = projectLinkedinProfile(data, handle);
@@ -177,7 +198,7 @@ export async function readLinkedinProfile(page, handle, ownedPage) {
   });
 }
 
-export function observeLinkedinExperience(source, handle, account, readProfile) {
+export function observeLinkedinExperience(source, handle, account, readProfile, scroll = true) {
   const profile = readProfile(source, handle);
   if (!profile) return null;
   if (profile.account_id !== account) throw new Error('ONECREW_LINKEDIN_INVALID');
@@ -188,10 +209,10 @@ export function observeLinkedinExperience(source, handle, account, readProfile) 
     return headings.length === 1 && (section.querySelector('[id="experience"]') || labels.has(headings[0].textContent.trim()));
   });
   if (sections.length > 1) throw new Error('ONECREW_LINKEDIN_INVALID');
-  if (!sections.length) return {author_handle:handle,account_id:account,profile_url:source,evidence_source:'visible_current_experience',section_found:false,entries:[]};
+  if (!sections.length) return {author_handle:handle,account_id:account,profile_url:source,evidence_source:'visible_current_experience',section_found:false,entries:[],completeness:'unknown'};
   const section = sections[0];
   const visible = node => node.getClientRects().length && !node.closest('[aria-hidden="true"],aside,nav');
-  section.scrollIntoView({block:'center'});
+  if (scroll) section.scrollIntoView({block:'center'});
   // 保留同一经历条目的完整原文，交由评分识别公司、职位和任职期间。
   const cards = [...section.querySelectorAll('li,[role="listitem"],[data-view-name="profile-component-entity"]')]
     .filter(visible).filter(node => !node.parentElement?.closest('li,[role="listitem"],[data-view-name="profile-component-entity"]'));
@@ -227,7 +248,7 @@ export function observeLinkedinExperience(source, handle, account, readProfile) 
     if (original && !entries.some(entry => entry.text === original)) entries.push({text:original});
     if (entries.length === 3) break;
   }
-  return {author_handle:handle,account_id:account,profile_url:source,evidence_source:'visible_current_experience',section_found:true,entries};
+  return {author_handle:handle,account_id:account,profile_url:source,evidence_source:'visible_current_experience',section_found:true,entries,completeness:'unknown'};
 }
 
 export async function readLinkedinExperience(page, handle, account, ownedPage) {

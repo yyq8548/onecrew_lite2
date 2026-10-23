@@ -35,11 +35,15 @@ WITH bindings AS (
  WHERE h.discovery_campaign_id=?1 AND p.discovery_campaign_id=h.discovery_campaign_id
    AND p.platform=h.platform AND p.profile_ref=h.profile_ref AND p.expected_revision=?2
    AND p.status='completed' AND p.author_id=a.author_id
+   AND (p.platform!='instagram' OR NOT EXISTS(SELECT 1 FROM discovery_web_source_reads web
+     WHERE web.search_hit_id=h.id AND web.discovery_campaign_id=h.discovery_campaign_id AND web.expected_revision=?2
+       AND web.origin_platform='instagram' AND web.target_platform='instagram' AND web.profile_ref=h.profile_ref
+       AND web.source_url=h.source_url AND web.native_author_id=p.author_id AND web.status='completed' AND web.stop_code IS NULL))
    AND json_extract(p.native_profile_json,CASE WHEN p.platform='zhihu' THEN '$.author_url' ELSE '$.profile_url' END)=a.author_url
    AND (
     (p.platform='bilibili' AND json_extract(p.native_profile_json,'$.mid')=a.author_id)
-    OR (p.platform IN ('tiktok','reddit','facebook','instagram','weibo') AND json_extract(p.native_profile_json,'$.id')=a.author_id)
-    OR (p.platform IN ('zhihu','hackernews','pinterest','pixiv') AND json_extract(p.native_profile_json,'$.author_id')=a.author_id)
+    OR (p.platform IN ('tiktok','facebook','instagram','weibo') AND json_extract(p.native_profile_json,'$.id')=a.author_id)
+    OR (p.platform IN ('zhihu','hackernews','pixiv') AND json_extract(p.native_profile_json,'$.author_id')=a.author_id)
     OR (p.platform='douyin' AND json_extract(p.native_profile_json,'$.author_id')=a.author_id
       AND EXISTS(SELECT 1 FROM discovery_douyin_author_reads joint WHERE joint.search_hit_id=h.id
         AND joint.discovery_campaign_id=h.discovery_campaign_id AND joint.expected_revision=?2

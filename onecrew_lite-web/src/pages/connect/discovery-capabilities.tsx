@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 
-export const hasNativeScoring = (platform: string) => ["youtube", "twitter", "tiktok", "bilibili", "reddit"].includes(platform);
+export const hasNativeScoring = (platform: string) => ["youtube", "twitter", "tiktok", "bilibili"].includes(platform);
 export function DiscoveryCapabilities({ platforms }: { platforms: readonly string[] }) {
   const { t } = useTranslation("shell");
   const native = platforms.filter(hasNativeScoring), leads = platforms.filter(platform => !hasNativeScoring(platform));

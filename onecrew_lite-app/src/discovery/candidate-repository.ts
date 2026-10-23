@@ -1,7 +1,7 @@
 import type { DatabaseSync } from "node:sqlite";
 import { z } from "zod";
 import { parseApplicationJson, stringifyApplicationJson } from "../contracts/application-json.ts";
-import { validateCreatorSchema } from "../storage/creator-schema.ts";
+import { assertValidatedCreatorConnection } from "../storage/creator-schema.ts";
 import { discoveryEligibleContactAuthor, discoveryHasHiddenEmail, loadDiscoveryManualWechat } from "./contact-native.ts";
 import { loadDiscoveryContactObservations } from "./contact-repository.ts";
 import { loadIdentityPublicationBasis } from "./identity-library-publication.ts";
@@ -15,7 +15,7 @@ export type DiscoveryCandidatePageInput = z.infer<typeof discoveryCandidatePageI
 
 export class DiscoveryCandidateRepository {
   readonly #db: DatabaseSync;
-  constructor(database: DatabaseSync) { validateCreatorSchema(database); this.#db = database; }
+  constructor(database: DatabaseSync) { assertValidatedCreatorConnection(database); this.#db = database; }
   #read<T>(body: () => T): T {
     this.#db.exec("BEGIN DEFERRED"); let committed = false;
     try { const result = body(); this.#db.exec("COMMIT"); committed = true; return result; }
@@ -37,7 +37,7 @@ export class DiscoveryCandidateRepository {
         const { evidence_json, ...candidate } = rawCandidate.parse(raw), evidence = z.record(text, z.unknown()).parse(parseApplicationJson(evidence_json));
         for (const key of ["contact_status", "associated_social_accounts", "manual_profile_contact", "manual_wechat_accounts"]) delete evidence[key];
         const author = discoveryEligibleContactAuthor(this.#db, candidate.campaign_id, candidate.criteria_revision, candidate.id);
-        if (["linkedin", "reddit"].includes(candidate.platform) && author === candidate.platform_account_id && this.#db.prepare("SELECT EXISTS(SELECT 1 FROM discovery_campaigns WHERE id=? AND current_revision=?) AS current").get(candidate.campaign_id, candidate.criteria_revision)!.current === 1) evidence.manual_profile_contact = true;
+        if (candidate.platform === "linkedin" && author === candidate.platform_account_id && this.#db.prepare("SELECT EXISTS(SELECT 1 FROM discovery_campaigns WHERE id=? AND current_revision=?) AS current").get(candidate.campaign_id, candidate.criteria_revision)!.current === 1) evidence.manual_profile_contact = true;
         const wechat = loadDiscoveryManualWechat(this.#db, { ...candidate, evidence }); if (wechat.length) evidence.manual_wechat_accounts = wechat;
         const social = loadDiscoveryContactObservations(this.#db, candidate.campaign_id, candidate.criteria_revision, candidate.id, candidate.platform_account_id, true); if (social.length) evidence.associated_social_accounts = social;
         if (author !== null && discoveryHasHiddenEmail(this.#db, candidate.campaign_id, candidate.criteria_revision, candidate.id, candidate.platform_account_id) && loadDiscoveryContactObservations(this.#db, candidate.campaign_id, candidate.criteria_revision, candidate.id, candidate.platform_account_id).length === 0) evidence.contact_status = { has_contact: false, manual_email_required: true };

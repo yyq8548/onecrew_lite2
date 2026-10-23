@@ -23,6 +23,13 @@ describe("platform connection presentation", () => {
   it("marks public paths green without suggesting site login was checked", () => {
     expect(openCliPlatformIsGreen(publicSource, null, undefined, false)).toBe(true);
   });
+  it("shows YouTube account login until a full matching login observation is available", () => {
+    const youtube = { ...browser, platform: "youtube" };
+    expect(openCliPlatformNeedsSignIn(youtube, "selected", undefined, false)).toBe(true);
+    expect(openCliPlatformIsGreen(youtube, "selected", undefined, false)).toBe(false);
+    expect(openCliPlatformIsGreen(youtube, "selected", { ...loggedIn, platform: "youtube" }, false)).toBe(true);
+    expect(openCliPlatformIsGreen(youtube, "selected", { ...loggedIn, platform: "youtube", method: "quick" }, false)).toBe(false);
+  });
   it("marks only matching successful login observations green", () => {
     expect(openCliPlatformIsGreen(browser, "selected", loggedIn, false)).toBe(true);
     expect(openCliPlatformIsGreen(browser, "other", loggedIn, false)).toBe(false);

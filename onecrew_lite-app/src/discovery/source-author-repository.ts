@@ -1,8 +1,9 @@
 import type { DatabaseSync } from "node:sqlite";
+import { discoveryReadBusySql } from "./read-capacity.ts";
 import { isDeepStrictEqual } from "node:util";
 import { z } from "zod";
-import { stringifyApplicationJson } from "../contracts/application-json.ts";
-import { validateCreatorSchema } from "../storage/creator-schema.ts";
+import { parseApplicationJson, stringifyApplicationJson } from "../contracts/application-json.ts";
+import { assertValidatedCreatorConnection } from "../storage/creator-schema.ts";
 import { validateSavedDiscoveryDouyinContent, validateSavedDiscoveryDouyinProfile } from "./douyin-material.ts";
 import { DiscoveryProfileRepository } from "./profile-repository.ts";
 import { discoveryReadPlatformStatus, sourceLocalReadFailure } from "./stops.ts";
@@ -15,17 +16,30 @@ export function discoveryDouyinSourcePost(source: string): string | null { retur
 export class DiscoverySourceAuthorRepository {
   readonly #db: DatabaseSync;
   readonly #profiles: DiscoveryProfileRepository;
-  constructor(database: DatabaseSync) { validateCreatorSchema(database); this.#db = database; this.#profiles = new DiscoveryProfileRepository(database); }
+  constructor(database: DatabaseSync) { assertValidatedCreatorConnection(database); this.#db = database; this.#profiles = new DiscoveryProfileRepository(database); }
+  savedProfile(raw: DiscoverySourceAuthorClaim, author: string) {
+    const claim = discoverySourceAuthorClaim.parse(raw);
+    const row = this.#db.prepare(`SELECT p.native_profile_json FROM discovery_profile_reads p
+      JOIN discovery_search_authors a ON a.search_hit_id=p.search_hit_id AND a.author_id=p.author_id
+      JOIN discovery_search_hits h ON h.id=p.search_hit_id AND h.discovery_campaign_id=p.discovery_campaign_id AND h.platform=p.platform AND h.profile_ref=p.profile_ref
+      WHERE p.platform='douyin' AND p.profile_ref=? AND p.author_id=? AND p.status='completed' AND p.stop_code IS NULL
+      ORDER BY (p.discovery_campaign_id=? AND p.expected_revision=?) DESC,p.updated_at DESC,p.search_hit_id LIMIT 1`).get(claim.profile_ref, author, claim.campaign_id, claim.expected_revision);
+    if (!row) return null;
+    const profile = validateSavedDiscoveryDouyinProfile(parseApplicationJson(Buffer.from(text.parse(row.native_profile_json))));
+    if (profile.author_id !== author) throw new Error("discovery_source_author_profile_identity_conflict");
+    return profile;
+  }
   #transaction<T>(body: () => T): T { this.#db.exec("BEGIN IMMEDIATE"); let committed = false; try { const value = body(); this.#db.exec("COMMIT"); committed = true; return value; } finally { if (!committed) this.#db.exec("ROLLBACK"); } }
-  next(campaign: string, excluded: readonly string[] = []): string | null {
+  next(campaign: string, excluded: readonly string[] = [], held: readonly string[] = []): string | null {
     if (excluded.includes("douyin")) return null;
     const rows = this.#db.prepare(`SELECT h.id,h.source_url FROM discovery_search_hits h JOIN discovery_campaigns c ON c.id=h.discovery_campaign_id
       JOIN discovery_campaign_revisions v ON v.discovery_campaign_id=c.id AND v.revision=c.current_revision JOIN discovery_platform_runs r ON r.discovery_campaign_id=c.id AND r.platform=h.platform AND r.profile_ref=h.profile_ref
       LEFT JOIN discovery_search_authors a ON a.search_hit_id=h.id LEFT JOIN discovery_douyin_author_reads p ON p.search_hit_id=h.id
-      WHERE c.id=?1 AND c.phase='active' AND v.approved_at IS NOT NULL AND(c.max_calls IS NULL OR c.used_calls<c.max_calls) AND h.platform='douyin' AND r.status='completed' AND a.search_hit_id IS NULL AND p.search_hit_id IS NULL
-      AND NOT EXISTS(SELECT 1 FROM discovery_platform_runs b WHERE b.discovery_campaign_id=c.id AND b.status='searching')
+      WHERE c.id=?1 AND c.phase='active' AND v.approved_at IS NOT NULL AND h.platform='douyin' AND r.status='completed' AND a.search_hit_id IS NULL AND p.search_hit_id IS NULL
+      AND NOT ${discoveryReadBusySql(this.#db, campaign, "h.platform")}
       ORDER BY h.captured_at,COALESCE((SELECT position FROM discovery_search_positions WHERE search_hit_id=h.id),9223372036854775807),h.id`).all(campaign);
-    for (const row of rows) if (discoveryDouyinSourcePost(text.parse(row.source_url)) !== null) return text.parse(row.id); return null;
+    const skipped = new Set(held);
+    for (const row of rows) if (!skipped.has(text.parse(row.id)) && discoveryDouyinSourcePost(text.parse(row.source_url)) !== null) return text.parse(row.id); return null;
   }
   get(campaign: string, hit: string) {
     const statement = this.#db.prepare(`SELECT p.expected_revision,p.platform,p.profile_ref,p.source_url,p.post_id,p.call_number,p.status,p.author_id,p.profile_url,p.duplicate_of,p.stop_code,p.updated_at
@@ -37,13 +51,13 @@ export class DiscoverySourceAuthorRepository {
   claim(campaign: string, revision: number, hit: string): DiscoverySourceAuthorClaim {
     u32.parse(revision);
     return this.#transaction(() => {
-      const head = this.#db.prepare("SELECT c.used_calls,c.max_calls FROM discovery_campaigns c JOIN discovery_campaign_revisions v ON v.discovery_campaign_id=c.id AND v.revision=c.current_revision WHERE c.id=? AND c.current_revision=? AND c.phase='active' AND v.approved_at IS NOT NULL").get(campaign, revision);
-      if (!head) throw new Error("discovery_source_author_not_approved"); const budget = z.object({ used_calls: u32, max_calls: u32.nullable() }).parse(head); if (budget.max_calls !== null && budget.used_calls >= budget.max_calls) throw new Error("discovery_budget_exhausted");
+      const head = this.#db.prepare("SELECT c.used_calls FROM discovery_campaigns c JOIN discovery_campaign_revisions v ON v.discovery_campaign_id=c.id AND v.revision=c.current_revision WHERE c.id=? AND c.current_revision=? AND c.phase='active' AND v.approved_at IS NOT NULL").get(campaign, revision);
+      if (!head) throw new Error("discovery_source_author_not_approved"); const counter = z.object({ used_calls: u32 }).parse(head);
       const source = this.#db.prepare(`SELECT h.profile_ref,h.source_url FROM discovery_search_hits h JOIN discovery_platform_runs r ON r.discovery_campaign_id=h.discovery_campaign_id AND r.platform=h.platform AND r.profile_ref=h.profile_ref
         WHERE h.id=?1 AND h.discovery_campaign_id=?2 AND h.platform='douyin' AND r.status='completed' AND NOT EXISTS(SELECT 1 FROM discovery_search_authors a WHERE a.search_hit_id=h.id)
-        AND NOT EXISTS(SELECT 1 FROM discovery_douyin_author_reads p WHERE p.search_hit_id=h.id) AND NOT EXISTS(SELECT 1 FROM discovery_platform_runs b WHERE b.discovery_campaign_id=h.discovery_campaign_id AND b.status='searching')`).get(hit, campaign);
+        AND NOT EXISTS(SELECT 1 FROM discovery_douyin_author_reads p WHERE p.search_hit_id=h.id) AND NOT ${discoveryReadBusySql(this.#db, campaign, "h.platform")}`).get(hit, campaign);
       if (!source) throw new Error("discovery_source_author_already_attempted_or_stopped"); const post = discoveryDouyinSourcePost(text.parse(source.source_url)); if (post === null) throw new Error("discovery_source_author_source_invalid");
-      const claim = discoverySourceAuthorClaim.parse({ ...source, campaign_id: campaign, expected_revision: revision, search_hit_id: hit, platform: "douyin", post_id: post, call_number: budget.used_calls + 1 }), now = Math.floor(Date.now() / 1000);
+      const claim = discoverySourceAuthorClaim.parse({ ...source, campaign_id: campaign, expected_revision: revision, search_hit_id: hit, platform: "douyin", post_id: post, call_number: counter.used_calls + 1 }), now = Math.floor(Date.now() / 1000);
       if (this.#db.prepare("UPDATE discovery_campaigns SET used_calls=?,updated_at=? WHERE id=?").run(claim.call_number, now, campaign).changes !== 1) throw new Error("discovery_source_author_campaign_changed");
       if (this.#db.prepare("UPDATE discovery_platform_runs SET status='searching',active_query=?,stop_code=NULL,updated_at=? WHERE discovery_campaign_id=? AND platform='douyin' AND profile_ref=?").run(`source_author:${hit}:${claim.call_number}`, now, campaign, claim.profile_ref).changes !== 1) throw new Error("discovery_source_author_run_changed");
       this.#db.prepare("INSERT INTO discovery_douyin_author_reads VALUES(?1,?2,'douyin',?3,?4,?5,?6,?7,'reading',NULL,NULL,NULL,NULL,?8)").run(hit, campaign, claim.profile_ref, claim.source_url, claim.post_id, revision, claim.call_number, now); return claim;
@@ -67,9 +81,9 @@ export class DiscoverySourceAuthorRepository {
         this.#db.prepare("INSERT INTO discovery_search_authors VALUES(?,?,?,?)").run(claim.search_hit_id, author, profileUrl, now);
         if (duplicate === null) {
           this.#db.prepare("INSERT INTO discovery_profile_reads VALUES(?1,?2,'douyin',?3,?4,?5,?6,'completed',?7,NULL,?8)").run(claim.search_hit_id, claim.campaign_id, claim.profile_ref, author, claim.expected_revision, claim.call_number, stringifyApplicationJson(profile), now);
-          this.#db.prepare("INSERT INTO discovery_content_reads VALUES(?1,?2,'douyin',?3,?4,?5,?6,?7,'completed',?8,NULL,?9)").run(claim.search_hit_id, claim.campaign_id, claim.profile_ref, author, claim.source_url, claim.expected_revision, claim.call_number, stringifyApplicationJson(content), now);
-          this.#profiles.projectSaved(claim.campaign_id, claim.search_hit_id);
         }
+        this.#db.prepare("INSERT INTO discovery_content_reads VALUES(?1,?2,'douyin',?3,?4,?5,?6,?7,'completed',?8,NULL,?9)").run(claim.search_hit_id, claim.campaign_id, claim.profile_ref, author, claim.source_url, claim.expected_revision, claim.call_number, stringifyApplicationJson(content), now);
+        if (duplicate === null) this.#profiles.projectSaved(claim.campaign_id, claim.search_hit_id);
       }
       if (this.#db.prepare("UPDATE discovery_douyin_author_reads SET status=?3,author_id=?4,profile_url=?5,duplicate_of=?6,stop_code=?7,updated_at=?8 WHERE search_hit_id=?1 AND call_number=?2 AND status='reading'").run(claim.search_hit_id, claim.call_number, stop === null ? "completed" : "failed", author, profileUrl, duplicate, stop, now).changes !== 1) throw new Error("discovery_source_author_receipt_stale"); return this.get(claim.campaign_id, claim.search_hit_id);
     });

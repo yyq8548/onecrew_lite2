@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { canRecoverDiscoverySearch, canSearchDiscovery, canVerifyDiscovery, discoveryScopeKeywords, getDiscoveryContent, getDiscoveryProfile, getDiscoveryTranscript, listDiscoveryCandidates, listDiscoveryHits, nextDiscoveryPage, runDiscoveryCampaign, searchDiscoveryOnce, syncDiscoveryLibrary, validCategoryScopes, validRedditCommunities, validScopedTags, validV2exNodes, type DiscoveryCampaign } from "./opencli-discovery";
+import { canRecoverDiscoverySearch, canSearchDiscovery, canVerifyDiscovery, discoveryScopeKeywords, getDiscoveryContent, getDiscoveryProfile, getDiscoveryTranscript, listDiscoveryCandidates, listDiscoveryHits, nextDiscoveryPage, runDiscoveryCampaign, searchDiscoveryOnce, syncDiscoveryLibrary, validCategoryScopes, validScopedTags, validV2exNodes, type DiscoveryCampaign } from "./opencli-discovery";
 import { invoke } from "./local-runtime";
 import { getDiscoveryPublicPage, advanceDiscoveryCampaign } from "./opencli-discovery";
 import { increaseDiscoveryTarget, prepareDiscoveryDraft, listRecentDiscoveryCampaigns, validDiscoveryCampaignId } from "./opencli-discovery";
@@ -20,7 +20,7 @@ describe("Campaign local result pagination", () => {
   beforeEach(() => { vi.mocked(invoke).mockReset(); });
 
   it("reads at most five saved plan summaries without issuing a search or approval", async () => {
-    const plan = { id: "saved", brief: "鞋子", phase: "paused", target_count: 100, used_calls: 22, max_calls: 400, updated_at: 1790810000 };
+    const plan = { id: "saved", brief: "鞋子", phase: "paused", target_count: 100, used_calls: 22, updated_at: 1790810000 };
     vi.mocked(invoke).mockResolvedValueOnce([plan]);
     expect(await listRecentDiscoveryCampaigns()).toEqual([plan]);
     expect(invoke).toHaveBeenCalledExactlyOnceWith("onecrew_discovery_campaigns_recent", {});
@@ -32,7 +32,7 @@ describe("Campaign local result pagination", () => {
 
   it("submits product planning directly through authenticated HTTP without clipboard or MCP", async () => {
     const input = { id: "stable-draft", brief: '鞋子"\n便宜时尚', profile_ref: "browser",
-      opencli_version: "1.8.8", target_count: 30, max_calls: 200 };
+      opencli_version: "1.8.8", target_count: 30 };
     const output = { ...input, phase: "draft", revision: 1, criteria: { min_subscribers: 0 },
       used_calls: 0, scopes: [{ platform: "youtube", profile_ref: "browser", keywords: ["平价鞋测评"] }], platform_runs: [] };
     vi.mocked(invoke).mockResolvedValueOnce(output);
@@ -127,20 +127,16 @@ describe("Campaign local result pagination", () => {
 });
 
 it("keeps V2EX node scopes separate from general search terms", () => {
-  expect(discoveryScopeKeywords("youtube", "AI tools, demos", "python", "Python")).toEqual(["AI tools", "demos"]);
-  expect(discoveryScopeKeywords("v2ex-node", "AI tools, demos", "python, javascript", "Python")).toEqual(["python", "javascript"]);
-  expect(discoveryScopeKeywords("reddit-subreddit", "AI tools, demos", "python", "Python, learnprogramming")).toEqual(["Python", "learnprogramming"]);
+  expect(discoveryScopeKeywords("youtube", "AI tools, demos", "python")).toEqual(["AI tools", "demos"]);
+  expect(discoveryScopeKeywords("v2ex-node", "AI tools, demos", "python, javascript")).toEqual(["python", "javascript"]);
   expect(validV2exNodes(["python", "javascript"])).toBe(true);
   expect(validV2exNodes(["AI tools"])).toBe(false);
   expect(validV2exNodes(["-python"])).toBe(false);
   expect(validV2exNodes(["python", "python"])).toBe(false);
-  expect(validRedditCommunities(["Python", "learnprogramming"])).toBe(true);
-  expect(validRedditCommunities(["Python", "python"])).toBe(false);
-  expect(validRedditCommunities(["r/Python"])).toBe(false);
-  expect(discoveryScopeKeywords("devto-tag", "AI tools", "python", "Python", { "devto-tag": "ai, webdev" })).toEqual(["ai", "webdev"]);
+  expect(discoveryScopeKeywords("devto-tag", "AI tools", "python", { "devto-tag": "ai, webdev" })).toEqual(["ai", "webdev"]);
   expect(validScopedTags(["ai", "webdev"])).toBe(true);
   expect(validScopedTags(["ai", "AI"])).toBe(false);
-  expect(discoveryScopeKeywords("juejin-hot", "AI tools", "python", "Python", {}, { "juejin-hot": "ai, frontend" })).toEqual(["ai", "frontend"]);
+  expect(discoveryScopeKeywords("juejin-hot", "AI tools", "python", {}, { "juejin-hot": "ai, frontend" })).toEqual(["ai", "frontend"]);
   expect(validCategoryScopes("juejin-hot", ["ai", "frontend"])).toBe(true);
   expect(validCategoryScopes("juejin-hot", ["marketing-sales"])).toBe(false);
   expect(validCategoryScopes("producthunt-posts", ["marketing-sales"])).toBe(true);
@@ -149,7 +145,7 @@ it("keeps V2EX node scopes separate from general search terms", () => {
 const approved: DiscoveryCampaign = {
   id: "campaign-1", phase: "active", revision: 2, brief: "AI tool creators",
   opencli_version: "1.8.8", criteria: { min_subscribers: 10000, requires_ai_tool_demo: true, requires_public_tool_url: true },
-  target_count: 20, max_calls: 50, used_calls: 0,
+  target_count: 20, used_calls: 0,
   scopes: [{ platform: "youtube", profile_ref: "work-profile", keywords: ["AI tools"] }],
   platform_runs: [{ platform: "youtube", profile_ref: "work-profile", status: "unsearched", calls_used: 0, stop_code: null }],
 };
@@ -593,8 +589,8 @@ describe("YouTube Campaign search gate", () => {
     expect(canSearchDiscovery({ ...approved, phase: "draft" }, "work-profile")).toBe(false);
   });
 
-  it("stops when budget is exhausted or a read is already in flight", () => {
-    expect(canSearchDiscovery({ ...approved, used_calls: 50 }, "work-profile")).toBe(false);
+  it("retains read statistics without limiting reads and blocks a read already in flight", () => {
+    expect(canSearchDiscovery({ ...approved, used_calls: 50 }, "work-profile")).toBe(true);
     expect(canSearchDiscovery({ ...approved, platform_runs: [{ ...approved.platform_runs[0], status: "searching" }] }, "work-profile")).toBe(false);
     expect(canSearchDiscovery({ ...approved, platform_runs: [{ ...approved.platform_runs[0], status: "technical_stop", stop_code: "opencli_timeout" }] }, "work-profile")).toBe(false);
     expect(canSearchDiscovery({ ...approved, platform_runs: [{ ...approved.platform_runs[0], status: "technical_stop", stop_code: "interrupted_read" }] }, "work-profile")).toBe(true);
@@ -621,11 +617,11 @@ describe("explicit interrupted-search recovery", () => {
   const interrupted: DiscoveryCampaign = { ...approved, used_calls: 1,
     platform_runs: [{ ...approved.platform_runs[0], calls_used: 1, status: "technical_stop", stop_code: "interrupted_read" }] };
 
-  it("requires an interrupted search, approved identity, finished coverage and available budget", () => {
+  it("requires an interrupted search, approved identity and finished coverage", () => {
     expect(canRecoverDiscoverySearch(interrupted, "work-profile", "youtube")).toBe(true);
     expect(canRecoverDiscoverySearch(interrupted, "other-profile", "youtube")).toBe(false);
     expect(canRecoverDiscoverySearch({ ...interrupted, phase: "draft" }, "work-profile", "youtube")).toBe(false);
-    expect(canRecoverDiscoverySearch({ ...interrupted, used_calls: 50 }, "work-profile", "youtube")).toBe(false);
+    expect(canRecoverDiscoverySearch({ ...interrupted, used_calls: 50 }, "work-profile", "youtube")).toBe(true);
     for (const code of ["opencli_timeout", "opencli_command_failed", "opencli_auth_required", "interrupted_video_read"]) {
       expect(canRecoverDiscoverySearch({ ...interrupted, platform_runs: [{ ...interrupted.platform_runs[0], stop_code: code }] }, "work-profile", "youtube")).toBe(false);
     }
@@ -652,10 +648,10 @@ describe("explicit interrupted-search recovery", () => {
 });
 
 describe("YouTube video evidence gate", () => {
-  it("waits for first search, exact profile and remaining read budget", () => {
+  it("waits for first search and exact profile regardless of accumulated read count", () => {
     expect(canVerifyDiscovery(approved, "work-profile")).toBe(false);
     expect(canVerifyDiscovery({ ...approved, platform_runs: [{ ...approved.platform_runs[0], status: "completed" }] }, "work-profile")).toBe(true);
     expect(canVerifyDiscovery({ ...approved, platform_runs: [{ ...approved.platform_runs[0], status: "completed" }] }, "other-profile")).toBe(false);
-    expect(canVerifyDiscovery({ ...approved, used_calls: 50, platform_runs: [{ ...approved.platform_runs[0], status: "completed" }] }, "work-profile")).toBe(false);
+    expect(canVerifyDiscovery({ ...approved, used_calls: 50, platform_runs: [{ ...approved.platform_runs[0], status: "completed" }] }, "work-profile")).toBe(true);
   });
 });

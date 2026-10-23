@@ -3,7 +3,6 @@ import { nativeContentObservations } from "../platforms/opencli/observations.ts"
 import { stringifyApplicationJson } from "../contracts/application-json.ts";
 import { twitterPostContentPlan } from "../platforms/opencli/twitter-posts.ts";
 import { validateDiscoveryRetainedContent } from "./native-material.ts";
-import { validateDiscoveryPinterestContent } from "./pinterest-material.ts";
 import { discoveryContentClaim } from "./review-material.ts";
 import type { z as Zod } from "zod";
 import { discoveryPostIdForSource } from "./post-author-contracts.ts";
@@ -14,11 +13,10 @@ const text = z.string().refine(value => value.isWellFormed()), stop = z.enum(["o
 export function validateDiscoveryContentResult(claim: DiscoveryContentClaim, raw: unknown, failure: string | null): Record<string, unknown> | null {
   discoveryContentClaim.parse(claim);
   if (failure !== null) { stop.parse(failure); if (raw !== null) throw new Error("discovery_content_result_invalid"); return null; }
-  const native = z.record(text, z.unknown()).parse(raw), maximum = claim.platform === "hackernews" ? 40000 : ["linkedin", "pinterest", "pixiv", "zhihu"].includes(claim.platform) ? 24000 : 16000;
+  const native = z.record(text, z.unknown()).parse(raw), maximum = claim.platform === "hackernews" ? 40000 : ["linkedin", "pixiv", "zhihu"].includes(claim.platform) ? 24000 : 16000;
   if (Buffer.byteLength(stringifyApplicationJson(native)) > maximum) throw new Error("discovery_content_result_too_large");
-  if (claim.platform === "pinterest") return validateDiscoveryPinterestContent(claim.author_id, claim.source_url, native);
   if (claim.platform === "instagram") {
-    if (!/^https:\/\/www\.instagram\.com\/[a-z0-9_.]{1,30}\/$/u.test(claim.source_url) || !/^[1-9][0-9]{0,24}$/u.test(claim.author_id)) throw new Error("discovery_content_result_invalid");
+    if (!/^https:\/\/www\.instagram\.com\/[a-z0-9_.]{1,30}\/$/u.test(claim.source_url) || !/^[1-9][0-9]{0,24}$/u.test(claim.author_id) && claim.author_id !== claim.source_url) throw new Error("discovery_content_result_invalid");
     const post = z.strictObject({ post_id: text.regex(/^[A-Za-z0-9_-]{1,32}$/u), author_id: z.literal(claim.author_id), source_url: text.regex(/^https:\/\/www\.instagram\.com\/(?:p|reel)\/[A-Za-z0-9_-]{1,32}\/$/u), text: text.refine(value => Buffer.byteLength(value) <= 8000 && !value.includes("\0")), text_truncated: z.boolean(), observations: nativeContentObservations.optional() }).parse(native);
     if (!/^[1-9][0-9]{0,24}$/u.test(post.post_id) && new URL(post.source_url).pathname.split("/")[2] !== post.post_id) throw new Error("discovery_content_result_invalid");
     return post;

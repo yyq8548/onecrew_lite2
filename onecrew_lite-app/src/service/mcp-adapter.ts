@@ -15,6 +15,7 @@ import { getPackagedRuntime } from "../packaging/runtime-context.ts";
 import { localServiceStatus } from "@onecrew/runtime-contracts/status";
 import { FrozenMcpOutputValidator, McpJsonSchemaValidator, nativeMcpOutputSchema } from "./mcp-json-schema.ts";
 import { workspaceCardRequest } from "./workspace-card-requests.ts";
+import { installationRepairInput, installationRepairResult, repairInstallation } from "./installation-repair.ts";
 
 const noArguments = { type: "object" as const, properties: {}, additionalProperties: false };
 const empty = z.strictObject({});
@@ -26,6 +27,7 @@ const bootstrap = [
   { name: "onecrew_login_cancel", description: "Cancel the current Access authorization.", inputSchema: noArguments },
   { name: "onecrew_logout", description: "Revoke the local Access session.", inputSchema: noArguments },
   { name: "onecrew_web", description: "Return one-use workbench and Library URLs and mount their read-only status card. To show pages, open these URLs in Codex's in-app browser, show its right panel with visibility.set(true), select each target tab and read rendered content. Finish with the workbench selected and preserve the table tab. markDeliverable only preserves tabs; verify panel visibility and selected content before reporting displayed. Report missing tools, queued opens or read failures as incomplete.", inputSchema: noArguments },
+  { name: "onecrew_repair", description: "Run only when the user requests One-click repair / 一键修复. Works while the main local service is stopped. Check the saved original installation, start that service, repair the companion plugin only for client=codex, then prepare account-bound diagnostics. Reuse one request_id UUID for this repair and repeat while repairing; never start/resume search, reset data, change paths or read creators. Follow returned instructions to finish model diagnosis through onecrew.repair.get/apply/finish.", inputSchema: z.toJSONSchema(installationRepairInput) },
 ];
 const sessionReply = z.strictObject({ session_id: z.string(), surface: mcpSurface, account_id: z.string(), auth_epoch: z.string() });
 const workspaceReply = z.strictObject({ url: z.url(), instance_id: z.uuid() });
@@ -45,10 +47,11 @@ export async function createMcpAdapter(directory: string, surface: McpSurface = 
     return { ...tool, ...(tool.outputSchema ? { outputSchema: nativeMcpOutputSchema(tool.outputSchema) } : {}), ...(tool.name === "onecrew_result_present" ? { _meta: ui } : {}) };
   })];
   const frozenOutputs = new FrozenMcpOutputValidator(registry, surface);
-  const version = getPackagedRuntime()?.manifest.productVersion ?? "0.9.0";
-  const server = new Server({ name: "onecrew_lite", version }, { capabilities: { tools: {}, resources: {} }, jsonSchemaValidator: new McpJsonSchemaValidator(), instructions: "Bootstrap: onecrew_status, onecrew_login, onecrew_login_cancel, onecrew_logout, onecrew_web. Discover only registered operations through onecrew_tool_search, get their exact contract with onecrew_tool_get, and execute at most eight calls. Present each new result_ref once with onecrew_result_present and the conversation locale. Wait for actual user confirmation; never invent bindings or a confirmed plan. MCP has no mail or social sending capability." });
+  const version = getPackagedRuntime()?.manifest.productVersion ?? "0.9.1";
+  const server = new Server({ name: "onecrew_lite", version }, { capabilities: { tools: {}, resources: {} }, jsonSchemaValidator: new McpJsonSchemaValidator(), instructions: "Bootstrap: onecrew_status, onecrew_login, onecrew_login_cancel, onecrew_logout, onecrew_web, onecrew_repair. For an explicit One-click repair / 一键修复 request, call onecrew_repair even while the main service is stopped and follow its returned steps, preserving data and stopped searches. Discover only registered operations through onecrew_tool_search, get their exact contract with onecrew_tool_get, and execute at most eight calls. Present each new result_ref once with onecrew_result_present and the conversation locale. Wait for actual user confirmation; never invent bindings or a confirmed plan. MCP has no mail or social sending capability." });
   let session: { runtime: string; descriptor: RuntimeDescriptor; id: string } | undefined;
   let closingSession: Promise<void> | undefined;
+  let installationRepair: { id: string; client: "codex" | "mcp"; result: ReturnType<typeof installationRepairResult>; pending: Promise<unknown> } | undefined;
   async function closeSession(): Promise<void> {
     if (closingSession) return closingSession;
     const active = session;
@@ -102,6 +105,19 @@ export async function createMcpAdapter(directory: string, surface: McpSurface = 
   server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
     const input = decodeMcpInput(request.params.arguments ?? {}), name = request.params.name;
     if (!tools.some(tool => tool.name === name)) throw new Error("mcp_tool_not_registered");
+    if (name === "onecrew_repair") {
+      const request = installationRepairInput.parse(input);
+      if (installationRepair && installationRepair.id === request.request_id && installationRepair.client !== request.client) throw new Error("repair.request_changed");
+      if (!installationRepair || installationRepair.id !== request.request_id && installationRepair.result.state !== "repairing") {
+        const result = installationRepairResult(request.request_id);
+        installationRepair = { id: request.request_id, client: request.client, result, pending: repairInstallation(directory, request.client, result) };
+      }
+      if (request.wait_ms > 0 && installationRepair.result.state === "repairing") {
+        const { setTimeout } = await import("node:timers/promises");
+        await Promise.race([installationRepair.pending, setTimeout(request.wait_ms, undefined, { ref: false, signal: extra.signal })]);
+      }
+      return encodeMcpResult(installationRepair.result);
+    }
     const runtime = await readVerifiedRuntime(directory);
     if (name === "onecrew_workspace_open") {
       const { destination } = workspaceOpenInput.parse(input);

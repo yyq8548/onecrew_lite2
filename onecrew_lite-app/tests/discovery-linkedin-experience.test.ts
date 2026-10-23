@@ -15,28 +15,31 @@ import { discoveryScoreHit } from "../src/discovery/execution-material.ts";
 
 const materials = JSON.parse(await readFile(new URL("./fixtures/linkedin-occupational-headlines-20261021.json",import.meta.url),"utf8"));
 const model = JSON.parse(await readFile(new URL("./fixtures/linkedin-experience-model-20261021.json",import.meta.url),"utf8"));
-const examples: Array<{name:string;fixture:string;live:string;expected:"qualified"|"rejected"|"pending";stop?:string}> = [
+const examples: Array<{name:string;fixture:string;live:string;expected:"qualified"|"rejected"|"pending";stop?:string;withoutPosts?:boolean}> = [
+  {name:"Liu Zhengyang",fixture:"linkedin-experience-failure-20261021.json",live:"linkedin-experience-live-liu-20261021.json",expected:"qualified",withoutPosts:true},
+  {name:"Dylan X",fixture:"linkedin-experience-dylan-rows-20261021.json",live:"linkedin-experience-live-dylan-20261021.json",expected:"pending",withoutPosts:true},
   {name:"Liu Zhengyang",fixture:"linkedin-experience-failure-20261021.json",live:"linkedin-experience-live-liu-20261021.json",expected:"qualified"},
-  {name:"Dylan X",fixture:"linkedin-experience-dylan-rows-20261021.json",live:"linkedin-experience-live-dylan-20261021.json",expected:"rejected"},
-  {name:"Dylan X",fixture:"linkedin-experience-dylan-rows-20261021.json",live:"linkedin-experience-live-dylan-20261021.json",expected:"rejected",stop:"opencli_timeout"},
+  {name:"Dylan X",fixture:"linkedin-experience-dylan-rows-20261021.json",live:"linkedin-experience-live-dylan-20261021.json",expected:"pending"},
+  {name:"Dylan X",fixture:"linkedin-experience-dylan-rows-20261021.json",live:"linkedin-experience-live-dylan-20261021.json",expected:"pending",stop:"opencli_timeout"},
   {name:"Dylan X",fixture:"linkedin-experience-dylan-rows-20261021.json",live:"linkedin-experience-live-dylan-20261021.json",expected:"pending",stop:"interrupted_experience_read"},
 ];
 for (const example of examples) {
 const fixture=JSON.parse(await readFile(new URL(`./fixtures/${example.fixture}`,import.meta.url),"utf8"));
 const live=JSON.parse(await readFile(new URL(`./fixtures/${example.live}`,import.meta.url),"utf8"));
 
-test(`真实${example.name}只补查一次Experience：${example.stop??example.expected}，保留主页和失败历史`,async t=>{
+test(`真实${example.name}只补查一次Experience：${example.stop??example.expected}，${example.withoutPosts?"无需读取帖子":"保留主页和失败历史"}`,async t=>{
   const material = materials.records[0].material;
   const directory = await mkdtemp(fileURLToPath(new URL("../../.scratch/experience-test-",import.meta.url)));
   const path = join(directory,"creator.sqlite");
   await initializeNewCreatorDatabase(path);
   const db = new DatabaseSync(path); t.after(()=>db.close());
   const repository = new DiscoveryRepository(db), campaign = material.campaign_id;
-  repository.create({id:campaign,brief:"在LinkedIn搜索币安、OKX、Bitget、Bybit或Gate.io的商务、BD或Marketing人员。成功的账号不重复读取。币安（Binance）、OKX、Bitget、Bybit、Gate.io 的商务、BD 或 Marketing 人员",opencli_version:"1.8.8",criteria:material.criteria,scopes:material.approved_scopes,target_count:30,max_calls:null});
+  repository.create({id:campaign,brief:"在LinkedIn搜索币安、OKX、Bitget、Bybit或Gate.io的商务、BD或Marketing人员。成功的账号不重复读取。币安（Binance）、OKX、Bitget、Bybit、Gate.io 的商务、BD 或 Marketing 人员",opencli_version:"1.8.8",criteria:material.criteria,scopes:material.approved_scopes,target_count:30});
   repository.approve(campaign,1);
   db.prepare("UPDATE discovery_platform_runs SET status='completed' WHERE discovery_campaign_id=?").run(campaign);
   db.prepare("UPDATE discovery_campaigns SET used_calls=70 WHERE id=?").run(campaign);
   for (const [table,row] of Object.entries(fixture.rows)) {
+    if (example.withoutPosts && table === "discovery_content_reads") continue;
     const value = row as Record<string,string|number|null>, columns = Object.keys(value);
     db.prepare(`INSERT INTO ${table}(${columns.join(",")}) VALUES(${columns.map(()=>"?").join(",")})`).run(...Object.values(value));
   }
@@ -61,7 +64,7 @@ test(`真实${example.name}只补查一次Experience：${example.stop??example.e
   }
   if(live.native.entries.length===0) {
     const candidate=db.prepare("SELECT verdict,evidence_json FROM discovery_candidates WHERE id=?").get(fixture.rows.discovery_candidates.id)!;
-    assert.equal(candidate.verdict,"rejected");
+    assert.equal(candidate.verdict,"pending");
     assert.ok(JSON.parse(String(candidate.evidence_json)).assessment.reasons.includes("linkedin_current_employment_evidence_exhausted"));
     assert.equal(repository.nextContentHit(campaign,"linkedin"),null);
     assert.equal(repository.getPlan(campaign).used_calls,71);

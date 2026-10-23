@@ -2,7 +2,7 @@ import { invoke } from "./local-runtime";
 import type { DiscoveryCampaign } from "./opencli-discovery";
 import type { DiscoveryRunCheckpoint } from "./discovery-run-checkpoint";
 
-export type WorkspaceStage = "ready" | "searching" | "verifying" | "pausing" | "paused" | "finished" | "budget_exhausted" | "needs_evidence" | "error";
+export type WorkspaceStage = "ready" | "searching" | "verifying" | "pausing" | "paused" | "finished" | "needs_evidence" | "error";
 export function discoveryRunStageKey(status: string) {
   switch (status) {
     case "unsearched": case "searching": case "completed": case "unauthorized": case "technical_stop": case "risk_control_stop":
@@ -10,13 +10,12 @@ export function discoveryRunStageKey(status: string) {
     default: return null;
   }
 }
-export function discoveryStage(campaign: DiscoveryCampaign | undefined, running: boolean, pausing: boolean, execution: string): WorkspaceStage {
+export function discoveryStage(campaign: Pick<DiscoveryCampaign, "platform_runs"> | undefined, running: boolean, pausing: boolean, execution: string): WorkspaceStage {
   if (pausing && running) return "pausing";
   if (running) return campaign?.platform_runs.some(run => run.status === "unsearched" || run.status === "searching") ? "searching" : "verifying";
   if (execution === "error") return "error";
   if (execution === "paused") return "paused";
   if (campaign?.platform_runs.some(run => run.status === "searching")) return "searching";
-  if (campaign && campaign.max_calls !== null && campaign.used_calls >= campaign.max_calls) return "budget_exhausted";
   if (execution === "needs_evidence") return "needs_evidence";
   if (execution === "search_exhausted") return "needs_evidence";
   if (execution === "target_reached") return "finished";

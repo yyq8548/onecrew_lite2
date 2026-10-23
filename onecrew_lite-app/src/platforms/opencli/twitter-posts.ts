@@ -2,6 +2,7 @@ import { z } from "zod";
 import { nativeContentObservations } from "./observations.ts";
 import { OpenCliError } from "./errors.ts";
 import type { ReviewedOpenCliRead } from "./read-plan.ts";
+import { twitterIdentityPlan } from "./profiles.ts";
 
 const text = z.string().refine(value => value.isWellFormed());
 const numeric = (value: string) => /^[1-9]\d{0,19}$/u.test(value);
@@ -35,15 +36,25 @@ function locator(value: string) {
 }
 export function twitterPostContentPlan(handle: string, postId: string, accountId: string) {
   target(handle, postId, accountId);
-  return { site: "onecrew-twitter-post-content", name: "read", args: ["-f", "json", "--", handle, postId, accountId], addons: ["onecrew-twitter-post-content", "onecrew-twitter-post-identity", "onecrew-browser-search"], maximumBytes: 64000, decode(value: unknown) {
+  return { site: "onecrew-twitter-post-content", name: "read", args: ["-f", "json", "--", handle, postId, accountId], addons: ["onecrew-twitter-post-content", "onecrew-twitter-post-identity", "onecrew-twitter-identity", "onecrew-browser-search"], maximumBytes: 64000, decode(value: unknown) {
     const row = one(content, value);
     if (!validIdentity(row.identity, handle, postId) || row.identity.account_id !== accountId || !row.text.trim() || Buffer.byteLength(row.text) > 8000 || row.text.includes("\0") || !row.created_at.trim() || Buffer.byteLength(row.created_at) > 80 || /\p{Cc}/u.test(row.created_at) || new Set(row.expanded_urls).size !== row.expanded_urls.length || !row.expanded_urls.every(locator)) return invalid();
     return row;
   } } satisfies ReviewedOpenCliRead<unknown>;
 }
+export function twitterPostEvidencePlan(handle: string, postId: string) {
+  target(handle, postId);
+  return { site: "onecrew-twitter-post-content", name: "read", args: ["-f", "json", "--include-author-profile", "--", handle, postId], addons: ["onecrew-twitter-post-content", "onecrew-twitter-post-identity", "onecrew-twitter-identity", "onecrew-browser-search"], maximumBytes: 64000, decode(value: unknown) {
+    const row = one(z.strictObject({ content, profile: z.record(z.string(), z.unknown()).nullable() }), value);
+    const savedContent = twitterPostContentPlan(handle, postId, row.content.identity.account_id).decode([row.content]);
+    const profile = row.profile === null ? null : twitterIdentityPlan(handle, "x_tweet_detail").decode([row.profile]);
+    if (profile !== null && profile.account_id !== savedContent.identity.account_id) return invalid();
+    return { content: savedContent, profile };
+  } } satisfies ReviewedOpenCliRead<unknown>;
+}
 export function twitterLanguagePlan(handle: string, postId: string, accountId: string) {
   target(handle, postId, accountId);
-  return { site: "onecrew-twitter-post-content", name: "read", args: ["-f", "json", "--language-sample", "--", handle, postId, accountId], addons: ["onecrew-twitter-post-content", "onecrew-twitter-post-identity", "onecrew-browser-search"], maximumBytes: 64000, decode(value: unknown) {
+  return { site: "onecrew-twitter-post-content", name: "read", args: ["-f", "json", "--language-sample", "--", handle, postId, accountId], addons: ["onecrew-twitter-post-content", "onecrew-twitter-post-identity", "onecrew-twitter-identity", "onecrew-browser-search"], maximumBytes: 64000, decode(value: unknown) {
     const row = one(z.record(z.string(), z.unknown()), value);
     if (row.author_id !== accountId || row.source_url !== `https://x.com/${handle}/status/${postId}`) return invalid();
     return row;

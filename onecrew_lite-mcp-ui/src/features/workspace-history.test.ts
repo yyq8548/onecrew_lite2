@@ -5,7 +5,7 @@ import type { WorkspaceActivity } from "@mcp-ui/lib/result-contract/workspace";
 const first = "11111111-1111-4111-8111-111111111111";
 const second = "22222222-2222-4222-8222-222222222222";
 const activity: WorkspaceActivity = { campaign_id: "one", brief: "洗发水", stage: "searching",
-  qualified: 1, pending: 0, target: 4, attempted: 2, total: 3, used: 5, max: 100,
+  qualified: 1, pending: 0, target: 4, attempted: 2, total: 3, used: 5,
   login_required: 0, read_errors: 0, restricted: 0, stale: false };
 describe("workspace display history", () => {
   it("restores the same card after remount, isolated from other host views", () => {

@@ -21,6 +21,9 @@ const input = (arguments_: Record<string, unknown>): unknown => ({ input: argume
 const pageInput = (arguments_: Record<string, unknown>): unknown => ({ input: { ...arguments_, after_id: arguments_.after_id ?? null } });
 const direct = (arguments_: Record<string, unknown>): unknown => arguments_;
 const mappings = [
+  ["onecrew.repair.get", "onecrew_repair_get", direct],
+  ["onecrew.repair.apply", "onecrew_repair_apply", direct],
+  ["onecrew.repair.finish", "onecrew_repair_finish", direct],
   ["onecrew.outreach.action.status", "onecrew.outreach.action.status", direct],
   ["onecrew.outreach.contact_route.last_contact_account", "onecrew.outreach.contact_route.last_contact_account", direct],
   ["onecrew.outreach.conversation.get", "onecrew.outreach.conversation.get", direct],
@@ -65,6 +68,15 @@ const mappings = [
   ["youtube.credential.delete", "delete_youtube_api_key", (arguments_: Record<string, unknown>) => { const value = z.strictObject({ credential_id: z.string(), confirmed: z.boolean(), idempotency_key: z.string() }).parse(arguments_); return { credentialId: value.credential_id, confirmed: value.confirmed, idempotencyKey: value.idempotency_key }; }],
   ["onecrew.discovery.campaign.get", "onecrew_discovery_campaign_get", (arguments_: Record<string, unknown>) => ({ id: campaignId.parse(arguments_).campaign_id })],
   ["onecrew.discovery.advance", "onecrew_discovery_advance", input],
+  ["onecrew.discovery.host_work.claim", "onecrew_discovery_host_work_claim", input],
+  ["onecrew.discovery.execution.start", "onecrew_discovery_execution_start", input],
+  ["onecrew.discovery.execution.get", "onecrew_discovery_execution_get", () => ({})],
+  ["onecrew.discovery.host_work.get", "onecrew_discovery_host_work_get", input],
+  ["onecrew.discovery.host_work.submit", "onecrew_discovery_host_work_submit", input],
+  ["onecrew.discovery.host_operation.get", "onecrew_discovery_host_operation_get", input],
+  ["onecrew.discovery.queries.expand", "onecrew_discovery_queries_expand", input],
+  ["onecrew.discovery.source_targets.set", "onecrew_discovery_source_targets_set", input],
+  ["onecrew.discovery.web_author.resolve", "onecrew_discovery_web_author_resolve", input],
   ["onecrew.discovery.identity.get", "onecrew_discovery_identity_get", input],
   ["onecrew.discovery.candidates.count", "onecrew_discovery_candidates_count", (arguments_: Record<string, unknown>) => ({ id: campaignId.parse(arguments_).campaign_id })],
   ["onecrew.discovery.candidates.list", "onecrew_discovery_candidates_list", pageInput],

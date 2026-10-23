@@ -196,7 +196,7 @@ export async function buildCandidate(options: { output: string; productVersion: 
   const receipt = { productVersion: options.productVersion, target: options.target, nodeSha256, payloadSha256: manifest.payloadSha256, executableSha256: payloadDigest(executableBytes), executableBytes: executableBytes.length, productionReady: false, licenseTextMissing: manifest.components.filter(component => component.licenseEvidence === "declared_only").map(component => `${component.name}@${component.version}`) };
   await writeFile(join(output, "candidate.json"), JSON.stringify(receipt), { flag: "wx" });
   const zip = new JSZip();
-  zip.file(basename(executable), executableBytes, { unixPermissions: 0o755 });
+  zip.file(basename(executable), executableBytes, { unixPermissions: 0o100755 });
   zip.file("runtime-manifest.json", JSON.stringify(manifest)); zip.file("candidate.json", JSON.stringify(receipt));
   for (const file of files.filter(file => file.path.startsWith("licenses/"))) zip.file(file.path, await readFile(join(stage, ...file.path.split("/"))));
   const archive = await zip.generateAsync({ type: "nodebuffer", compression: "DEFLATE", compressionOptions: { level: 6 }, platform: options.target.startsWith("win32-") ? "DOS" : "UNIX" });

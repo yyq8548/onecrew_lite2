@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { PINTEREST_MIN_MONTHLY_VIEWS_EXCLUSIVE } from "@onecrew/runtime-contracts/discovery";
 import { discoveryIntentProposal, proposedDiscoveryConstraint, validateDiscoveryIntent } from "./intent.ts";
 import type { DiscoveryIntentProposal } from "./intent.ts";
 import { discoveryPlanInput, type DiscoveryPlanInput } from "./contracts.ts";
@@ -11,14 +10,13 @@ const count = z.number().int().min(1).max(10000);
 export const prepareDiscoveryDraftInput = z.strictObject({
   id: text.regex(/^[A-Za-z\d_-]{1,128}$/u), brief: text.refine(value => !!value.trim() && Buffer.byteLength(value) <= 32000),
   profile_ref: text.refine(value => !!value.length && Buffer.byteLength(value) <= 128 && !/\p{Cc}/u.test(value)), opencli_version: z.literal("1.8.8"),
-  target_count: count.nullish().transform(value => value ?? null), max_calls: count.nullish().transform(value => value ?? null), min_followers_override: z.number().int().nonnegative().safe().nullish().transform(value => value ?? null),
-  read_budget: z.strictObject({ mode: z.enum(["default", "explicit"]), limit: count.nullable() }).optional(),
+  target_count: count.nullish().transform(value => value ?? null), min_followers_override: z.number().int().nonnegative().safe().nullish().transform(value => value ?? null),
   criteria_overrides: z.strictObject({ region: boundedText.nullish().transform(value => value ?? null), language: boundedText.nullish().transform(value => value ?? null), category: boundedText.nullish().transform(value => value ?? null), requires_ai_tool_demo: z.boolean(), requires_public_tool_url: z.boolean() }).nullish().transform(value => value ?? null),
   scope_overrides: z.array(z.strictObject({ platform: text.refine(value => !!value.length && Buffer.byteLength(value) <= 128), keywords: z.array(keyword).min(1).max(20) })).max(64).default([]),
   refinement: z.strictObject({ campaign_id: text.min(1).max(128), expected_revision: z.number().int().positive().max(4294967295) }).nullish().transform(value => value ?? null),
-}).refine(value => !(value.read_budget && value.max_calls !== null) && new Set(value.scope_overrides.map(scope => scope.platform)).size === value.scope_overrides.length && Buffer.byteLength(value.brief) <= (value.refinement === null ? 4000 : 32000));
+}).refine(value => new Set(value.scope_overrides.map(scope => scope.platform)).size === value.scope_overrides.length && Buffer.byteLength(value.brief) <= (value.refinement === null ? 4000 : 32000));
 const proposedCount = proposedDiscoveryConstraint(z.union([z.number().int().nonnegative().safe(), z.bigint().min(0n).max(18446744073709551615n)]));
-export const semanticDiscoveryDraft = z.strictObject({ table_subject: text.default(""), target_count: proposedCount, max_calls: proposedCount, contact_search_terms: z.array(text).default([]), min_subscribers_exclusive: z.boolean().default(false), min_subscribers_in_requirements: z.boolean().default(false), intent: discoveryIntentProposal, scopes: z.array(z.strictObject({ platform: text, keywords: z.array(text) })) });
+export const semanticDiscoveryDraft = z.strictObject({ table_subject: text.default(""), target_count: proposedCount, source_targets: z.array(z.strictObject({ platform: text, count, excerpt: text.min(1) })).max(64).default([]), contact_search_terms: z.array(text).default([]), min_subscribers_exclusive: z.boolean().default(false), min_subscribers_in_requirements: z.boolean().default(false), intent: discoveryIntentProposal, scopes: z.array(z.strictObject({ platform: text, keywords: z.array(text) })) });
 export interface RegisteredDiscoverySource { readonly platform: string; readonly registered: boolean; readonly allowed_values: readonly string[]; readonly command?: string }
 export class DiscoveryDraftError extends Error { readonly code: string; readonly excerpts: readonly string[]; constructor(code: string, excerpts: readonly string[] = []) { super(code); this.code = code; this.excerpts = excerpts; } }
 export function isEnglishDiscoveryLanguage(value: string): boolean { return ["英文", "英语", "english", "en", "en-us", "en-gb"].includes(value.trim().toLowerCase()); }
@@ -31,7 +29,7 @@ export function discoveryQueryScript(value: string): RegExp | null {
   if (["阿拉伯语", "arabic", "ar"].includes(language)) return /[\u0600-\u06ff]/u;
   return null;
 }
-export type DiscoveryDraftPrevious = Pick<DiscoveryPlanInput, "criteria" | "target_count" | "max_calls">;
+export type DiscoveryDraftPrevious = Pick<DiscoveryPlanInput, "criteria" | "target_count">;
 export function buildDiscoveryDraft(raw: unknown, rawPlan: unknown, sources: readonly RegisteredDiscoverySource[], previous?: DiscoveryDraftPrevious): DiscoveryPlanInput {
   const input = prepareDiscoveryDraftInput.parse(raw), plan = semanticDiscoveryDraft.parse(rawPlan);
   const invalid = (code: string): never => { throw new DiscoveryDraftError(`discovery_draft_${code}`); };
@@ -44,10 +42,12 @@ export function buildDiscoveryDraft(raw: unknown, rawPlan: unknown, sources: rea
   if (plan.target_count.state === "unrestricted") {
     quotedCount(plan.target_count); throw new DiscoveryDraftError("discovery_draft_conditions_unsupported", [plan.target_count.excerpt]);
   }
-  const target_count = input.target_count ?? quotedCount(plan.target_count) ?? previous?.target_count ?? 30;
-  const inferredBudget = quotedCount(plan.max_calls);
-  const max_calls = input.read_budget?.mode === "explicit" ? input.read_budget.limit
-    : input.max_calls ?? (plan.max_calls.state === "unspecified" ? previous ? previous.max_calls : input.read_budget?.limit ?? null : inferredBudget);
+  const source_targets = plan.source_targets.length ? Object.fromEntries(plan.source_targets.map(target => {
+    if (!input.brief.includes(target.excerpt) || !plan.scopes.some(scope => scope.platform === target.platform)) return invalid("source_targets_invalid");
+    return [target.platform, target.count];
+  })) : undefined;
+  if (source_targets && Object.keys(source_targets).length !== plan.source_targets.length) invalid("source_targets_invalid");
+  const target_count = input.target_count ?? (source_targets ? Object.values(source_targets).reduce((sum, value) => sum + value, 0) : quotedCount(plan.target_count) ?? previous?.target_count ?? 30);
   plan.intent.region = { state: "unspecified" };
   if (input.criteria_overrides) for (const [label, field] of [["Content language", "language"], ["Content category", "category"]] as const) {
     const value = input.criteria_overrides[field]; if (value === null) continue; const line = `${label}: ${value}`;
@@ -67,7 +67,7 @@ export function buildDiscoveryDraft(raw: unknown, rawPlan: unknown, sources: rea
   const language = input.criteria_overrides?.language ?? inheritedText("language");
   for (const override of input.scope_overrides) {
     const source = registered.find(source => source.platform === override.platform); if (!source) invalid("plan_invalid");
-    const translate = !!language.trim() && !/-(?:tag|node|subreddit)$/u.test(override.platform) && source!.allowed_values.length === 0;
+    const translate = !!language.trim() && !/-(?:tag|node)$/u.test(override.platform) && source!.allowed_values.length === 0;
     const existing = plan.scopes.find(scope => scope.platform === override.platform);
     if (existing) {
       if (translate) { if (existing.keywords.length !== override.keywords.length) invalid("scope_invalid"); const seen = new Set<string>(); existing.keywords = existing.keywords.filter(value => { const key = value.trim().toLowerCase(); if (seen.has(key)) return false; seen.add(key); return true; }); }
@@ -77,7 +77,7 @@ export function buildDiscoveryDraft(raw: unknown, rawPlan: unknown, sources: rea
   const seen = new Set<string>(), nonLatin = /[\u3400-\u9fff\u3040-\u30ff\uac00-\ud7af\u1100-\u11ff\u0400-\u052f\u0600-\u06ff]/u;
   for (const scope of plan.scopes) {
     const source = registered.find(source => source.platform === scope.platform); if (!source) invalid("plan_invalid");
-    const named = /-(?:tag|node|subreddit)$/u.test(scope.platform) || source!.allowed_values.length > 0;
+    const named = /-(?:tag|node)$/u.test(scope.platform) || source!.allowed_values.length > 0;
     if (!named) {
       if (isEnglishDiscoveryLanguage(language) && scope.keywords.some(value => !/[A-Za-z]/u.test(value) || nonLatin.test(value))) invalid("scope_invalid");
       const script = discoveryQueryScript(language);
@@ -94,7 +94,6 @@ export function buildDiscoveryDraft(raw: unknown, rawPlan: unknown, sources: rea
   const threshold = input.min_followers_override ?? (plan.min_subscribers_in_requirements ? 0 : min.state === "specified" ? min.value : min.state === "unrestricted" ? 0 : previous ? previous.criteria.min_subscribers ?? previous.criteria.min_followers ?? 0 : plan.scopes.every(scope => scope.platform === "linkedin") ? 0 : 2000);
   const criteria: Record<string, unknown> = { category: inheritedText("category"), region: "", language: inheritedText("language"), min_subscribers: threshold, requires_ai_tool_demo: false, requires_public_tool_url: false };
   if (thresholdSource !== undefined) criteria.min_subscribers_source = thresholdSource;
-  if (plan.scopes.some(scope => scope.platform === "pinterest")) criteria.pinterest_min_monthly_views_exclusive = previous?.criteria.pinterest_min_monthly_views_exclusive ?? PINTEREST_MIN_MONTHLY_VIEWS_EXCLUSIVE;
   const requirements = [...plan.intent.other_hard_conditions];
   const quality = plan.intent.quality_filter;
   criteria.quality_filter = quality?.state === "specified" ? freezeQualityFilter(quality.value, requirements)
@@ -105,7 +104,7 @@ export function buildDiscoveryDraft(raw: unknown, rawPlan: unknown, sources: rea
   if (input.refinement !== null) criteria.refinement = input.refinement;
   if (input.criteria_overrides) { for (const key of ["language", "category"] as const) if (input.criteria_overrides[key] !== null) criteria[key] = input.criteria_overrides[key]; criteria.requires_ai_tool_demo = input.criteria_overrides.requires_ai_tool_demo; criteria.requires_public_tool_url = input.criteria_overrides.requires_public_tool_url; }
   if (plan.contact_search_terms.length) criteria.contact_search_terms = plan.contact_search_terms;
-  criteria.automatic_query_expansion = input.scope_overrides.length === 0;
+  criteria.automatic_query_expansion = true;
   if (plan.table_subject.trim()) criteria.table_subject = [...plan.table_subject.trim()].filter(character => !/\p{Cc}/u.test(character)).slice(0, 40).join("");
-  return discoveryPlanInput.parse({ id: input.id, brief: input.brief, opencli_version: input.opencli_version, criteria, scopes: plan.scopes.map(scope => ({ ...scope, profile_ref: input.profile_ref })), target_count, max_calls });
+  return discoveryPlanInput.parse({ id: input.id, brief: input.brief, opencli_version: input.opencli_version, criteria, scopes: plan.scopes.map(scope => ({ ...scope, profile_ref: input.profile_ref })), target_count, ...(source_targets ? { source_targets } : {}) });
 }

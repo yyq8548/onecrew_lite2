@@ -3,12 +3,17 @@ import { lstat, open, readFile, rename } from "node:fs/promises";
 import { join } from "node:path";
 import { z } from "zod";
 import { creatorU64 } from "@onecrew/runtime-contracts/creators";
+import { discoveryQueryAuditDiagnostic } from "@onecrew/runtime-contracts/status";
 import { parseApplicationJson, stringifyApplicationJson } from "../contracts/application-json.ts";
 import { createPrivateDirectory, verifyPrivateDirectory, verifyPrivateFile } from "../storage/private-backup.ts";
+import type { OpenCliDiagnostics } from "../platforms/opencli/errors.ts";
 
 const text = z.string(), u32 = z.number().int().min(0).max(4294967295);
+const openCliDiagnostic: z.ZodType<OpenCliDiagnostics> = z.strictObject({ stage: text.max(8192), exit_code: z.number().int().nullable(), stdout: text.max(8192), stderr: text.max(8192) });
+const accessDiagnostic = z.strictObject({ endpoint: text.refine(value => ["/installations/{id}", "/creator-sync/credential", "/me"].includes(value)), elapsed_ms: u32.optional(), http_status: z.number().int().min(100).max(599).optional(), transport_code: text.regex(/^[A-Za-z][A-Za-z0-9_]{0,63}$/u).optional() });
 export const discoveryReadFailure = z.strictObject({ recorded_at: creatorU64, step: text, platform: text.nullable(), target_id: text.nullable(), call_number: u32.nullable(), code: text,
-  diagnostic: z.strictObject({ endpoint: text.refine(value => ["/installations/{id}", "/creator-sync/credential", "/me"].includes(value)), elapsed_ms: u32.optional(), http_status: z.number().int().min(100).max(599).optional(), transport_code: text.regex(/^[A-Za-z][A-Za-z0-9_]{0,63}$/u).optional() }).optional() });
+  target_url: text.max(2048).nullable().optional(), elapsed_ms: u32.optional(),
+  diagnostic: z.union([accessDiagnostic, openCliDiagnostic, discoveryQueryAuditDiagnostic]).optional() });
 export type DiscoveryReadFailure = z.infer<typeof discoveryReadFailure>;
 const phase = z.strictObject({ calls: creatorU64, elapsed_ms: creatorU64 });
 const metricsSchema = z.object({ campaign_id: text, phases: z.record(text, phase), failures: z.array(discoveryReadFailure).default([]), failure_count: creatorU64.default(0) });
@@ -21,7 +26,7 @@ const writers = new Map<string, Promise<void>>();
 const folders = new Map<string, Promise<string>>();
 const missing = (error: unknown) => (error as NodeJS.ErrnoException).code === "ENOENT";
 
-// 每个实例绑定真实账号私有目录；只保存聚合耗时及分类错误，不保存页面或凭据。
+// 每个实例绑定真实账号私有目录；诊断只接收脱敏限长片段。
 export class FileDiscoveryExecutionMetrics {
   readonly #directory: string; readonly #assertOwned: () => void; #pending: Pending[] = [];
   constructor(directory: string, assertOwned: () => void) { this.#directory = directory; this.#assertOwned = assertOwned; }
@@ -56,6 +61,12 @@ export class FileDiscoveryExecutionMetrics {
     const folder = await this.#folder(false); if (folder === null) return 0;
     const metrics = await this.#load(folder, campaign); this.#assertOwned();
     return BigInt(metrics.failure_count) >= BigInt(metrics.failures.length) ? metrics.failure_count : metrics.failures.length;
+  }
+  async recentFailures(campaign: string): Promise<DiscoveryReadFailure[]> {
+    const folder = await this.#folder(false); if (folder === null) return [];
+    const metrics = await this.#load(folder, campaign); this.#assertOwned();
+    if (metrics.campaign_id !== campaign) throw new Error("discovery_metrics_campaign_mismatch");
+    return metrics.failures.slice(-20).reverse();
   }
   async flushPending(): Promise<void> {
     const pending = this.#pending; this.#pending = [];
@@ -94,5 +105,26 @@ export class FileDiscoveryExecutionMetrics {
     }));
     const errors = results.filter((item): item is PromiseRejectedResult => item.status === "rejected").map(item => item.reason as unknown);
     if (errors.length) throw new AggregateError(errors, "discovery_metrics_flush_failed");
+  }
+}
+
+// 同时只写一批；新事件留在原队列，暂停和结束时完整排空。
+export class DiscoveryMetricsWriter {
+  readonly #metrics: FileDiscoveryExecutionMetrics;
+  #task: Promise<void> | undefined;
+  #result: { ok: true } | { ok: false; error: unknown } | undefined;
+  constructor(metrics: FileDiscoveryExecutionMetrics) { this.#metrics = metrics; }
+  #complete(): void {
+    if (!this.#result) return;
+    if (!this.#result.ok) throw this.#result.error;
+    this.#task = undefined; this.#result = undefined;
+  }
+  reap(): void {
+    this.#complete();
+    if (!this.#task) this.#task = this.#metrics.flushPending().then(() => { this.#result = { ok: true }; }, error => { this.#result = { ok: false, error: error as unknown }; });
+  }
+  async close(): Promise<void> {
+    await this.#task; this.#complete();
+    await this.#metrics.flushPending();
   }
 }

@@ -16,6 +16,7 @@ import { clearOpenCliAuthObservations } from "@/lib/opencli-auth";
 import { persistLocale } from "@/i18n";
 import { ComponentCompatibility } from "@/pages/connect/component-compatibility";
 import { TableBackendSync } from "@/pages/connect/table-backend-sync";
+import { OneClickRepair } from "@/pages/connect/one-click-repair";
 
 function StatusRow({ label, children }: { label: string; children: React.ReactNode }) {
   return <div className="flex items-start justify-between gap-6 py-3 text-sm">
@@ -49,10 +50,12 @@ export function Connect({ freeEdition = false, freePage = "connections", onFreeN
   return (
     <div className="h-full overflow-y-auto">
       <div className="mx-auto max-w-3xl space-y-5 p-5">
-        <div className="flex justify-end gap-2" aria-label={t("service.interfaceLanguage")}>
+        <OneClickRepair page={freePage} credentialId={status?.login?.status.credential_id ?? null}>
+        <div className="flex gap-2" aria-label={t("service.interfaceLanguage")}>
           {(["zh-CN", "en-US"] as const).map(locale => <Button key={locale} size="sm" variant={i18n.resolvedLanguage === locale ? "secondary" : "outline"}
             aria-pressed={i18n.resolvedLanguage === locale} onClick={() => { persistLocale(locale); void i18n.changeLanguage(locale); }}>{locale === "zh-CN" ? "中文" : "English"}</Button>)}
         </div>
+        </OneClickRepair>
         {service.isPending && <Loader2 className="size-4 animate-spin" aria-label={t("service.checking")} />}
         {service.isError && <Alert variant="destructive"><AlertDescription>{t("service.statusFailed")}</AlertDescription></Alert>}
         {status && <>

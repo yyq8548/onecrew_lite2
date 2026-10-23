@@ -1,9 +1,10 @@
 import { readFileSync } from "node:fs";
 import type { DatabaseSync } from "node:sqlite";
+import { discoveryReadBusySql } from "./read-capacity.ts";
 import { z } from "zod";
 import { parseApplicationJson, stringifyApplicationJson } from "../contracts/application-json.ts";
 import { runtimeAssetPath } from "../packaging/runtime-context.ts";
-import { validateCreatorSchema } from "../storage/creator-schema.ts";
+import { assertValidatedCreatorConnection } from "../storage/creator-schema.ts";
 import { assertDiscoveryReadHealthy } from "./read-health.ts";
 import { loadDiscoveryReviewBasis } from "./review-basis.ts";
 import { loadDiscoveryContentReceipt, loadDiscoveryLanguageSamples, loadDiscoveryProfileReceipt } from "./review-receipts.ts";
@@ -12,12 +13,12 @@ import { discoveryReadPlatformStatus, sourceLocalReadFailure } from "./stops.ts"
 import { discoveryLanguageClaim, validDiscoveryLanguageSample, type DiscoveryLanguageClaim, type DiscoveryLanguageSample } from "./language-contracts.ts";
 
 const eligibleSql = readFileSync(runtimeAssetPath("discovery/language-eligible.sql", new URL("./language-eligible.sql", import.meta.url)), "utf8");
-const platforms = new Set(["twitter", "youtube", "bilibili", "tiktok", "reddit", "facebook", "instagram", "weibo", "bluesky", "zhihu", "hackernews", "linkedin", "douyin", "google", "yahoo"]);
+const platforms = new Set(["twitter", "youtube", "bilibili", "tiktok", "facebook", "instagram", "weibo", "bluesky", "zhihu", "hackernews", "linkedin", "douyin", "google", "yahoo"]);
 const text = z.string().refine(value => value.isWellFormed());
 const object = (value: unknown) => z.record(z.string(), z.unknown()).parse(value);
 function observedSource(read: ReturnType<typeof loadDiscoveryContentReceipt>): string | null {
   if (read.status !== "completed" || read.stop_code !== null) return null;
-  return ["instagram", "pinterest", "linkedin"].includes(read.claim.platform) ? text.parse(object(read.native_content).source_url) : read.claim.source_url;
+  return ["instagram", "linkedin"].includes(read.claim.platform) ? text.parse(object(read.native_content).source_url) : read.claim.source_url;
 }
 function twitterHandle(source: string): string {
   const match = /^https:\/\/x\.com\/([A-Za-z0-9_]{1,15})\/status\/[1-9][0-9]{0,19}$/u.exec(source);
@@ -32,7 +33,7 @@ function utf8Prefix(value: string, maximum: number): string {
 
 export class DiscoveryLanguageRepository {
   readonly #db: DatabaseSync;
-  constructor(database: DatabaseSync) { validateCreatorSchema(database); this.#db = database; }
+  constructor(database: DatabaseSync) { assertValidatedCreatorConnection(database); this.#db = database; }
   #transaction<T>(body: () => T): T {
     this.#db.exec("BEGIN IMMEDIATE"); let committed = false;
     try { const result = body(); this.#db.exec("COMMIT"); committed = true; return result; }
@@ -42,7 +43,7 @@ export class DiscoveryLanguageRepository {
     if (this.#db.prepare("SELECT 1 FROM discovery_content_reads WHERE discovery_campaign_id=? AND search_hit_id=? AND platform='linkedin' AND status='failed' AND stop_code='linkedin_content_unavailable'").get(campaign,hit)) return false;
     // 主页简介不能替代作者原帖的语言样本。
     if (this.#db.prepare("SELECT 1 FROM discovery_web_source_reads WHERE discovery_campaign_id=? AND search_hit_id=? AND target_platform IN ('instagram','tiktok')").get(campaign, hit)) return false;
-    return this.#db.prepare(eligibleSql).get(campaign, hit)!.eligible === 1;
+    return this.#db.prepare(eligibleSql.replace("__DISCOVERY_READ_AVAILABLE__", `NOT ${discoveryReadBusySql(this.#db, campaign, "h.platform")} AND NOT ${discoveryReadBusySql(this.#db, campaign, "c.platform")}`)).get(campaign, hit)!.eligible === 1;
   }
   source(campaign: string, hit: string) {
     return z.object({ platform: text, profile_ref: text }).parse(this.#db.prepare("SELECT platform,profile_ref FROM discovery_search_hits WHERE discovery_campaign_id=? AND id=?").get(campaign, hit));
@@ -71,7 +72,7 @@ export class DiscoveryLanguageRepository {
       if (!this.eligible(campaign, hit)) return null;
       const basis = loadDiscoveryReviewBasis(this.#db, campaign, revision, hit), previous = loadDiscoveryLanguageSamples(this.#db, campaign, revision, basis.candidate_id);
       const now = Math.floor(Date.now() / 1000);
-      const used = this.#db.prepare("UPDATE discovery_campaigns SET used_calls=used_calls+?3,updated_at=?4 WHERE id=?1 AND current_revision=?2 AND phase='active' AND (max_calls IS NULL OR used_calls+?3<=max_calls) RETURNING used_calls").get(campaign, revision, 1, now);
+      const used = this.#db.prepare("UPDATE discovery_campaigns SET used_calls=used_calls+?3,updated_at=?4 WHERE id=?1 AND current_revision=?2 AND phase='active' RETURNING used_calls").get(campaign, revision, 1, now);
       if (!used) return null;
       let savedContentUrls: string[] = [];
       if (basis.hit.platform === "facebook") {
@@ -82,12 +83,12 @@ export class DiscoveryLanguageRepository {
       }
       let authorHandle: string, root: string;
       const platform = basis.hit.platform, content = basis.native_content;
-      if (platform === "linkedin" || platform === "instagram" || platform === "reddit") {
-        const patterns = { linkedin: /^https:\/\/www\.linkedin\.com\/in\/([A-Za-z0-9][A-Za-z0-9_-]{0,99})\/$/u, instagram: /^https:\/\/www\.instagram\.com\/(.*)\/$/u, reddit: /^https:\/\/www\.reddit\.com\/user\/(.*)\/$/u };
+      if (platform === "linkedin" || platform === "instagram") {
+        const patterns = { linkedin: /^https:\/\/www\.linkedin\.com\/in\/([A-Za-z0-9][A-Za-z0-9_-]{0,99})\/$/u, instagram: /^https:\/\/www\.instagram\.com\/(.*)\/$/u };
         const handle = patterns[platform].exec(basis.hit.author_url ?? "")?.[1];
         if (handle === undefined || platform === "linkedin" && ["me", "self"].includes(handle.toLowerCase())) throw new Error("language_author_unavailable");
         authorHandle = handle;
-        root = platform === "reddit" ? basis.hit.source_url : content ? observedSource(content) ?? "" : "";
+        root = content ? observedSource(content) ?? "" : "";
         if (!root || platform === "linkedin" && !/^https:\/\/www\.linkedin\.com\/feed\/update\/urn:li:activity:[1-9][0-9]{0,19}\/$/u.test(root)) throw new Error("language_author_unavailable");
       } else if (platform === "facebook") {
         if (!content) throw new Error("language_author_unavailable"); authorHandle = basis.native_author_id; root = content.claim.source_url;

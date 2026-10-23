@@ -5,10 +5,14 @@ const safe = new Set(["score_queue_unavailable", "query_round_authentication_req
 export const discoveryFindingFailureCodes = ["initial_match_criterion_invalid", "initial_match_outcome_invalid", "initial_match_level_invalid", "initial_match_rationale_empty", "initial_match_rationale_too_large", "initial_match_auxiliary_field_invalid", "initial_match_citation_count_invalid", "initial_match_citation_not_saved", "selection_quality_findings_required", "selection_quality_citation_invalid", "selection_quality_level_invalid", "selection_quality_required_count_invalid", "selection_quality_author_evidence_required", "selection_quality_reviewer_required"] as const;
 for (const code of discoveryFindingFailureCodes) deferred.add(code);
 deferred.add("initial_match_professional_review_invalid");
+for (const code of ["initial_match_evidence_ids_invalid", "initial_match_quality_invalid", "host_work_unavailable", "host_work_already_waiting"]) deferred.add(code);
+for (const code of ["host_work_scope_required", "host_work_file_invalid", "host_work_owner_mismatch", "host_work_not_found", "host_work_lease_expired", "host_work_receipt_conflict", "host_work_evidence_not_found", "host_operation_not_found"]) safe.add(code);
 for (const code of ["score_queue_exceeds_capacity", "score_queue_file_invalid", "score_queue_write_and_cleanup_failed"]) safe.add(code);
 export function discoveryScoreDeferred(code: string): boolean { return deferred.has(code); }
 for (const code of PLATFORM_READ_FAILURE_CODES) safe.add(code);
+for (const code of ["legacy_match_scoring_retired", "web_author_quote_invalid", "web_author_link_unobserved", "web_author_page_invalid", "web_author_identity_conflict", "web_author_native_source_invalid", "web_author_native_attribution_invalid", "web_author_material_changed", "web_author_approval_changed", "web_author_resolution_failed", "web_author_read_interrupted", "discovery_source_targets_campaign_changed", "discovery_source_targets_outside_approval", "query_round_not_exhausted", "query_round_read_active", "query_round_dependencies_unavailable"]) safe.add(code);
 safe.add("opencli_cancel_pending");
+safe.add("web_source_profile_already_saved");
 for (const code of ["provider_request_failed", "provider_response_http_error", "provider_endpoint_not_found", "provider_response_redirected", "provider_response_invalid_json", "provider_response_shape_invalid", "provider_source_unavailable", "youtube_video_unavailable", "youtube_watch_layout_unsupported", "youtube_author_identity_invalid", "youtube_description_unavailable", "discovery_draft_intent_invalid", "discovery_draft_scope_invalid"]) safe.add(code);
 for (const code of ["review_requirements_invalid", "review_requirements_incomplete", "review_requirements_mismatch", "review_requirement_citation_invalid"]) deferred.add(code);
 for (const code of ["discovery_repository_busy", "discovery_plan_missing", "discovery_repository_stopped", "discovery_repository_read_failed"]) safe.add(code);

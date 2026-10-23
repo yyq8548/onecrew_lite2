@@ -24,32 +24,6 @@ describe("manual contacts", () => {
     expect(html).not.toContain("wrong123"); expect(html).not.toContain("mailto:");
     expect(html).not.toContain('href="public123"');
   });
-  it.each(["zh-CN", "en-US"])("separates Reddit author chat and moderator contact in %s", async locale => {
-    const i18n = createInstance();
-    await i18n.init({ lng: locale, resources: { "zh-CN": { shell: zh }, "en-US": { shell: en } } });
-    const candidate: DiscoveryCandidate = {
-      id: "reddit", platform: "reddit", platform_account_id: "t2_native",
-      display_name: "Example", profile_url: "https://www.reddit.com/user/Example/",
-      verdict: "qualified", evidence: { source_urls: ["https://www.reddit.com/comments/abc/"], manual_profile_contact: true },
-    };
-    const render = () => renderToStaticMarkup(<I18nextProvider i18n={i18n}><DiscoveryManualContacts candidates={[candidate]} /></I18nextProvider>);
-    const copy = locale === "zh-CN" ? zh : en;
-    const html = render();
-    expect(html.match(/<tr\b/g)).toHaveLength(3);
-    expect(html).toContain(copy.opencliPilot.manualContactsRedditAuthorSteps);
-    expect(html).toContain(copy.opencliPilot.manualContactsRedditModeratorsSteps);
-    expect(html).toContain('href="https://www.reddit.com/user/Example/"');
-    expect(html).toContain('href="https://www.reddit.com/comments/abc/"');
-    expect(html).not.toMatch(/opencliPilot\.|<button|<form|mailto:|onclick=/);
-    candidate.evidence.manual_profile_contact = false;
-    expect(render()).toBe("");
-    candidate.evidence.manual_profile_contact = true;
-    candidate.evidence.source_urls = ["https://www.reddit.com.evil.example/comments/abc/"];
-    expect(render()).toBe("");
-    candidate.evidence.source_urls = ["https://www.reddit.com/comments/abc/"];
-    candidate.profile_url = "https://www.reddit.com/user/Other/?next=Example";
-    expect(render()).toBe("");
-  });
   it.each(["zh-CN", "en-US"])("shows actionable real %s copy without send controls", async locale => {
     const i18n = createInstance();
     await i18n.init({ lng: locale, resources: { "zh-CN": { shell: zh }, "en-US": { shell: en } } });

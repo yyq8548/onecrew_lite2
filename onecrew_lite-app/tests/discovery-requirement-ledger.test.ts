@@ -9,6 +9,7 @@ import { DiscoveryRepository } from "../src/discovery/repository.ts";
 import { parseApplicationJson, stringifyApplicationJson } from "../src/contracts/application-json.ts";
 import { stripUnauditedDiscoveryProofs } from "../src/discovery/review-proof-audit.ts";
 import { INITIAL_MATCH_REVIEWER } from "../src/discovery/initial-match.ts";
+import { SELECTION_QUALITY_REVIEWER } from "../src/discovery/quality-policy.ts";
 import { discoveryReviewReceipt } from "@onecrew/runtime-contracts/discovery";
 import { discoveryJsonValue } from "../src/discovery/library-material.ts";
 
@@ -25,11 +26,13 @@ test("真实作者资料经审核事务提交额外条件，伪造证明和跨�
     const requirement = { description: "核实已观察的作者内容", excerpt: quote };
     db.prepare("UPDATE discovery_campaign_revisions SET criteria_json=? WHERE discovery_campaign_id=? AND revision=1").run(stringifyApplicationJson({ requires_ai_tool_demo: false, requires_public_tool_url: false, requirements: [requirement] }), "merge-review");
     const material = repository.prepareReviewMaterial("merge-review", 1, hit);
-    const receipt = repository.submitReview("owner-requirements", { campaign_id: "merge-review", expected_revision: 1, search_hit_id: hit, material_hash: material.material_hash, request_id: "additional-condition", reviewer: { kind: "agent", label: INITIAL_MATCH_REVIEWER }, findings: [
-      { criterion: "match_fit", outcome: "supported", match_level: "good", rationale: quote, citations: [{ kind: "description", quote }] },
+    assert.throws(() => repository.submitReview("owner-requirements", { campaign_id: "merge-review", expected_revision: 1, search_hit_id: hit, material_hash: material.material_hash, request_id: "retired-score", reviewer: { kind: "agent", label: INITIAL_MATCH_REVIEWER }, findings: [] }), /legacy_match_scoring_retired/);
+    const receipt = repository.submitReview("owner-requirements", { campaign_id: "merge-review", expected_revision: 1, search_hit_id: hit, material_hash: material.material_hash, request_id: "additional-condition", reviewer: { kind: "agent", label: SELECTION_QUALITY_REVIEWER }, findings: [
+      { criterion: "selection_fit", outcome: "supported", match_level: null, rationale: quote, citations: [{ kind: "description", quote }] },
+      { criterion: "quality_rating", outcome: "supported", match_level: "good", rationale: quote, citations: [{ kind: "description", quote }] },
       { criterion: { requirement: 0 }, outcome: "supported", rationale: quote, citations: [{ kind: "description", quote }] },
     ] });
-    assert.deepEqual(receipt.judgments[1]?.criterion, { requirement: 0 });
+    assert.deepEqual(receipt.judgments[2]?.criterion, { requirement: 0 });
     assert.equal(discoveryReviewReceipt.safeParse(receipt).success, true);
     const evidence = parseApplicationJson(db.prepare("SELECT evidence_json FROM discovery_candidates WHERE id=?").get(material.candidate_id)!.evidence_json as string) as Record<string, unknown>;
     db.exec("BEGIN DEFERRED");

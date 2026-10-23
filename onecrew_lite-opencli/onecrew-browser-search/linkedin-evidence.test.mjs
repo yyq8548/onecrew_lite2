@@ -3,6 +3,7 @@ import {test} from 'node:test';
 import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 import {withOwnedSearchPage} from './owned-page.mjs';
+import {equivalentSourceUrl} from './source-url.mjs';
 import {linkedinProfileTarget, linkedinConnections, projectLinkedinProfile, observeLinkedinProfile, readLinkedinProfile,
   projectLinkedinContent, observeLinkedinContent, readLinkedinContent,
   projectLinkedinContact, observeLinkedinContact, readLinkedinContact} from './linkedin-evidence.mjs';
@@ -56,15 +57,15 @@ function pageContext() {
   const contact = anchor(`${source}overlay/contact-info/`);
   const paragraphs = ['· 3rd','Keyboard reviews','1,606 followers'].map(textContent=>({...visible,textContent}));
   const aboutHeading = {...visible,textContent:'About'};
-  const about = {querySelector:()=>null,querySelectorAll:selector=>selector==='h2'?[aboutHeading]:[{...visible,textContent:'Business: studio@example.org'}]};
+  const about = {matches:()=>false,querySelector:()=>null,querySelectorAll:selector=>selector==='h2'?[aboutHeading]:selector==='p'?[{...visible,textContent:'Business: studio@example.org'}]:[]};
   const header = {querySelectorAll:selector=>selector==='h1,h2,h3'?[name]:selector==='a[href]'?[message,message,website,contact]:paragraphs};
-  const main = {querySelectorAll:selector=>selector==='h1,h2'?[name]:[header,about]};
+  const main = {matches:()=>false,querySelectorAll:selector=>selector==='h1,h2'?[name]:selector==='section'?[header,about]:[]};
   const treeWalker = paragraph => {
     const nodes=paragraph.nodes || [{textContent:paragraph.textContent,parentElement:paragraph}];
     let index=-1;
     return {nextNode(){index++;this.currentNode=nodes[index];return index<nodes.length;},currentNode:null};
   };
-  const context = {location:{origin:'https://www.linkedin.com',pathname:`/in/${handle}/`,href:source},URL,TextEncoder,
+  const context = {location:{origin:'https://www.linkedin.com',pathname:`/in/${handle}/`,href:source},URL,TextEncoder,equivalentSourceUrl,
     NodeFilter:{SHOW_TEXT:4},document:{querySelector:()=>main,querySelectorAll:()=>[],createTreeWalker:treeWalker}};
   return {context,header,name,message,main,paragraphs,about};
 }

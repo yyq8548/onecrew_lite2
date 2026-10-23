@@ -82,11 +82,11 @@ const read = (value: DiscoveryCreatorView) => {
 };
 assert.deepEqual(read(material), [
   ['名字', '类别', '平台', '评分', '联系方式'],
-  ['作者', '科技', 'X', '一般', 'business@example.com'],
+  ['作者', '科技', 'X', '70 · 中等', 'business@example.com'],
 ]);
 const exported = XLSX.read(buildCreatorWorkbook(table, material, 'zh-CN'), {type: 'array'}).Sheets['推荐'];
 const followerTable = { ...table, columns: [...table.columns, { id: 'followers', name: 'Followers', data_type: 'string' as const }] };
-for (const platform of ['youtube', 'twitter', 'tiktok', 'instagram', 'facebook', 'linkedin', 'bilibili', 'douyin', 'weibo', 'reddit']) {
+for (const platform of ['youtube', 'twitter', 'tiktok', 'instagram', 'facebook', 'linkedin', 'bilibili', 'douyin', 'weibo']) {
 for (const [value, expected] of [['4029', '4029'], ['~12400', '约 12400'], ['~1万', '约 1万'], [null, '未知']] as const) {
   const counted = structuredClone(material);
   counted.projection!.groups[0].members[0].platform = platform;

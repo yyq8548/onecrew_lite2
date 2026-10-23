@@ -38,6 +38,8 @@ export class DiscoveryPublicPageExecutor {
     if (browser.profile !== input.profile_ref) throw new Error("discovery_browser_profile_mismatch");
     this.accounts.assertCurrent(context); owned.assertOwned();
     const claim = owned.repository.claimPublicPage(input);
+    const reused = owned.repository.reusePublicPage(claim);
+    if (reused !== null) return reused;
     const started = performance.now();
     const read = async () => {
       const channel = /^https:\/\/www\.youtube\.com\/channel\/([^/?#]+)$/u.exec(input.requested_url)?.[1];

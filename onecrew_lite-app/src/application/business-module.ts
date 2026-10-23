@@ -122,7 +122,7 @@ export function createBusinessModule(lease: InstanceLease, identities: UnifiedAc
   const operatorDisconnect = ownerVaultStore ? registerOperatorDisconnectOperations(operations, identities.contexts, ownerVaultStore, context => changes.publish(context, ["creators"])) : undefined;
   const admission = new DiscoveryAdmissionGate(identities.contexts);
   const supervisor = new DiscoveryExecutionSupervisor(identities.contexts, admission);
-  const discoveryDependencies = createDefaultDiscoveryDependencies({ accounts: identities.contexts, identities, directories: databases, browsers: { resolve: (context, profile) => browserBindings.resolveProfileRef(context, profile) }, openCliHome, ...(platformVault ? { vault: platformVault } : {}) });
+  const discoveryDependencies = createDefaultDiscoveryDependencies({ accounts: identities.contexts, identities, directories: databases, browsers: { resolve: (context, profile) => browserBindings.resolveProfileRef(context, profile) }, openCliHome, onHostWork: (context, notice, active) => workspaceCards.hostWork(context.principal.user.id, notice, active), ...(platformVault ? { vault: platformVault } : {}) });
   const sync = createTableSyncModule(identities, databases, operations, admission, createLibraryCaptureSource(identities.contexts, tables), () => supervisor.blocksBackendSync());
   const projection = createDiscoveryLibraryProjection(identities.contexts, databases, tables, origin);
   operations.register("onecrew_discovery_library_get", z.strictObject({ campaignId: z.string().min(1) }),

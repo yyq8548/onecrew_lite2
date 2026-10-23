@@ -7,8 +7,6 @@ export type DiscoveryCodexRequest = {
   version: string;
   platforms: string[];
   targetCount: number | null;
-  maxCalls: number | null;
-  readBudget?: { mode: "default" | "explicit"; limit: number | null };
   minFollowersOverride?: number | bigint | null;
   scopeOverrides?: { platform: string; keywords: string[] }[];
   startAfterPrepare?: boolean;
@@ -45,12 +43,10 @@ export function matchesDiscoveryCodexRequest(campaign: DiscoveryCampaign, reques
     && (!request.refinement || JSON.stringify(campaign.criteria.refinement) === JSON.stringify(request.refinement))
     && campaign.scopes.length > 0 && campaign.used_calls === 0
     && (request.targetCount === null || campaign.target_count === request.targetCount)
-    && (request.maxCalls === null || campaign.max_calls === request.maxCalls)
-    && (request.readBudget?.mode !== "explicit" || campaign.max_calls === request.readBudget.limit)
     && (request.minFollowersOverride == null || campaign.criteria.min_subscribers != null && BigInt(campaign.criteria.min_subscribers) === BigInt(request.minFollowersOverride))
     && (!request.criteriaOverrides || Object.entries(request.criteriaOverrides).every(([key, value]) => value === null || campaign.criteria[key] === value))
     && (!request.scopeOverrides || request.scopeOverrides.every(requested => campaign.scopes.some(scope => scope.platform === requested.platform && (JSON.stringify(scope.keywords) === JSON.stringify(requested.keywords)
-      || (typeof campaign.criteria.language === "string" && !!campaign.criteria.language.trim() && !/-(tag|node|subreddit)$/.test(requested.platform)
+      || (typeof campaign.criteria.language === "string" && !!campaign.criteria.language.trim() && !/-(tag|node)$/.test(requested.platform)
         && scope.keywords.length > 0 && scope.keywords.length <= requested.keywords.length)))))
     && campaign.scopes.every(scope => scope.profile_ref === request.profileRef && request.platforms.includes(scope.platform));
 }

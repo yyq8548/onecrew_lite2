@@ -4,6 +4,7 @@ import type { DiscoveryRepositoryResolver } from "./search-execution.ts";
 import type { DiscoveryDependencyResolver } from "./dependencies.ts";
 import { DiscoveryAdvanceExecutor, type DiscoveryAdvanceResult } from "./advance.ts";
 import { AccessVerificationError } from "../identity/access-verification.ts";
+import { OpenCliError } from "../platforms/opencli/errors.ts";
 import { discoveryExecutionInput, type DiscoveryExecutionOwner, type DiscoveryExecutionStage, type DiscoveryExecutionSupervisor } from "./execution-supervisor.ts";
 import type { DiscoverySemanticMatcher, PreparedSemanticDiscoveryMatch } from "./semantic-match.ts";
 import { resolveDiscoveryScoreDirectory, SavedDiscoveryScores } from "./saved-scores.ts";
@@ -11,11 +12,14 @@ import { DISCOVERY_READ_AHEAD, discoveryScoreCapacity, DiscoveryProjectionLane }
 import { DISCOVERY_SCORE_CONCURRENCY } from "./score-gate.ts";
 import { discoveryAdvanceFailure, discoveryScoreHit, discoveryScoringPlatforms } from "./execution-material.ts";
 import { discoveryExecutionFailureCode, discoveryScoreDeferred } from "./execution-failure.ts";
-import { FileDiscoveryExecutionMetrics } from "./execution-metrics.ts";
+import { FileDiscoveryExecutionMetrics, DiscoveryMetricsWriter } from "./execution-metrics.ts";
 import { DiscoveryQueryRoundExecutor } from "./query-round-execution.ts";
+import { DiscoveryQueryAuditError } from "./query-audit.ts";
 import { discoveryReadFailureLocation, recordDiscoveryReadTiming } from "./scheduler-metrics.ts";
-import { RETIRED_CREATOR_SOURCES } from "../platforms/opencli/sources.ts";
+import { INACTIVE_CREATOR_SOURCES } from "../platforms/opencli/sources.ts";
 import type { DiscoveryLibraryProjection } from "./runtime.ts";
+import { discoveryShouldHold } from "./backpressure.ts";
+import { DISCOVERY_READ_CONCURRENCY } from "./read-capacity.ts";
 
 interface SchedulerConfiguration {
   accounts: AccountContextService; repositories: DiscoveryRepositoryResolver; directories: AccountDatabases; supervisor: DiscoveryExecutionSupervisor;
@@ -26,7 +30,9 @@ interface SchedulerConfiguration {
 }
 type ScoreOutcome = { ok: true; saved: boolean; refresh?: boolean } | { ok: false; error: unknown };
 interface ScoreJob { hit: string; deferred: string[]; prepared: PreparedSemanticDiscoveryMatch; state: "queued" | "running" | "settled"; task?: Promise<ScoreOutcome>; outcome?: ScoreOutcome; preparedAt: number; queuedAt: number }
-const terminal = (kind: string): { stage: DiscoveryExecutionStage; reason: string } => kind === "target_reached" ? { stage: "finished", reason: kind } : kind === "budget_exhausted" ? { stage: "budget_exhausted", reason: kind } : ["needs_evidence", "search_exhausted"].includes(kind) ? { stage: "needs_evidence", reason: kind } : { stage: "paused", reason: "busy" };
+type ReadOutcome = { ok: true; result: DiscoveryAdvanceResult } | { ok: false; error: unknown };
+interface ReadJob { started: number; attempt?: DiscoveryAdvanceResult; task: Promise<ReadOutcome>; outcome?: ReadOutcome }
+const terminal = (kind: string): { stage: DiscoveryExecutionStage; reason: string } => kind === "target_reached" ? { stage: "finished", reason: kind } : ["needs_evidence", "search_exhausted"].includes(kind) ? { stage: "needs_evidence", reason: kind } : { stage: "paused", reason: "busy" };
 async function queueWork<T>(work: () => Promise<T>): Promise<T> { return work().then(value => value, error => { throw new Error(error instanceof Error && ["score_queue_exceeds_capacity", "score_queue_file_invalid", "score_queue_write_and_cleanup_failed"].includes(error.message) ? error.message : "score_queue_unavailable", { cause: error }); }); }
 
 export class DiscoveryScheduler {
@@ -43,8 +49,8 @@ export class DiscoveryScheduler {
       const current = owned.repository.getPlan(input.campaign_id);
       if (current.phase !== "active" || current.revision !== input.expected_revision || current.scopes.some(scope => scope.profile_ref !== input.profile_ref)) throw new Error("discovery_execution_approval_changed");
       await configuration.library.readiness(context); accounts.assertCurrent(context); owned.assertOwned();
-      const next = owned.repository.planStep(input.campaign_id, input.expected_revision, [...new Set([...input.excluded_platforms, ...RETIRED_CREATOR_SOURCES])]);
-      if (!["target_reached", "budget_exhausted", "needs_evidence", "search_exhausted", "busy"].includes(next.kind)) {
+      const next = owned.repository.planStep(input.campaign_id, input.expected_revision, [...new Set([...input.excluded_platforms, ...INACTIVE_CREATOR_SOURCES])]);
+      if (!["target_reached", "needs_evidence", "search_exhausted", "busy"].includes(next.kind)) {
         if (!configuration.dependencies) throw new Error("discovery_dependency_unavailable");
         const environment = await configuration.dependencies.reads(context), browser = await environment.browsers.resolve(context, input.profile_ref); await browser.assertCurrent();
         if (browser.profile !== input.profile_ref) throw new Error("discovery_browser_profile_mismatch");
@@ -56,15 +62,30 @@ export class DiscoveryScheduler {
   async #run(owner: DiscoveryExecutionOwner): Promise<void> {
     const configuration = this.#configuration, { context, input } = owner, owned = await configuration.repositories.resolve(context); owned.assertOwned();
     const directory = await resolveDiscoveryScoreDirectory(configuration.directories, context), queue = new SavedDiscoveryScores(directory, input.campaign_id, input.expected_revision), metrics = await configuration.metrics(context);
+    const metricsWriter = new DiscoveryMetricsWriter(metrics);
     const restored = [...await queueWork(() => queue.load()), ...await queueWork(() => queue.loadDeferred())], jobs: ScoreJob[] = [], attempted = new Set<string>(), lane = new DiscoveryProjectionLane(), failures: unknown[] = [];
     owned.repository.reprojectCompletedContacts(input.campaign_id, input.expected_revision);
     const restoredHits = new Set(restored.map(item => item.hit));
-    for (const hit of owned.repository.pendingScoreHits(input.campaign_id, input.expected_revision, [...input.excluded_platforms, ...RETIRED_CREATOR_SOURCES])) {
+    for (const { search_hit_id: hit } of owned.repository.readyReviews(input.campaign_id, input.expected_revision, [...input.excluded_platforms, ...INACTIVE_CREATOR_SOURCES])) {
       if (!restoredHits.has(hit)) { restored.push({ hit, deferred_platforms: [] }); restoredHits.add(hit); }
     }
     const recommended = new Set(owned.repository.recommendedCandidateIds(input.campaign_id));
     let recommendationVersion = 0;
-    let readAhead = 0, used = owned.repository.getPlan(input.campaign_id).used_calls, finalStage: DiscoveryExecutionStage = "paused", finalReason = "execution_interrupted", fatal = false;
+    let holdDiscovery = false;
+    const failedHits = new Set<string>();
+    const unavailable = [...new Set([...input.excluded_platforms, ...INACTIVE_CREATOR_SOURCES, ...owned.repository.readStops(input.campaign_id).map(stop => stop.platform)])];
+    const resumable = new Set(owned.repository.pendingScoreHits(input.campaign_id, input.expected_revision, unavailable));
+    for (let index = restored.length - 1; index >= 0; index--) if (!resumable.has(restored[index]!.hit)) restored.splice(index, 1);
+    const updatePipeline = () => {
+      for (const stop of owned.repository.readStops(input.campaign_id)) if (!unavailable.includes(stop.platform)) unavailable.push(stop.platform);
+      const active = owned.repository.activePendingCount(input.campaign_id, input.expected_revision, unavailable, [...failedHits]);
+      const next = discoveryShouldHold(holdDiscovery, active);
+      if (next !== holdDiscovery) metrics.enqueue(input.campaign_id, next ? "pipeline.discovery_held" : "pipeline.discovery_resumed", 0);
+      holdDiscovery = next;
+      owner.change(status => { status.pipeline = { active_pending: active, queued_scores: jobs.filter(job => job.state === "queued").length, running_scores: jobs.filter(job => job.state === "running").length, discovery_held: holdDiscovery, contact_pending: owned.repository.nextPublicPage(input.campaign_id, unavailable) !== null }; });
+    };
+    let readAhead = 0, finalStage: DiscoveryExecutionStage = "paused", finalReason = "execution_interrupted", fatal = false;
+    const reads: ReadJob[] = [];
     let attemptedRead: { result: DiscoveryAdvanceResult; started: number } | undefined;
     const elapsed = (start: number) => Math.floor(performance.now() - start), started = performance.now(); metrics.enqueue(input.campaign_id, "pipeline.started", 0);
     const sync = async () => {
@@ -91,6 +112,8 @@ export class DiscoveryScheduler {
     };
     const recordScore = (hit: string, outcome: ScoreOutcome): boolean => {
       const code = outcome.ok ? null : discoveryExecutionFailureCode(outcome.error), proceed = code === null || discoveryScoreDeferred(code);
+      if (outcome.ok) failedHits.delete(hit); else failedHits.add(hit);
+      if (code !== null) metrics.enqueueFailure(input.campaign_id, { recorded_at: Date.now(), step: "score", platform: null, target_id: hit, call_number: null, code });
       owner.change(status => {
         if (outcome.ok) status.deferred_hits = status.deferred_hits.filter(item => item.search_hit_id !== hit);
         else { const prior = status.deferred_hits.find(item => item.search_hit_id === hit); if (prior) prior.reason = code!; else if (status.deferred_hits.length < 1000) status.deferred_hits.push({ search_hit_id: hit, reason: code! }); }
@@ -107,13 +130,13 @@ export class DiscoveryScheduler {
         if (job.state !== "queued") continue; active++; job.state = "running";
         metrics.enqueue(input.campaign_id, "score.queue", elapsed(job.queuedAt), job.hit);
         job.task = (async (): Promise<ScoreOutcome> => {
-          const matcher = await configuration.matcher(context), receipt = await matcher.evaluate(context, job.prepared, (phase, duration) => metrics.enqueue(input.campaign_id, `score.semantic.${phase}`, duration, job.hit));
+          const matcher = await configuration.matcher(context), receipt = await matcher.evaluate(context, job.prepared, (phase, duration) => metrics.enqueue(input.campaign_id, `score.semantic.${phase}`, duration, job.hit), code => metrics.enqueue(input.campaign_id, `score.correction.${code}`, 0, job.hit), undefined, owner.signal);
           if (receipt !== null) await queueWork(() => queue.remove(job.hit));
           return { ok: true, saved: receipt !== null, refresh: receipt === null };
-        })().then(value => value, error => ({ ok: false as const, error: error as unknown })).then(async outcome => {
+        })().then(value => value, error => owner.signal.aborted && error === owner.signal.reason ? { ok: true as const, saved: false, refresh: true } : { ok: false as const, error: error as unknown }).then(async outcome => {
           if (!outcome.ok) await queueWork(() => queue.defer({ hit: job.hit, deferred_platforms: job.deferred }, discoveryExecutionFailureCode(outcome.error)));
           return outcome;
-        }).then(value => value, error => ({ ok: false as const, error: error as unknown })).then(outcome => { metrics.enqueue(input.campaign_id, "score", elapsed(job.preparedAt)); job.outcome = outcome; job.state = "settled"; return outcome; });
+        }).then(value => value, error => ({ ok: false as const, error: error as unknown })).then(outcome => { metrics.enqueue(input.campaign_id, "score", elapsed(job.preparedAt), job.hit); job.outcome = outcome; job.state = "settled"; return outcome; });
       }
     };
     const finishOne = async (): Promise<boolean> => {
@@ -141,62 +164,100 @@ export class DiscoveryScheduler {
     };
     const work = await (async () => {
       while (!fatal) {
-        await metrics.flushPending(); await lane.reap();
+        metricsWriter.reap(); await lane.reap();
         if (jobs.some(job => job.state === "settled")) { if (!await finishOne()) break; readAhead = 0; continue; }
         if (owner.signal.aborted) break;
         configuration.accounts.assertCurrent(context); owned.assertOwned();
+        updatePipeline();
         if (jobs.length || restored.length) {
-          const capacity = discoveryScoreCapacity(owned.repository.remainingSlots(input.campaign_id, input.excluded_platforms));
+          const capacity = discoveryScoreCapacity(owned.repository.remainingSlots(input.campaign_id, unavailable));
           if (!capacity && !jobs.length) restored.length = 0;
           if (jobs.length && (jobs.length >= capacity || readAhead >= DISCOVERY_READ_AHEAD)) { if (!await finishOne()) break; readAhead = 0; continue; }
         }
         const saved = restored.shift(); if (saved) { if (!await enqueue(saved.hit, saved.deferred_platforms)) break; continue; }
-        owner.change(status => { status.stage = "searching"; }); const began = performance.now();
-        const result = await configuration.advances.advance(context, { campaign_id: input.campaign_id, expected_revision: input.expected_revision, excluded_platforms: input.excluded_platforms }, jobs.flatMap(job => job.deferred), jobs.map(job => job.hit), owner.signal, result => { attemptedRead = { result, started: began }; });
+        owner.change(status => { status.stage = "searching"; });
+        if (!reads.some(read => read.outcome)) {
+          while (reads.length < DISCOVERY_READ_CONCURRENCY && !owner.signal.aborted) {
+            const started = performance.now(); let read: ReadJob;
+            const task = configuration.advances.advance(context, { campaign_id: input.campaign_id, expected_revision: input.expected_revision, excluded_platforms: input.excluded_platforms }, jobs.flatMap(job => job.deferred), jobs.map(job => job.hit), owner.signal, result => { read.attempt = result; }, { holdDiscovery })
+              .then(result => ({ ok: true as const, result }), error => ({ ok: false as const, error: error as unknown }))
+              .then(outcome => { read.outcome = outcome; return outcome; });
+            read = { started, task }; reads.push(read);
+          }
+          await Promise.race([...reads.map(read => read.task), ...jobs.flatMap(job => job.task ? [job.task] : [])]);
+        }
+        const read = reads.find(item => item.outcome);
+        if (!read) continue;
+        reads.splice(reads.indexOf(read), 1);
+        if (read.attempt) attemptedRead = { result: read.attempt, started: read.started };
+        if (!read.outcome!.ok) throw read.outcome!.error;
+        const result = read.outcome!.result, began = read.started;
         attemptedRead = undefined;
-        const advancing = result.step.kind.startsWith("read_") || result.step.kind === "search";
+        const advancing = result.step.kind.startsWith("read_") || result.step.kind === "search" || result.step.kind === "resolve_article";
         if (advancing) metrics.enqueue(input.campaign_id, "read", elapsed(began));
         recordDiscoveryReadTiming(metrics, input.campaign_id, result, elapsed(began));
         const failure = discoveryAdvanceFailure(result);
-        if (failure !== null) metrics.enqueueFailure(input.campaign_id, { recorded_at: Date.now(), ...discoveryReadFailureLocation(result), call_number: result.campaign.used_calls, code: discoveryExecutionFailureCode(failure) });
-        owner.change(status => { status.used = result.campaign.used_calls; });
+        if (failure !== null) metrics.enqueueFailure(input.campaign_id, { recorded_at: Date.now(), ...discoveryReadFailureLocation(result), elapsed_ms: elapsed(began), call_number: result.campaign.used_calls, code: discoveryExecutionFailureCode(failure), ...(result.provider_diagnostics ? { diagnostic: result.provider_diagnostics } : {}) });
+        owner.change(status => { status.used = owned.repository.getPlan(input.campaign_id).used_calls; });
         const hadScores = jobs.length > 0; if (hadScores && advancing) readAhead++;
         let hit = discoveryScoreHit(result); if (result.public_page && owned.repository.candidateIsQualified(input.campaign_id, result.public_page.candidate_id)) hit = null;
         if (hit !== null && !owner.signal.aborted) { const previous = jobs.length; if (!await enqueue(hit, discoveryScoringPlatforms(result))) break; if (previous === 1 && jobs.length === 2) readAhead = 0; }
         publishChanged();
+        if (!advancing && reads.length) {
+          await Promise.race([...reads.map(read => read.task), ...jobs.flatMap(job => job.task ? [job.task] : [])]);
+          continue;
+        }
         if (!advancing && hadScores) { if (!await finishOne()) break; readAhead = 0; continue; }
         if (!advancing) {
-          if (["search_exhausted", "needs_evidence"].includes(result.step.kind) && result.campaign.criteria.automatic_query_expansion === true
-            && result.campaign.platform_runs.some(run => run.status === "completed" && !input.excluded_platforms.includes(run.platform) && !RETIRED_CREATOR_SOURCES.includes(run.platform))) {
+          if (["search_exhausted", "needs_evidence"].includes(result.step.kind)
+            && result.campaign.platform_runs.some(run => run.status === "completed" && !unavailable.includes(run.platform))) {
             if (!configuration.dependencies) throw new Error("discovery_dependency_unavailable");
             const expanded = await new DiscoveryQueryRoundExecutor(configuration.accounts, configuration.repositories, configuration.dependencies).expand(context, input.campaign_id, input.expected_revision, input.excluded_platforms, owner.signal);
             if (expanded) continue;
           }
-          ({ stage: finalStage, reason: finalReason } = terminal(result.step.kind)); break;
+          ({ stage: finalStage, reason: finalReason } = terminal(holdDiscovery && result.step.kind === "busy" ? "needs_evidence" : result.step.kind)); break;
         }
-        if (result.campaign.used_calls <= used) throw new Error("progress_unconfirmed"); used = result.campaign.used_calls;
       }
     })().then(() => ({ ok: true as const }), error => ({ ok: false as const, error: error as unknown }));
     const deliberateStop = !work.ok && owner.signal.aborted && (work.error === owner.signal.reason || work.error === context.signal.reason || work.error instanceof DOMException && work.error.name === "AbortError");
     if (!work.ok && !deliberateStop) {
       const code = discoveryExecutionFailureCode(work.error);
-      if (attemptedRead) {
+      if (work.error instanceof DiscoveryQueryAuditError) {
+        metrics.enqueueFailure(input.campaign_id, { recorded_at: Date.now(), step: "query_audit", platform: null, target_id: null, call_number: null, code, diagnostic: work.error.diagnostics });
+      } else if (attemptedRead) {
         const { result, started } = attemptedRead, campaign = owned.repository.getPlan(input.campaign_id);
         const location = discoveryReadFailureLocation(result);
         const platforms = [...new Set(campaign.scopes.map(scope => scope.platform))];
         if (location.platform === null && platforms.length === 1) location.platform = platforms[0]!;
         recordDiscoveryReadTiming(metrics, input.campaign_id, result, elapsed(started));
-        metrics.enqueueFailure(input.campaign_id, { recorded_at: Date.now(), ...location, call_number: campaign.used_calls > result.campaign.used_calls ? campaign.used_calls : null, code,
-          ...(work.error instanceof AccessVerificationError && work.error.details ? { diagnostic: work.error.details } : {}) });
+        metrics.enqueueFailure(input.campaign_id, { recorded_at: Date.now(), ...location, elapsed_ms: elapsed(started), call_number: campaign.used_calls > result.campaign.used_calls ? campaign.used_calls : null, code,
+          diagnostic: work.error instanceof AccessVerificationError && work.error.details ? work.error.details : work.error instanceof OpenCliError && work.error.diagnostics ? work.error.diagnostics : result.provider_diagnostics ?? new OpenCliError("opencli_command_failed", null, { stage: `${location.step}:settle`, exit_code: null, stdout: "", stderr: work.error instanceof Error ? work.error.stack ?? work.error.message : String(work.error) }).diagnostics });
         owner.change(status => { status.used = campaign.used_calls; });
       }
       finalStage = "error"; finalReason = "request_failed"; failures.push(work.error);
-      owner.change(status => { status.failure_code = code; status.failure_phase = code.startsWith("access.") ? "account" : code.startsWith("score_queue_") ? "score" : "read"; });
+      owner.change(status => { status.failure_code = code; status.failure_phase = work.error instanceof DiscoveryQueryAuditError ? "query_audit" : code.startsWith("access.") ? "account" : code.startsWith("score_queue_") ? "score" : "read"; });
     }
     owner.change(status => { status.stage = "pausing"; });
+    // 已启动的两路读取均须写完回执或中断记录，暂停后不再补充任务。
+    for (const read of reads) {
+      const outcome = await read.task;
+      if (outcome.ok) {
+        const duration = elapsed(read.started);
+        recordDiscoveryReadTiming(metrics, input.campaign_id, outcome.result, duration);
+        if (outcome.result.step.kind.startsWith("read_") || outcome.result.step.kind === "search" || outcome.result.step.kind === "resolve_article") metrics.enqueue(input.campaign_id, "read", duration);
+        const code = discoveryAdvanceFailure(outcome.result);
+        if (code !== null) metrics.enqueueFailure(input.campaign_id, { recorded_at: Date.now(), ...discoveryReadFailureLocation(outcome.result), elapsed_ms: duration, call_number: outcome.result.campaign.used_calls, code, ...(outcome.result.provider_diagnostics ? { diagnostic: outcome.result.provider_diagnostics } : {}) });
+      } else if (!(owner.signal.aborted && (outcome.error === owner.signal.reason || outcome.error === context.signal.reason || outcome.error instanceof DOMException && outcome.error.name === "AbortError"))) {
+        failures.push(outcome.error);
+        if (read.attempt) metrics.enqueueFailure(input.campaign_id, { recorded_at: Date.now(), ...discoveryReadFailureLocation(read.attempt), elapsed_ms: elapsed(read.started), call_number: owned.repository.getPlan(input.campaign_id).used_calls, code: discoveryExecutionFailureCode(outcome.error) });
+      }
+    }
+    publishChanged();
+    owner.change(status => { status.used = owned.repository.getPlan(input.campaign_id).used_calls; });
     // 暂停只留下未启动队列；已经接纳的模型和本地投影完整排空。
     const scores = await Promise.allSettled(jobs.filter(job => job.state !== "queued").map(async job => { const outcome = await job.task!; recordScore(job.hit, outcome); }));
     for (const score of scores) if (score.status === "rejected") failures.push(score.reason);
+    if (!context.signal.aborted) updatePipeline();
     const drained = await lane.close().then(() => ({ ok: true as const }), error => ({ ok: false as const, error: error as unknown })); if (!drained.ok) failures.push(drained.error);
     if (!context.signal.aborted) {
       const finalSync = await sync().then(() => ({ ok: true as const }), error => ({ ok: false as const, error: error as unknown }));
@@ -206,7 +267,7 @@ export class DiscoveryScheduler {
       }
     }
     metrics.enqueue(input.campaign_id, "pipeline.wall", elapsed(started));
-    const flushed = await metrics.flushPending().then(() => ({ ok: true as const }), error => ({ ok: false as const, error: error as unknown }));
+    const flushed = await metricsWriter.close().then(() => ({ ok: true as const }), error => ({ ok: false as const, error: error as unknown }));
     if (!flushed.ok) { failures.push(flushed.error); owner.change(status => { status.failure_phase = "metrics"; status.failure_code = "execution_failed"; }); }
     owner.change(status => { status.stage = failures.length ? "error" : finalStage; status.reason = owner.signal.aborted && !failures.length ? status.reason ?? "execution_interrupted" : finalReason; });
     if (failures.length) throw new AggregateError(failures, "discovery_execution_failed");

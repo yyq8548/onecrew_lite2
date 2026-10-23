@@ -30,6 +30,7 @@ import { ServiceShell, bootstrapShellCommands, configureServiceShellRoutes, regi
 import { CodexClientAdapter, defaultCodexHome } from "../client-adapters/codex.ts";
 import { configureWorkspaceCardRoutes } from "../service/workspace-card-routes.ts";
 import { inspectUnifiedData } from "../service/data-status.ts";
+import { WorkspaceRepair } from "../service/workspace-repair.ts";
 
 export interface UnifiedResourcesOptions {
   vaultPath: string;
@@ -67,7 +68,7 @@ export function unifiedResources(options: UnifiedResourcesOptions): RuntimeBoots
       await assertNativeTelegramCryptography();
       if (process.platform !== "win32" && process.platform !== "darwin") throw new Error("Unified service requires Windows or macOS");
       const packaged = getPackagedRuntime();
-      const accessLifecycle = new AccessLifecycle(lease, { vaultPath, masterKeyPath, appVersion: packaged ? packaged.manifest.productVersion : "0.9.0", platform: process.platform === "win32" ? "windows" : "macos", deviceLabel: hostname() }, identities);
+      const accessLifecycle = new AccessLifecycle(lease, { vaultPath, masterKeyPath, appVersion: packaged ? packaged.manifest.productVersion : "0.9.1", platform: process.platform === "win32" ? "windows" : "macos", deviceLabel: hostname() }, identities);
       initializedLifecycle = accessLifecycle;
       const business = createBusinessModule(lease, identities, tables, `http://127.0.0.1:${profile.port}`, generationRoot, new PlatformVaultReader(vaultPath, masterKeyPath), profile.originSource === "new-install" && active === null && generationRoot === lease.directory);
       initializedBusiness = business;
@@ -105,6 +106,8 @@ export function unifiedResources(options: UnifiedResourcesOptions): RuntimeBoots
       }
       const shell = new ServiceShell({ lease, access: accessLifecycle, sessions: business.mcpSessions, buildIdentity, directory: () => mcpCoordinator.directory(), componentEvidence, workspaceConnections, activity: workspaceActivity, dataStatus: () => inspectUnifiedData({ lease, generationRoot, vaultPath, originSource: profile.originSource, candidate: options.candidateGenerationRoot !== undefined, ...(active ? { activation: active } : {}) }), ...(codex ? { pluginStatus: (refresh: boolean) => codex.status(refresh) } : {}) });
       registerServiceShellOperations(business.operations, shell);
+      const workspaceRepair = new WorkspaceRepair({ accounts: identities.contexts, operations: business.operations, shell, cards: business.workspaceCards });
+      workspaceRepair.register(business.operations);
       mcpCoordinator = await createMcpCoordinator({ registry: business.operations, sessions: business.mcpSessions, results: business.results, authorize: business.authorizeMcp, connections: business.mcpConnections, requireCompleteCatalogue: true });
       const bootstrapSessions = new BootstrapSessions();
       const resourceIdentity = Object.freeze({ ...buildIdentity, data_paths_sha256: dataPathIdentity({ dataDirectory: resolve(lease.directory), generationRoot, vaultPath: resolve(vaultPath), masterKeyPath: resolve(masterKeyPath), tablesDirectory: directory }), candidate: options.candidateGenerationRoot !== undefined, profile_port: profile.port });
@@ -159,6 +162,14 @@ export function unifiedResources(options: UnifiedResourcesOptions): RuntimeBoots
         ...(libraryWebAssets ? { libraryWebAssets } : {}),
         configureRoutes(app) {
           configureServiceShellRoutes(app, shell);
+          app.post("/_local/repair/begin", async context => {
+            const input = z.strictObject({ request_id: z.uuid() }).parse(parseApplicationJson(new Uint8Array(await context.req.arrayBuffer())));
+            const access = await accessLifecycle.status();
+            if (access.state !== "signed_in") throw Object.assign(new Error("access.login_required"), { code: "access.login_required", status: 401 });
+            const selected = identities.contexts.current();
+            if (access.user?.id !== selected.principal.user.id) throw Object.assign(new Error("access.account_changed"), { code: "access.account_changed", status: 409 });
+            return context.json(await workspaceRepair.begin(selected, { request_id: input.request_id, page: "connections" }));
+          });
           configureWorkspaceCardRoutes(app, business.workspaceCards, async () => {
             const access = await accessLifecycle.status();
             if (access.state === "unavailable") throw Object.assign(new Error("access.unavailable"), { code: "access.unavailable", status: 503 });

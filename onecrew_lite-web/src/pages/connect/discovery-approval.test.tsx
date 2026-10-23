@@ -29,7 +29,7 @@ afterEach(() => { vi.unstubAllGlobals(); vi.clearAllMocks(); harness.buttons.cle
 
 it.each([false, true])("approval starts provider work only when selected: %s", async startAfterApproval => {
   const campaign = { id: "smoke", phase: "draft", revision: 1, brief: "Mouse",
-    opencli_version: "1.8.8", criteria: {}, target_count: 3, max_calls: 6, used_calls: 0,
+    opencli_version: "1.8.8", criteria: {}, target_count: 3, used_calls: 0,
     scopes: [{ platform: "youtube", profile_ref: "test-profile", keywords: ["鼠标测评"] }], platform_runs: [] };
   vi.stubGlobal("window", { localStorage: { getItem: () => "smoke", setItem: () => {} } });
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity } } });
@@ -44,10 +44,10 @@ it.each([false, true])("approval starts provider work only when selected: %s", a
       { platform: "youtube", command: "youtube/search", browser_required: true, registered: true },
     ]} />
   </QueryClientProvider></I18nextProvider>);
-  expect(html).toContain("Maximum 6 reads");
+  expect(html).not.toContain("Maximum platform reads");
   const chinese = i18next.createInstance();
   await chinese.init({ lng: "zh-CN", resources: { "zh-CN": { shell: zh } }, defaultNS: "shell" });
-  expect(chinese.t("opencliPilot.frozenBudget", { target: 3, calls: 6, version: "1.8.8" })).toContain("最多读取 6 次");
+  expect(chinese.t("opencliPilot.frozenPlan", { target: 3, version: "1.8.8" })).toContain("目标 3 人");
   const action = harness.buttons.get(startAfterApproval ? "Confirm plan and start searching" : "Approve plan only");
   expect(action).toBeDefined();
   action!();

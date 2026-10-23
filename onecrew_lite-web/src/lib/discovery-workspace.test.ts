@@ -12,16 +12,16 @@ describe("workbench status ownership", () => {
     expect(send.mock.calls[0][0].activate).toBe(false);
   });
   it("does not claim the runner is active after an uncertain request failed", () => {
-    const campaign = { used_calls: 11, max_calls: 200, platform_runs: [{ status: "searching" }] } as DiscoveryCampaign;
+    const campaign = { used_calls: 11, platform_runs: [{ status: "searching" }] } as DiscoveryCampaign;
     expect(discoveryStage(campaign, false, false, "error")).toBe("error");
     expect(discoveryStage(campaign, false, false, "paused")).toBe("paused");
   });
-  it("keeps an in-flight read visible while pausing or using the last budget call", () => {
-    const campaign = { used_calls: 5, max_calls: 5, platform_runs: [{ status: "searching" }] } as DiscoveryCampaign;
+  it("keeps an in-flight read visible while pausing without imposing a read limit", () => {
+    const campaign = { used_calls: 5, platform_runs: [{ status: "searching" }] } as DiscoveryCampaign;
     expect(discoveryStage(campaign, true, true, "")).toBe("pausing");
     expect(discoveryStage(campaign, true, false, "")).toBe("searching");
     expect(discoveryStage(campaign, false, false, "")).toBe("searching");
-    expect(discoveryStage({ ...campaign, platform_runs: [] }, false, false, "")).toBe("budget_exhausted");
+    expect(discoveryStage({ ...campaign, platform_runs: [] }, false, false, "")).toBe("ready");
     expect(discoveryStage(undefined, false, false, "search_exhausted")).toBe("needs_evidence");
     expect(discoveryStage(undefined, false, false, "target_reached")).toBe("finished");
   });

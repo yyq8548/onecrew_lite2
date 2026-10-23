@@ -10,8 +10,6 @@ export const CREATOR_SEARCH_SOURCES: Readonly<Record<string, SearchSource>> = Ob
   twitter: { site: "onecrew-search-twitter", name: "search", maximum: 50, addon: "onecrew-browser-search", discovery: true },
   linkedin: { site: "onecrew-search-linkedin", name: "people-search", maximum: 10, addon: "onecrew-browser-search", discovery: true },
   facebook: { site: "onecrew-search-facebook", name: "search", maximum: 50, addon: "onecrew-browser-search", discovery: true },
-  pinterest: { site: "onecrew-pinterest-reader", name: "search-pins", maximum: 20, addon: "onecrew-browser-search", discovery: true },
-  reddit: { site: "onecrew-search-reddit", name: "search", maximum: 50, addon: "onecrew-browser-search", discovery: true },
   bilibili: { site: "onecrew-bilibili", name: "search", maximum: 50, addon: "onecrew-bilibili", discovery: true },
   douyin: { site: "onecrew-search-douyin", name: "search", maximum: 30, addon: "onecrew-browser-search", discovery: true },
   weibo: { site: "onecrew-search-weibo", name: "search", maximum: 50, addon: "onecrew-browser-search", discovery: true },
@@ -20,8 +18,12 @@ export const CREATOR_SEARCH_SOURCES: Readonly<Record<string, SearchSource>> = Ob
   tieba: { site: "onecrew-search-tieba", name: "search", maximum: 20, addon: "onecrew-browser-search", discovery: false },
 });
 for (const source of Object.values(CREATOR_SEARCH_SOURCES)) Object.freeze(source);
+export const TEMPORARILY_DISABLED_CREATOR_SOURCES: readonly string[] = Object.freeze(["google", "yahoo"]);
 
-export const RETIRED_CREATOR_SOURCES = Object.freeze(["zhihu", "pixiv", "weixin", "stackoverflow", "stackoverflow-users", "devto-tag", "hf-spaces", "nowcoder", "producthunt-posts", "medium", "medium-tag", "bluesky", "jike", "dribbble-designers", "hupu", "apple-podcasts", "pinterest-pins", "pinterest-boards", "dribbble-shots", "google-images", "reddit-subreddit", "linkedin-learning", "substack", "v2ex-node", "lesswrong-tag", "lobsters-tag", "stackoverflow-tag", "juejin-hot", "linux-do", "linkedin-salesnav", "duckduckgo", "archive", "weread", "douban-books", "douban-music", "hf-models", "hf-datasets", "hackernews"]);
+// 旧任务保留原始来源标识，执行时排除已移除的来源，已有结果不变。
+export const RETIRED_CREATOR_SOURCES = Object.freeze(["zhihu", "pixiv", "weixin", "stackoverflow", "stackoverflow-users", "devto-tag", "hf-spaces", "nowcoder", "producthunt-posts", "medium", "medium-tag", "bluesky", "jike", "dribbble-designers", "hupu", "apple-podcasts", "pinterest", "reddit", "pinterest-pins", "pinterest-boards", "dribbble-shots", "google-images", "reddit-subreddit", "linkedin-learning", "substack", "v2ex-node", "lesswrong-tag", "lobsters-tag", "stackoverflow-tag", "juejin-hot", "linux-do", "linkedin-salesnav", "duckduckgo", "archive", "weread", "douban-books", "douban-music", "hf-models", "hf-datasets", "hackernews"]);
+
+export const INACTIVE_CREATOR_SOURCES: readonly string[] = Object.freeze([...RETIRED_CREATOR_SOURCES, ...TEMPORARILY_DISABLED_CREATOR_SOURCES]);
 
 export function creatorSearchSource(platform: string): SearchSource {
   const source = Object.hasOwn(CREATOR_SEARCH_SOURCES, platform) ? CREATOR_SEARCH_SOURCES[platform] : undefined;
@@ -29,6 +31,7 @@ export function creatorSearchSource(platform: string): SearchSource {
   return source;
 }
 export function creatorSearchArguments(profile: string, platform: string, query: string, limit: number): readonly string[] {
+  if (TEMPORARILY_DISABLED_CREATOR_SOURCES.includes(platform)) throw new OpenCliError("opencli_read_command_unavailable");
   const source = creatorSearchSource(platform);
   validateOpenCliProfile(profile);
   if (!query.isWellFormed() || !query.trim() || [...query].length > 160 || /\p{Cc}/u.test(query) || !Number.isInteger(limit) || limit < 1 || limit > source.maximum) throw new OpenCliError("opencli_invalid_input");

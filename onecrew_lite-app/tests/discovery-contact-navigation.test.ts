@@ -24,7 +24,6 @@ test("原staff归属、推广过滤和已存读取身份保持一致", () => {
   assert.equal(discoveryPromotional("https://bit.ly/unknown", "Zygen NP-01 - https://bit.ly/unknown"), false);
   assert.equal(discoveryContactReadKey("https://twitter.com/boardzyxd/"), discoveryContactReadKey("https://x.com/boardzyxd"));
   assert.equal(discoveryContactReadKey("https://www.youtube.com/channel/UCGTxQKN8nd47EDvnbBWIY-g/about"), discoveryContactReadKey("https://www.youtube.com/channel/UCGTxQKN8nd47EDvnbBWIY-g"));
-  assert.equal(discoveryExactUsername("https://www.pinterest.com/a/"), "a");
   assert.equal(discoveryExactUsername("https://news.ycombinator.com/user?id=a"), "a");
 });
 test("原批准语言词与作者标识保留，非法planner查询符号被拒绝", () => {

@@ -58,10 +58,11 @@ test('wrapper reads named visible result anchors rather than native presence-lab
     getClientRects:()=>visible?[1]:[], closest:()=>null});
   const anchors = [anchor('Online status indicatorActive'), anchor('Headphone Review'),
     anchor('Hidden noise','https://www.facebook.com/Hidden',false)];
-  const context = {URL, location:{href:'https://www.facebook.com/search/top?q=headphone%20reviewer'},
+  const feed = {querySelectorAll:selector=>selector==='a[href]'?anchors:[],scrollHeight:1000,clientHeight:600,scrollBy:()=>{}};
+  const context = {URL, location:new URL('https://www.facebook.com/search/top?q=headphone%20reviewer'),setTimeout,
     getComputedStyle:()=>({visibility:'visible'}),
-    document:{querySelector:selector=>selector==='[role="feed"]'?{querySelectorAll:()=>anchors}:null}};
-  const page = {evaluate:async script=>JSON.parse(JSON.stringify(vm.runInNewContext(script,context)))};
+    document:{querySelector:selector=>selector==='[role="feed"]'?feed:null,querySelectorAll:()=>[],scrollingElement:feed}};
+  const page = {evaluate:async script=>JSON.parse(JSON.stringify(await vm.runInNewContext(script,context)))};
   const native = async()=>[{title:'Online status indicatorActive',url}];
   const rows = await readFacebookCreatorResults(page,{query:'headphone reviewer',limit:3},native);
   assert.equal(rows.length,1);

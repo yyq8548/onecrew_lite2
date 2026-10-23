@@ -3,7 +3,6 @@ import assert from 'node:assert/strict';
 import { searchBilibili } from './onecrew-bilibili/search.mjs';
 import { readBilibiliProfile } from './onecrew-bilibili-profile/profile.mjs';
 import { readBilibiliVideo } from './onecrew-bilibili-video/video.mjs';
-import { searchCards } from './onecrew-source-search/search.mjs';
 import { searchTikTok } from './onecrew-tiktok/search.mjs';
 import { readTikTokProfile } from './onecrew-tiktok-profile/profile.mjs';
 import { readVideoEvidence } from './onecrew-youtube/evidence.mjs';
@@ -14,7 +13,6 @@ for (const [name, read] of [
   ['Bilibili search', page => searchBilibili(page, 'AI', 5)],
   ['Bilibili profile', page => readBilibiliProfile(page, '8420618')],
   ['Bilibili video', page => readBilibiliVideo(page, 'BV1xx411c7mD', '8420618')],
-  ['Nowcoder search', page => searchCards(page, 'nowcoder', 'AI', 5)],
   ['TikTok search', page => searchTikTok(page, 'AI', 5)],
   ['TikTok profile', page => readTikTokProfile(page, 'creator', '123456789')],
   ['YouTube evidence', page => readVideoEvidence(page, 'abcdefghijk')],

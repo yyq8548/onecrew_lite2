@@ -14,6 +14,7 @@ import { createDiscoveryLibraryProjection } from "../src/sync/discovery-library.
 import { DiscoveryAdmissionGate } from "../src/discovery/admission-gate.ts";
 import { DiscoveryExecutionSupervisor } from "../src/discovery/execution-supervisor.ts";
 import { createDiscoveryRuntime } from "../src/discovery/runtime.ts";
+import { upgradeCreatorStagingCopy } from "../src/storage/creator-upgrade.ts";
 
 test("完整注册器使用真实SQLite/PGlite：缺浏览器不领取，严格包装，空历史不伪造执行状态", async () => {
   const root = await mkdtemp(fileURLToPath(new URL("../../.scratch/discovery-runtime-", import.meta.url))), directory = await createPrivateDirectory(join(root, "private")), lease = await acquireInstanceLock(directory);
@@ -24,9 +25,10 @@ test("完整注册器使用真实SQLite/PGlite：缺浏览器不领取，严格�
   try {
     await databases.createNewAccount(context); const registry = new OperationRegistry(accounts); runtime.registerOperations(registry);
     const execute = (name: string, input: unknown) => registry.execute(name, input, context.principal.user.id, context.epoch);
-    assert.equal(registry.names().length, 32); assert.equal(await execute("onecrew_discovery_execution_get", {}), null);
+    assert.equal(registry.names().length, 39); assert.equal(await execute("onecrew_discovery_execution_get", {}), null);
+    for (const name of ["claim", "get", "submit"]) assert.ok(registry.names().includes(`onecrew_discovery_host_work_${name}`));
     const repository = (await databases.discoveryResolver().resolve(context)).repository;
-    repository.create({ id: "runtime-plan", brief: "找鞋子作者", opencli_version: "1.8.8", criteria: { automatic_query_expansion: true }, scopes: [{ platform: "youtube", profile_ref: "work", keywords: ["shoe review"] }], target_count: 2, max_calls: 2 }); repository.approve("runtime-plan", 1);
+    repository.create({ id: "runtime-plan", brief: "找鞋子作者", opencli_version: "1.8.8", criteria: { automatic_query_expansion: true }, scopes: [{ platform: "youtube", profile_ref: "work", keywords: ["shoe review"] }], target_count: 2 }); repository.approve("runtime-plan", 1);
     const input = { id: "runtime-plan", expectedRevision: 1, profileRef: "work", limit: 10 };
     await assert.rejects(execute("onecrew_discovery_youtube_search_once", input), /browser_unavailable/);
     await assert.rejects(execute("onecrew_discovery_search_once", { ...input, platform: "youtube", executable: "untrusted" }));
@@ -75,6 +77,7 @@ test("真实调度器排空原Rust已保存材料并发布实际Library，终止
     const folders = (await readdir(directory)).filter(name => /^account-[a-f0-9]{64}$/u.test(name)); assert.equal(folders.length, 1);
     await copyFile(fileURLToPath(new URL("./fixtures/discovery-video-hydration/after.sqlite", import.meta.url)), join(directory, folders[0]!, "creator.sqlite"));
     if (process.platform !== "win32") await chmod(join(directory, folders[0]!, "creator.sqlite"), 0o600);
+    await upgradeCreatorStagingCopy({ sourcePath: fileURLToPath(new URL("./fixtures/discovery-video-hydration/after.sqlite", import.meta.url)), stagingPath: join(directory, folders[0]!, "creator.sqlite") });
     const repository = (await databases.discoveryResolver().resolve(context)).repository, plan = repository.getPlan("video-hydration"), before = repository.countCandidates(plan.id);
     const registry = new OperationRegistry(accounts); runtime.registerOperations(registry);
     await registry.execute("onecrew_discovery_execution_start", { input: { campaign_id: plan.id, expected_revision: plan.revision, profile_ref: plan.scopes[0]!.profile_ref, excluded_platforms: plan.scopes.map(scope => scope.platform) } }, context.principal.user.id, context.epoch);

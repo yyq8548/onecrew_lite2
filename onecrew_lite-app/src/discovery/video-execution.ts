@@ -29,6 +29,8 @@ export class DiscoveryVideoExecutor {
     if (browser.profile !== input.profile_ref) throw new Error("discovery_browser_profile_mismatch");
     this.accounts.assertCurrent(context); owned.assertOwned();
     const claim = owned.repository.claimVideo(input.campaign_id, input.expected_revision, input.profile_ref, input.search_hit_id);
+    const reused = owned.repository.reuseVideo(claim);
+    if (reused) return reused;
     const observed = await this.reader.youtubeVideoEvidence(browser, claim.source_url).then(value => ({ ok: true as const, value }), error => ({ ok: false as const, error: error as unknown }));
     // 原账号的真实读取结果必须提交，账号切换只阻止后续工作。
     owned.assertOwned();

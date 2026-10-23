@@ -167,8 +167,6 @@
       "subscriber_count_unverified": "Follower count unverified",
       "subscriber_count_near_threshold": "Follower count near threshold",
       "below_min_subscribers": "Follower count below threshold",
-      "below_pinterest_scale": "Neither followers nor monthly views meet the requirement",
-      "pinterest_scale_unverified": "Pinterest follower or monthly-view condition needs verification",
       "related_alternative": "Related alternative; excluded from the recommendation target",
       "own_ai_tool_demo_unverified": "Creator's AI demo unverified",
       "public_tool_url_unverified": "Public tool link unverified",

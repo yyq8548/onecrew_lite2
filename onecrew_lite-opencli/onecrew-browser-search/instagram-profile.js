@@ -4,7 +4,7 @@ import {instagramProfileTarget,readInstagramWebProfile} from './instagram-profil
 import {withOwnedSearchPage} from './owned-page.mjs';
 for(const operation of ['read','identity']) cli({site:'onecrew-instagram-profile',name:operation,access:'read',browser:true,
   domain:'www.instagram.com',strategy:Strategy.COOKIE,navigateBefore:false,
-  description:'Verify the visible Instagram account, expand its biography and preserve public contacts through Computer Use',
+  description:'Verify the Instagram account and read biography, public contacts and previews through OpenCLI DOM',
   args:[{name:'username',positional:true,required:true},{name:'author_id',positional:true}],
   columns:['id','username','follower_count','profile_url'],
   func:async(page,args)=>{

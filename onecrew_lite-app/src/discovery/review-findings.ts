@@ -15,17 +15,18 @@ export function applyDiscoveryReviewFindings(material: DiscoveryReviewMaterial, 
     || citation.kind === "native_profile" && (material.native_platform ?? material.hit.platform) === "instagram"
       && material.native_profile?.web_text?.startsWith("Visible profile post previews; bounded excerpts, not verified full original captions.\n") === true
       && material.native_profile.web_text.slice(material.native_profile.web_text.indexOf("\n") + 1).includes(citation.quote);
-  for (const criterion of ["content_language", "match_fit"] as const) {
+  if (findings.some(finding => finding.criterion === "match_fit")) throw new Error("legacy_match_scoring_retired");
+  for (const criterion of ["content_language"] as const) {
     const selected = findings.filter(finding => finding.criterion === criterion);
     if (selected.length > 1 || criterion === "content_language" && language === null && selected.length) throw new Error("review_conditions_mismatch");
     const finding = selected[0]; if (!finding) continue;
-    if (!text(finding.rationale, 4000) || finding.tool != null || finding.country_code != null || finding.citations.length > 8 || !finding.citations.every(citation => containsDiscoveryCitation(material, citation)) || finding.outcome !== "insufficient" && !finding.citations.some(criterion === "match_fit" ? matchingContent : authorContent)) throw new Error("review_first_hand_evidence_required");
+    if (!text(finding.rationale, 4000) || finding.tool != null || finding.country_code != null || finding.citations.length > 8 || !finding.citations.every(citation => containsDiscoveryCitation(material, citation)) || finding.outcome !== "insufficient" && !finding.citations.some(authorContent)) throw new Error("review_first_hand_evidence_required");
     if (criterion === "content_language" && finding.outcome !== "insufficient" && language !== null && ["spoken", "speech", "口语", "口播", "语音"].some(word => language.toLowerCase().includes(word)) && !finding.citations.some(citation => citation.kind === "transcript")) throw new Error("review_transcript_required");
-    if (criterion !== "match_fit" && finding.match_level != null || criterion === "match_fit" && (finding.outcome === "supported") !== (finding.match_level != null) || criterion === "match_fit" && finding.outcome === "contradicted") throw new Error("review_match_level_invalid");
-    const key = criterion === "content_language" ? "reviewed_language" : "reviewed_match"; delete evidence[key];
+    if (finding.match_level != null) throw new Error("review_match_level_invalid");
+    const key = "reviewed_language"; delete evidence[key];
     if (finding.outcome !== "insufficient") evidence[key] = { ...proof("language-match-review-v1"), language: criteria.language ?? null, outcome: finding.outcome, level: finding.match_level ?? null, reason: finding.rationale };
   }
-  if (findings.some(finding => finding.criterion !== "match_fit" && finding.match_level != null)) throw new Error("review_match_level_invalid");
+  if (findings.some(finding => finding.match_level != null)) throw new Error("review_match_level_invalid");
   delete evidence.own_ai_tool_demo; delete evidence.public_tool_url;
   for (const [criterion, key] of [["own_ai_tool_demo", "requires_ai_tool_demo"], ["public_tool_url", "requires_public_tool_url"]] as const) {
     const selected = findings.filter(finding => finding.criterion === criterion);

@@ -21,7 +21,7 @@ test("真实schema90按原Rust材料还原已绑定YouTube一致快照，丢失�
   const db = new DatabaseSync(path), repository = new DiscoveryRepository(db);
   try {
     db.exec("PRAGMA foreign_keys=ON");
-    repository.create({ id: basis.campaign_id, brief: "原Rust离线合同", opencli_version: "1.8.8", criteria: parseApplicationJson(Buffer.from(basis.criteria_json)), scopes: parseApplicationJson(Buffer.from(basis.scopes_json)), target_count: 30, max_calls: 4 });
+    repository.create({ id: basis.campaign_id, brief: "原Rust离线合同", opencli_version: "1.8.8", criteria: parseApplicationJson(Buffer.from(basis.criteria_json)), scopes: parseApplicationJson(Buffer.from(basis.scopes_json)), target_count: 30 });
     repository.approve(basis.campaign_id, basis.revision);
     db.prepare("UPDATE discovery_campaign_revisions SET approved_at=?,criteria_json=?,scope_json=? WHERE discovery_campaign_id=? AND revision=?").run(basis.approved_at, basis.criteria_json, basis.scopes_json, basis.campaign_id, basis.revision);
     db.prepare("INSERT INTO discovery_search_hits(id,discovery_campaign_id,platform,profile_ref,search_keyword,source_url,title,author_label,captured_at) VALUES(?,?,?,?,?,?,?,?,?)").run(hit.id, hit.campaign_id, hit.platform, hit.profile_ref, hit.search_keyword, hit.source_url, hit.title, hit.author_label, hit.captured_at);

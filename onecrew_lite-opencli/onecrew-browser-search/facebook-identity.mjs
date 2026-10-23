@@ -17,13 +17,15 @@ export function projectFacebookIdentity(data, requested) {
   const source = facebookVanitySource(requested);
   if (data?.source_url !== requested || typeof data.id !== 'string' || !/^[1-9][0-9]{0,19}$/.test(data.id)
     || typeof data.display_name !== 'string' || !data.display_name.trim() || data.display_name.length > 200
-    || /[\u0000-\u001f\u007f]/.test(data.display_name) || typeof data.profile_url !== 'string') throw new Error('ONECREW_FB_IDENTITY_INVALID');
+    || /[\u0000-\u001f\u007f]/.test(data.display_name) || typeof data.profile_url !== 'string'
+    || data.skip_reason!==undefined&&data.skip_reason!=='followers_unavailable') throw new Error('ONECREW_FB_IDENTITY_INVALID');
   let observed;
   try { observed = facebookVanitySource(data.profile_url); } catch { throw new Error('ONECREW_FB_IDENTITY_INVALID'); }
   if (observed.toLowerCase() !== source.toLowerCase()) throw new Error('ONECREW_FB_IDENTITY_INVALID');
   return {adapter_version:'1.0.0', source_url:requested, id:data.id,
     display_name:data.display_name.trim(), profile_url:data.profile_url,
-    evidence_source:'native_profile_header_response'};
+    evidence_source:'native_profile_header_response',
+    ...(data.skip_reason==='followers_unavailable'?{skip_reason:data.skip_reason}:{})};
 }
 
 // This is the exact public response subtree observed on the real profile.
@@ -73,10 +75,19 @@ export async function readFacebookIdentityPage(requested, source, collect) {
       const node=candidates[0];const main=mains[0];
       const visible=n=>n.getClientRects().length && !n.closest('[role="article"],[role="feed"],[aria-hidden="true"]');
       const owner=[...main.querySelectorAll('a[href]')].filter(a=>visible(a) && a.getAttribute('role')!=='tab' && a.href.replace(/\/$/,'').toLowerCase()===`${source}/followers`.toLowerCase());
-      const names=[...main.querySelectorAll('h1,[role="button"]')].filter(n=>visible(n) && n.innerText.trim()===node.display_name);
-      // Facebook can render desktop/mobile header buttons for the same name.
-      // Identity uniqueness comes from the native ID and exact owner URL.
-      if (owner.length===1 && names.length>=1) return {...node,source_url:requested};
+      const nativeName=node.display_name.replace(/\s+/g,' ').trim();
+      const names=[...main.querySelectorAll('h1,[role="button"]')].filter(n=>{
+        if(!visible(n))return false;
+        const label=n.innerText.replace(/\s+/g,' ').trim();
+        return label===nativeName||label.startsWith(nativeName)&&/^[（(].+[)）]$/.test(label.slice(nativeName.length).trim());
+      });
+      const name=names.find(n=>n.tagName==='H1')??names[0];
+      if(name) {
+        const identity={...node,display_name:name.innerText.replace(/\s+/g,' ').trim(),source_url:requested};
+        if(owner.length)return identity;
+        const loading=[...main.querySelectorAll('[aria-busy="true"],[role="progressbar"]')].some(visible);
+        if(document.readyState==='complete'&&!loading)return {...identity,skip_reason:'followers_unavailable'};
+      }
     }
     if (attempt<15) await new Promise(resolve=>setTimeout(resolve,500));
   }

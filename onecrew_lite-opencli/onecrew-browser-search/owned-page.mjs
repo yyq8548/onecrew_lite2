@@ -32,7 +32,6 @@ export async function withOwnedSearchPage(page, task) {
       if (destination.hostname === 'www.facebook.com' && destination.pathname.startsWith('/search/')) {
         await step(()=>object.evaluate('(' + waitForFacebookSearch.toString() + ')()'));
       }
-      await step(()=>object.evaluate('(' + restoreOriginalLanguage.toString() + ')()'));
     };
     if (key === 'evaluate') return async (...args) => {
       if (target) await step(()=>object.setActivePage(target));
@@ -159,28 +158,70 @@ export function normalizeBrowserRows(site, rows, limit) {
   }).slice(0, limit);
 }
 
-// Read the same rendered search once, up to the reviewed native ceiling.
-// Filtering after the caller's small limit lets early group cards starve people.
-// This performs no pagination, alternative query or extra provider navigation.
-export async function readFacebookCreatorResults(page, args, nativeSearch) {
+// 在同一个搜索页面滚动，重复视口不增加候选，也不重新提交查询。
+export async function readFacebookCreatorResults(page, args) {
   if (typeof args.query !== 'string' || !args.query.trim()
     || !Number.isInteger(args.limit) || args.limit < 1 || args.limit > 50)
     throw new Error('ONECREW_FACEBOOK_SEARCH_INPUT');
-  // Keep native navigation/authentication errors, but re-observe this same
-  // document: native dedup may have discarded a name after its avatar link.
-  await nativeSearch(page, {...args, limit: 50});
-  const raw = await page.evaluate(`(${observeFacebookAccounts.toString()})(${JSON.stringify(args.query)})`);
-  const rows = raw && 'session' in Object(raw) && 'data' in Object(raw) ? raw.data : raw;
-  return normalizeBrowserRows('facebook', rows, args.limit);
+  await page.goto('https://www.facebook.com/search/top/?q='+encodeURIComponent(args.query),{settleMs:0});
+  const rows=[],seen=new Set();let scroll=false;
+  while(rows.length<args.limit) {
+    const raw=await page.evaluate(`(${observeFacebookSearchPage.toString()})(${JSON.stringify(args.query)},${JSON.stringify([...seen])},${scroll},${observeFacebookAccounts.toString()},${readSearchStop.toString()})`);
+    const observed=raw && 'session' in Object(raw) && 'data' in Object(raw) ? raw.data : raw;
+    const batch=normalizeBrowserRows('facebook',observed,50),previous=rows.length;
+    for(const row of batch) {
+      const key=row.url.replace(/\/$/,'').toLowerCase();
+      if(seen.has(key)) continue;
+      seen.add(key);rows.push(row);
+      if(rows.length===args.limit) break;
+    }
+    if(scroll&&rows.length===previous) break;
+    scroll=true;
+  }
+  return rows;
+}
+
+export async function observeFacebookSearchPage(query,known,scroll,observe,readStop) {
+  const check=()=>{
+    if(/^\/(?:login|recover)(?:\/|\.php|$)/.test(location.pathname)) throw new Error('ONECREW_FACEBOOK_SEARCH_AUTH');
+    if(/^\/(?:checkpoint|challenge|two_step_verification)(?:\/|$)/.test(location.pathname)) throw new Error('ONECREW_FACEBOOK_SEARCH_RISK');
+    const stop=readStop();
+    if(stop==='auth') throw new Error('ONECREW_FACEBOOK_SEARCH_AUTH');
+    if(stop==='risk') throw new Error('ONECREW_FACEBOOK_SEARCH_RISK');
+  };
+  check();
+  const initial=observe(query);
+  const seen=new Set(known);
+  if(!scroll||initial.some(row=>!seen.has(row.url.replace(/\/$/,'').toLowerCase()))) return initial;
+  const root=document.querySelector('[role="feed"]') || document.querySelector('[role="main"]');
+  let target=root;
+  while(target&&target!==document.documentElement) {
+    if(target.scrollHeight>target.clientHeight+8&&/auto|scroll/.test(getComputedStyle(target).overflowY)) break;
+    target=target.parentElement;
+  }
+  target=target&&target!==document.documentElement?target:document.scrollingElement||document.documentElement;
+  if(!target||typeof target.scrollBy!=='function') throw new Error('ONECREW_FACEBOOK_SEARCH_INVALID_FIELD_SCROLL');
+  target.scrollBy(0,Math.max(400,target.clientHeight*.8));
+  for(let poll=0;poll<12;poll++) {
+    await new Promise(resolve=>setTimeout(resolve,250));
+    check();
+    const rows=observe(query);
+    if(rows.some(row=>!seen.has(row.url.replace(/\/$/,'').toLowerCase()))) return rows;
+    const currentRoot=document.querySelector('[role="feed"]') || document.querySelector('[role="main"]');
+    const loading=[...currentRoot.querySelectorAll('[role="progressbar"],[aria-busy="true"]')].some(node=>node.getClientRects().length&&getComputedStyle(node).visibility!=='hidden');
+    if(poll>=3&&!loading) return rows;
+    if(poll===11&&loading) throw new Error('ONECREW_FACEBOOK_SEARCH_INVALID_FIELD_LOADING');
+  }
+  return observe(query);
 }
 
 export function observeFacebookAccounts(query) {
   const current = new URL(location.href);
   if (current.origin !== 'https://www.facebook.com' || !/^\/search\/top\/?$/.test(current.pathname)
-    || current.searchParams.get('q') !== query) throw new Error('ONECREW_FACEBOOK_SEARCH_INVALID');
+    || current.searchParams.get('q') !== query) throw new Error('ONECREW_FACEBOOK_SEARCH_INVALID_FIELD_SOURCE');
   // Never fall back to document.body: it includes navigation/chat contacts.
   const root = document.querySelector('[role="feed"]') || document.querySelector('[role="main"]');
-  if (!root) throw new Error('ONECREW_FACEBOOK_SEARCH_INVALID');
+  if (!root) throw new Error('ONECREW_FACEBOOK_SEARCH_INVALID_FIELD_ROOT');
   const clean = value => String(value || '').replace(/[\u200b-\u200f\u202a-\u202e\u2060\ufeff]/g,'').replace(/\s+/g,' ').trim();
   const rows = [], seen = new Set();
   for (const anchor of root.querySelectorAll('a[href]')) {

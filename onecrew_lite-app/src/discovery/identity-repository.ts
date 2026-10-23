@@ -1,7 +1,7 @@
 import type { DatabaseSync } from "node:sqlite";
 import { isDeepStrictEqual } from "node:util";
 import { z } from "zod";
-import { validateCreatorSchema } from "../storage/creator-schema.ts";
+import { assertValidatedCreatorConnection } from "../storage/creator-schema.ts";
 import { loadDiscoveryReviewBasis } from "./review-basis.ts";
 import type { DiscoveryReviewBasis } from "./review-material.ts";
 import { buildIdentityPair } from "./identity-material.ts";
@@ -30,7 +30,7 @@ export function identityTransaction<T>(db: DatabaseSync, write: boolean, operati
 }
 export class DiscoveryIdentityRepository {
   readonly #db: DatabaseSync;
-  constructor(database: DatabaseSync) { validateCreatorSchema(database); this.#db = database; }
+  constructor(database: DatabaseSync) { assertValidatedCreatorConnection(database); this.#db = database; }
   #find(campaign: string, decision: string): StoredIdentityReview | null { const row = this.#db.prepare("SELECT request_hash,receipt_json FROM discovery_identity_reviews WHERE discovery_campaign_id=? AND decision_id=?").get(campaign, decision); return row === undefined ? null : stored.parse(row); }
   material(raw: unknown) { const input = identityPairInput.parse(raw); return identityTransaction(this.#db, false, () => buildIdentityPair(input, loadIdentityPairBasis(this.#db, input))); }
   groups(raw: unknown) {

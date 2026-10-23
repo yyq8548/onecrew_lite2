@@ -1,3 +1,5 @@
+import { waitForYoutubePage } from './evidence.mjs';
+
 // Native response text only. Translated DOM, recommendations and replies from
 // unrelated threads must never become an author's language evidence.
 export function projectLanguageComments(data, videoId) {
@@ -80,7 +82,7 @@ export async function readLanguagePage(videoId, channelId, project) {
 
 export async function readYoutubeLanguage(page, videoId, channelId, restoreOriginal) {
   await page.goto(`https://www.youtube.com/watch?v=${videoId}`, { waitUntil: 'none' });
-  await page.wait(3);
+  await page.evaluate(`(${waitForYoutubePage.toString()})('watch')`);
   await page.evaluate(`(${restoreOriginal.toString()})()`);
   const result = await page.evaluate(`(${readLanguagePage.toString()})(${JSON.stringify(videoId)}, ${JSON.stringify(channelId)}, ${projectLanguageComments.toString()})`);
   const value = result && 'session' in result && 'data' in result ? result.data : result;
@@ -89,7 +91,7 @@ export async function readYoutubeLanguage(page, videoId, channelId, restoreOrigi
 
 export async function readYoutubeRecent(page, channelId, restoreOriginal) {
   await page.goto(`https://www.youtube.com/channel/${channelId}/videos`, { waitUntil: 'none' });
-  await page.wait(3);
+  await page.evaluate(`(${waitForYoutubePage.toString()})('channel')`);
   await page.evaluate(`(${restoreOriginal.toString()})()`);
   const result = await page.evaluate(`(${projectRecentVideos.toString()})(window.ytInitialData, ${JSON.stringify(channelId)})`);
   const value = result && 'session' in result && 'data' in result ? result.data : result;

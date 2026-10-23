@@ -24,7 +24,7 @@ test("真实独立匹配与质量回执保存85分，重启读取保持证据且
   const db = new DatabaseSync(path); t.after(() => db.close());
   const repository = new DiscoveryRepository(db), campaign = String(saved.plan.discovery_campaign_id), hit = String(saved.hit.id);
   const criteria = { ...parseApplicationJson(Buffer.from(String(saved.plan.criteria_json))) as Record<string, unknown>, quality_filter: null };
-  repository.create({ id: campaign, brief: parseApplicationJson(Buffer.from(String(saved.plan.brief_json))), opencli_version: "1.8.8", criteria, scopes: parseApplicationJson(Buffer.from(String(saved.plan.scope_json))), target_count: 30, max_calls: null });
+  repository.create({ id: campaign, brief: parseApplicationJson(Buffer.from(String(saved.plan.brief_json))), opencli_version: "1.8.8", criteria, scopes: parseApplicationJson(Buffer.from(String(saved.plan.scope_json))), target_count: 30 });
   repository.approve(campaign, 1);
   db.prepare("UPDATE discovery_campaign_revisions SET approved_at=? WHERE discovery_campaign_id=?").run(saved.plan.approved_at!, campaign);
   db.prepare("UPDATE discovery_platform_runs SET status='completed' WHERE discovery_campaign_id=?").run(campaign);
@@ -32,6 +32,7 @@ test("真实独立匹配与质量回执保存85分，重启读取保持证据且
     const keys = Object.keys(row); db.prepare(`INSERT INTO ${table}(${keys.join(",")}) VALUES(${keys.map(() => "?").join(",")})`).run(...Object.values(row));
   }
   const material = repository.prepareReviewMaterial(campaign, 1, hit);
+  assert.equal(repository.activePendingCount(campaign, 1), 1);
   const input = { campaign_id: campaign, expected_revision: 1, search_hit_id: hit, material_hash: material.material_hash, request_id: "real-selection-quality-regression", reviewer: { kind: "agent", label: SELECTION_QUALITY_REVIEWER }, findings: [review.selection, review.quality_rating, ...review.requirement_findings] };
   assert.throws(() => repository.submitReview("quality-regression", { ...input, findings: [review.selection, ...review.requirement_findings] }), /selection_quality_findings_required/);
   assert.throws(() => repository.submitReview("quality-regression", { ...input, material_hash: "0".repeat(64) }), /material/);
@@ -39,6 +40,7 @@ test("真实独立匹配与质量回执保存85分，重启读取保持证据且
   assert.throws(() => repository.submitReview("quality-regression", { ...input, findings: [review.selection, badCitation, ...review.requirement_findings] }), /citation/);
   const receipt = repository.submitReview("quality-regression", input);
   assert.equal(receipt.verdict, "qualified");
+  assert.equal(repository.activePendingCount(campaign, 1), 0);
   const stored = db.prepare("SELECT evidence_json FROM discovery_candidates WHERE id=?").get(saved.candidate.id!);
   const evidence = parseApplicationJson(Buffer.from(String(stored!.evidence_json))) as Record<string, unknown>;
   const selected = evidence.reviewed_selection as Record<string, unknown>, quality = evidence.reviewed_quality as Record<string, unknown>;
@@ -50,6 +52,10 @@ test("真实独立匹配与质量回执保存85分，重启读取保持证据且
     const keys = Object.keys(row); db.prepare(`INSERT INTO ${table}(${keys.join(",")}) VALUES(${keys.map(() => "?").join(",")})`).run(...Object.values(row));
   }
   const contact = repository.planStepScoring(campaign, 1, [], ["linkedin", "google", "yahoo"], [String(gap.hit.id)]);
+  assert.equal(repository.activePendingCount(campaign, 1), 1);
+  assert.equal(repository.activePendingCount(campaign, 1, [], [String(gap.hit.id)]), 0);
+  assert.equal(repository.activePendingCount(campaign, 1, ["linkedin"]), 0);
+  assert.notEqual(repository.planStepScoring(campaign, 1, [], ["linkedin", "google", "yahoo"], [String(gap.hit.id)], { holdDiscovery: true }).kind, "read_public_page");
   assert.equal(contact.kind, "read_public_page");
   if (contact.kind === "read_public_page") assert.equal(contact.candidate_id, saved.candidate.id);
   const heldContact = repository.planStepScoring(campaign, 1, [], ["linkedin", "google", "yahoo"], [hit]);
@@ -73,6 +79,31 @@ test("真实独立匹配与质量回执保存85分，重启读取保持证据且
   }
 });
 
+for (const sourceQuota of [false, true]) test(`真实已通过候选达到${sourceQuota ? "来源配额" : "总目标"}后仍可补联系，完成候选不计入活动等待`, async t => {
+  const directory = await mkdtemp(fileURLToPath(new URL("../../.scratch/quality-contact-quota-", import.meta.url))), path = join(directory, "creator.sqlite");
+  await initializeNewCreatorDatabase(path);
+  const db = new DatabaseSync(path); t.after(() => db.close());
+  const repository = new DiscoveryRepository(db), campaign = String(saved.plan.discovery_campaign_id), hit = String(saved.hit.id);
+  const criteria = { ...parseApplicationJson(Buffer.from(String(saved.plan.criteria_json))) as Record<string, unknown>, quality_filter: null };
+  repository.create({ id: campaign, brief: parseApplicationJson(Buffer.from(String(saved.plan.brief_json))), opencli_version: "1.8.8", criteria, scopes: parseApplicationJson(Buffer.from(String(saved.plan.scope_json))), target_count: 1, ...(sourceQuota ? { source_targets: { linkedin: 1 } } : {}) });
+  repository.approve(campaign, 1);
+  db.prepare("UPDATE discovery_campaign_revisions SET approved_at=? WHERE discovery_campaign_id=?").run(saved.plan.approved_at!, campaign);
+  db.prepare("UPDATE discovery_platform_runs SET status='completed' WHERE discovery_campaign_id=?").run(campaign);
+  for (const [table, row] of Object.entries({ discovery_search_hits: saved.hit, discovery_search_authors: saved.author, discovery_profile_reads: saved.profile, discovery_candidates: saved.candidate })) {
+    const keys = Object.keys(row); db.prepare(`INSERT INTO ${table}(${keys.join(",")}) VALUES(${keys.map(() => "?").join(",")})`).run(...Object.values(row));
+  }
+  const material = repository.prepareReviewMaterial(campaign, 1, hit);
+  assert.equal(repository.submitReview("quality-contact-quota", { campaign_id: campaign, expected_revision: 1, search_hit_id: hit, material_hash: material.material_hash, request_id: "real-quality-contact-quota", reviewer: { kind: "agent", label: SELECTION_QUALITY_REVIEWER }, findings: [review.selection, review.quality_rating, ...review.requirement_findings] }).verdict, "qualified");
+  assert.equal(repository.activePendingCount(campaign, 1), 0);
+  for (const holdDiscovery of [false, true]) {
+    const step = repository.planStep(campaign, 1, [], [], { holdDiscovery });
+    assert.equal(step.kind, "read_public_page");
+    if (step.kind === "read_public_page") assert.equal(step.candidate_id, saved.candidate.id);
+    assert.notEqual(repository.planStep(campaign, 1, ["linkedin"], [], { holdDiscovery }).kind, "read_public_page");
+  }
+  assert.equal(repository.getPlan(campaign).used_calls, 0);
+});
+
 test("明确评分门槛按实际代表分比较，或者与同时保留三值逻辑", () => {
   for (const [operator, score, level, expected] of [["gte",85,"good","supported"],["gt",85,"good","contradicted"],["gte",80,"good","supported"],["gte",95,"excellent","supported"],["gt",95,"excellent","contradicted"],["gte",100,"excellent","contradicted"],["gte",40,null,"insufficient"]] as const) {
     assert.equal(evaluateQualityFilter({ kind: "minimum", operator, score, excerpt: "评分" }, level, []), expected);
@@ -93,13 +124,13 @@ test("评分门槛必须来自用户明确要求，偏好、人数和显示请�
   const proposed: ProposedQualityFilter = { kind: "any", items: [{ kind: "minimum", operator: "gte", score: 85, excerpt: "评分至少85" }, { kind: "condition", description: "任职币安", excerpt: "任职币安" }] };
   assert.equal(validateProposedQualityFilter("评分至少85或者任职币安", proposed), true);
   assert.deepEqual(freezeQualityFilter(proposed, requirements), { kind: "any", items: [proposed.items[0], { kind: "requirement", index: 0 }] });
-  const base = { id: "quality-criteria", brief: "找85人", opencli_version: "1.8.8", criteria: { quality_filter: { kind: "minimum", operator: "gte", score: 85, excerpt: "找85人" } }, scopes: [{ platform: "linkedin", profile_ref: "default", keywords: ["BD"] }], target_count: 85, max_calls: null };
+  const base = { id: "quality-criteria", brief: "找85人", opencli_version: "1.8.8", criteria: { quality_filter: { kind: "minimum", operator: "gte", score: 85, excerpt: "找85人" } }, scopes: [{ platform: "linkedin", profile_ref: "default", keywords: ["BD"] }], target_count: 85 };
   assert.equal(discoveryPlanInput.safeParse(base).success, false);
 });
 
 test("真实模型的一句话评分或任职条件通过计划合同并保留任选关系", () => {
   const actual = parseApplicationJson(readFileSync(new URL("./fixtures/linkedin-quality-intent-20261020.json", import.meta.url))) as { draft: unknown };
-  const draft = discoveryPlanInput.parse(actual.draft);
+  const draft = discoveryPlanInput.strip().parse(actual.draft);
   assert.equal(draft.criteria.min_subscribers, 0);
   assert.deepEqual(draft.criteria.quality_filter, { kind: "any", items: [{ kind: "minimum", operator: "gte", score: 85, excerpt: "评分至少85" }, { kind: "requirement", index: 0 }] });
 });

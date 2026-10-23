@@ -175,14 +175,9 @@ export function CreatorMainView({
                     <td><ul>{creator.accounts.map(account => <li key={JSON.stringify([account.platform, account.nativeId])}>
                       {creator.accounts.length > 1 && `${account.platform === 'twitter' ? 'X' : account.platform} · `}
                       {followerDigits(account.followers) ?? t('detail.followersUnknown')}
-                      {account.pinterestMonthlyViews && <div>{account.pinterestMonthlyViews}</div>}
                     </li>)}</ul></td>
                     <td>
                       {t(`detail.verdict.${creator.verdict}`, creator.verdict)}
-                      <ul>{creator.accounts.flatMap(account => (account.pinterestScalePassedBy ?? []).map(branch => <li key={`${account.platform}:${account.nativeId}:${branch}`}>
-                        {creator.accounts.length > 1 && `${account.platform} · `}
-                        {branch === 'monthly_views' ? (i18n.language.startsWith('zh') ? '月浏览量达标' : 'Monthly views requirement met') : (i18n.language.startsWith('zh') ? '粉丝数达标' : 'Follower requirement met')}
-                      </li>))}</ul>
                       {(creator.verdict === 'pending' || creator.verdict === 'related') && <ul>{creator.reasons
                         .filter(reason => /^(核实状态|证据缺口|下一步|最后核实时间)：/.test(reason))
                         .map(reason => <li key={reason}>{reason}</li>)}</ul>}

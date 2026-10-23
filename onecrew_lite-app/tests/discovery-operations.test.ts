@@ -3,6 +3,7 @@ import { mkdtemp } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
+import { setTimeout as wait } from "node:timers/promises";
 import { AccountContextService } from "../src/identity/account-context.ts";
 import { AccountDatabases } from "../src/identity/account-databases.ts";
 import { OperationRegistry } from "../src/application/operation-registry.ts";
@@ -20,16 +21,22 @@ test("八项Discovery实际注册读取使用唯一账号SQLite，严格旧Web�
     assert.equal(registry.names().length, 12); assert.deepEqual(await execute("onecrew_discovery_campaigns_recent", {}), []);
     registerDiscoveryWriteOperations(registry, accounts, databases.discoveryResolver());
     const drafts = new DiscoveryDraftRuntime(accounts, databases.discoveryResolver()); registerDiscoveryDraftOperations(registry, drafts);
+    async function settledDraft(id: string) {
+      for (let attempt = 0; attempt < 100; attempt++) {
+        const progress = await execute("onecrew_discovery_draft_progress_get", { id }) as { phase: string; error_code: string | null } | null;
+        if (progress && ["finished", "failed"].includes(progress.phase)) return progress;
+        await wait(10);
+      }
+      throw new Error("draft_did_not_settle");
+    }
     const repository = (await databases.discoveryResolver().resolve(context)).repository;
-    repository.create({ id: "actual-local-plan", brief: "找鞋子作者", opencli_version: "1.8.8", criteria: {}, scopes: [{ platform: "youtube", profile_ref: "work", keywords: ["shoe review"] }], target_count: 2, max_calls: 2 }); repository.approve("actual-local-plan", 1);
+    repository.create({ id: "actual-local-plan", brief: "找鞋子作者", opencli_version: "1.8.8", criteria: {}, scopes: [{ platform: "youtube", profile_ref: "work", keywords: ["shoe review"] }], target_count: 2 }); repository.approve("actual-local-plan", 1);
     assert.equal((await execute("onecrew_discovery_campaign_get", { id: "actual-local-plan" }) as { id: string }).id, "actual-local-plan");
     assert.equal((await execute("onecrew_discovery_campaigns_recent", {}) as unknown[]).length, 1);
-    const writeInput = { id: "registered-write", brief: "键盘作者", opencli_version: "1.8.8", criteria: {}, scopes: [{ platform: "youtube", profile_ref: "work", keywords: ["keyboard review"] }], target_count: 2, max_calls: 2 };
+    const writeInput = { id: "registered-write", brief: "键盘作者", opencli_version: "1.8.8", criteria: {}, scopes: [{ platform: "youtube", profile_ref: "work", keywords: ["keyboard review"] }], target_count: 2 };
     assert.equal((await execute("onecrew_discovery_campaign_create", { input: writeInput }) as { phase: string }).phase, "draft");
     assert.equal((await execute("onecrew_discovery_campaign_approve", { id: writeInput.id, expectedRevision: 1 }) as { phase: string }).phase, "active");
-    const budgetInput = { campaign_id: writeInput.id, expected_revision: 1, expected_max_calls: 2, new_max_calls: 3, decision_id: "registered-budget" };
-    assert.equal((await execute("onecrew_discovery_budget_increase", { input: budgetInput }) as { max_calls: number }).max_calls, 3);
-    assert.equal((await execute("onecrew_discovery_budget_increase", { input: budgetInput }) as { max_calls: number }).max_calls, 3);
+    assert.equal(registry.names().includes("onecrew_discovery_budget_increase"), false);
     const targetInput = { campaign_id: writeInput.id, expected_revision: 1, expected_target_count: 2, new_target_count: 1, decision_id: "registered-target" };
     assert.equal((await execute("onecrew_discovery_target_increase", { input: targetInput }) as { target_count: number }).target_count, 1);
     assert.equal((await execute("onecrew_discovery_target_increase", { input: targetInput }) as { target_count: number }).target_count, 1);
@@ -39,12 +46,14 @@ test("八项Discovery实际注册读取使用唯一账号SQLite，严格旧Web�
     await assert.rejects(execute("onecrew_discovery_profile_get", { input: { campaign_id: "actual-local-plan", search_hit_id: "missing" } }), /read_missing/);
     await assert.rejects(execute("onecrew_discovery_review_material_get", { input: { campaign_id: "actual-local-plan", expected_revision: 1, search_hit_id: "missing" } }));
     await assert.rejects(execute("onecrew_discovery_campaign_get", { id: "actual-local-plan", accountId: "another-owner", databasePath: "other.sqlite" }));
-    repository.create({ id: "existing-draft", brief: "找鞋子作者", opencli_version: "1.8.8", criteria: { region: "" }, scopes: [{ platform: "youtube", profile_ref: "work", keywords: ["shoe review"] }], target_count: 2, max_calls: 2 });
-    const draftInput = { id: "existing-draft", brief: "找鞋子作者", profile_ref: "work", opencli_version: "1.8.8", target_count: 2, max_calls: 2, scope_overrides: [] };
+    repository.create({ id: "existing-draft", brief: "找鞋子作者", opencli_version: "1.8.8", criteria: { region: "" }, scopes: [{ platform: "youtube", profile_ref: "work", keywords: ["shoe review"] }], target_count: 2 });
+    const draftInput = { id: "existing-draft", brief: "找鞋子作者", profile_ref: "work", opencli_version: "1.8.8", target_count: 2, scope_overrides: [] };
     assert.equal((await execute("onecrew_discovery_draft_prepare", { input: draftInput }) as { id: string }).id, "existing-draft");
-    assert.equal((await execute("onecrew_discovery_draft_progress_get", { id: "existing-draft" }) as { phase: string }).phase, "finished");
-    await assert.rejects(execute("onecrew_discovery_draft_prepare", { input: { ...draftInput, brief: "不同请求" } }), /draft_conflict/);
-    await assert.rejects(execute("onecrew_discovery_draft_prepare", { input: { ...draftInput, id: "requires-dependencies" } }), /browser_unavailable/);
+    assert.equal((await settledDraft("existing-draft")).phase, "finished");
+    await execute("onecrew_discovery_draft_prepare", { input: { ...draftInput, brief: "不同请求" } });
+    assert.equal((await settledDraft("existing-draft")).error_code, "discovery_draft_conflict");
+    await execute("onecrew_discovery_draft_prepare", { input: { ...draftInput, id: "requires-dependencies" } });
+    assert.equal((await settledDraft("requires-dependencies")).error_code, "discovery_draft_browser_unavailable");
     assert.equal(repository.findPlan("requires-dependencies"), null); assert.equal(repository.getPlan("actual-local-plan").used_calls, 0);
     assert.equal((await execute("onecrew_discovery_draft_progress_get", { id: "requires-dependencies" }) as { error_code: string }).error_code, "discovery_draft_browser_unavailable");
     await drafts.close();

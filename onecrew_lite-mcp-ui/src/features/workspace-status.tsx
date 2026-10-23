@@ -106,7 +106,7 @@ export function WorkspaceStatusCard({ appClient, initial }: { appClient: App; in
   useEffect(() => {
     let stopped = false;
     let busy = false;
-    let blockedCampaign: string | undefined;
+    let deliveryUnavailable = false;
     let retryAt = 0;
     const refresh = async () => {
       if (busy || stopped || document.visibilityState === "hidden") return;
@@ -121,9 +121,9 @@ export function WorkspaceStatusCard({ appClient, initial }: { appClient: App; in
             setHistory(previous => mergeWorkspaceHistory(previous,
               historyForWorkspaceView(status.history, initial.workspace_activity?.campaign_id), status.activity));
             setUpdatedAt(Date.now());
-            if (status.activity && blockedCampaign !== status.activity.campaign_id && Date.now() >= retryAt && initial.viewId) {
+            if (!deliveryUnavailable && Date.now() >= retryAt && initial.viewId) {
               const outcome = await requestWorkspaceCard(appClient, initial.viewId, false, initial.workspace_activity?.campaign_id);
-              if (outcome === "unavailable") blockedCampaign = status.activity.campaign_id;
+              if (outcome === "unavailable") deliveryUnavailable = true;
               if (outcome === "retryable") retryAt = Date.now() + 30_000;
               if (outcome === "delivered") setNotificationFailed(false);
               else if (outcome === "unavailable" || outcome === "retryable") setNotificationFailed(true);
@@ -162,8 +162,8 @@ export function WorkspaceStatusCard({ appClient, initial }: { appClient: App; in
       historical={item.campaign_id !== activity?.campaign_id}
       libraryError={item.campaign_id === activity?.campaign_id ? initial.library_error : null} locale={locale} />)}
     {!activity && <WorkspaceStatusView phase={phase} activity={null} error={error} updatedAt={updatedAt} libraryError={initial.library_error} locale={locale} />}
-    {initial.viewId && activity && <div className="space-y-2">
-      {notificationFailed && <p role="status">{locale === "zh-CN" ? "新卡片未确认显示，搜索进度已保留。" : "New card delivery was not confirmed. Search progress is saved."}</p>}
+    {initial.viewId && <div className="space-y-2">
+      {notificationFailed && <p role="status">{locale === "zh-CN" ? "当前客户端未确认接收工作台通知，自动交接尚未确认。任务和进度已保留；如果对话尚未处理任务，可在当前对话中要求继续。已启动的模型处理无需逐条通知。" : "This client has not confirmed the workbench notification, so automatic handoff is unconfirmed. Tasks and progress are saved. If the conversation has not started processing, ask it to continue. An active model loop does not need a notification for every task."}</p>}
       <Button disabled={sending} onClick={async () => {
         setSending(true);
         try {

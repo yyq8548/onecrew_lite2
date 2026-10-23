@@ -9,9 +9,6 @@ export const linkedinAccount = z.string().regex(/^ACo[A-Za-z0-9_-]{16,125}$/);
 const linkedinBody = z.object({ account_id: linkedinAccount, author_handle: linkedinHandle, profile_url: z.string().url(),
   post_id: numeric, source_url: z.string().url(), text: text(16000).refine(value => value.trim().length > 0),
   text_truncated: z.literal(true), evidence_source: z.literal("visible_author_activity") }).strict();
-const pinterestBody = z.object({ pin_id: numeric, author_id: numeric, author_username: z.string().regex(/^[A-Za-z0-9_]{1,30}$/),
-  profile_url: z.string().url(), source_url: z.string().url(), text: text(16000).refine(value => value.trim().length > 0),
-  text_truncated: z.literal(true) }).strict();
 const weiboBody = z.object({ post_id: numeric, author_id: numeric, author: label, source_url: z.string().url(),
   text: text(16000), text_truncated: z.boolean(), text_completeness_known: z.boolean(), is_repost: z.literal(false) }).strict();
 const zhihuAuthor = { author_id: z.string().regex(/^[a-f0-9]{32}$/), url_token: z.string().regex(/^[A-Za-z0-9_-]{1,128}$/),
@@ -22,8 +19,8 @@ const caption = z.object({ post_id: z.string(), author_id: z.string(), source_ur
   text: text(16000), text_truncated: z.boolean() }).strict();
 
 /** Exact owner receipt shapes. Search titles and arbitrary JSON cannot pass as native text. */
-export const additionalNativeContentSchema = z.union([linkedinBody, pinterestBody, weiboBody, zhihuArticle, zhihuAnswer]);
-export const additionalNativePlatforms = ["linkedin", "pinterest", "pixiv", "weibo", "zhihu", "instagram", "facebook", "reddit"] as const;
+export const additionalNativeContentSchema = z.union([linkedinBody, weiboBody, zhihuArticle, zhihuAnswer]);
+export const additionalNativePlatforms = ["linkedin", "pixiv", "weibo", "zhihu", "instagram", "facebook"] as const;
 type Claim = { platform: string; author_id: string; source_url: string };
 
 export function additionalNativeContentBound(claim: Claim, value: unknown): boolean {
@@ -32,12 +29,6 @@ export function additionalNativeContentBound(claim: Claim, value: unknown): bool
     return result.success && result.data.author_handle === claim.author_id
       && result.data.profile_url === claim.source_url && claim.source_url === `https://www.linkedin.com/in/${result.data.author_handle}/`
       && result.data.source_url === `https://www.linkedin.com/feed/update/urn:li:activity:${result.data.post_id}/`;
-  }
-  if (claim.platform === "pinterest") {
-    const result = pinterestBody.safeParse(value);
-    return result.success && result.data.author_id === claim.author_id
-      && result.data.profile_url === claim.source_url && claim.source_url === `https://www.pinterest.com/${result.data.author_username}/`
-      && result.data.source_url === `https://www.pinterest.com/pin/${result.data.pin_id}/`;
   }
   if (claim.platform === "weibo") {
     const result = weiboBody.safeParse(value);
@@ -64,9 +55,6 @@ export function additionalNativeContentBound(claim: Claim, value: unknown): bool
   if (claim.platform === "facebook") return numeric.safeParse(body.author_id).success && /^[1-9][0-9]{0,24}$/.test(body.post_id)
     && body.source_url === claim.source_url && claim.source_url === `https://www.facebook.com/reel/${body.post_id}`
     && body.text.trim().length > 0 && new TextEncoder().encode(body.text).length <= 8000;
-  if (claim.platform === "reddit") return /^t2_[a-z0-9]{1,15}$/.test(body.author_id) && /^[a-z0-9]{1,15}$/.test(body.post_id)
-    && body.source_url === claim.source_url && claim.source_url === `https://www.reddit.com/comments/${body.post_id}/`
-    && body.text.trim().length > 0 && new TextEncoder().encode(body.text).length <= 8000;
   return false;
 }
 
@@ -77,16 +65,11 @@ export function additionalNativeReviewBound(platform: string, claim: Claim, valu
     const body = linkedinBody.parse(value);
     return body.account_id === author && body.profile_url === profile && claim.source_url === hitSource;
   }
-  if (platform === "pinterest") {
-    const body = pinterestBody.parse(value);
-    return body.author_id === author && body.profile_url === profile && claim.source_url === hitSource;
-  }
   if (claim.author_id !== author || (platform !== "facebook" && claim.source_url !== hitSource)) return false;
   if (platform === "zhihu") return z.union([zhihuArticle, zhihuAnswer]).parse(value).author_url === profile;
   if (platform === "weibo") return profile === `https://weibo.com/u/${author}`;
   if (platform === "pixiv") return profile === `https://www.pixiv.net/users/${author}`;
   if (platform === "instagram") return profile === hitSource;
-  if (platform === "reddit") return /^https:\/\/www\.reddit\.com\/user\/[A-Za-z0-9_-]{3,20}\/$/.test(profile);
   if (platform === "facebook") return profile === `https://www.facebook.com/profile.php?id=${author}`;
   return false;
 }

@@ -1,6 +1,6 @@
 {
   "name": "@onecrew/runtime-contracts",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "private": true,
   "type": "module",
   "exports": {
@@ -17,7 +17,8 @@
     "./result-wire": "./src/result-wire.ts",
     "./search-plan": "./src/search-plan.ts",
     "./discovery": "./src/discovery.ts",
-    "./status": "./src/status.ts"
+    "./status": "./src/status.ts",
+    "./repair": "./src/repair.ts"
   },
   "dependencies": {
     "jsonc-parser": "3.3.1",

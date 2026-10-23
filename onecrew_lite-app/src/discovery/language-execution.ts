@@ -2,7 +2,7 @@ import { z } from "zod";
 import type { AccountContext, AccountContextService } from "../identity/account-context.ts";
 import { OpenCliError } from "../platforms/opencli/errors.ts";
 import type { OpenCliReader, VerifiedOpenCliBrowserBinding } from "../platforms/opencli/reader.ts";
-import { RETIRED_CREATOR_SOURCES } from "../platforms/opencli/sources.ts";
+import { INACTIVE_CREATOR_SOURCES } from "../platforms/opencli/sources.ts";
 import type { DiscoveryBrowserResolver, DiscoveryRepositoryResolver } from "./search-execution.ts";
 import { discoveryLanguageSample } from "./review-material.ts";
 import { validDiscoveryLanguageSample, type DiscoveryLanguageClaim } from "./language-contracts.ts";
@@ -34,11 +34,11 @@ export class DiscoveryLanguageExecutor {
     if (campaign.revision !== input.expected_revision || campaign.phase !== "active") throw new Error("discovery_language_approval_changed");
     if (!owned.repository.languageEligible(input.campaign_id, input.search_hit_id)) return null;
     const source = owned.repository.languageSource(input.campaign_id, input.search_hit_id);
-    if ((RETIRED_CREATOR_SOURCES as readonly string[]).includes(source.platform)) throw new OpenCliError("opencli_read_command_unavailable");
+    if (INACTIVE_CREATOR_SOURCES.includes(source.platform)) throw new OpenCliError("opencli_read_command_unavailable");
     if (campaign.opencli_version !== "1.8.8" || this.reader.version !== campaign.opencli_version) throw new OpenCliError("opencli_version_changed");
     const browser = await this.browsers.resolve(context, source.profile_ref); await browser.assertCurrent();
     if (browser.profile !== source.profile_ref) throw new Error("discovery_browser_profile_mismatch");
-    await this.reader.checkBrowserProfile(browser); owned.assertOwned(); this.accounts.assertCurrent(context);
+    owned.assertOwned(); this.accounts.assertCurrent(context);
     const claim = owned.repository.claimLanguage(input.campaign_id, input.expected_revision, input.search_hit_id);
     if (claim === null) return null;
     const result = await (async () => {
@@ -82,7 +82,6 @@ export class DiscoveryLanguageExecutor {
       return { author_id: claim.author_id, source_url: source, text: saved.text, comments: comments.map(comment => ({ source_url: `${source}#comment-${comment.id}`, text: comment.text })) };
     }
     if (claim.platform === "facebook") return this.reader.facebookLanguageSample(browser, claim.author_id, source);
-    if (claim.platform === "reddit") return this.reader.redditLanguageSample(browser, claim.author_handle, claim.author_id, source);
     if (claim.platform === "tiktok") return this.reader.tiktokLanguageSample(browser, claim.author_handle, claim.author_id, source, includeComments);
     if (claim.platform === "bilibili") return this.reader.bilibiliLanguageSample(browser, claim.author_id, source);
     if (claim.platform === "google" || claim.platform === "yahoo") {

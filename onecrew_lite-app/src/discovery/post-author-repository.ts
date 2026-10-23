@@ -1,7 +1,13 @@
 import type { DatabaseSync } from "node:sqlite";
+import { discoveryReadBusySql } from "./read-capacity.ts";
+import { stringifyApplicationJson } from "../contracts/application-json.ts";
+import { twitterPostContentPlan } from "../platforms/opencli/twitter-posts.ts";
+import { twitterIdentityPlan } from "../platforms/opencli/profiles.ts";
+import { DiscoveryProfileRepository, type DiscoveryProfileClaim } from "./profile-repository.ts";
+import { projectTwitterIdentityContent } from "./twitter-observations.ts";
 import { isDeepStrictEqual } from "node:util";
 import { z } from "zod";
-import { validateCreatorSchema } from "../storage/creator-schema.ts";
+import { assertValidatedCreatorConnection } from "../storage/creator-schema.ts";
 import { getDiscoverySavedIdentity } from "./saved-read-repository.ts";
 import { discoveryPostAuthorClaim, discoveryPostIdForSource, validateDiscoveryPostAuthorResult, type DiscoveryPostAuthorClaim } from "./post-author-contracts.ts";
 import { discoveryReadPlatformStatus, sourceLocalReadFailure } from "./stops.ts";
@@ -9,15 +15,15 @@ import { discoveryReadPlatformStatus, sourceLocalReadFailure } from "./stops.ts"
 const u32 = z.number().int().min(0).max(4294967295);
 export class DiscoveryPostAuthorRepository {
   readonly #db: DatabaseSync;
-  constructor(database: DatabaseSync) { validateCreatorSchema(database); this.#db = database; }
+  constructor(database: DatabaseSync) { assertValidatedCreatorConnection(database); this.#db = database; }
   #transaction<T>(body: () => T): T { this.#db.exec("BEGIN IMMEDIATE"); let committed = false; try { const value = body(); this.#db.exec("COMMIT"); committed = true; return value; } finally { if (!committed) this.#db.exec("ROLLBACK"); } }
   needs(campaign: string, hit: string): boolean { return this.#db.prepare("SELECT EXISTS(SELECT 1 FROM discovery_search_hits h WHERE h.id=?1 AND h.discovery_campaign_id=?2 AND h.platform='twitter' AND NOT EXISTS(SELECT 1 FROM discovery_identity_reads i WHERE i.search_hit_id=h.id)) needed").get(hit, campaign)!.needed === 1; }
   claim(campaign: string, revision: number, hit: string): DiscoveryPostAuthorClaim {
     u32.parse(revision);
     return this.#transaction(() => {
       const head = this.#db.prepare(`SELECT c.used_calls FROM discovery_campaigns c JOIN discovery_campaign_revisions v ON v.discovery_campaign_id=c.id AND v.revision=c.current_revision
-        WHERE c.id=?1 AND c.current_revision=?2 AND c.phase='active' AND v.approved_at IS NOT NULL AND(c.max_calls IS NULL OR c.used_calls<c.max_calls)
-        AND NOT EXISTS(SELECT 1 FROM discovery_platform_runs r WHERE r.discovery_campaign_id=c.id AND r.status='searching')`).get(campaign, revision);
+        WHERE c.id=?1 AND c.current_revision=?2 AND c.phase='active' AND v.approved_at IS NOT NULL
+        AND NOT ${discoveryReadBusySql(this.#db, campaign, "'twitter'")}`).get(campaign, revision);
       if (!head) throw new Error("discovery_post_author_not_approved_idle_or_budget");
       const row = this.#db.prepare(`SELECT h.profile_ref,a.author_id AS author_handle,h.source_url FROM discovery_search_hits h JOIN discovery_search_authors a ON a.search_hit_id=h.id
         JOIN discovery_platform_runs r ON r.discovery_campaign_id=h.discovery_campaign_id AND r.platform=h.platform AND r.profile_ref=h.profile_ref
@@ -39,6 +45,18 @@ export class DiscoveryPostAuthorRepository {
       if (this.#db.prepare(`UPDATE discovery_platform_runs SET status=?4,active_query=NULL,stop_code=?5,updated_at=?6 WHERE discovery_campaign_id=?1 AND platform='twitter' AND profile_ref=?2 AND status='searching' AND active_query=?3
         AND EXISTS(SELECT 1 FROM discovery_campaigns c JOIN discovery_campaign_revisions v ON v.discovery_campaign_id=c.id AND v.revision=c.current_revision WHERE c.id=?1 AND c.phase='active' AND c.current_revision=?7 AND v.approved_at IS NOT NULL)`).run(claim.campaign_id, claim.profile_ref, `identity:${claim.search_hit_id}:${claim.call_number}`, discoveryReadPlatformStatus(result.stop_code), runStop, now, claim.expected_revision).changes !== 1) throw new Error("discovery_post_author_claim_stale");
       if (this.#db.prepare("UPDATE discovery_identity_reads SET status=?,account_id=?,observed_source_url=?,stop_code=?,updated_at=? WHERE search_hit_id=?").run(result.stop_code === null ? "completed" : "failed", result.account_id, result.observed_source_url, result.stop_code, now, claim.search_hit_id).changes !== 1) throw new Error("discovery_post_author_receipt_missing");
+      if (result.native_content !== undefined) {
+        const content = twitterPostContentPlan(claim.author_handle, claim.post_id, result.account_id!).decode([result.native_content]);
+        const profile = result.native_profile == null ? null : twitterIdentityPlan(claim.author_handle, "x_tweet_detail").decode([result.native_profile]);
+        if (profile !== null && (profile.account_id !== result.account_id || profile.follower_count === null)) throw new Error("discovery_post_author_profile_mismatch");
+        this.#db.prepare("INSERT INTO discovery_identity_observations VALUES(?,?,?,?,?)").run(claim.search_hit_id, claim.call_number, stringifyApplicationJson(content), profile === null ? null : stringifyApplicationJson(profile), now);
+        if (profile !== null) {
+          this.#db.prepare("INSERT INTO discovery_profile_reads VALUES(?,?,'twitter',?,?,?,?,'completed',?,NULL,?)").run(claim.search_hit_id, claim.campaign_id, claim.profile_ref, claim.author_handle, claim.expected_revision, claim.call_number, stringifyApplicationJson(profile), now);
+          this.#db.prepare("INSERT INTO discovery_profile_identity_matches VALUES(?1,?1,?2,?3)").run(claim.search_hit_id, result.account_id, now);
+          new DiscoveryProfileRepository(this.#db).projectSaved(claim.campaign_id, claim.search_hit_id);
+          projectTwitterIdentityContent(this.#db, { ...claim, platform: "twitter", author_id: claim.author_handle, author_url: profile.profile_url } satisfies DiscoveryProfileClaim);
+        }
+      }
       return getDiscoverySavedIdentity(this.#db, claim.campaign_id, claim.search_hit_id);
     });
   }

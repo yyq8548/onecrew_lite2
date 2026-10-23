@@ -1,6 +1,6 @@
 {
   "name": "onecrew_lite-app",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@10.32.1",
@@ -14,11 +14,11 @@
     "probe:native": "node src/native-capabilities/probe.ts"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "1.32.1",
-    "@onecrew/runtime-contracts": "workspace:*",
     "@hono/node-server": "2.1.1",
+    "@modelcontextprotocol/sdk": "1.32.1",
     "@mtcute/core": "0.32.4",
     "@mtcute/node": "0.32.4",
+    "@onecrew/runtime-contracts": "workspace:*",
     "acorn": "8.19.0",
     "ajv": "8.20.0",
     "ajv-formats": "3.0.1",
@@ -29,6 +29,7 @@
     "jszip": "3.10.1",
     "lossless-json": "4.3.1",
     "mailparser": "3.9.39",
+    "marked": "18.1.1",
     "minisearch": "7.2.0",
     "nodemailer": "10.1.1",
     "onecrew_lite_tables": "workspace:*",

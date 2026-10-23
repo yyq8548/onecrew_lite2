@@ -1,8 +1,18 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { youtubeChannelPlan, youtubeTranscriptPlan, youtubeVideoId, youtubeVideoPlan, youtubeRecentLanguagePlan } from "../src/platforms/opencli/youtube.ts";
+import { youtubeChannelPlan, youtubeTranscriptPlan, youtubeVideoId, youtubeVideoPlan, youtubeRecentLanguagePlan, sameYoutubeVideoSource } from "../src/platforms/opencli/youtube.ts";
 import { youtubeChannelContactPlan, youtubeVideoEvidencePlan } from "../src/platforms/opencli/youtube-evidence.ts";
 import { publicOpenCliAddress, publicWebUrl } from "../src/platforms/opencli/public-url.ts";
+
+test("美妆实测同视频跟踪地址保持同一来源，其他视频、站点和重复ID不能混用", () => {
+  const old = "https://www.youtube.com/watch?v=HhRzdxiqRTA&pp=ygUM576O5aaG5pWZ56iL";
+  const current = "https://www.youtube.com/watch?v=HhRzdxiqRTA&pp=ygUT5pel5bi45aaG5a65IOaVmeeoiw%3D%3D";
+  assert.equal(sameYoutubeVideoSource(old, current), true);
+  assert.equal(sameYoutubeVideoSource(old, "https://www.youtube.com/watch?v=aDl0e93KG1M"), false);
+  assert.equal(sameYoutubeVideoSource(old, "https://example.com/watch?v=HhRzdxiqRTA"), false);
+  assert.equal(sameYoutubeVideoSource(old, current + "&v=HhRzdxiqRTA"), false);
+  assert.equal(sameYoutubeVideoSource(null, current), false);
+});
 
 test("YouTube原字段合同保留频道、订阅文本、视频ID及字幕时间，拒绝重复字段", () => {
   const channel = [{ field: "name", value: "AI Maker" }, { field: "channelId", value: "UC1234567890" }, { field: "subscribers", value: "12.4K subscribers" }, { field: "url", value: "https://www.youtube.com/channel/UC1234567890" }];

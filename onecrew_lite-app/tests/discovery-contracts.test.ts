@@ -22,7 +22,7 @@ test("发现需求保留未指定条件，拒绝改写粉丝，保留有原文�
 
 test("原计划约束保留Unicode字符与字节边界，查询扩充仅追加原范围且不改criteria", () => {
   const scope = { platform: "youtube", profile_ref: "work", keywords: ["鞋".repeat(160)] };
-  const plan = discoveryPlanInput.parse({ id: "plan", brief: "鞋".repeat(4000), opencli_version: "1.8.8", criteria: { min_subscribers: 5000, language: "English" }, scopes: [scope], target_count: 2, max_calls: null });
+  const plan = discoveryPlanInput.parse({ id: "plan", brief: "鞋".repeat(4000), opencli_version: "1.8.8", criteria: { min_subscribers: 5000, language: "English" }, scopes: [scope], target_count: 2 });
   assert.equal(plan.brief.length, 4000); assertRegisteredDiscoveryScopes(plan.scopes);
   assert.throws(() => assertRegisteredDiscoveryScopes([{ ...scope, platform: "hackernews" }]));
   assert.throws(() => discoveryPlanInput.parse({ ...plan, criteria: { min_subscribers: 1, min_followers: 1 } }));
@@ -33,11 +33,14 @@ test("原计划约束保留Unicode字符与字节边界，查询扩充仅追加�
   assert.deepEqual(expected[0]?.keywords, ["headphone review"]);
 });
 
-test("技术停止不伪装有效零结果，中断和超时不得自动换查询", () => {
+test("搜索超时换新关键词，三次失败停止平台，中断和风控保留停止边界", () => {
   const run = { status: "technical_stop", stop_code: "opencli_command_failed", active_query: "first", calls_used: 1 };
   assert.equal(nextDiscoverySearchKeyword(["first", "second"], run, new Set()), "second");
   assert.equal(canAdvanceSearchAfterStop("interrupted_read"), false);
-  assert.equal(canAdvanceSearchAfterStop("opencli_timeout"), false);
+  assert.equal(canAdvanceSearchAfterStop("opencli_timeout"), true);
+  assert.equal(canAdvanceSearchAfterStop("opencli_risk_control"), false);
+  assert.equal(canAdvanceSearchAfterStop("opencli_auth_required"), false);
+  assert.equal(nextDiscoverySearchKeyword(["first", "second"], { ...run, cursor: JSON.stringify({ last_query: "first", consecutive_failures: 3 }) }, new Set()), null);
   assert.equal(discoveryReadPlatformStatus("opencli_timeout"), "completed");
   assert.equal(discoveryReadPlatformStatus("opencli_risk_control"), "risk_control_stop");
   assert.equal(discoveryReadPlatformStatus("opencli_auth_required"), "unauthorized");

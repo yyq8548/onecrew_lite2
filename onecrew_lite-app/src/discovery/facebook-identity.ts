@@ -1,10 +1,12 @@
 import type { DatabaseSync } from "node:sqlite";
+import { discoveryReadBusySql } from "./read-capacity.ts";
 import { isDeepStrictEqual } from "node:util";
 import { z } from "zod";
 import { parseApplicationJson, stringifyApplicationJson } from "../contracts/application-json.ts";
-import { validateCreatorSchema } from "../storage/creator-schema.ts";
+import { assertValidatedCreatorConnection } from "../storage/creator-schema.ts";
 import { facebookSourceValid } from "../platforms/opencli/facebook-profile.ts";
 import { discoveryReadPlatformStatus, sourceLocalReadFailure } from "./stops.ts";
+import { assertDiscoveryReadHealthy, discoveryReadExcludedHits } from "./read-health.ts";
 
 const text = z.string(), u32 = z.number().int().min(0).max(4294967295), record = z.record(text, z.unknown());
 export const discoveryFacebookIdentityClaim = z.strictObject({ campaign_id: text, search_hit_id: text, expected_revision: u32, profile_ref: text, source_url: text, call_number: u32 });
@@ -14,40 +16,42 @@ const stops = new Set(["opencli_timeout", "opencli_output_too_large", "opencli_v
 export function validateDiscoveryFacebookIdentity(claim: DiscoveryFacebookIdentityClaim, native: Record<string, unknown> | null, stop: string | null): void {
   if (!facebookSourceValid(claim.source_url)) throw new Error("Facebook identity requires its saved profile source");
   if (native === null) { if (stop !== null && stops.has(stop)) return; throw new Error("Facebook identity result does not bind its native ID to the saved profile"); }
-  const parsed = z.strictObject({ adapter_version: z.literal("1.0.0"), source_url: z.literal(claim.source_url), id: text.regex(/^[1-9]\d{0,19}$/u), display_name: text.refine(name => !!name.trim() && [...name].length <= 200 && !/\p{Cc}/u.test(name)), profile_url: text.refine(source => facebookSourceValid(source) && source.replace(/\/+$/u, "").toLowerCase() === claim.source_url.replace(/\/+$/u, "").toLowerCase()), evidence_source: z.literal("native_profile_header_response") }).safeParse(native);
+  const parsed = z.strictObject({ adapter_version: z.literal("1.0.0"), source_url: z.literal(claim.source_url), id: text.regex(/^[1-9]\d{0,19}$/u), display_name: text.refine(name => !!name.trim() && [...name].length <= 200 && !/\p{Cc}/u.test(name)), profile_url: text.refine(source => facebookSourceValid(source) && source.replace(/\/+$/u, "").toLowerCase() === claim.source_url.replace(/\/+$/u, "").toLowerCase()), evidence_source: z.literal("native_profile_header_response"), skip_reason: z.literal("followers_unavailable").optional() }).safeParse(native);
   if (stop !== null || !parsed.success || Buffer.byteLength(stringifyApplicationJson(native)) > 4000) throw new Error("Facebook identity result does not bind its native ID to the saved profile");
 }
 export class DiscoveryFacebookIdentityRepository {
   readonly #db: DatabaseSync;
-  constructor(database: DatabaseSync) { validateCreatorSchema(database); this.#db = database; }
+  constructor(database: DatabaseSync) { assertValidatedCreatorConnection(database); this.#db = database; }
   #transaction<T>(body: () => T): T { this.#db.exec("BEGIN IMMEDIATE"); let committed = false; try { const value = body(); this.#db.exec("COMMIT"); committed = true; return value; } finally { if (!committed) this.#db.exec("ROLLBACK"); } }
-  next(campaign: string, excluded: readonly string[] = []): string | null {
+  next(campaign: string, excluded: readonly string[] = [], held: readonly string[] = []): string | null {
     if (excluded.includes("facebook")) return null;
+    const stopped = new Set([...held, ...discoveryReadExcludedHits(this.#db, campaign, "facebook_identity")]);
     const rows = this.#db.prepare(`SELECT h.id,h.source_url FROM discovery_search_hits h
       JOIN discovery_campaigns c ON c.id=h.discovery_campaign_id
       JOIN discovery_campaign_revisions v ON v.discovery_campaign_id=c.id AND v.revision=c.current_revision
       JOIN discovery_platform_runs r ON r.discovery_campaign_id=c.id AND r.platform=h.platform AND r.profile_ref=h.profile_ref
-      WHERE c.id=? AND c.phase='active' AND v.approved_at IS NOT NULL AND(c.max_calls IS NULL OR c.used_calls<c.max_calls)
+      WHERE c.id=? AND c.phase='active' AND v.approved_at IS NOT NULL
         AND h.platform='facebook' AND r.status='completed'
         AND NOT EXISTS(SELECT 1 FROM discovery_search_authors a WHERE a.search_hit_id=h.id)
         AND NOT EXISTS(SELECT 1 FROM discovery_facebook_identity_reads i WHERE i.search_hit_id=h.id)
-        AND NOT EXISTS(SELECT 1 FROM discovery_platform_runs b WHERE b.discovery_campaign_id=c.id AND b.status='searching')
+        AND NOT ${discoveryReadBusySql(this.#db, campaign, "h.platform")}
       ORDER BY h.captured_at,COALESCE((SELECT position FROM discovery_search_positions WHERE search_hit_id=h.id),9223372036854775807),h.id`).all(campaign);
-    for (const raw of rows) { const row = z.object({ id: text, source_url: text }).parse(raw); if (facebookSourceValid(row.source_url)) return row.id; }
+    for (const raw of rows) { const row = z.object({ id: text, source_url: text }).parse(raw); if (!stopped.has(row.id) && facebookSourceValid(row.source_url)) return row.id; }
     return null;
   }
   claim(campaign: string, revision: number, hit: string): DiscoveryFacebookIdentityClaim {
     u32.parse(revision);
     return this.#transaction(() => {
+      assertDiscoveryReadHealthy(this.#db, campaign, "facebook_identity", hit);
       const raw = this.#db.prepare(`SELECT h.profile_ref,h.source_url FROM discovery_search_hits h
         JOIN discovery_campaigns c ON c.id=h.discovery_campaign_id
         JOIN discovery_campaign_revisions v ON v.discovery_campaign_id=c.id AND v.revision=c.current_revision
         JOIN discovery_platform_runs r ON r.discovery_campaign_id=c.id AND r.platform=h.platform AND r.profile_ref=h.profile_ref
-        WHERE c.id=? AND c.current_revision=? AND c.phase='active' AND v.approved_at IS NOT NULL AND(c.max_calls IS NULL OR c.used_calls<c.max_calls)
+        WHERE c.id=? AND c.current_revision=? AND c.phase='active' AND v.approved_at IS NOT NULL
           AND h.id=? AND h.platform='facebook' AND r.status='completed'
           AND NOT EXISTS(SELECT 1 FROM discovery_search_authors a WHERE a.search_hit_id=h.id)
           AND NOT EXISTS(SELECT 1 FROM discovery_facebook_identity_reads i WHERE i.search_hit_id=h.id)
-          AND NOT EXISTS(SELECT 1 FROM discovery_platform_runs b WHERE b.discovery_campaign_id=c.id AND b.status='searching')`).get(campaign, revision, hit);
+          AND NOT ${discoveryReadBusySql(this.#db, campaign, "h.platform")}`).get(campaign, revision, hit);
       if (!raw) throw new Error("Facebook identity source is unapproved, attempted, bound or stopped");
       const source = z.object({ profile_ref: text, source_url: text }).parse(raw);
       if (!facebookSourceValid(source.source_url)) throw new Error("Facebook identity requires a saved vanity profile");
@@ -78,7 +82,7 @@ export class DiscoveryFacebookIdentityRepository {
         WHERE discovery_campaign_id=:campaign AND platform='facebook' AND profile_ref=:profile AND status='searching' AND active_query=:active
           AND EXISTS(SELECT 1 FROM discovery_campaigns c JOIN discovery_campaign_revisions v ON v.discovery_campaign_id=c.id AND v.revision=c.current_revision WHERE c.id=:campaign AND c.current_revision=:revision AND c.phase='active' AND v.approved_at IS NOT NULL)`).run({ status: discoveryReadPlatformStatus(stop), stop: sourceLocalReadFailure(stop) ? null : stop, now: timestamp, campaign: claim.campaign_id, profile: claim.profile_ref, active: `facebook_identity:${claim.search_hit_id}:${claim.call_number}`, revision: claim.expected_revision });
       if (changed.changes !== 1) throw new Error("Facebook identity authorization changed");
-      if (native !== null) { const id = text.parse(native.id); this.#db.prepare("INSERT INTO discovery_search_authors VALUES(?,?,?,?)").run(claim.search_hit_id, id, `https://www.facebook.com/profile.php?id=${id}`, timestamp); }
+      if (native !== null && native.skip_reason !== "followers_unavailable") { const id = text.parse(native.id); this.#db.prepare("INSERT INTO discovery_search_authors VALUES(?,?,?,?)").run(claim.search_hit_id, id, `https://www.facebook.com/profile.php?id=${id}`, timestamp); }
       this.#db.prepare("UPDATE discovery_facebook_identity_reads SET status=?,native_identity_json=?,stop_code=?,updated_at=? WHERE search_hit_id=? AND call_number=? AND status='reading'").run(native === null ? "failed" : "completed", native === null ? null : stringifyApplicationJson(native), stop, timestamp, claim.search_hit_id, claim.call_number);
       return this.get(claim.campaign_id, claim.search_hit_id);
     });

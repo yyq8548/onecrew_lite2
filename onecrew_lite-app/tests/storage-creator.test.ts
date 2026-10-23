@@ -6,7 +6,7 @@ import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { extractCreatorHistory } from "./creator-history.ts";
-import { creatorSchemaSnapshot, initializeNewCreatorDatabase, normalizeCreatorSchemaSql, validateCreatorSchema, validateCreatorSchema90 } from "../src/storage/creator-schema.ts";
+import { assertValidatedCreatorConnection, creatorSchemaSnapshot, initializeNewCreatorDatabase, normalizeCreatorSchemaSql, validateCreatorSchema, validateCreatorSchema90, validateCreatorSchemaVersion } from "../src/storage/creator-schema.ts";
 import { inspectLegacyDatabase } from "../src/storage/legacy-sqlite.ts";
 import { createPrivateDirectory } from "../src/storage/private-backup.ts";
 import { GmailBulkRepository } from "../src/mail/gmail-bulk-repository.ts";
@@ -14,6 +14,22 @@ import { GmailMailboxRepository } from "../src/mail/gmail-mailbox-repository.ts"
 
 const schema = ["creator-schema90.sql", "creator-indexes90.sql", "creator-triggers90.sql"]
   .map((file) => readFileSync(new URL(`../src/storage/${file}`, import.meta.url), "utf8")).join("\n");
+
+test("同一真实连接复用验证，结构和版本变化后重新拒绝非法数据库", () => {
+  using database = new DatabaseSync(":memory:");
+  database.exec(schema); database.exec("PRAGMA user_version=90; PRAGMA foreign_keys=ON");
+  validateCreatorSchema(database);
+  for (let count = 0; count < 50; count++) assertValidatedCreatorConnection(database);
+  const index = database.prepare("SELECT sql FROM sqlite_schema WHERE name='creators_by_group'").get()!;
+  database.exec("DROP INDEX creators_by_group");
+  assert.throws(() => assertValidatedCreatorConnection(database), /frozen structure differs/);
+  database.exec(String(index.sql)); assertValidatedCreatorConnection(database);
+  database.exec("PRAGMA user_version=97");
+  assert.throws(() => assertValidatedCreatorConnection(database), /unsupported/);
+  database.exec("PRAGMA user_version=90"); assertValidatedCreatorConnection(database);
+  assert.throws(() => validateCreatorSchemaVersion(database, 91), /requires version/);
+  assertValidatedCreatorConnection(database);
+});
 
 test("new Creator SQLite matches the frozen schema contract across every schema object", async () => {
   const directory = await extractCreatorHistory();
@@ -29,17 +45,18 @@ test("new Creator SQLite matches the frozen schema contract across every schema 
       created.exec("PRAGMA foreign_keys=ON");
       assert.doesNotThrow(()=>new GmailBulkRepository(created));
       assert.doesNotThrow(()=>new GmailMailboxRepository(created));
-      assert.equal(created.prepare("PRAGMA user_version").get()!.user_version, 92);
-      const changed = new Set(["discovery_contact_observations", "discovery_web_source_reads", "discovery_linkedin_experience_reads"]);
+      assert.equal(created.prepare("PRAGMA user_version").get()!.user_version, 96);
+      const additions = new Set(["discovery_linkedin_experience_reads", "discovery_source_targets", "discovery_web_author_pages", "discovery_web_author_edges", "discovery_search_materials", "discovery_identity_observations"]);
+      const changed = new Set(["discovery_contact_observations", "discovery_web_source_reads", ...additions]);
       const previous = creatorSchemaSnapshot(original);
-      assert.deepEqual(creatorSchemaSnapshot(created).tables.filter(table=>table.name!=="discovery_linkedin_experience_reads"), previous.tables);
+      assert.deepEqual(creatorSchemaSnapshot(created).tables.filter(table=>!additions.has(table.name)), previous.tables);
       assert.deepEqual(creatorSchemaSnapshot(created).objects.filter(item => !changed.has(String(item.name))), previous.objects.filter(item => !changed.has(String(item.name))));
       assert.match(String(created.prepare("SELECT sql FROM sqlite_schema WHERE name='discovery_contact_observations'").get()!.sql), /'website','messenger','phone'/);
       const snapshot = creatorSchemaSnapshot(created);
-      assert.equal(snapshot.tables.length, 80);
-      assert.equal(snapshot.tables.reduce((count, table) => count + table.columns.length, 0), 673);
-      assert.equal(snapshot.tables.reduce((count, table) => count + table.foreignKeys.length, 0), 200);
-      assert.equal(snapshot.tables.reduce((count, table) => count + table.indexes.length, 0), 144);
+      assert.equal(snapshot.tables.length, 85);
+      assert.equal(snapshot.tables.reduce((count, table) => count + table.columns.length, 0), 705);
+      assert.equal(snapshot.tables.reduce((count, table) => count + table.foreignKeys.length, 0), 209);
+      assert.equal(snapshot.tables.reduce((count, table) => count + table.indexes.length, 0), 150);
       assert.equal(snapshot.objects.filter((object) => object.type === "index").length, 44);
       assert.equal(snapshot.objects.filter((object) => object.type === "trigger").length, 13);
       assert.equal(inspectLegacyDatabase(path, "creator").schemaValidated, true);

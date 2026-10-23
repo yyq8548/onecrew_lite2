@@ -1,8 +1,9 @@
 import type { DatabaseSync } from "node:sqlite";
+import { discoveryReadBusySql } from "./read-capacity.ts";
 import { isDeepStrictEqual } from "node:util";
 import { z } from "zod";
 import { parseApplicationJson, stringifyApplicationJson } from "../contracts/application-json.ts";
-import { validateCreatorSchema } from "../storage/creator-schema.ts";
+import { assertValidatedCreatorConnection } from "../storage/creator-schema.ts";
 import { loadDiscoveryNativeContactMaterial } from "./contact-native.ts";
 import { discoveryContactSearchQuery, discoveryExactUsername, discoveryLinkedUsername } from "./contact-navigation.ts";
 import { DiscoveryProfileRepository } from "./profile-repository.ts";
@@ -12,7 +13,7 @@ export const discoveryContactLookup = z.object({ campaign_id: text, expected_rev
 export type DiscoveryContactLookup = z.infer<typeof discoveryContactLookup>;
 export class DiscoveryContactLookupRepository {
   readonly #db: DatabaseSync;
-  constructor(database: DatabaseSync) { validateCreatorSchema(database); this.#db = database; }
+  constructor(database: DatabaseSync) { assertValidatedCreatorConnection(database); this.#db = database; }
   #transaction<T>(write: boolean, body: () => T): T {
     this.#db.exec(write ? "BEGIN IMMEDIATE" : "BEGIN DEFERRED"); let committed = false;
     try { const value = body(); this.#db.exec("COMMIT"); committed = true; return value; }
@@ -26,8 +27,8 @@ export class DiscoveryContactLookupRepository {
       JOIN discovery_platform_runs p ON p.discovery_campaign_id=d.id AND p.platform=c.source_platform AND p.profile_ref=c.source_profile_ref
       WHERE d.id=? AND d.phase='active' AND a.approved_at IS NOT NULL AND c.criteria_revision=d.current_revision
         AND NOT EXISTS(SELECT 1 FROM json_each(?) excluded WHERE excluded.value IN(c.platform,c.source_platform))
-        AND (? IS NULL OR c.id=?) AND c.verdict='qualified' AND p.status='completed' AND(d.max_calls IS NULL OR d.used_calls<d.max_calls)
-        AND NOT EXISTS(SELECT 1 FROM discovery_platform_runs r WHERE r.discovery_campaign_id=d.id AND r.status='searching') ORDER BY c.id`).all(campaign, stringifyApplicationJson(excluded), candidate, candidate);
+        AND (? IS NULL OR c.id=?) AND c.verdict='qualified' AND p.status='completed'
+        AND NOT ${discoveryReadBusySql(this.#db, campaign, "c.source_platform")} AND NOT ${discoveryReadBusySql(this.#db, campaign, "c.platform")} ORDER BY c.id`).all(campaign, stringifyApplicationJson(excluded), candidate, candidate);
     for (const raw of rows) {
       const row = z.object({ id: text, criteria_revision: u32, source_profile_ref: text }).parse(raw);
       const input: DiscoveryContactLookup = { campaign_id: campaign, expected_revision: row.criteria_revision, candidate_id: row.id, profile_ref: row.source_profile_ref, method: "", native_author_id: "", author_label: "", username: null, query: "", call_number: 0, status: "planned", links: [], stop_code: null };

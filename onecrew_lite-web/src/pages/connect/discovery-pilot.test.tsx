@@ -58,7 +58,7 @@ describe("Campaign paginated result presentation", () => {
       criteria: { min_subscribers: 8000 }, target_count: 30, max_calls: 200, used_calls: 11,
       scopes: [{ platform: "youtube", profile_ref: "scope", keywords: ["phone stand"] }],
       platform_runs: [{ platform: "youtube", profile_ref: "scope", status: "completed", calls_used: 1, stop_code: null }] } as DiscoveryCampaign;
-    saveRunCheckpoint(storage, { ...campaign, id: "water", brief: "水杯" }, "budget_exhausted", 1000);
+    saveRunCheckpoint(storage, { ...campaign, id: "water" }, "user_paused", 1000);
     saveRunCheckpoint(storage, campaign, "search_page_left", 2000);
     const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity } } });
     client.setQueryData(["opencli-campaign", "phone"], campaign);
@@ -69,7 +69,8 @@ describe("Campaign paginated result presentation", () => {
     </QueryClientProvider></I18nextProvider>);
     expect(markup).toContain("离开搜索页后暂停");
     expect(markup).toContain("卖手机架");
-    expect(markup).toContain("11/200");
+    expect(markup).toContain("11");
+    expect(markup).not.toContain("11/200");
     expect(markup).not.toContain("水杯");
     client.setQueryData(["opencli-campaign-candidate-counts", "phone"], { qualified: 30, pending: 0, rejected: 0 });
     const completed = renderToStaticMarkup(<I18nextProvider i18n={i18n}><QueryClientProvider client={client}>
@@ -78,7 +79,7 @@ describe("Campaign paginated result presentation", () => {
     expect(completed).toContain("本轮搜索结束");
     client.clear();
   });
-  it("shows target increases with the unchanged budget and explicit identity-count limits in both locales", async () => {
+  it("shows target increases with accumulated reads and explicit identity-count limits in both locales", async () => {
     for (const [locale, catalog] of [["en-US", en], ["zh-CN", zh]] as const) {
       const i18n = i18next.createInstance();
       await i18n.init({ lng: locale, ns: ["shell"], defaultNS: "shell", resources: { [locale]: { shell: catalog } } });
@@ -92,7 +93,8 @@ describe("Campaign paginated result presentation", () => {
       expect(markup).toContain('id="discovery-target-new"');
       expect(markup).toContain('min="1"');
       expect(markup).toContain('max="10000"');
-      expect(markup).toContain("227/400");
+      expect(markup).toContain("227");
+      expect(markup).not.toContain("227/400");
       expect(markup).toContain(catalog.opencliPilot.targetDecisionTitle.replaceAll("'", "&#x27;"));
       expect(markup).toContain('disabled=""');
       client.clear();
@@ -157,10 +159,12 @@ describe("Campaign paginated result presentation", () => {
     client.clear();
   });
 
-  it("selects the full 49-entry catalog without retired Tieba, Pixiv or Zhihu when every entry is registered", async () => {
+  it("selects the remaining catalog without retired sources when every entry is registered", async () => {
     vi.stubGlobal("window", { localStorage: { getItem: () => null } });
     const all = SEARCH_PLATFORM_GROUPS.flatMap(group => group.platforms);
-    expect(all).toHaveLength(49);
+    expect(all).toHaveLength(44);
+    expect(all).not.toContain("reddit");
+    expect(all).not.toContain("pinterest");
     expect(all).not.toContain("zhihu");
     expect(all).not.toContain("tieba");
     expect(all).not.toContain("pixiv");
@@ -171,7 +175,7 @@ describe("Campaign paginated result presentation", () => {
       <DiscoveryPilot profileRef="scope" version="1.8.8"
         capabilities={all.map(platform => ({ platform, command: `${platform}/search`, browser_required: true, registered: true }))} />
     </QueryClientProvider></I18nextProvider>);
-    expect(registeredSearchPlatforms(all.map(platform => ({ platform, command: `${platform}/search`, browser_required: true, registered: true })))).toEqual(all);
+    expect(registeredSearchPlatforms(all.map(platform => ({ platform, command: `${platform}/search`, browser_required: true, registered: true })))).toEqual(all.filter(platform => !["google", "yahoo"].includes(platform)));
     expect(markup).toContain(en.opencliPilot.aiPrepare);
     expect(markup).not.toContain('id="discovery-followers"');
     expect(markup).not.toContain('id="discovery-require-demo"');
@@ -212,7 +216,7 @@ describe("Campaign paginated result presentation", () => {
       expect(markup).toContain(catalog.opencliPilot.adjustPlan);
       expect(markup).toContain('aria-expanded="false"');
       expect(markup).not.toContain('id="discovery-budget-new"');
-      expect(markup).not.toContain(catalog.opencliPilot.budgetDecisionConfirm.replace("{{max}}", "0"));
+      expect(markup).not.toContain('id="discovery-max-calls"');
       expect(markup).not.toContain("175/200");
       expect(markup).toContain(catalog.opencliPilot.editPlan);
       expect(markup).toContain("outside mainland China");

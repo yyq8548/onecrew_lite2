@@ -11,19 +11,18 @@ const report: OpenCliSetupReport = {
   daemon_running: true, extension_connected: true,
   profiles: [{ context_id: "work", alias: "campaign" }], issue: null,
   search_capabilities: [{ platform: "youtube", command: "youtube/search", browser_required: true, registered: false }],
-  addons: [{ id: "onecrew-site-auth", state: "ready" }, { id: "onecrew-youtube", state: "ready" }, { id: "onecrew-tiktok", state: "missing" }, { id: "onecrew-bilibili", state: "ready" }, { id: "onecrew-tiktok-profile", state: "ready" }, { id: "onecrew-bilibili-profile", state: "ready" }, { id: "onecrew-bilibili-video", state: "ready" }, { id: "onecrew-twitter-identity", state: "ready" }, { id: "onecrew-twitter-post-identity", state: "ready" }, { id: "onecrew-twitter-post-content", state: "ready" }, { id: "onecrew-substack", state: "ready" }, { id: "onecrew-source-search", state: "ready" }, { id: "onecrew-browser-search", state: "ready" }],
+  addons: [{ id: "onecrew-site-auth", state: "ready" }, { id: "onecrew-youtube", state: "ready" }, { id: "onecrew-tiktok", state: "missing" }, { id: "onecrew-bilibili", state: "ready" }, { id: "onecrew-tiktok-profile", state: "ready" }, { id: "onecrew-bilibili-profile", state: "ready" }, { id: "onecrew-bilibili-video", state: "ready" }, { id: "onecrew-twitter-identity", state: "ready" }, { id: "onecrew-twitter-post-identity", state: "ready" }, { id: "onecrew-twitter-post-content", state: "ready" }, { id: "onecrew-browser-search", state: "ready" }],
 };
-report.addons.push({ id: "onecrew-public-search", state: "ready" }, { id: "onecrew-bluesky", state: "ready" });
 
 describe("OpenCLI setup selection", () => {
   it("accepts every adapter in the backend installation inventory", () => {
     const ids = Object.keys(OPENCLI_ADDON_FILES);
-    expect(ids).toContain("onecrew-public-search");
+    expect(ids).toHaveLength(11);
     const addons = ids.map(id => ({ id, state: "ready" }));
     expect(openCliSetupReportSchema.parse({ ...report, addons }).addons).toEqual(addons);
   });
   it("accepts the full installed search adapter inventory", () => {
-    expect(openCliSetupReportSchema.parse(report).addons).toHaveLength(15);
+    expect(openCliSetupReportSchema.parse(report).addons).toHaveLength(11);
   });
   it("repairs only after explicit approval and keeps disconnected readback honest", async () => {
     const disconnected = { ...report, daemon_running: true, extension_connected: false, profiles: [], issue: "extension_unavailable" };
@@ -83,7 +82,7 @@ describe("OpenCLI setup selection", () => {
     expect(openCliSetupReportSchema.safeParse({ ...report, addons: [report.addons[0], report.addons[0]] }).success).toBe(false);
     expect(openCliSetupReportSchema.safeParse({ ...report, addons: [{ id: "arbitrary-addon", state: "ready" }] }).success).toBe(false);
     expect(canInstallOpenCliAddons({ ...report, addons: report.addons.slice(0, 2) })).toBe(false);
-    for (const missing of ["onecrew-bilibili", "onecrew-tiktok-profile", "onecrew-bilibili-profile", "onecrew-bilibili-video", "onecrew-twitter-identity", "onecrew-twitter-post-identity", "onecrew-twitter-post-content", "onecrew-substack", "onecrew-source-search", "onecrew-browser-search", "onecrew-public-search", "onecrew-bluesky"]) {
+    for (const missing of ["onecrew-bilibili", "onecrew-tiktok-profile", "onecrew-bilibili-profile", "onecrew-bilibili-video", "onecrew-twitter-identity", "onecrew-twitter-post-identity", "onecrew-twitter-post-content", "onecrew-browser-search"]) {
       expect(canInstallOpenCliAddons({ ...report, addons: report.addons.map(addon => ({ ...addon, state: addon.id === missing ? "missing" : "ready" })) })).toBe(true);
     }
     expect(canInstallOpenCliAddons({ ...report, addons: report.addons.slice(0, 9) })).toBe(false);

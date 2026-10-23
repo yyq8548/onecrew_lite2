@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { invoke } from "./local-runtime";
-import { openCliSearchNeedsLoginCheck } from "./opencli-search-access";
+import { openCliSearchNeedsLoginCheck, OPENCLI_NON_SEARCH_PLATFORMS } from "./opencli-search-access";
 
 const observationSchema = z.object({
   platform: z.string().min(1),
@@ -118,6 +118,7 @@ export function excludedSearchPlatforms(observations: Record<string, OpenCliAuth
 /** Refresh stale/missing login proof before starting, without searches or automatic retries. */
 export async function preflightOpenCliSearch(credentialId: string | null, profile: string,
   capabilities: readonly {platform: string; browser_required: boolean}[]): Promise<string[]> {
+  capabilities = capabilities.filter(item => !OPENCLI_NON_SEARCH_PLATFORMS.includes(item.platform));
   const observations = await readOpenCliAuthObservations(profile);
   for (const item of capabilities) {
     if (!openCliSearchNeedsLoginCheck(item.platform, item.browser_required)

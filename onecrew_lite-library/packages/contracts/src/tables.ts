@@ -313,7 +313,6 @@ export function isSocialProfile(value: string): boolean {
       return parts.length === 1 && parts[0].startsWith('@') && handle(parts[0].slice(1));
     if (host === 'space.bilibili.com') return parts.length === 1 && /^\d+$/.test(parts[0]);
     if (host === 'linkedin.com') return parts.length === 2 && parts[0] === 'in' && handle(parts[1]);
-    if (host === 'reddit.com') return parts.length === 2 && ['user', 'u'].includes(parts[0]) && handle(parts[1]);
     if (host === 'bsky.app')
       return parts.length === 2 && parts[0] === 'profile' && handle(parts[1]);
     return false;

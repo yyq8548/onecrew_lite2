@@ -19,16 +19,8 @@ import { Button } from '@/components/ui/button';
 import type { DataType, ScoreValue } from '@onecrew/contracts/tables';
 import { scoreValuePoints } from '@onecrew/contracts/tables';
 import type { Column } from '@/features/tables/model';
-import { DATA_TYPES } from '@/features/tables/model';
 
 type TableDialogsProps = {
-  addColumnOpen: boolean;
-  setAddColumnOpen: (open: boolean) => void;
-  newColumnName: string;
-  setNewColumnName: (value: string) => void;
-  newColumnType: DataType;
-  setNewColumnType: (value: DataType) => void;
-  addColumn: () => void;
   busy: boolean;
   structuredEdit: { column: { data_type: DataType } } | null;
   setStructuredEdit: (value: null) => void;
@@ -47,13 +39,6 @@ type TableDialogsProps = {
 type StructuredDraft = TableDialogsProps['structuredDraft'];
 export function TableDialogs(props: TableDialogsProps) {
   const {
-    addColumnOpen,
-    setAddColumnOpen,
-    newColumnName,
-    setNewColumnName,
-    newColumnType,
-    setNewColumnType,
-    addColumn,
     busy,
     structuredEdit,
     setStructuredEdit,
@@ -65,53 +50,6 @@ export function TableDialogs(props: TableDialogsProps) {
   } = props;
   return (
     <>
-      <Dialog open={addColumnOpen} onOpenChange={setAddColumnOpen}>
-        <DialogContent variant="demo">
-          <DialogHeader>
-            <DialogTitle>{t('detail.newColumnTitle')}</DialogTitle>
-            <DialogDescription>{t('detail.newColumnDescription')}</DialogDescription>
-          </DialogHeader>
-          <label>
-            {t('detail.columnName')}
-            <Input
-              autoFocus
-              value={newColumnName}
-              onChange={(e) => setNewColumnName(e.target.value)}
-              placeholder={t('detail.columnPlaceholder')}
-            />
-          </label>
-          <label>
-            {t('detail.type')}
-            <Select
-              value={t(`types.${newColumnType}`)}
-              onValueChange={(value) =>
-                setNewColumnType(
-                  DATA_TYPES.find((type) => t(`types.${type}`) === value) ?? 'string',
-                )
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {DATA_TYPES.map((type) => (
-                  <SelectItem key={type} value={t(`types.${type}`)}>
-                    {t(`types.${type}`)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </label>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAddColumnOpen(false)}>
-              {t('common.cancel')}
-            </Button>
-            <Button onClick={addColumn} disabled={busy || !newColumnName.trim()}>
-              {t('detail.addColumn')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
       <Dialog
         open={Boolean(structuredEdit)}
         onOpenChange={(open) => {

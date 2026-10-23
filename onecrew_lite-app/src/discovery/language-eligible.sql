@@ -7,9 +7,9 @@ SELECT EXISTS(
    AND review.policy_version IN ('initial-match-evaluation-v1','selection-quality-evaluation-v2')
    AND review.material_hash=COALESCE(json_extract(c.evidence_json,'$.reviewed_selection.material_hash'),json_extract(c.evidence_json,'$.reviewed_match.material_hash'))
    AND review.native_author_id=COALESCE(json_extract(c.evidence_json,'$.reviewed_selection.native_author_id'),json_extract(c.evidence_json,'$.reviewed_match.native_author_id'))
- WHERE d.id=?1 AND h.id=?2 AND h.platform IN ('twitter','youtube','bilibili','tiktok','reddit','facebook','instagram','weibo','bluesky','zhihu','hackernews','linkedin','douyin','google','yahoo') AND c.verdict='pending'
+ WHERE d.id=?1 AND h.id=?2 AND h.platform IN ('twitter','youtube','bilibili','tiktok','facebook','instagram','weibo','bluesky','zhihu','hackernews','linkedin','douyin','google','yahoo') AND c.verdict='pending'
    AND c.criteria_revision=d.current_revision AND d.phase='active' AND v.approved_at IS NOT NULL
-   AND NOT EXISTS(SELECT 1 FROM discovery_platform_runs busy WHERE busy.discovery_campaign_id=d.id AND busy.status='searching')
+   AND __DISCOVERY_READ_AVAILABLE__
    AND (json_extract(v.criteria_json,'$.language') IS NOT NULL OR h.platform='tiktok')
    AND COALESCE(json_extract(c.evidence_json,'$.reviewed_selection.outcome'),json_extract(c.evidence_json,'$.reviewed_match.outcome'))='insufficient'
    AND (
@@ -79,7 +79,6 @@ SELECT EXISTS(
          AND json_extract(review.material_json,'$.native_content.claim.call_number')=original.call_number
          AND json_extract(review.material_json,'$.native_content.native_content')=json(original.native_content_json))
    )
-   AND (d.max_calls IS NULL OR d.used_calls + 1 <= d.max_calls)
    AND EXISTS(SELECT 1 FROM json_each(review.findings_json) f WHERE
      (json_extract(f.value,'$.criterion')='content_language' AND json_extract(v.criteria_json,'$.language') IS NOT NULL
        OR h.platform='tiktok' AND json_extract(f.value,'$.criterion') IN ('match_fit','selection_fit'))

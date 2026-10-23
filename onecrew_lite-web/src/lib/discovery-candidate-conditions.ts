@@ -14,14 +14,11 @@ function hasLanguageOnlyMatch(item: DiscoveryCandidate) {
 }
 
 export function candidateConditions(item: DiscoveryCandidate, criteria: DiscoveryCampaign["criteria"]) {
-  const met: ("followersMet" | "pinterestMonthlyViewsMet" | "languageMet" | "categoryMet" | "regionMet")[] = [];
+  const met: ("followersMet" | "languageMet" | "categoryMet" | "regionMet")[] = [];
   const reasons = new Set(item.evidence.assessment?.reasons ?? []);
   const minimum = criteria.min_subscribers ?? criteria.min_followers;
   const count = item.evidence.assessment?.subscribers_normalized;
-  const pinterestScale = item.platform === "pinterest" ? item.evidence.assessment?.pinterest_scale : undefined;
-  if (pinterestScale?.state === "passed" && pinterestScale.passed_by?.includes("monthly_views")) met.push("pinterestMonthlyViewsMet");
-  if (pinterestScale?.state === "passed" && pinterestScale.passed_by?.includes("followers")) met.push("followersMet");
-  if (item.platform !== "pinterest" && minimum != null && count != null && count >= minimum
+  if (minimum != null && count != null && count >= minimum
     && !reasons.has("subscriber_count_near_threshold") && !reasons.has("subscriber_count_unverified")) met.push("followersMet");
   for (const [criterion, key, label] of [
     ["language", "reviewed_language", "languageMet"],

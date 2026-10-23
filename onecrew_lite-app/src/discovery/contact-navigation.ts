@@ -12,8 +12,6 @@ export function discoveryCommunityInvite(link: string): boolean {
   return url !== null && (["discord.gg", "www.discord.gg"].includes(url.hostname) || ["discord.com", "www.discord.com", "discordapp.com", "www.discordapp.com"].includes(url.hostname) && (url.pathname === "/invite" || url.pathname.startsWith("/invite/")));
 }
 export function discoveryExactUsername(source: string): string | null {
-  const pinterest = /^https:\/\/www\.pinterest\.com\/([^/]+)\/$/u.exec(source)?.[1];
-  if (pinterest !== undefined) return /^[A-Za-z0-9_]{1,30}$/u.test(pinterest) ? pinterest : null;
   const hackernews = /^https:\/\/news\.ycombinator\.com\/user\?id=([A-Za-z0-9_-]{1,64})$/u.exec(source)?.[1];
   if (hackernews !== undefined) return hackernews;
   const url = URL.parse(source); if (!url || url.protocol !== "https:" || url.username || url.password || url.port) return null;
@@ -21,7 +19,6 @@ export function discoveryExactUsername(source: string): string | null {
   let name: string | undefined;
   if (["x.com", "twitter.com", "www.twitter.com"].includes(host) && parts.length === 1) name = parts[0];
   else if (["www.tiktok.com", "tiktok.com", "www.youtube.com", "youtube.com"].includes(host) && parts.length === 1 && parts[0]!.startsWith("@")) name = parts[0]!.slice(1);
-  else if (["www.reddit.com", "reddit.com"].includes(host) && parts.length === 2 && ["user", "u"].includes(parts[0]!)) name = parts[1];
   else if (["www.instagram.com", "instagram.com"].includes(host) && parts.length === 1 && Buffer.byteLength(parts[0]!) <= 30) name = parts[0];
   else if (host === "www.zhihu.com" && parts.length === 2 && parts[0] === "people") name = parts[1];
   return name !== undefined && /^[A-Za-z0-9_.-]{2,64}$/u.test(name) ? name : null;

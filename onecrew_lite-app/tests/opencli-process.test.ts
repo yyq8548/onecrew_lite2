@@ -11,6 +11,18 @@ test("真实Node进程读取版本，无shell且关闭stdin", async () => {
   assert.equal(stdin.stdout, "closed");
 });
 
+test("真实命令退出保留本地诊断且公开错误只显示分类", async () => {
+  await assert.rejects(runTrustedOpenCliProcess({ executable: process.execPath }, ["--onecrew-diagnostic-unknown-option"], { deadlineMs: 15000 }), error => {
+    assert.ok(error instanceof OpenCliError);
+    assert.equal(error.exitCode, 9);
+    assert.equal(error.message, "opencli_command_failed");
+    assert.equal(error.diagnostics?.stage, "process_exit");
+    assert.equal(error.diagnostics?.exit_code, 9);
+    assert.match(error.diagnostics?.stderr ?? "", /bad option: --onecrew-diagnostic-unknown-option/u);
+    return true;
+  });
+});
+
 test("真实子进程超时和取消结束运行，预取消不启动进程", async () => {
   await assert.rejects(runTrustedOpenCliProcess({ executable: process.execPath }, ["--eval", "setInterval(()=>{},1000)"], { deadlineMs: 30 }), { code: "opencli_timeout" });
   const controller = new AbortController();
@@ -41,9 +53,6 @@ test("原生读取失败保留阶段，授权与风控优先于接口错误且�
     ["onecrew_instagram_search_read_http_404", "provider_endpoint_not_found"],
     ["onecrew_instagram_search_read_http_500", "provider_response_http_error"],
     ["onecrew_instagram_search_read_json", "provider_response_invalid_json"],
-    ["onecrew_reddit_profile_read_redirect", "provider_response_redirected"],
-    ["onecrew_reddit_profile_inaccessible", "provider_source_unavailable"],
-    ["onecrew_pinterest_read_resource", "provider_response_shape_invalid"],
     ["onecrew_youtube_layout_unsupported", "youtube_watch_layout_unsupported"],
     ["onecrew_youtube_description_unavailable", "youtube_description_unavailable"],
     ["YouTube search bootstrap data not found", "provider_response_shape_invalid"],

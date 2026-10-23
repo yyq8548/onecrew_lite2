@@ -1,6 +1,7 @@
 import { projectPostAuthor, readPostAuthorPage } from '../onecrew-twitter-post-identity/post.mjs';
 import { projectLanguageSample } from './language.mjs';
 import { restoreOriginalLanguage } from '../onecrew-browser-search/original-language.mjs';
+import { projectIdentity } from '../onecrew-twitter-identity/profile.mjs';
 
 // Only fixed local categories may leave the adapter, never exception payloads.
 export function postContentDiagnostic(message) {
@@ -17,10 +18,10 @@ export function postContentDiagnostic(message) {
 
 // This projection runs inside the browser. Only the exact focal author's text
 // and link entities leave the tab; these are observations, not qualification.
-export function projectPostContent(data, handle, postId, accountId, projectIdentity) {
+export function projectPostContent(data, handle, postId, accountId, projectIdentity, projectProfile) {
   const fail = code => { throw new Error('ONECREW_X_POST_CONTENT_INVALID_' + code); };
   const identity = projectIdentity(data, handle, postId);
-  if (identity.account_id !== accountId) fail('AUTHOR');
+  if (accountId !== null && identity.account_id !== accountId) fail('AUTHOR');
   let focal;
   const inspect = result => {
     const tweet = result?.__typename === 'TweetWithVisibilityResults' ? result.tweet : result;
@@ -66,7 +67,7 @@ export function projectPostContent(data, handle, postId, accountId, projectIdent
   const media = focal.legacy.extended_entities?.media ?? focal.legacy.entities?.media ?? [];
   if (!Array.isArray(media) || media.some(item => !['photo', 'video', 'animated_gif'].includes(item?.type))) fail('MEDIA');
   if (focal.legacy.is_quote_status != null && typeof focal.legacy.is_quote_status !== 'boolean') fail('QUOTE');
-  return { adapter_version: '1.0.0', identity, text: excerpt, text_truncated: excerpt !== text,
+  const content = { adapter_version: '1.0.0', identity, text: excerpt, text_truncated: excerpt !== text,
     text_source: note != null ? 'note_tweet' : 'legacy_full_text', created_at: created,
     has_media: media.length > 0,
     quotes_another_post: focal.legacy.is_quote_status === true || focal.quoted_status_result != null,
@@ -79,11 +80,20 @@ export function projectPostContent(data, handle, postId, accountId, projectIdent
       view_count:/^\d+$/.test(focal.views?.count??'')&&Number.isSafeInteger(Number(focal.views.count))?Number(focal.views.count):null,
       text_completeness:excerpt!==text?'truncated':'complete',
     } };
+  if (!projectProfile) return content;
+  const user = focal.core.user_results.result;
+  const name = user.core?.name ?? user.legacy?.name;
+  const bio = user.profile_bio?.description ?? user.legacy?.description;
+  const count = user.relationship_counts?.followers ?? user.legacy?.followers_count;
+  // 只有同次响应确实带回全部必要字段，才省去单独的主页请求。
+  const profile = typeof name === 'string' && typeof bio === 'string' && Number.isSafeInteger(count) && count >= 0
+    ? projectProfile(user, handle, 'x_tweet_detail') : null;
+  return { content, profile };
 }
 
-export async function readTwitterPostContent(page, handle, postId, accountId, resolveOperation, bearer, languageSample = false) {
+export async function readTwitterPostContent(page, handle, postId, accountId, resolveOperation, bearer, languageSample = false, includeAuthorProfile = false) {
   const numeric = value => typeof value === 'string' && /^[1-9][0-9]{0,19}$/.test(value);
-  if (typeof handle !== 'string' || !/^[a-z0-9_]{1,15}$/.test(handle) || !numeric(postId) || !numeric(accountId))
+  if (typeof handle !== 'string' || !/^[a-z0-9_]{1,15}$/.test(handle) || !numeric(postId) || !(numeric(accountId) || includeAuthorProfile && accountId === null) || includeAuthorProfile && languageSample)
     throw new Error('ONECREW_X_POST_IDENTITY_INPUT');
   const tab = await page.newTab('https://x.com/' + handle + '/status/' + postId);
   if (!tab) throw new Error('ONECREW_X_POST_IDENTITY_ORIGIN');
@@ -101,7 +111,7 @@ export async function readTwitterPostContent(page, handle, postId, accountId, re
     ? '(data, handle, postId) => (' + projectLanguageSample.toString() + ')(data, handle, postId, '
       + JSON.stringify(accountId) + ', ' + projectPostContent.toString() + ', ' + projectPostAuthor.toString() + ')'
     : '(data, handle, postId) => (' + projectPostContent.toString() + ')(data, handle, postId, '
-      + JSON.stringify(accountId) + ', ' + projectPostAuthor.toString() + ')';
+      + JSON.stringify(accountId) + ', ' + projectPostAuthor.toString() + (includeAuthorProfile ? ', ' + projectIdentity.toString() : '') + ')';
   const code = '(' + readPostAuthorPage.toString() + ')(' + [JSON.stringify(handle), JSON.stringify(postId),
     JSON.stringify(metadata), JSON.stringify(bearer), project].join(',') + ')';
   const result = await page.evaluate(code);

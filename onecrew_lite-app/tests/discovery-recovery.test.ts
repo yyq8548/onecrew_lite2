@@ -1,18 +1,27 @@
 import assert from "node:assert/strict";
-import { copyFile, mkdtemp } from "node:fs/promises";
+import { mkdtemp } from "node:fs/promises";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { DiscoveryRepository } from "../src/discovery/repository.ts";
 import { recoverDiscoveryReads } from "../src/discovery/recovery.ts";
+import { backupLegacyDatabase } from "../src/storage/legacy-sqlite.ts";
+import { upgradeCreatorStagingCopy } from "../src/storage/creator-upgrade.ts";
+import { validateCreatorSchemaVersion } from "../src/storage/creator-schema.ts";
 
-test("真实原schema90跨类型中断恢复保留已计费原领取，不自动重试未知搜索，事务失败共同回滚", async () => {
-  const root = await mkdtemp(fileURLToPath(new URL("../../.scratch/discovery-recovery-", import.meta.url))), path = join(root, "crm.sqlite");
-  await copyFile(new URL("./fixtures/discovery-profile-hydration/claimed.sqlite", import.meta.url), path);
-  const db = new DatabaseSync(path), repo = new DiscoveryRepository(db);
+test("schema90真实领取升级至当前版本后，中断恢复保留读取记录、未知搜索与事务回滚", async () => {
+  const root = await mkdtemp(fileURLToPath(new URL("../../.scratch/discovery-recovery-", import.meta.url))), path = join(root, "current", "crm.sqlite");
+  const sourcePath = fileURLToPath(new URL("./fixtures/discovery-profile-hydration/claimed.sqlite", import.meta.url));
+  const original = new DatabaseSync(sourcePath, { readOnly: true });
+  try { validateCreatorSchemaVersion(original, 90); } finally { original.close(); }
+  await backupLegacyDatabase(sourcePath, path, "creator");
+  assert.deepEqual(await upgradeCreatorStagingCopy({ sourcePath, stagingPath: path }), { fromVersion: 90, toVersion: 96 });
+  const db = new DatabaseSync(path);
   try {
-    repo.create({ id: "unresolved-search", brief: "找鞋子作者", opencli_version: "1.8.8", criteria: {}, scopes: [{ platform: "youtube", profile_ref: "work", keywords: ["shoe review"] }], target_count: 2, max_calls: 4 }); repo.approve("unresolved-search", 1);
+    validateCreatorSchemaVersion(db, 96);
+    const repo = new DiscoveryRepository(db);
+    repo.create({ id: "unresolved-search", brief: "找鞋子作者", opencli_version: "1.8.8", criteria: {}, scopes: [{ platform: "youtube", profile_ref: "work", keywords: ["shoe review"] }], target_count: 2 }); repo.approve("unresolved-search", 1);
     const search = repo.claimSearch("unresolved-search", 1, "youtube", "work"), before = db.prepare("SELECT id,used_calls FROM discovery_campaigns ORDER BY id").all();
     db.exec("CREATE TRIGGER deny_recovery BEFORE UPDATE ON discovery_platform_runs BEGIN SELECT RAISE(ABORT,'recovery unavailable'); END");
     assert.throws(() => recoverDiscoveryReads(db), /recovery unavailable/);

@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import { test } from "node:test";
 import { z } from "zod";
 import { parseApplicationJson } from "../src/contracts/application-json.ts";
-import { buildDiscoveryMatchPrompt, discoveryMatchEvidenceKey, discoveryMatchPromptMaterial, loadBundledDiscoveryMatchRubric } from "../src/discovery/semantic-match.ts";
+import { buildDiscoveryMatchPrompt, buildDiscoveryScoreRequest, discoveryMatchEvidenceKey, discoveryMatchPromptMaterial, loadBundledDiscoveryMatchRubric } from "../src/discovery/semantic-match.ts";
 import type { DiscoveryReviewMaterial } from "../src/discovery/review-material.ts";
 
 test("真实旧评分材料使用GitHub新创作者规则，幂等键与旧规则回执隔离", async () => {
@@ -32,4 +32,13 @@ test("真实旧评分材料使用GitHub新创作者规则，幂等键与旧规�
   assert.equal(compact.video_description, projection.video_description);
   assert.equal(compact.transcript?.call_number, undefined);
   assert.deepEqual(compact.transcript?.segments, material.transcript?.segments);
+  const request = buildDiscoveryScoreRequest(fixture.objective, material, fixture.count, rubric);
+  assert.ok(request.scoringContext.includes("requirements[index]"));
+  assert.ok(request.scoringContext.includes("quality.score is 95/85/70/40"));
+  assert.ok(!request.scoringContext.includes("criterion="));
+  assert.ok(!request.scoringContext.includes("match_level"));
+  assert.ok(!request.scoringContext.includes("requirement_findings"));
+  assert.ok(!request.scoringContext.includes("Ignore older output-format"));
+  assert.ok(request.scoringContext.includes("Preserve nested groups and exclusions"));
+  assert.equal(discoveryMatchEvidenceKey(material, fixture.count, rubric, false), automatic);
 });

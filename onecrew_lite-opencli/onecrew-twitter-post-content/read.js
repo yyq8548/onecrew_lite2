@@ -21,7 +21,8 @@ cli({
   args: [
     { name: 'handle', type: 'string', required: true, positional: true, help: 'Observed lowercase author handle' },
     { name: 'post-id', type: 'string', required: true, positional: true, help: 'Observed numeric post ID' },
-    { name: 'account-id', type: 'string', required: true, positional: true, help: 'Previously verified native author ID' },
+    { name: 'account-id', type: 'string', required: false, positional: true, help: 'Previously verified native author ID; omitted only when reading initial author evidence' },
+    { name: 'include-author-profile', type: 'boolean', default: false, help: 'Read initial focal author identity, post and available profile in one response' },
     { name: 'language-sample', type: 'boolean', default: false, help: 'Read original focal text and first five direct replies' },
   ],
   columns: ['text', 'text_source', 'has_media'],
@@ -31,8 +32,8 @@ cli({
       if (metadata.version !== '1.8.8') throw new Error('ONECREW_X_POST_CONTENT_VERSION');
       const { resolveTwitterOperationMetadata } = await import(new URL('clis/twitter/shared.js', packageRoot).href);
       const { TWITTER_BEARER_TOKEN } = await import(new URL('clis/twitter/utils.js', packageRoot).href);
-      return await readTwitterPostContent(page, args.handle, args['post-id'], args['account-id'],
-        page => resolveTwitterOperationMetadata(page, 'TweetDetail', operation), TWITTER_BEARER_TOKEN, args['language-sample'] === true);
+      return await readTwitterPostContent(page, args.handle, args['post-id'], args['account-id'] ?? null,
+        page => resolveTwitterOperationMetadata(page, 'TweetDetail', operation), TWITTER_BEARER_TOKEN, args['language-sample'] === true, args['include-author-profile'] === true);
     } catch (error) {
       const message = String(error?.message ?? '');
       if (message.includes('ONECREW_X_POST_IDENTITY_INPUT')) throw new ArgumentError('Invalid OneCrew X post content input');

@@ -5,6 +5,10 @@ export function recoverDiscoveryReads(database: DatabaseSync): number {
   database.exec("BEGIN IMMEDIATE"); let committed = false;
   try {
     const now = Math.floor(Date.now() / 1000); let released = 0;
+    if (database.prepare("SELECT 1 FROM sqlite_schema WHERE type='table' AND name='discovery_web_author_pages'").get()) {
+      database.prepare("UPDATE discovery_web_author_pages SET status=CASE WHEN material_json IS NULL THEN 'failed' ELSE 'awaiting_resolution' END,stop_code=CASE WHEN material_json IS NULL THEN 'web_author_read_interrupted' ELSE NULL END,updated_at=? WHERE status='reading'").run(now);
+      released += Number(database.prepare("UPDATE discovery_platform_runs SET status='completed',active_query=NULL,stop_code=NULL,updated_at=? WHERE status='searching' AND active_query LIKE 'article:%'").run(now).changes);
+    }
     database.prepare(`UPDATE discovery_contact_lookups SET receipt_json=json_set(receipt_json,'$.status','failed','$.stop_code','interrupted_contact_lookup','$.links',json('[]')) WHERE json_extract(receipt_json,'$.status')='reading'
       AND EXISTS(SELECT 1 FROM discovery_platform_runs r WHERE r.discovery_campaign_id=discovery_contact_lookups.discovery_campaign_id AND r.status='searching' AND r.profile_ref=json_extract(receipt_json,'$.profile_ref') AND r.active_query='contact:'||discovery_contact_lookups.candidate_id||':'||json_extract(receipt_json,'$.call_number'))`).run();
     released += Number(database.prepare(`UPDATE discovery_platform_runs SET status='completed',stop_code=NULL,active_query=NULL,updated_at=? WHERE status='searching'

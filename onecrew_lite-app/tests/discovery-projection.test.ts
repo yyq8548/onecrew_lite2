@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { DiscoveryProjectionLane, discoveryScoreCapacity } from "../src/discovery/projection-lane.ts";
 
-test("投影只排空当前与最新待办，评分预读不超过二加三", async () => {
-  assert.deepEqual([30, 3, 1, 0].map(discoveryScoreCapacity), [5, 3, 1, 0]);
+test("投影只排空当前与最新待办，评分并发三项加预读三项且不超过剩余人数", async () => {
+  assert.deepEqual([30, 3, 1, 0].map(discoveryScoreCapacity), [6, 3, 1, 0]);
   assert.throws(() => discoveryScoreCapacity(-1), /remaining_invalid/);
   const lane = new DiscoveryProjectionLane(), entered = Promise.withResolvers<void>(), release = Promise.withResolvers<void>(), order: number[] = [];
   lane.request(async () => { entered.resolve(); await release.promise; order.push(1); });

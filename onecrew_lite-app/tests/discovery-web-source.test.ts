@@ -9,6 +9,7 @@ import { z } from "zod";
 import { parseApplicationJson } from "../src/contracts/application-json.ts";
 import { discoveryWebSourceClaim, discoveryWebSourceRead, discoveryWebSourceTarget } from "../src/discovery/web-source-contracts.ts";
 import { DiscoveryWebSourceRepository } from "../src/discovery/web-source-repository.ts";
+import { readStorageSql } from "../src/storage/sql-resource.ts";
 
 const fixture = (name: string) => new URL(`./fixtures/discovery-web-source/${name}`, import.meta.url);
 async function open(name: string) {
@@ -35,7 +36,7 @@ for (const origin of ["google", "yahoo"]) for (const target of ["youtube", "twit
       const repo = opened.repository, original = input.claim;
       assert.equal(repo.next(original.campaign_id), original.search_hit_id);
       assert.equal(repo.next(original.campaign_id, [origin]), null);
-      assert.equal(repo.next(original.campaign_id, [target]), null);
+      assert.equal(repo.next(original.campaign_id, [target]), original.search_hit_id);
       assert.equal(repo.next(original.campaign_id, [], [original.search_hit_id]), null);
       const claim = repo.claim(original.campaign_id, 1, original.search_hit_id);
       assert.deepEqual(claim, original);
@@ -51,6 +52,11 @@ for (const origin of ["google", "yahoo"]) for (const target of ["youtube", "twit
       assert.equal(actual.id, result.candidate_id);
       const actualEvidence = z.record(z.string(), z.unknown()).parse(parseApplicationJson(Buffer.from(String(actual.evidence_json))));
       const expectedEvidence = z.record(z.string(), z.unknown()).parse(parseApplicationJson(Buffer.from(String(expected.evidence_json))));
+      if (target === "twitter") {
+        const expectedAssessment = z.record(z.string(), z.unknown()).parse(expectedEvidence.assessment);
+        expectedAssessment.subscribers_normalized = z.record(z.string(), z.unknown()).parse(input.material.profile).follower_count;
+        expectedEvidence.assessment = expectedAssessment;
+      }
       assert.deepEqual({ ...actualEvidence, captured_at: 0 }, { ...expectedEvidence, captured_at: 0 });
       for (const key of ["discovery_campaign_id", "criteria_revision", "platform", "source_profile_ref", "platform_account_id", "display_name", "profile_url", "verdict", "source_platform"]) assert.equal(actual[key], expected[key]);
       const binding = opened.database.prepare("SELECT * FROM discovery_video_identity_bindings").get()!;
@@ -64,15 +70,15 @@ for (const origin of ["google", "yahoo"]) for (const target of ["youtube", "twit
   });
 }
 
-test("引擎转读的批准、全部原生调用预算及未知领取均不能绕过", async () => {
+test("历史读取上限移除后继续保留批准、未知领取和来源停止校验", async () => {
   const input = await oracle("google-twitter"), opened = await open("google-twitter");
   try {
     const repo = opened.repository, claim = input.claim;
     opened.database.exec("UPDATE discovery_campaigns SET max_calls=3");
-    assert.equal(repo.next(claim.campaign_id), null);
-    assert.throws(() => repo.claim(claim.campaign_id, 1, claim.search_hit_id), /budget_exhausted/);
+    opened.database.exec(readStorageSql("creator-93-to-94.sql"));
+    assert.equal(opened.database.prepare("SELECT max_calls FROM discovery_campaigns").get()!.max_calls, null);
+    assert.equal(repo.next(claim.campaign_id), claim.search_hit_id);
     assert.equal(opened.database.prepare("SELECT used_calls FROM discovery_campaigns").get()!.used_calls, 1);
-    opened.database.exec("UPDATE discovery_campaigns SET max_calls=20");
     assert.throws(() => repo.claim(claim.campaign_id, 2, claim.search_hit_id));
     const issued = repo.claim(claim.campaign_id, 1, claim.search_hit_id);
     assert.equal(repo.next(claim.campaign_id), null);

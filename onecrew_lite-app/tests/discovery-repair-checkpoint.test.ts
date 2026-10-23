@@ -15,16 +15,15 @@ test("真实数据库恢复核对停止时间与代码，保留计费且禁止�
   const db = new DatabaseSync(path), repository = new DiscoveryRepository(db);
   try {
     db.exec("PRAGMA foreign_keys=ON");
-    for (const [id, status, code, budget] of [
-      ["repair", "technical_stop", "provider_response_invalid_json", 2],
-      ["spent", "technical_stop", "provider_response_invalid_json", 1],
-      ["connection-daemon", "technical_stop", "opencli_daemon_unavailable", 2],
-      ["connection-extension", "technical_stop", "opencli_extension_unavailable", 2],
-      ["connection-profile", "technical_stop", "opencli_profile_unavailable", 2],
-      ["auth", "unauthorized", "opencli_auth_required", 2],
-      ["risk", "risk_control_stop", "opencli_risk_control", 2],
+    for (const [id, status, code] of [
+      ["repair", "technical_stop", "provider_response_invalid_json"],
+      ["connection-daemon", "technical_stop", "opencli_daemon_unavailable"],
+      ["connection-extension", "technical_stop", "opencli_extension_unavailable"],
+      ["connection-profile", "technical_stop", "opencli_profile_unavailable"],
+      ["auth", "unauthorized", "opencli_auth_required"],
+      ["risk", "risk_control_stop", "opencli_risk_control"],
     ] as const) {
-      repository.create({ id, brief: "查找作者", opencli_version: "1.8.8", criteria: {}, scopes: [{ platform: "youtube", profile_ref: "work", keywords: ["first", "second"] }], target_count: 2, max_calls: budget });
+      repository.create({ id, brief: "查找作者", opencli_version: "1.8.8", criteria: {}, scopes: [{ platform: "youtube", profile_ref: "work", keywords: ["first", "second"] }], target_count: 2 });
       repository.approve(id, 1);
       const claim = repository.claimSearch(id, 1, "youtube", "work");
       repository.finishSearch(claim, status, code, []);
@@ -37,11 +36,12 @@ test("真实数据库恢复核对停止时间与代码，保留计费且禁止�
         const next = repository.claimSearch(id, 1, "youtube", "work", true, checkpoint);
         assert.equal(next.query, id.startsWith("connection-") ? "first" : "second");
         assert.equal(next.callNumber, 2);
-        assert.throws(() => repository.claimSearch(id, 1, "youtube", "work", true, checkpoint), /budget_exhausted/);
+        assert.throws(() => repository.claimSearch(id, 1, "youtube", "work", true, checkpoint), /read_active/);
+        assert.equal(repository.getPlan(id).used_calls, 2);
         repository.finishSearch(next, "completed", null, []);
         assert.equal(db.prepare("SELECT COUNT(*) n FROM discovery_search_completions WHERE discovery_campaign_id=?").get(id)?.n, 1);
       } else {
-        assert.throws(() => repository.claimSearch(id, 1, "youtube", "work", true, checkpoint), id === "spent" ? /budget_exhausted/ : /checkpoint_changed/);
+        assert.throws(() => repository.claimSearch(id, 1, "youtube", "work", true, checkpoint), /checkpoint_changed/);
         assert.equal(repository.getPlan(id).used_calls, 1);
       }
     }

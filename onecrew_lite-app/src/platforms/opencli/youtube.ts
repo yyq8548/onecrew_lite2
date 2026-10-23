@@ -13,14 +13,21 @@ function youtubeUrl(value: string): URL | null {
   const url = new URL(value);
   return url.protocol === "https:" && ["youtube.com", "www.youtube.com"].includes(url.hostname) && !url.username && !url.password && !url.port ? url : null;
 }
-export function youtubeVideoId(value: string): string {
-  if (idValid(value)) return value;
+function videoSourceId(value: string): string | null {
   const url = youtubeUrl(value);
-  if (!url) return inputError();
+  if (!url) return null;
   const ids = url.searchParams.getAll("v");
   if (url.pathname === "/watch" && ids.length === 1 && idValid(ids[0]!)) return ids[0]!;
   const path = /^\/(?:shorts|live)\/([A-Za-z\d_-]{11})$/u.exec(url.pathname);
-  return path?.[1] ?? inputError();
+  return path?.[1] ?? null;
+}
+export function youtubeVideoId(value: string): string {
+  return idValid(value) ? value : videoSourceId(value) ?? inputError();
+}
+export function sameYoutubeVideoSource(left: unknown, right: string): boolean {
+  if (typeof left !== "string") return false;
+  const id = videoSourceId(left);
+  return id !== null && id === videoSourceId(right);
 }
 function fields(value: unknown): Map<string, string> {
   const rows = parsed(z.array(z.object({ field: text, value: text })).max(100), value);
@@ -55,7 +62,7 @@ export function youtubeSearchPlan(query: string, limit: number) {
   if (!query.isWellFormed() || !query.trim() || [...query].length > 160 || /\p{Cc}/u.test(query) || !Number.isInteger(limit) || limit < 1 || limit > 50) inputError();
   return { site: "onecrew-search-youtube", name: "search", args: ["--limit", String(limit), "-f", "json", "--", query], addons: ["onecrew-browser-search"], emptyOn66: () => [] as z.infer<typeof schema>[], decode(value: unknown) { return parsed(z.array(schema).max(50), value); } } satisfies ReviewedOpenCliRead<unknown>;
 }
-const schema = z.object({ rank: z.number().int().nonnegative().max(4294967295).nullable().default(null), title: text.default(""), channel: text.default(""), views: text.default(""), duration: text.default(""), published: text.default(""), url: text }).refine(row => youtubeUrl(row.url) !== null && !!row.title.trim() && [...row.title].length <= 500 && !/\p{Cc}/u.test(row.title) && [...row.channel].length <= 200 && !/\p{Cc}/u.test(row.channel));
+const schema = z.object({ rank: z.number().int().nonnegative().max(4294967295).nullable().default(null), title: text.default(""), channel: text.default(""), channel_id: text.regex(/^UC[A-Za-z\d_-]{22}$/u).optional(), views: text.default(""), duration: text.default(""), published: text.default(""), url: text }).refine(row => youtubeUrl(row.url) !== null && !!row.title.trim() && [...row.title].length <= 500 && !/\p{Cc}/u.test(row.title) && [...row.channel].length <= 200 && !/\p{Cc}/u.test(row.channel));
 export function youtubeTranscriptPlan(video: string) {
   const id = youtubeVideoId(video);
   const line = z.object({ timestamp: text.regex(/^[\d:]{1,24}$/u), speaker: text.default("").refine(value => [...value].length <= 120), text: text.refine(value => !!value.trim() && [...value].length <= 4000) });

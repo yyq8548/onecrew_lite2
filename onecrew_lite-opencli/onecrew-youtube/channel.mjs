@@ -1,4 +1,5 @@
 import { enrichYoutubeHiddenEmail } from './hidden-email.mjs';
+import { waitForYoutubePage } from './evidence.mjs';
 
 // 只提取作者的频道资料，不将评论或推荐内容用作联系方式证据。
 export function projectChannelData(data, channelId) {
@@ -67,7 +68,8 @@ export async function readChannelPage(channelId, project) {
 }
 export async function readChannelEvidence(page, channelId, task) {
   if(!/^UC[A-Za-z0-9_-]{22}$/.test(channelId)) throw new Error('ONECREW_CHANNEL_ID_INVALID');
-  await page.goto('https://www.youtube.com/channel/'+channelId+'/about',{waitUntil:'none'}); await page.wait(2);
+  await page.goto('https://www.youtube.com/channel/'+channelId+'/about',{waitUntil:'none'});
+  await page.evaluate(`(${waitForYoutubePage.toString()})()`);
   const result=await page.evaluate(`(${readChannelPage.toString()})(${JSON.stringify(channelId)}, ${projectChannelData.toString()})`);
   const data=result && 'session' in result && 'data' in result ? result.data : result;
   if(!data || data.channelId!==channelId || data.adapterVersion!=='1.0.0') throw new Error('ONECREW_CHANNEL_EVIDENCE_INVALID');

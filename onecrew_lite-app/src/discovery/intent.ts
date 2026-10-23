@@ -62,7 +62,7 @@ export function validateDiscoveryIntent(request: string, raw: unknown, registere
     if (!preference.description.trim() || bytes(preference.description) > 300) issue("soft_preferences", "invalid_value");
     if (preference.excerpt !== null && !excerptValid(preference.excerpt)) issue("soft_preferences", "excerpt_not_in_request");
   }
-  if (!proposal.suggested_keywords.length || proposal.suggested_keywords.length > 20) issue("suggested_keywords", "invalid_count");
+  if (proposal.suggested_keywords.length > 20) issue("suggested_keywords", "invalid_count");
   const seen = new Set<string>();
   for (const keyword of proposal.suggested_keywords) {
     const normalized = keyword.trim().toLowerCase();

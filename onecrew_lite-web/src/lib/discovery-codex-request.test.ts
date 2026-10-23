@@ -2,26 +2,19 @@ import { describe, expect, it } from "vitest";
 import { canStartPreparedDraft, discoveryDraftFailureKey, matchesDiscoveryCodexRequest } from "./discovery-codex-request";
 import type { DiscoveryCampaign } from "./opencli-discovery";
 
-const request = { id: "draft-request", brief: "我要卖手机支架", profileRef: "browser", version: "1.8.8", platforms: ["youtube", "bilibili"], targetCount: 30, maxCalls: 200 };
+const request = { id: "draft-request", brief: "我要卖手机支架", profileRef: "browser", version: "1.8.8", platforms: ["youtube", "bilibili"], targetCount: 30 };
 const draft: DiscoveryCampaign = { id: request.id, brief: request.brief, opencli_version: request.version,
-  phase: "draft", revision: 1, criteria: {}, target_count: 30, max_calls: 200, used_calls: 0,
+  phase: "draft", revision: 1, criteria: {}, target_count: 30, used_calls: 0,
   scopes: [{ platform: "youtube", profile_ref: "browser", keywords: ["phone stand review"] }], platform_runs: [] };
 
 describe("Automatic product planning", () => {
-  it("accepts AI-understood creator count and budget only when no manual override was supplied", () => {
-    const understood = { ...request, brief: "在tiktok上搜索美妆博主5人", platforms: ["youtube", "tiktok"], targetCount: null, maxCalls: null };
-    const planned = { ...draft, brief: understood.brief, target_count: 5, max_calls: 20,
+  it("accepts AI-understood creator count only when no manual override was supplied", () => {
+    const understood = { ...request, brief: "在tiktok上搜索美妆博主5人", platforms: ["youtube", "tiktok"], targetCount: null };
+    const planned = { ...draft, brief: understood.brief, target_count: 5,
       scopes: [{ platform: "tiktok", profile_ref: "browser", keywords: ["美妆"] }] };
     expect(matchesDiscoveryCodexRequest(planned, understood)).toBe(true);
     expect(matchesDiscoveryCodexRequest(planned, { ...understood, targetCount: 8 })).toBe(false);
     expect(matchesDiscoveryCodexRequest(planned, { ...understood, platforms: ["youtube"] })).toBe(false);
-  });
-  it("rejects unlimited or expanded budgets when six reads were requested", () => {
-    const bounded = { ...request, maxCalls: 6 };
-    expect(matchesDiscoveryCodexRequest({ ...draft, max_calls: 6 }, bounded)).toBe(true);
-    for (const max_calls of [null, 7, 200]) {
-      expect(matchesDiscoveryCodexRequest({ ...draft, max_calls }, bounded)).toBe(false);
-    }
   });
   it("starts only the explicitly requested draft after selection, never a restored or changed plan", () => {
     const pending = { id: draft.id, profileRef: "browser" };
@@ -53,7 +46,7 @@ describe("Automatic product planning", () => {
   it("adopts only an unexecuted matching draft from the selected identity and available sources", () => {
     expect(matchesDiscoveryCodexRequest(draft, request)).toBe(true);
     for (const changed of [{ id: "other" }, { brief: "其他商品" }, { phase: "active" }, { used_calls: 1 }, { opencli_version: "2.0" },
-      { target_count: 200 }, { max_calls: 400 }, { scopes: [] }, { scopes: [{ ...draft.scopes[0], profile_ref: "other" }] }, { scopes: [{ ...draft.scopes[0], platform: "unknown" }] }]) {
+      { target_count: 200 }, { scopes: [] }, { scopes: [{ ...draft.scopes[0], profile_ref: "other" }] }, { scopes: [{ ...draft.scopes[0], platform: "unknown" }] }]) {
       expect(matchesDiscoveryCodexRequest({ ...draft, ...changed }, request)).toBe(false);
     }
   });
