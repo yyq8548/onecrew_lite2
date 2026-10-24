@@ -1,4 +1,4 @@
-# OneCrew Lite 0.9.1 · Mac ARM64 · R32 安装指南
+# OneCrew Lite 0.9.2 · Mac ARM64 · R1 安装指南
 
 由用户 Mac 上的当前 AI 客户端执行。目标为 Apple Silicon Mac，程序已包含运行环境。安装验收保留账号、数据、主密钥、端口、原 Chrome 身份、证据、评分和结果，搜索保持停止。
 
@@ -20,13 +20,13 @@
 
 使用本目录或用户提供的以下同一组文件：
 
-- `OneCrew-Lite-0.9.1-Mac-arm64-R32.zip`
-- `OneCrew-Lite-0.9.1-Mac-arm64-R32.zip.release.json`
-- `OneCrew-Lite-0.9.1-Mac-arm64-R32.zip.sha256`
+- `OneCrew-Lite-0.9.2-Mac-arm64-R1.zip`
+- `OneCrew-Lite-0.9.2-Mac-arm64-R1.zip.release.json`
+- `OneCrew-Lite-0.9.2-Mac-arm64-R1.zip.sha256`
 
 下载入口见 [CODEX-PROMPT.md](CODEX-PROMPT.md)。每个下载要求 HTTPS、HTTP 200、证书校验有效并禁止跟随重定向。下载遇到权限限制先按第 1 节申请；实际 DNS、连接或超时失败时，只使用已启用且可核实的本机代理设置重试原地址一次。保持证书验证和系统网络设置原状，不猜测代理端口。
 
-用 `plutil -p` 读取发布记录，确认 `product=onecrew_lite`、`version=0.9.1`、`revision=R32`、`target=darwin-arm64`。记录 ZIP 的 `bytes`、`sha256`、程序的 `executableSha256`、源码提交和摘要。以 `stat -f '%z'` 和 `shasum -a 256` 核对 ZIP 的确切大小和 SHA-256。缺少记录或校验不符时停止。
+用 `plutil -p` 读取发布记录，确认 `product=onecrew_lite`、`version=0.9.2`、`revision=R1`、`target=darwin-arm64`。记录 ZIP 的 `bytes`、`sha256`、程序的 `executableSha256`、源码提交和摘要。以 `stat -f '%z'` 和 `shasum -a 256` 核对 ZIP 的确切大小和 SHA-256。缺少记录或校验不符时停止。
 
 在用户工作目录中用 `/usr/bin/ditto -x -k` 解压到一个新的目录。将 `packageDir` 设置为其中 `OneCrew-Lite` 文件夹的实际绝对路径。执行：
 
@@ -57,13 +57,15 @@ chmod 755 "$packageDir/onecrew_lite"
 
 从已授权的 Lite 服务、启动记录、客户端配置或配套插件 `.mcp.json` 核实原程序、数据目录、vault、主密钥路径和端口。配套插件的 `ONECREW_LITE_MCP_DATA_DIR` 可提供原数据目录。只记录非敏感路径及状态，保留原账号和浏览器身份。多个真实候选且现有证据无法确定时才让用户选择。Mac 不调用仅支持 Windows 的 `installation-discover`。
 
-已有安装沿用原路径。`vault.sqlite` 和主密钥必须成对存在；历史密钥可名为 `masterkey` 或 `master.key`，直接沿用已核实文件名。缺失或归属冲突时停止该步骤。确认没有原安装或数据时才使用用户默认目录 `~/Library/Application Support/OneCrewLite/TypeScript`，由程序创建 vault 和主密钥。
+识别原数据布局：已有 `current.json` 或完整 `tables/pglite` 的统一安装直接沿用；已有 `account-*` 账号目录但表格仍在独立 Library 的安装，按第 5 节迁入表格；旧 Rust 安装的 `crm.db`、`agent-platform.db`、`vault.key` 和独立 Library 则按第 5 节完整迁移。历史文件名以已核实配置为准。`data-upgrade` 只处理账号目录中的 Creator SQLite，返回 `current` 不能证明 Library 已迁移。
 
-将 `dataDir`、`vaultPath`、`masterKeyPath`、`installDir` 设为已核实的绝对路径。首次安装默认使用 `~/Applications/OneCrewLite/releases/0.9.1-R32`；已有安装使用新的独立版本目录，保留旧程序直到验收完成。新数据目录使用 `install -d -m 700 "$dataDir"`，已有目录保持原样。
+从独立 Library 的原服务记录核实 `libraryDataDir`。旧 Mac 常见路径为 `~/Library/Application Support/io.onecrewai.onecrew_lite` 和 `~/Library/Application Support/onecrew_lite_tables`，只用于查找，不能据此替代实际核实。数据、密钥缺失或归属冲突时停止该步骤；没有原安装或数据时才使用默认目录 `~/Library/Application Support/OneCrewLite/TypeScript`，由启动流程初始化。
+
+将 `dataDir`、`vaultPath`、`masterKeyPath`、`installDir` 设为已核实的绝对路径。首次安装默认使用 `~/Applications/OneCrewLite/releases/0.9.2-R1`；已有安装使用新的独立版本目录，保留旧程序直到验收完成。新数据目录使用 `install -d -m 700 "$dataDir"`，已有目录保持原样。
 
 ## 5. 安装、升级和启动
 
-对已核实原目录执行新程序的只读状态检查：
+对已有统一安装执行新程序的只读状态检查：
 
 ```sh
 "$packageDir/onecrew_lite" status --data-dir "$dataDir"
@@ -73,7 +75,7 @@ chmod 755 "$packageDir/onecrew_lite"
 
 返回 `cli.failed` 时，对同一目录用 `ONECREW_LITE_DIAGNOSTICS=1` 重试该只读命令一次，保留真实诊断及断点。权限错误按第 1 节审批；其他错误只依据实际证据处理，保留旧服务。文件名差异或通用错误码不能证明数据不兼容。
 
-确认需要升级且原服务归属明确后，停止它并要求 `state=stopped`：
+确认需要升级且原服务归属明确后，用原安装支持的控制命令停止原主服务和独立 Library。新统一安装可以执行以下 `stop`；旧 Rust 服务使用原安装的已核实命令。不得用新 CLI 对旧目录返回的通用错误推断旧服务已经停止。实际迁移还会持有原服务与数据库的原生锁，活动 writer 会明确拒绝迁移。
 
 ```sh
 "$packageDir/onecrew_lite" stop --data-dir "$dataDir"
@@ -84,13 +86,27 @@ shasum -a 256 "$installDir/onecrew_lite"
 /usr/bin/codesign --verify --strict "$installDir/onecrew_lite"
 ```
 
-再次确认安装后哈希。已有数据在服务停止时执行：
+再次确认安装后哈希。已有 `account-*` 账号目录、没有 `current.json` 的安装，在服务停止时执行：
 
 ```sh
 "$installDir/onecrew_lite" data-upgrade --data-dir "$dataDir"
 ```
 
-要求 `state=upgraded` 或 `state=current`，保留程序自动创建的数据库备份。遇到活动服务、非空 WAL、数据归属或升级错误时保存断点及备份，按实际错误处理。首次安装没有原数据时跳过数据升级，由启动流程初始化。
+要求 `state=upgraded` 或 `state=current`，保留自动备份。若表格仍在独立 Library，继续执行：
+
+```sh
+"$installDir/onecrew_lite" library-migrate --data-dir "$dataDir" --library-data-dir "$libraryDataDir" --vault "$vaultPath" --master-key "$masterKeyPath"
+```
+
+旧 Rust 根目录布局使用完整迁移：将 `legacyDataDir`、`creatorDb`、`vaultPath`、`masterKeyPath`、`libraryDataDir` 和 `legacyPort` 设为已核实原值；`dataDir` 为与旧主目录和 Library 均不嵌套的新私有统一目录。这个目录只接收通过验证的完整旧数据副本。执行：
+
+```sh
+"$installDir/onecrew_lite" library-migrate --data-dir "$dataDir" --legacy-data-dir "$legacyDataDir" --creator-db "$creatorDb" --library-data-dir "$libraryDataDir" --vault "$vaultPath" --master-key "$masterKeyPath" --legacy-port "$legacyPort"
+```
+
+包内程序自动使用内置网页资源。源代码开发运行需额外提供 `--web-assets` 和 `--library-web-assets`，用户安装不需要这些参数。要求迁移返回 `state=migrated` 或 `state=current`、`source_preserved=true`、`search_resumed=false`。保存 `recovery_directory`、表格数量和原安装身份检查结果。将后续启动和客户端连接使用的 `dataDir`、`vaultPath`、`masterKeyPath` 更新为迁移返回的 `data_directory`、`vault_path`、`master_key_path`，不继续使用旧根目录路径。
+
+迁移会验证全部原表格和行的内容摘要、账号与 tenant/base 的归属、原登录和 installation ID。原主库、独立 Library 和密钥保留；重复执行同一迁移返回 `current`。活动服务、数据变更、身份冲突、未知目标库或在线账号验证失败时停止切换，保留原安装和恢复副本，报告具体错误。不要手工复制 PGlite、伪造 `current.json`、创建空 `tables` 或重新注册账号绕过失败。首次安装跳过升级与迁移。
 
 ```sh
 "$installDir/onecrew_lite" start --data-dir "$dataDir" --vault "$vaultPath" --master-key "$masterKeyPath"
@@ -109,7 +125,7 @@ Codex 执行：
 "$installDir/onecrew_lite" codex-status --data-dir "$dataDir" --refresh
 ```
 
-要求配套插件为本机生成的完整 `0.9.1+codex.<64 位摘要>`，已安装、已启用并完成新鲜核实。完整摘要与本机程序和数据路径相关，不套用打包电脑的摘要。找不到已安装的 Codex CLI 时定位当前客户端附带的 CLI，通过 `--codex-executable` 指定绝对路径。保留其他插件和配置。
+要求配套插件为本机生成的完整 `0.9.2+codex.<64 位摘要>`，已安装、已启用并完成新鲜核实。完整摘要与本机程序和数据路径相关，不套用打包电脑的摘要。找不到已安装的 Codex CLI 时定位当前客户端附带的 CLI，通过 `--codex-executable` 指定绝对路径。保留其他插件和配置。
 
 完成注册后，若宿主仍加载旧配套进程，集中请求一次重载或重启；之后只执行尚未完成的 live MCP 和页面验收，复用已完成安装和授权。`mcp_operation_output_contract_mismatch` 需要核对运行中配套进程，不能当成平台读取失败。
 
@@ -121,7 +137,7 @@ Codex 执行：
 
 没有可用 MCP 时，由 AI 对已核实程序执行 `repair --data-dir "$dataDir" --client codex`；其他客户端使用 `--client mcp`。程序缺失或没有原启动记录时，从本指南实际安装断点继续，保持原数据和路径。权限仍按第 1 节审批，登录及浏览器授权由用户完成。
 
-通过 live `onecrew_status` 核实 0.9.1、实际程序哈希、账号状态和当前客户端连接。确认 `discovery.host_work.claim/get/submit` 与 `discovery.host_operation.get` 可发现，安装验收只检查能力，不领取或执行暂停任务。
+通过 live `onecrew_status` 核实 0.9.2、实际程序哈希、原账号和安装身份，以及当前客户端连接。确认 `discovery.host_work.claim/get/submit` 与 `discovery.host_operation.get` 可发现，安装验收只检查能力，不领取或执行暂停任务。使用原表格链接和已保存任务结果验证历史数据仍可读。
 
 调用 `onecrew_web`，使用可用 UI 工具打开并读取只读状态卡、可见工作台及当前任务原结果表；没有任务时显示 Library。保持工作台选中并保留表格标签页。仅返回 URL 或排队打开不算页面验收完成。客户端缺少相应能力时如实列为待完成，不宣称通过。
 

@@ -1,16 +1,14 @@
-# OneCrew Lite 0.9.1 · Mac ARM64 · R32
+# OneCrew Lite 0.9.2 · Mac ARM64 · R1
 
-适用于 Apple Silicon（M 系列）Mac。程序内置运行环境，无须安装 Node.js、pnpm 或编译工具。
+适用于 Apple Silicon Mac，程序内置运行环境。
 
-- [安装包](OneCrew-Lite-0.9.1-Mac-arm64-R32.zip)
-- [大小、SHA-256 与构建身份](OneCrew-Lite-0.9.1-Mac-arm64-R32.zip.release.json)
-- [ZIP SHA-256](OneCrew-Lite-0.9.1-Mac-arm64-R32.zip.sha256)
-- [给本地 AI 的安装提示词](CODEX-PROMPT.md)
-- [完整安装指南](INSTALL-CODEX.md)
-- [版本范围与验证](RELEASE-STATUS.md)
+- [Mac ZIP](OneCrew-Lite-0.9.2-Mac-arm64-R1.zip)
+- [发布记录与哈希](OneCrew-Lite-0.9.2-Mac-arm64-R1.zip.release.json)
+- [ZIP SHA-256](OneCrew-Lite-0.9.2-Mac-arm64-R1.zip.sha256)
+- [安装提示词](CODEX-PROMPT.md)
+- [完整安装与迁移指南](INSTALL-CODEX.md)
+- [版本说明](RELEASE-STATUS.md)
 
-将安装提示词发给目标 Mac 上的 AI 客户端，由 AI 下载、校验和安装；也可同时提供本目录的 ZIP 及其校验文件。遇到 sandbox 或目录、网络、本地端口权限限制，AI 使用客户端支持的审批流程申请必要权限，批准后从安装断点继续。
+本版提供 Mac 旧版独立 Library 的正式迁移命令，支持 ZIP 安装升级到 npm。迁移保留原账号、安装身份、表格、搜索结果和旧库恢复副本；安装不启动或恢复搜索。
 
-安装沿用已有账号、数据、主密钥、端口、Chrome 身份和搜索结果。主程序与配套插件分别核实，验收同时检查状态卡、工作台和原结果表；安装不恢复搜索。
-
-本包为 GitHub 分发的开发候选，`productionReady=false`，使用 ad-hoc 签名，尚未经过 Apple 公证。Intel Mac 不适用。`windows_installer` 保持原样，公司服务及下载清单未在本次更新范围内。
+npm 主包与 Mac 平台包为 0.9.2；Windows 继续引用已发布的 0.9.1。Windows 分发目录保持原样。本候选使用 ad-hoc 签名，未经过 Apple 公证，正式部署须经审批。

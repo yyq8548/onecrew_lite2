@@ -36,7 +36,7 @@ async function runningOwner(directory: string): Promise<RuntimeDescriptor | unde
 
 export async function runCli(args: string[]): Promise<void> {
   const { values, positionals } = parseArgs({ args, allowPositionals: true, strict: true,
-    options: { "data-dir": { type: "string" }, vault: { type: "string" }, "master-key": { type: "string" }, "legacy-port": { type: "string" }, "web-assets": { type: "string" }, "library-web-assets": { type: "string" }, stdio: { type: "boolean" }, "codex-home": { type: "string" }, "codex-executable": { type: "string" }, "plugin-directory": { type: "string" }, refresh: { type: "boolean" }, client: { type: "string" } } });
+    options: { "data-dir": { type: "string" }, vault: { type: "string" }, "master-key": { type: "string" }, "legacy-port": { type: "string" }, "legacy-data-dir": { type: "string" }, "library-data-dir": { type: "string" }, "creator-db": { type: "string" }, "web-assets": { type: "string" }, "library-web-assets": { type: "string" }, stdio: { type: "boolean" }, "codex-home": { type: "string" }, "codex-executable": { type: "string" }, "plugin-directory": { type: "string" }, refresh: { type: "boolean" }, client: { type: "string" } } });
   if (positionals.length === 1 && positionals[0] === "installation-discover") {
     for (const name of Object.keys(values)) if (!["data-dir", "codex-home"].includes(name)) throw new CliError("Installation discovery accepts only data-dir and codex-home");
     const { discoverInstallation, InstallationDiscoveryError } = await import("./service/installation-discovery.ts");
@@ -46,7 +46,7 @@ export async function runCli(args: string[]): Promise<void> {
     }));
     return;
   }
-  if (positionals.length !== 1 || !["start", "serve", "status", "stop", "repair", "data-upgrade", "workspace", "mcp", ...codexClientCommands].includes(positionals[0]!)) throw new CliError("Usage: onecrew_lite <installation-discover|start|serve|status|stop|repair|data-upgrade|workspace|mcp|connect-codex|disconnect-codex|codex-status|codex-config|codex-package> --data-dir <private directory>");
+  if (positionals.length !== 1 || !["start", "serve", "status", "stop", "repair", "data-upgrade", "library-migrate", "workspace", "mcp", ...codexClientCommands].includes(positionals[0]!)) throw new CliError("Usage: onecrew_lite <installation-discover|start|serve|status|stop|repair|data-upgrade|library-migrate|workspace|mcp|connect-codex|disconnect-codex|codex-status|codex-config|codex-package> --data-dir <private directory>");
   if (!values["data-dir"]) throw new CliError("An explicit data directory is required");
   if (values["web-assets"] !== undefined && !values["web-assets"].trim()) throw new CliError("Web assets directory must not be empty");
   if (values["library-web-assets"] !== undefined && !values["library-web-assets"].trim()) throw new CliError("Library web assets directory must not be empty");
@@ -57,6 +57,9 @@ export async function runCli(args: string[]): Promise<void> {
   if (portText !== undefined && (!/^\d{1,5}$/u.test(portText) || Number(portText) < 1 || Number(portText) > 65535)) throw new CliError("Legacy port must be an integer from 1 through 65535");
   const legacyPort = portText === undefined ? undefined : Number(portText);
   const command = positionals[0]!;
+  for (const name of ["legacy-data-dir", "library-data-dir", "creator-db"] as const) {
+    if (values[name] !== undefined && (command !== "library-migrate" || !values[name].trim())) throw new CliError(`--${name} requires library-migrate and a nonempty path`);
+  }
   if (values.client !== undefined && (command !== "repair" || !["codex", "mcp"].includes(values.client))) throw new CliError("--client accepts codex or mcp with repair only");
   if (values.stdio && command !== "mcp") throw new CliError("--stdio requires the mcp command");
   const directory = resolve(values["data-dir"]);
@@ -67,6 +70,25 @@ export async function runCli(args: string[]): Promise<void> {
     return;
   }
   if (values["codex-home"] !== undefined || values["codex-executable"] !== undefined || values["plugin-directory"] !== undefined || values.refresh !== undefined) throw new CliError("Codex options require a Codex client command");
+  if (command === "library-migrate") {
+    for (const name of Object.keys(values)) if (!["data-dir", "library-data-dir", "legacy-data-dir", "creator-db", "vault", "master-key", "legacy-port", "web-assets", "library-web-assets"].includes(name)) throw new CliError(`--${name} is not a Library migration option`);
+    if (!values["library-data-dir"] || !values.vault || !values["master-key"]) throw new CliError("Library migration requires library-data-dir, vault and master-key");
+    if (values["legacy-data-dir"] && (!values["creator-db"] || legacyPort === undefined || !webAssetsDirectory)) throw new CliError("Legacy root migration also requires creator-db, legacy-port and web-assets");
+    if (!values["legacy-data-dir"] && (values["creator-db"] || legacyPort !== undefined)) throw new CliError("creator-db and legacy-port require legacy-data-dir");
+    if (values["legacy-data-dir"] && !lstatSync(directory, { throwIfNoEntry: false })) await createPrivateDirectory(directory);
+    const { migrateMacLibrary } = await import("./migration/macos-library-migration.ts");
+    const lease = await acquireInstanceLock(directory);
+    try {
+      output({ service: "onecrew_lite", ...await migrateMacLibrary(lease, {
+        libraryDirectory: resolve(values["library-data-dir"]), vaultPath: resolve(values.vault), masterKeyPath: resolve(values["master-key"]),
+        ...(values["legacy-data-dir"] ? { legacyDirectory: resolve(values["legacy-data-dir"]) } : {}),
+        ...(values["creator-db"] ? { creatorPath: resolve(values["creator-db"]) } : {}),
+        ...(legacyPort === undefined ? {} : { legacyPort }), ...(webAssetsDirectory ? { webAssetsDirectory } : {}),
+        ...(libraryWebAssetsDirectory ? { libraryWebAssetsDirectory } : {}), signal: AbortSignal.timeout(15 * 60_000), onProgress: step => process.stderr.write(`[library-migrate] ${step}\n`),
+      }) });
+    } finally { await lease.close(); }
+    return;
+  }
   if (command === "start" || command === "serve") {
     if (!values.vault || !values["master-key"]) throw new CliError("Vault and master key paths are required for unified identity");
     if (!lstatSync(directory, { throwIfNoEntry: false })) await createPrivateDirectory(directory);

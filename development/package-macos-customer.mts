@@ -75,7 +75,7 @@ const receipt = {
   companionPlugin: { versionPrefix: `${candidate.productVersion}+codex.`, expectedVersion: 'Generated and verified by this binary on the target computer; suffix binds its paths and data directory.' },
   signature: 'ad-hoc', notarized: false, productionReady: false,
   licenseTextMissing: candidate.licenseTextMissing,
-  scope: 'GitHub Mac development candidate; no Access or company production download manifest change; Windows installer retained.',
+  scope: 'Mac ZIP and npm Library migration candidate for deployment approval; Windows 0.9.1 installer retained; no production deployment performed.',
 };
 await writeFile(output + '.sha256', `${receipt.sha256}  ${basename(output)}\n`, { flag: 'wx' });
 await writeFile(output + '.release.json', JSON.stringify(receipt, null, 2) + '\n', { flag: 'wx' });

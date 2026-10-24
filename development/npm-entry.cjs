@@ -10,10 +10,14 @@ const platformPackage = `${manifest.name}-${target}`;
 if (!Object.hasOwn(manifest.optionalDependencies, platformPackage)) {
   throw new Error(`OneCrew Lite does not support ${target}. Use Apple Silicon macOS or Windows x64 with matching Node.js.`);
 }
+const platformVersion = manifest.optionalDependencies[platformPackage];
+if (typeof platformVersion !== 'string' || platformVersion.length === 0) {
+  throw new Error(`OneCrew Lite requires an exact version for ${platformPackage} in optionalDependencies.`);
+}
 const platformManifestPath = require.resolve(`${platformPackage}/package.json`);
 const platformManifest = require(platformManifestPath);
-if (platformManifest.version !== manifest.version) {
-  throw new Error(`OneCrew Lite requires ${platformPackage}@${manifest.version}. Reinstall with --include=optional.`);
+if (platformManifest.version !== platformVersion) {
+  throw new Error(`OneCrew Lite requires ${platformPackage}@${platformVersion}. Reinstall with --include=optional.`);
 }
 const binary = path.join(path.dirname(platformManifestPath), process.platform === 'win32' ? 'onecrew_lite.exe' : 'onecrew_lite');
 if (!fs.statSync(binary).isFile()) throw new Error(`OneCrew Lite binary is missing: ${binary}`);

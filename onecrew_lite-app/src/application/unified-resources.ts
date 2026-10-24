@@ -59,7 +59,7 @@ export function unifiedResources(options: UnifiedResourcesOptions): RuntimeBoots
       if (profile.originSource !== "new-install" || generationRoot !== lease.directory) throw new Error("Legacy table data must be migrated before unified service startup");
       await createPrivateDirectory(directory);
     }
-    const tables = await createEmbeddedTables(directory, `http://127.0.0.1:${profile.port}`);
+    const tables = await createEmbeddedTables(directory, `http://127.0.0.1:${profile.port}`, { recoverInterruptedSearches: options.candidateGenerationRoot === undefined });
     let ready = false;
     let initializedLifecycle: AccessLifecycle | undefined;
     let initializedBusiness: ReturnType<typeof createBusinessModule> | undefined;

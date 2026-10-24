@@ -7,8 +7,9 @@ import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import { parseApplicationJson } from "../contracts/application-json.ts";
 import { acquireDatabaseLock } from "onecrew_lite_tables/runtime";
+import { fingerprintLibraryCopy, type LibraryTableFingerprint } from "onecrew_lite_tables/migration-fingerprint";
 import { AccountDatabases, PreparedCreatorAdoption } from "../identity/account-databases.ts";
-import { VerifiedMigrationCredential } from "../identity/access-verification.ts";
+import { AccessInstallationVerifier, VerifiedMigrationCredential } from "../identity/access-verification.ts";
 import { readLibraryMigrationAccount } from "../identity/library-migration-account.ts";
 import type { GmailBulkRepositoryOwner } from "../mail/gmail-bulk-account-binding.ts";
 import type { InstanceLease } from "../service/instance-lock.ts";
@@ -22,12 +23,13 @@ import { LegacyQuiescenceLease, type LegacySourcePaths } from "./legacy-quiescen
 import { startCandidateRuntime, type CandidateHealth } from "../service/candidate-runtime.ts";
 import { readDevelopmentBuildIdentity } from "../service/build-identity.ts";
 import { PreparedWindowsCutover } from "./windows-cutover.ts";
+import { PreparedMacCutover } from "./macos-cutover.ts";
 import { AccessVaultStore, PreparedAccessVaultWrite } from "../identity/access-vault-store.ts";
 import { packagedFingerprintPaths } from "../packaging/runtime-context.ts";
 import { prepareTableSyncStaging, verifyTableSyncStaging } from "./table-sync-staging.ts";
 import { verifyLegacyPrivateDirectory } from "../storage/legacy-private-source.ts";
 import { PreparedPlatformOwnership, prepareLegacyPlatformOwnership } from "../platforms/browser/ownership.ts";
-import { readStoredAccessCredential } from "../identity/legacy-access-credential.ts";
+import { readStoredAccessCredential, type StoredAccessCredential } from "../identity/legacy-access-credential.ts";
 
 const sha256 = (bytes: Uint8Array | string) => createHash("sha256").update(bytes).digest("hex");
 const digest = z.string().regex(/^[a-f0-9]{64}$/u);
@@ -209,7 +211,7 @@ function assertIdentity(expected: readonly FileIdentity[], additions = new Map<s
     const added = additions.get(item.path);
     if (!current || current.isSymbolicLink() || current.dev !== item.stat.dev || current.ino !== item.stat.ino || (!added && (current.size !== item.stat.size ||
         current.mtimeNs !== item.stat.mtimeNs || current.ctimeNs !== item.stat.ctimeNs)) || current.mode !== item.stat.mode ||
-        (current.isFile() && current.nlink !== 1n) || !samePath(item.path, realpathSync(item.path))) throw new Error("migration.publication_data_changed");
+        (current.isFile() && current.nlink !== 1n) || !samePath(item.path, realpathSync(item.path))) throw new Error(`migration.publication_data_changed: ${item.path}`);
     if (item.children && !isDeepStrictEqual(readdirSync(item.path).sort(), [...item.children, ...(added ?? [])].sort())) throw new Error("migration.publication_data_changed");
   }
 }
@@ -224,19 +226,36 @@ export class PreparedActivationPublication {
   readonly #vaultStore: AccessVaultStore;
   readonly #vaultWrite: PreparedAccessVaultWrite;
   readonly #platformOwnership: PreparedPlatformOwnership | undefined;
+  readonly #originalMainCredential: StoredAccessCredential | undefined;
   #credentialInstalled = false;
   readonly candidateSha256: string;
   readonly #health: CandidateHealth;
   constructor(issuer: symbol, lease: InstanceLease, candidate: ActivationCandidate, sha256: string, identities: readonly FileIdentity[],
-    quiescence: LegacyQuiescenceLease, adoption: PreparedCreatorAdoption, health: CandidateHealth, vaultStore: AccessVaultStore, vaultWrite: PreparedAccessVaultWrite, platformOwnership?: PreparedPlatformOwnership) {
+    quiescence: LegacyQuiescenceLease, adoption: PreparedCreatorAdoption, health: CandidateHealth, vaultStore: AccessVaultStore, vaultWrite: PreparedAccessVaultWrite, platformOwnership?: PreparedPlatformOwnership, originalMainCredential?: StoredAccessCredential) {
     if (issuer !== publicationIssuer) throw new Error("migration.publication_authority_unissued");
     this.#lease = lease; this.#candidate = structuredClone(candidate); this.#identities = identities;
     this.#quiescence = quiescence; this.#adoption = adoption; this.candidateSha256 = sha256; this.#health = structuredClone(health);
     this.#vaultStore = vaultStore; this.#vaultWrite = vaultWrite;
     this.#platformOwnership = platformOwnership;
+    this.#originalMainCredential = originalMainCredential;
     Object.freeze(this);
   }
   get health(): Readonly<CandidateHealth> { return structuredClone(this.#health); }
+  async verifyOriginalMainAccount(lease: InstanceLease, quiescence: LegacyQuiescenceLease, signal: AbortSignal): Promise<VerifiedMigrationCredential> {
+    const { candidate } = this.assertPrepared(lease, quiescence);
+    if (candidate.selected.source !== "main") throw new Error("migration.original_main_account_required");
+    const credential = this.#originalMainCredential;
+    if (!credential || credential.fingerprint !== candidate.selected.fingerprint || credential.metadata.access_user_id !== candidate.owner.accountId) throw new Error("migration.account_review_changed");
+    const proof = await new AccessInstallationVerifier().verifyForMigration(credential, signal);
+    let delivered = false;
+    using releaseProof = { [Symbol.dispose]() { if (!delivered) proof.dispose(); } };
+    this.assertPrepared(lease, quiescence); signal.throwIfAborted(); proof.assertFresh();
+    if (proof.user.id !== candidate.owner.accountId) throw new Error("migration.verified_owner_mismatch");
+    delivered = true;
+    return proof;
+  }
+  dispose(): void { this.#originalMainCredential?.dispose(); }
+  [Symbol.dispose](): void { this.dispose(); }
   assertPrepared(lease: InstanceLease, quiescence: LegacyQuiescenceLease) {
     this.#lease.assertOwned();
     if (lease !== this.#lease || quiescence !== this.#quiescence) throw new Error("migration.publication_lease_changed");
@@ -271,7 +290,7 @@ export class PreparedActivationPublication {
 }
 
 export async function prepareActivationPublication(lease: InstanceLease, input: { candidate: ActivationCandidate; quiescence: LegacyQuiescenceLease;
-  webAssetsDirectory: string; libraryWebAssetsDirectory?: string; signal: AbortSignal }): Promise<PreparedActivationPublication> {
+  webAssetsDirectory: string; libraryWebAssetsDirectory?: string; libraryFingerprint?: readonly LibraryTableFingerprint[]; verifyOriginalMain?: boolean; signal: AbortSignal }): Promise<PreparedActivationPublication> {
   lease.assertOwned(); input.signal.throwIfAborted();
   if (!(input.quiescence instanceof LegacyQuiescenceLease)) throw new Error("migration.legacy_quiescence_unavailable");
   if (!samePath(input.quiescence.serviceDirectory, input.candidate.legacyServiceDirectory)) throw new Error("migration.legacy_source_owner_mismatch");
@@ -281,6 +300,7 @@ export async function prepareActivationPublication(lease: InstanceLease, input: 
   const runtime = await startCandidateRuntime(lease, { generationRoot: initial.candidate.directory, webAssetsDirectory: input.webAssetsDirectory, ...(input.libraryWebAssetsDirectory ? { libraryWebAssetsDirectory: input.libraryWebAssetsDirectory } : {}) });
   let health: CandidateHealth;
   try { health = await runtime.health(); } finally { await runtime.close(); }
+  if (input.libraryFingerprint !== undefined && !isDeepStrictEqual(await fingerprintLibraryCopy(input.candidate.tables, input.libraryFingerprint), input.libraryFingerprint)) throw new Error("migration.library_records_changed");
   input.signal.throwIfAborted();
   const checked = await readActivationCandidate(lease, input.candidate.id), candidate = checked.candidate;
   if (checked.sha256 !== initial.sha256) throw new Error("migration.candidate_data_changed");
@@ -301,6 +321,15 @@ export async function prepareActivationPublication(lease: InstanceLease, input: 
     if (metadata.access_user_id !== candidate.owner.accountId) throw new Error("platform_ownership.access_owner_mismatch");
     platformOwnership = await prepareLegacyPlatformOwnership(lease, { creatorPath: candidate.creator, vaultPath: candidate.vault, masterKeyPath: candidate.masterKey, owner: candidate.owner, deviceId: metadata.access_device_id, selectedAccountRefIds: candidate.platformAccountRefIds });
   }
+  let originalMainCredential: StoredAccessCredential | undefined, retainedCredential = false;
+  using releaseCredential = { [Symbol.dispose]() { if (!retainedCredential) originalMainCredential?.dispose(); } };
+  if (input.verifyOriginalMain) {
+    if (candidate.selected.source !== "main") throw new Error("migration.original_main_account_required");
+    const access = await readStoredAccessCredential(candidate.sources.sqlite.vault.path, candidate.sources.sqlite.masterKey);
+    if (access.state !== "active") throw new Error("migration.original_login_required");
+    originalMainCredential = access.credential;
+    if (originalMainCredential.fingerprint !== candidate.selected.fingerprint || originalMainCredential.metadata.access_user_id !== candidate.owner.accountId) throw new Error("migration.account_review_changed");
+  }
   const build = await readDevelopmentBuildIdentity();
   for (const field of ["kind", "executable_sha256", "source_tree_sha256", "dependency_lock_sha256"] as const) {
     if (build[field] !== health.resource_identity[field]) throw new Error("migration.candidate_build_changed");
@@ -314,7 +343,9 @@ export async function prepareActivationPublication(lease: InstanceLease, input: 
     candidate.sources.sqlite.directory, ...(candidate.sources.library.state === "staged" ? [candidate.sources.library.receipt.directory] : []),
     ...(candidate.sourcePaths.libraryDirectory ? [candidate.sourcePaths.libraryDirectory] : [])]) collectIdentity(path, identities);
   input.signal.throwIfAborted(); input.quiescence.assertQuiescent(candidate.sourcePaths); lease.assertOwned();
-  return new PreparedActivationPublication(publicationIssuer, lease, candidate, checked.sha256, identities, input.quiescence, adoption, health, vaultStore, vaultWrite, platformOwnership);
+  const publication = new PreparedActivationPublication(publicationIssuer, lease, candidate, checked.sha256, identities, input.quiescence, adoption, health, vaultStore, vaultWrite, platformOwnership, originalMainCredential);
+  retainedCredential = true;
+  return publication;
 }
 
 export async function readActivationCandidate(lease: InstanceLease, id: string) {
@@ -385,13 +416,13 @@ export async function readActiveGeneration(lease: InstanceLease) {
 }
 
 export async function commitActivation(lease: InstanceLease, input: { candidate: ActivationCandidate; proof: VerifiedMigrationCredential;
-  quiescence: LegacyQuiescenceLease; publication?: PreparedActivationPublication; cutover?: PreparedWindowsCutover; expectedCurrent: string | null; signal: AbortSignal }) {
+  quiescence: LegacyQuiescenceLease; publication?: PreparedActivationPublication; cutover?: PreparedWindowsCutover | PreparedMacCutover; expectedCurrent: string | null; signal: AbortSignal }) {
   lease.assertOwned(); input.signal.throwIfAborted();
   if (!(input.proof instanceof VerifiedMigrationCredential)) throw new Error("migration.verified_credential_required");
   input.proof.assertFresh();
   if (!(input.quiescence instanceof LegacyQuiescenceLease)) throw new Error("migration.legacy_quiescence_unavailable");
   if (!(input.publication instanceof PreparedActivationPublication)) throw new Error("migration.publication_authority_required");
-  if (!(input.cutover instanceof PreparedWindowsCutover)) throw new Error("migration.installer_cutover_required");
+  if (!(input.cutover instanceof PreparedWindowsCutover) && !(input.cutover instanceof PreparedMacCutover)) throw new Error("migration.installer_cutover_required");
   const prepared = input.publication.assertPrepared(lease, input.quiescence), candidate = prepared.candidate;
   if (!samePath(input.quiescence.serviceDirectory, candidate.legacyServiceDirectory)) throw new Error("migration.legacy_source_owner_mismatch");
   if (!isDeepStrictEqual(candidate, input.candidate) || candidate.expectedCurrent !== input.expectedCurrent || (await currentPointer(lease))?.sha256 !== (input.expectedCurrent ?? undefined)) throw new Error("migration.current_pointer_changed");

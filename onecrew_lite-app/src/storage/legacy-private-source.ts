@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { lstat, realpath } from "node:fs/promises";
-import { join, relative, resolve } from "node:path";
+import { dirname, extname, join, relative, resolve } from "node:path";
 import { runtimeAssetPath } from "../packaging/runtime-context.ts";
 import { promisify } from "node:util";
 import { verifyPrivateFile, verifyPrivateDirectory } from "./private-backup.ts";
@@ -17,6 +17,13 @@ export async function verifyLegacyPrivateDirectory(path: string): Promise<string
 }
 async function verifyLegacySource(path: string, kind: "File" | "Directory"): Promise<void> {
   const absolute = resolve(path);
+  // Mac 旧版在私有目录内创建的 SQLite 为 0644；只读源允许此权限，密钥和新副本仍须私有。
+  if (process.platform === "darwin" && kind === "File" && [".db", ".sqlite"].includes(extname(absolute))) {
+    await verifyPrivateDirectory(dirname(absolute));
+    const file = await lstat(absolute, { bigint: true });
+    if (!file.isFile() || file.isSymbolicLink() || file.nlink !== 1n || file.uid !== BigInt(process.getuid!()) || (file.mode & 0o022n) !== 0n || relative(absolute, await realpath(absolute)) !== "") throw new Error("migration.legacy_source_file_invalid");
+    return;
+  }
   if (process.platform !== "win32") { if (kind === "File") await verifyPrivateFile(absolute); else await verifyPrivateDirectory(absolute); return; }
   const before = await lstat(absolute, { bigint: true });
   if ((kind === "File" ? !before.isFile() || before.nlink !== 1n : !before.isDirectory()) || before.isSymbolicLink() || relative(absolute, await realpath(absolute)) !== "") throw new Error("migration.legacy_source_file_invalid");

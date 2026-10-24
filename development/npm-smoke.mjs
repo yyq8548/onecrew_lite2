@@ -33,9 +33,16 @@ async function invoke(command) {
 const resolved = await execute(process.execPath, [entry, '--print-binary-path']);
 const binary = resolved.stdout.trim();
 const target = `${process.platform}-${process.arch}`;
-assert.equal(binary, path.join(modules, `@onecrew/lite-${target}`, catalog.platforms[target].executable));
+const platformPackage = `@onecrew/lite-${target}`;
+const manifest = JSON.parse(await readFile(path.join(modules, '@onecrew/lite/package.json'), 'utf8'));
+assert.ok(Object.hasOwn(manifest.optionalDependencies, platformPackage), `Unsupported platform: ${target}`);
+const platformVersion = manifest.optionalDependencies[platformPackage];
+assert.ok(typeof platformVersion === 'string' && platformVersion.length > 0, `Expected an exact version for ${platformPackage}`);
+const platformManifest = JSON.parse(await readFile(path.join(modules, platformPackage, 'package.json'), 'utf8'));
+assert.equal(platformManifest.version, platformVersion);
+assert.equal(binary, path.join(modules, platformPackage, catalog.platforms[target].executable));
 assert.equal(createHash('sha256').update(await readFile(binary)).digest('hex'), catalog.platforms[target].executableSha256);
-assert.equal(JSON.parse(await readFile(path.join(path.dirname(binary), 'candidate.json'), 'utf8')).productVersion, catalog.version);
+assert.equal(JSON.parse(await readFile(path.join(path.dirname(binary), 'candidate.json'), 'utf8')).productVersion, platformManifest.version);
 let running = false;
 const client = new Client({ name: 'onecrew-lite-npm-acceptance', version: catalog.version });
 const transport = new StdioClientTransport({ command: process.execPath, args: [entry, 'mcp', '--stdio', '--data-dir', data], stderr: 'pipe' });
