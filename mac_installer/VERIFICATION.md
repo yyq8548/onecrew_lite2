@@ -19,4 +19,14 @@ npm 候选已真实安装至隔离目录；原生服务、MCP 账号状态、工
 - ZIP SHA-256：`18ce04649311a7fe9c3641e7685d8cc46397cfea391b770cdc995d689acdbc41`。
 - 程序 SHA-256：`cec04fd700e57d37973dab78970194b9a6346937f2839ac50fb1f28af1b0b781`。
 
-运行资源及依赖锁摘要以同名 `.release.json` 和包内 `runtime-manifest.json` 为准。正式发布须经审批；当前未上传分发文件、未发布 npm、未部署。Windows 安装包及 Pro 保持原状。
+运行资源及依赖锁摘要以同名 `.release.json` 和包内 `runtime-manifest.json` 为准。
+
+2026-10-23 经用户批准发布 Mac ZIP、`@onecrew/lite-darwin-arm64@0.9.2` 和 `@onecrew/lite@0.9.2`。Mac 官网入口已更新至 0.9.2；Windows 安装包及平台 npm 包保持 0.9.1，Pro 和公司其他功能配置保持原状。两个 MR 的合并由 River 后续处理，用户明确允许先行发布。
+
+- 官网验证通过 16 组 Lite／Pro、Mac／Windows、中文／英文、ZIP／npm 指南，网页安装提示词与指南一致。
+- Mac 和 Windows ZIP 均通过公开下载入口的完整大小及 SHA-256 校验。
+- 从公开 npm 仓库全新安装 0.9.2 后，服务、MCP 账号状态、工作台和 Library 检查通过，验收耗时 11.65 秒；隔离验收服务已停止。
+- Mac ZIP 安装指南明确使用官网提供的版本、准确字节数和 SHA-256 作为发布记录，继续核对包内清单；无须另取独立校验文件。
+- 原账号、历史表格和搜索结果已在真实旧版 Library 迁移验收中保留，未恢复搜索。
+
+下载与安装入口：[Mac npm 安装指南](https://access.onecrewai.io/cli/install/lite/npm?lng=zh-CN)、[Mac ZIP 安装指南](https://access.onecrewai.io/cli/install/lite?lng=zh-CN)、[npm 主包](https://www.npmjs.com/package/@onecrew/lite)。
