@@ -23,7 +23,7 @@ For an existing scoped account-* root, run data upgrade with its original servic
 onecrew-lite data-upgrade --data-dir "/absolute/original/data-directory"
 ```
 
-On macOS 0.9.2, after stopping the original standalone Library, migrate its complete verified data into a scoped root with:
+On macOS, after stopping the original standalone Library, migrate its complete verified data into a scoped root with:
 
 ```sh
 onecrew-lite library-migrate --data-dir "/absolute/original/data-directory" --library-data-dir "/absolute/old-library" --vault "/absolute/original/vault.sqlite" --master-key "/absolute/original/master-key"
@@ -49,7 +49,7 @@ onecrew-lite connect-codex --data-dir "/absolute/original/data-directory" --refr
 onecrew-lite codex-status --data-dir "/absolute/original/data-directory" --refresh
 ```
 
-Verify the complete generated `<native-version>+codex.<digest>` plugin version, enabled state and fresh verification separately from the service. Main package __VERSION__ selects Mac 0.9.2 and the unchanged Windows 0.9.1 platform package. Complete any required client reload or restart. Other MCP clients use the absolute native program returned by `--print-binary-path`, with `mcp --stdio --data-dir` and the effective data directory. Start the service first.
+Verify the complete generated `<native-version>+codex.<digest>` plugin version, enabled state and fresh verification separately from the service. Main package __VERSION__ selects Mac __VERSION__ and the unchanged Windows 0.9.1 platform package. Complete any required client reload or restart. Other MCP clients use the absolute native program returned by `--print-binary-path`, with `mcp --stdio --data-dir` and the effective data directory. Start the service first.
 
 Complete sign-in and browser authorization yourself. Check a live `onecrew_status` account call, browser connectivity and Library readiness. Use `onecrew_web` and available UI tools to open and read the status card, workbench and existing result table or Library. Installation does not start or resume searches.
 

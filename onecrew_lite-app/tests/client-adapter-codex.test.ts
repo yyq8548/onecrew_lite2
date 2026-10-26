@@ -41,7 +41,7 @@ test("ClientAdapter reads mature TOML without changing unrelated configuration a
     const adapter = new CodexClientAdapter({ executable: process.execPath, runtimeVersion: "0.6.0", dataDirectory: root, codexHome: root, pluginDirectory: join(root, "plugins") });
     await assert.rejects(adapter.install(), /runtime_update_required/);
     assert.deepEqual(runtimeCompatibility, { protocol: 2, minimum: productMetadata.version, maximum: productMetadata.version });
-    for (const runtimeVersion of ["0.7.1", "0.7.1-ts.candidate.1", "0.9.1-ts.candidate.1", "0.7.0", "0.7.2", "0.9.0", "0.9.1", "0.9.3"]) await assert.rejects(new CodexClientAdapter({ executable: process.execPath, runtimeVersion, dataDirectory: root, codexHome: root, pluginDirectory: join(root, "plugins") }).install(), /runtime_update_required/);
+    for (const runtimeVersion of ["0.7.1", "0.7.1-ts.candidate.1", "0.9.1-ts.candidate.1", "0.7.0", "0.7.2", "0.9.0", "0.9.1", "0.9.2"]) await assert.rejects(new CodexClientAdapter({ executable: process.execPath, runtimeVersion, dataDirectory: root, codexHome: root, pluginDirectory: join(root, "plugins") }).install(), /runtime_update_required/);
     assert.equal(await readFile(join(root, "config.toml"), "utf8"), source);
   } finally { await rm(root, { recursive: true }); }
 });

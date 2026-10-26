@@ -1,6 +1,6 @@
-# OneCrew Lite 0.9.2 · Mac ARM64 · R2
+# OneCrew Lite 0.9.3 · Mac ARM64 · R1
 
-R2 将 Codex 配套插件的兼容版本、生成版本和校验前缀统一取自当前产品版本，支持安装、启用和验证 `0.9.2+codex.<摘要>`。插件内容摘要、原生程序哈希和数据目录校验继续保留。
+本版包含 0.9.2 R2 的修复，将 Codex 配套插件的兼容版本、生成版本和校验前缀统一取自当前产品版本，支持安装、启用和验证 `0.9.3+codex.<摘要>`。插件内容摘要、原生程序哈希和数据目录校验继续保留。
 
 新增 `library-migrate`，支持两种已有安装：
 
@@ -13,4 +13,4 @@ R2 将 Codex 配套插件的兼容版本、生成版本和校验前缀统一取�
 
 版本、源码提交、源码摘要、依赖锁摘要、程序和 ZIP 的大小及 SHA-256 以同名 `.release.json` 和包内 `runtime-manifest.json` 为准。Mac 候选为 `productionReady=false`，使用 ad-hoc 签名，未经过 Apple 公证。
 
-本次通过 R2 ZIP 交付。Windows 安装包、npm、官网、Pro 和公司其他功能配置保持原样。
+Mac 支持 ZIP 与 `@onecrew/lite@0.9.3` 安装。npm 主包为 Windows 选择已发布的 0.9.1 平台包；Windows 安装包、Pro 和公司其他功能配置保持原样。
