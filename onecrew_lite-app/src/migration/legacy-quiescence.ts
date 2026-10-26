@@ -73,6 +73,10 @@ export class LegacyQuiescenceLease {
     }
   }
   get serviceDirectory(): string { this.assertQuiescent(this.#sources); return this.#serviceDirectory; }
+  assertLibraryRecovery(owner: InstanceLease, directory: string): void {
+    if (owner !== this.#owner || this.#sources.libraryDirectory === null || !equalPath(directory, this.#sources.libraryDirectory)) throw new Error("migration.legacy_library_directory_conflict");
+    this.assertQuiescent(this.#sources);
+  }
   async close(): Promise<void> { if (this.#closed) return; this.#closed = true; for (const lock of this.#locks.toReversed()) await lock.file.close(); }
   async [Symbol.asyncDispose](): Promise<void> { await this.close(); }
   toJSON(): never { throw new Error("Legacy quiescence authority must not be serialized"); }

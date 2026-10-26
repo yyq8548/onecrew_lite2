@@ -13,14 +13,14 @@ import {
 } from './modules/tenancy/service.js';
 
 /** 统一服务进程内的表格模块；身份由主服务验证，不创建第二个 Access 服务。 */
-export async function createEmbeddedTables(rootDir: string, publicWebUrl: string) {
+export async function createEmbeddedTables(rootDir: string, publicWebUrl: string, options: { recoverInterruptedSearches?: boolean } = {}) {
   const origin = normalizePublicWebUrl(publicWebUrl);
   const database = await openDatabase(rootDir);
   let ready = false;
   try {
     const tenants = createTenantService(database.db);
     const data = await createTableData(database);
-    await recoverInterruptedSearches(database.db);
+    if (options.recoverInterruptedSearches !== false) await recoverInterruptedSearches(database.db);
     const service = createTableService(data, origin);
     ready = true;
     return {

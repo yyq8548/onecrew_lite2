@@ -1,18 +1,32 @@
-# OneCrew Lite 0.9.1 R32 · Mac 分发验证
+# OneCrew Lite 0.9.2 R1 · Mac 迁移验证
 
-- 源码提交：`ef229efc4d0d5a78c2a15dd27df541f8be7d5377`。
-- 文件：`OneCrew-Lite-0.9.1-Mac-arm64-R32.zip`。
-- ZIP 大小：61,806,735 字节。
-- ZIP SHA-256：`61de9bf244c735d629e2f88888af69cf40241dec711b087ab2460e0fa49cb686`。
-- 程序 SHA-256：`0d2f311935b39cd27c991d67e05305e125711fb971d5566381a1a8cffb7c897f`。
-- 平台：原生 macOS ARM64，Node.js 26.7.0 内置运行环境。
+真实旧 Mac 安装数据在隔离副本上完成验证，实际使用的服务和搜索保持原状。
 
-分发包已实际解压，ZIP 大小和 SHA-256、包内清单、程序执行权限、ad-hoc 签名、源码提交和文档一致性检查通过。原生服务成功启动，配套插件生成成功，live MCP 状态调用返回正确版本和程序哈希；工作台与 Library 的四份页面资源均与清单哈希一致。
+- 旧 Creator schema 90 升级至 96；79 张原 SQLite 表及已保存结果完成保留核对。
+- 独立 Library 的 87 张表、17,244 行原数据通过逐表、逐行内容摘要比较。
+- 原账号及 installation ID 保留，使用真实官方 Access 完成在线身份验证。
+- 完整根目录迁移约 45 秒；由真实迁移数据形成的兼容账号目录，Library 迁入约 16 秒。
+- 活动旧服务锁和真实 tenant 归属冲突均在发布前拒绝；原库保留。成功后重复执行返回 `current`。
+- 7 项存储回归、27 项账号与候选发布回归、1 项 CLI 启停回归通过。
+- 类型检查、共享接口检查、网页构建通过；安装过程不恢复搜索。
 
-停止验收服务后，通过包内新插件的 `onecrew_repair` 恢复原服务，端口和主密钥文件保持不变；重复使用同一修复请求复用同一服务。新建的验收账号保持未登录，修复正确返回登录要求；没有启动搜索。验收完成后测试服务已停止。
+最终 ZIP 已解压、核对全部文件和签名，并由包内原生程序重新执行真实旧库副本的完整迁移。新服务返回 `version=0.9.2`、`access.state=signed_in`、`data.state=ready`、`workspace_connections.library=ready`；通过原账号会话读取了 20 张历史表格的列表及首张表的 20 行数据。验收服务已停止，搜索未恢复。
 
-本包的 1,064 个运行资源逐文件与已安装并验收的 R32 完全一致，源码摘要和依赖锁摘要也一致，复用该版本的 12 项原生检查、818 项前端测试、类型检查、共享接口及网页构建通过结果。新的包内源码元数据指向上述已提交源码，分发 ZIP 另行完成本页记录的实机验收。
+npm 候选已真实安装至隔离目录；原生服务、MCP 账号状态、工作台、Library 及两处网页授权会话检查通过，约 13 秒。Access 使用真实 Mac ZIP 和只读取得的线上 Windows 0.9.1 清单，在本地完成 8 组双语 npm/ZIP 指南和下载哈希验证。
 
-构建清单如实保留 `sourceDirty=true` 和 `productionReady=false`。当前源码与运行资源的对应关系已经独立核实；此包未经过 Developer ID 签名或 Apple 公证。目标电脑仍须完成自己的登录、浏览器授权及必要权限审批。
+- 构建提交：`d4fadd8cd4bc36a2ce38403805533ccb903064ca`，`sourceDirty=false`。
+- ZIP：`OneCrew-Lite-0.9.2-Mac-arm64-R1.zip`，61,825,625 字节。
+- ZIP SHA-256：`18ce04649311a7fe9c3641e7685d8cc46397cfea391b770cdc995d689acdbc41`。
+- 程序 SHA-256：`cec04fd700e57d37973dab78970194b9a6346937f2839ac50fb1f28af1b0b781`。
 
-`windows_installer` 的 Git 目录对象保持 `ad222c25eb634a4505032da28472c5bca6fae12a`，本次没有修改任何 Windows 分发文件，也没有更改公司服务或下载清单。
+运行资源及依赖锁摘要以同名 `.release.json` 和包内 `runtime-manifest.json` 为准。
+
+2026-10-23 经用户批准发布 Mac ZIP、`@onecrew/lite-darwin-arm64@0.9.2` 和 `@onecrew/lite@0.9.2`。Mac 官网入口已更新至 0.9.2；Windows 安装包及平台 npm 包保持 0.9.1，Pro 和公司其他功能配置保持原状。两个 MR 的合并由 River 后续处理，用户明确允许先行发布。
+
+- 官网验证通过 16 组 Lite／Pro、Mac／Windows、中文／英文、ZIP／npm 指南，网页安装提示词与指南一致。
+- Mac 和 Windows ZIP 均通过公开下载入口的完整大小及 SHA-256 校验。
+- 从公开 npm 仓库全新安装 0.9.2 后，服务、MCP 账号状态、工作台和 Library 检查通过，验收耗时 11.65 秒；隔离验收服务已停止。
+- Mac ZIP 安装指南明确使用官网提供的版本、准确字节数和 SHA-256 作为发布记录，继续核对包内清单；无须另取独立校验文件。
+- 原账号、历史表格和搜索结果已在真实旧版 Library 迁移验收中保留，未恢复搜索。
+
+下载与安装入口：[Mac npm 安装指南](https://access.onecrewai.io/cli/install/lite/npm?lng=zh-CN)、[Mac ZIP 安装指南](https://access.onecrewai.io/cli/install/lite?lng=zh-CN)、[npm 主包](https://www.npmjs.com/package/@onecrew/lite)。

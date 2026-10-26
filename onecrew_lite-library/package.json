@@ -1,6 +1,6 @@
 {
   "name": "onecrew_lite_tables",
-  "version": "0.9.1",
+  "version": "0.9.3",
   "private": true,
   "type": "module",
   "license": "MIT",
@@ -89,6 +89,10 @@
     "onecrew_lite_tables": "./dist/cli.js"
   },
   "exports": {
+    "./migration-fingerprint": {
+      "types": "./dist/migration-fingerprint.d.ts",
+      "import": "./dist/migration-fingerprint.js"
+    },
     "./migration-copy": {
       "types": "./dist/migration-copy.d.ts",
       "import": "./dist/migration-copy.js"
