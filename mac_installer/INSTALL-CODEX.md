@@ -1,4 +1,4 @@
-# OneCrew Lite 0.9.2 · Mac ARM64 · R1 安装指南
+# OneCrew Lite 0.9.2 · Mac ARM64 · R2 安装指南
 
 由用户 Mac 上的当前 AI 客户端执行。目标为 Apple Silicon Mac，程序已包含运行环境。安装验收保留账号、数据、主密钥、端口、原 Chrome 身份、证据、评分和结果，搜索保持停止。
 
@@ -20,13 +20,13 @@
 
 使用本目录或用户提供的以下同一组文件：
 
-- `OneCrew-Lite-0.9.2-Mac-arm64-R1.zip`
-- `OneCrew-Lite-0.9.2-Mac-arm64-R1.zip.release.json`
-- `OneCrew-Lite-0.9.2-Mac-arm64-R1.zip.sha256`
+- `OneCrew-Lite-0.9.2-Mac-arm64-R2.zip`
+- `OneCrew-Lite-0.9.2-Mac-arm64-R2.zip.release.json`
+- `OneCrew-Lite-0.9.2-Mac-arm64-R2.zip.sha256`
 
-下载入口见 [CODEX-PROMPT.md](CODEX-PROMPT.md)。每个下载要求 HTTPS、HTTP 200、证书校验有效并禁止跟随重定向。下载遇到权限限制先按第 1 节申请；实际 DNS、连接或超时失败时，只使用已启用且可核实的本机代理设置重试原地址一次。保持证书验证和系统网络设置原状，不猜测代理端口。
+本次使用用户提供的 R2 ZIP 与同名校验文件，安装提示词见 [CODEX-PROMPT.md](CODEX-PROMPT.md)。若通过下载取得文件，要求 HTTPS、HTTP 200、证书校验有效并禁止跟随重定向。下载遇到权限限制先按第 1 节申请；实际 DNS、连接或超时失败时，只使用已启用且可核实的本机代理设置重试原地址一次。保持证书验证和系统网络设置原状，不猜测代理端口。
 
-用 `plutil -p` 读取发布记录，确认 `product=onecrew_lite`、`version=0.9.2`、`revision=R1`、`target=darwin-arm64`。记录 ZIP 的 `bytes`、`sha256`、程序的 `executableSha256`、源码提交和摘要。以 `stat -f '%z'` 和 `shasum -a 256` 核对 ZIP 的确切大小和 SHA-256。缺少记录或校验不符时停止。
+用 `plutil -p` 读取发布记录，确认 `product=onecrew_lite`、`version=0.9.2`、`revision=R2`、`target=darwin-arm64`。记录 ZIP 的 `bytes`、`sha256`、程序的 `executableSha256`、源码提交和摘要。以 `stat -f '%z'` 和 `shasum -a 256` 核对 ZIP 的确切大小和 SHA-256。缺少记录或校验不符时停止。
 
 在用户工作目录中用 `/usr/bin/ditto -x -k` 解压到一个新的目录。将 `packageDir` 设置为其中 `OneCrew-Lite` 文件夹的实际绝对路径。执行：
 
@@ -61,7 +61,7 @@ chmod 755 "$packageDir/onecrew_lite"
 
 从独立 Library 的原服务记录核实 `libraryDataDir`。旧 Mac 常见路径为 `~/Library/Application Support/io.onecrewai.onecrew_lite` 和 `~/Library/Application Support/onecrew_lite_tables`，只用于查找，不能据此替代实际核实。数据、密钥缺失或归属冲突时停止该步骤；没有原安装或数据时才使用默认目录 `~/Library/Application Support/OneCrewLite/TypeScript`，由启动流程初始化。
 
-将 `dataDir`、`vaultPath`、`masterKeyPath`、`installDir` 设为已核实的绝对路径。首次安装默认使用 `~/Applications/OneCrewLite/releases/0.9.2-R1`；已有安装使用新的独立版本目录，保留旧程序直到验收完成。新数据目录使用 `install -d -m 700 "$dataDir"`，已有目录保持原样。
+将 `dataDir`、`vaultPath`、`masterKeyPath`、`installDir` 设为已核实的绝对路径。首次安装默认使用 `~/Applications/OneCrewLite/releases/0.9.2-R2`；已有安装使用新的独立版本目录，保留旧程序直到验收完成。新数据目录使用 `install -d -m 700 "$dataDir"`，已有目录保持原样。
 
 ## 5. 安装、升级和启动
 

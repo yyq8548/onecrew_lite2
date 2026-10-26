@@ -1,10 +1,10 @@
-# OneCrew Lite 0.9.2 R1 · Mac 安装提示词
+# OneCrew Lite 0.9.2 R2 · Mac 安装提示词
 
-将下面提示词交给目标 Mac 上的 AI 客户端，同时提供本目录的 ZIP、发布记录和 SHA-256 文件。正式下载入口在部署审批后更新。
+将下面提示词交给目标 Mac 上的 AI 客户端，同时提供本目录的 R2 ZIP、发布记录和 SHA-256 文件。
 
 ---
 
-Install or update OneCrew Lite 0.9.2 R1 on my Apple Silicon Mac using the supplied ZIP and its matching release record and SHA-256 file. Alternatively, after this version is published, use `npm install --global @onecrew/lite@0.9.2 --registry=https://registry.npmjs.org/ --include=optional --ignore-scripts` and obtain the verified native program with `onecrew-lite --print-binary-path`. Follow the complete INSTALL-CODEX.md from this release. ZIP includes its own runtime; npm requires Node.js 20 or newer for its launcher. This Mac package supports ARM64 only.
+Install or update OneCrew Lite 0.9.2 R2 on my Apple Silicon Mac using the supplied ZIP and its matching release record and SHA-256 file. Follow the complete INSTALL-CODEX.md from this R2 release. The supplied ZIP includes the companion plugin version fix and its own runtime. This Mac package supports ARM64 only. Use these supplied files for this installation; the published npm package and website download are unchanged by this local delivery.
 
 I authorize the necessary local download, integrity checks, installation, backup and migration of existing Lite data, stopping and starting its verified services, selected-client plugin or MCP setup, and localhost, browser and Library checks. Execute the commands yourself. Use the client's supported approval mechanism for sandbox, EPERM, EACCES, network or localhost restrictions; request the specific command and paths, retry after approval, and continue from the checkpoint. In Codex, request `require_escalated` when the command tool supports it. This prompt does not itself change system permissions. Preserve other applications and client settings. I complete sign-in, browser authorization, required security consent and client restart.
 
