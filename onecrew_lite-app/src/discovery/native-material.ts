@@ -7,12 +7,14 @@ import { decodeBlueskyPost, decodeBlueskyProfile, blueskyUriFromSource } from ".
 import { linkedinContentPlan, linkedinProfilePlan } from "../platforms/opencli/linkedin.ts";
 import { validateSavedDiscoveryDouyinContent, validateSavedDiscoveryDouyinProfile } from "./douyin-material.ts";
 import { validateHistoricalDiscoveryContent, validateHistoricalDiscoveryProfile } from "./historical-native-material.ts";
+import { validateXiaohongshuContent, validateXiaohongshuProfile } from "../platforms/opencli/xiaohongshu.ts";
 
 const object = z.record(z.string(), z.unknown());
 const body = (maximum: number) => z.string().refine(value => value.isWellFormed() && !!value.trim() && Buffer.byteLength(value) <= maximum && !value.includes("\0"));
 export function validateDiscoveryRetainedProfile(platform: string, author: string, authorUrl: string, source: string, raw: unknown): Record<string, unknown> {
   const native = object.parse(raw);
   if (Buffer.byteLength(stringifyApplicationJson(native)) > 16000) throw new Error("review_native_profile_binding_unavailable");
+  if (platform === "xiaohongshu") return validateXiaohongshuProfile(author, authorUrl, native);
   if (["zhihu", "hackernews", "pixiv"].includes(platform)) return validateHistoricalDiscoveryProfile(platform, author, authorUrl, native);
   if (platform === "facebook") {
     facebookProfilePlan(author, typeof native.observed_profile_url === "string" ? native.observed_profile_url : undefined).decode([native]);
@@ -39,6 +41,7 @@ export function validateDiscoveryRetainedProfile(platform: string, author: strin
 export function validateDiscoveryRetainedContent(platform: string, author: string, source: string, raw: unknown): Record<string, unknown> {
   const observed = object.parse(raw), observations = observed.observations === undefined ? undefined : nativeContentObservations.parse(observed.observations);
   const native = { ...observed }; delete native.observations;
+  if (platform === "xiaohongshu") return validateXiaohongshuContent(author, source, native);
   if (Buffer.byteLength(stringifyApplicationJson(observed)) > (platform === "hackernews" ? 40000 : ["linkedin", "zhihu", "pixiv"].includes(platform) ? 24000 : 16000)) throw new Error("review_native_content_binding_unavailable");
   if (["zhihu", "hackernews", "pixiv"].includes(platform)) return validateHistoricalDiscoveryContent(platform, author, source, native);
   if (platform === "linkedin") linkedinContentPlan(author, z.string().parse(native.account_id)).decode([native]);

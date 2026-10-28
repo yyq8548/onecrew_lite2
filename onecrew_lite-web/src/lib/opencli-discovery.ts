@@ -186,7 +186,7 @@ const contentSchema = z.object({
   language_sample: z.object({ author_id: z.string(), source_url: z.string().url(), text: z.string().max(16000),
     comments: z.array(z.object({ source_url: z.string().url(), text: z.string().max(2000) }).strict()).max(5) }).strict().optional(),
   claim: z.object({ campaign_id: z.string(), expected_revision: z.number().int().positive(), search_hit_id: z.string(),
-    platform: z.enum(["bilibili", "twitter", "facebook", "youtube", "tiktok", "douyin", "instagram", "weibo", "zhihu", "pixiv", "linkedin", "google", "yahoo"]), profile_ref: z.string(), author_id: z.string(), source_url: z.string().url(),
+    platform: z.enum(["bilibili", "twitter", "facebook", "youtube", "tiktok", "douyin", "instagram", "weibo", "zhihu", "pixiv", "linkedin", "google", "yahoo", "xiaohongshu"]), profile_ref: z.string(), author_id: z.string(), source_url: z.string().url(),
     call_number: z.number().int().positive() }),
   status: z.enum(["reading", "completed", "failed"]), native_content: z.union([additionalNativeContentSchema, z.object({
     bvid: z.string(), author_id: z.string(), author: z.string(), source_url: z.string().url(),

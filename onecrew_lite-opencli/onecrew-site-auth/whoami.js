@@ -5,6 +5,8 @@ import { readSiteLogin } from './probe.mjs';
 const domains = { bilibili: 'www.bilibili.com', tiktok: 'www.tiktok.com', instagram: 'www.instagram.com', facebook: 'www.facebook.com', douyin: 'www.douyin.com', linkedin: 'www.linkedin.com', weibo: 'weibo.com', tieba: 'tieba.baidu.com' };
 domains.twitter = 'x.com';
 domains.youtube = 'www.youtube.com';
+domains.zhihu = 'www.zhihu.com';
+domains.xiaohongshu = 'www.xiaohongshu.com';
 for (const provider of Object.keys(domains)) {
   cli({
     site: `onecrew-${provider}-auth`, name: 'whoami', access: 'read',

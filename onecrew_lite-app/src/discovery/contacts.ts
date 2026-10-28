@@ -4,13 +4,14 @@ import { isIP } from "node:net";
 
 export type DiscoveryContact = z.infer<typeof discoveryContact>;
 const host = (value: string): string | null => { const name = URL.parse(value)?.hostname.replace(/^www\./u, ""); return name === "twitter.com" ? "x.com" : name === "space.bilibili.com" ? "bilibili.com" : name === "m.facebook.com" ? "facebook.com" : name ?? null; };
-export function discoveryContactPlatform(value: string): string | null { return ({ "youtube.com": "youtube", "bilibili.com": "bilibili", "x.com": "twitter", "instagram.com": "instagram", "facebook.com": "facebook", "tiktok.com": "tiktok", "douyin.com": "douyin", "linkedin.com": "linkedin", "bsky.app": "bluesky" } as Record<string, string>)[host(value) ?? ""] ?? null; }
+export function discoveryContactPlatform(value: string): string | null { return ({ "youtube.com": "youtube", "bilibili.com": "bilibili", "x.com": "twitter", "instagram.com": "instagram", "facebook.com": "facebook", "tiktok.com": "tiktok", "douyin.com": "douyin", "linkedin.com": "linkedin", "bsky.app": "bluesky", "xiaohongshu.com": "xiaohongshu" } as Record<string, string>)[host(value) ?? ""] ?? null; }
 export function discoverySocialProfile(value: string): boolean {
   const url = URL.parse(value); if (!url) return false;
   const hostname = url.hostname.replace(/^www\./u, ""), path = url.pathname;
   if (url.protocol === "https:" && hostname === "facebook.com" && path === "/profile.php" && !url.username && !url.password && !url.port && !url.hash) { const pairs = [...url.searchParams]; return pairs.length === 1 && pairs[0]![0] === "id" && /^[1-9][0-9]{0,19}$/u.test(pairs[0]![1]); }
   if (url.protocol !== "https:" || url.username || url.password || url.port || url.search || url.hash || value.includes("...") || value.includes("…")) return false;
   const parts = path.replace(/^\/+|\/+$/gu, "").split("/"), handle = (part: string) => Buffer.byteLength(part) <= 128 && /^[\p{Alphabetic}\p{Number}_.%\-]+$/u.test(part);
+  if (hostname === "xiaohongshu.com") return /^\/user\/profile\/[a-f0-9]{24}$/u.test(path);
   if (["instagram.com", "x.com", "twitter.com"].includes(hostname)) return parts.length === 1 && handle(parts[0]!) && !["home", "explore", "search", "i", "accounts", "reel", "reels", "p"].includes(parts[0]!);
   if (hostname === "tiktok.com") return parts.length === 1 && parts[0]!.startsWith("@") && handle(parts[0]!.slice(1));
   if (hostname === "douyin.com") return parts.length === 2 && parts[0] === "user" && /^MS4wLjABAAAA[A-Za-z0-9_-]{8,88}$/u.test(parts[1]!);

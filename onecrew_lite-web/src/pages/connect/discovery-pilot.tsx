@@ -49,7 +49,7 @@ import { discoveryHitsCsv, loadAllDiscoveryHits } from "./library-csv-export";
 // New drafts start with every registered entry. Saved Campaign scopes remain frozen.
 export const SEARCH_PLATFORM_GROUPS = [
   { label: "overseas", platforms: ["youtube", "tiktok", "instagram", "twitter", "linkedin", "linkedin-salesnav", "facebook", "producthunt-posts"] },
-  { label: "chinese", platforms: ["bilibili", "weixin", "douyin", "weibo", "hupu", "juejin-hot", "weread", "douban-books", "douban-music"] },
+  { label: "chinese", platforms: ["bilibili", "weixin", "douyin", "weibo", "zhihu", "xiaohongshu", "hupu", "juejin-hot", "weread", "douban-books", "douban-music"] },
   { label: "publications", platforms: ["medium", "medium-tag", "substack", "apple-podcasts", "archive", "devto-tag", "lesswrong-tag", "lobsters-tag", "linkedin-learning"] },
   { label: "other", platforms: ["bluesky", "jike", "hackernews", "linux-do", "nowcoder", "v2ex-node", "stackoverflow", "stackoverflow-tag", "stackoverflow-users", "hf-spaces", "hf-models", "hf-datasets", "dribbble-shots", "dribbble-designers", "google", "google-images", "duckduckgo", "yahoo"] },
 ] as const;

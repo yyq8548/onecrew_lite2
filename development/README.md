@@ -23,6 +23,20 @@ Library 的统一安装包网页使用 pnpm --filter onecrew_lite_tables build:w
 
 使用 pnpm build:candidate，并明确提供 --output、--product-version、--target、--node、--web-assets 和 --library-web-assets。后两项分别指向 onecrew_lite-web/dist 和 onecrew_lite-library/web/dist。支持 win32-x64、darwin-arm64、darwin-x64；每个目标使用配套的 Node 26.7.0 程序。输出目录必须不存在。
 
+## npm 分发
+
+使用当前已发布的 Mac ARM64 和 Windows x64 ZIP 生成 `@onecrew/lite`、`@onecrew/lite-darwin-arm64`、`@onecrew/lite-win32-x64` 三个同版本包：
+
+```sh
+pnpm build:npm --mac-zip <Mac-ZIP绝对路径> --windows-zip <Windows-ZIP绝对路径> --output <新的输出目录>
+```
+
+版本和已验证 ZIP 摘要由 `development/npm-release-inputs.json` 固定。构建验证完整 ZIP、全部校验项和主程序，保留每个平台的实际构建来源。主包用精确版本的 optionalDependencies 选择原生平台包，安装没有生命周期脚本或额外下载。npm 命令为 `onecrew-lite`，`--print-binary-path` 返回真实程序路径；其余参数透传，已有数据目录不变。npm 入口需要 Node.js 20 或更新版本，应用运行时内置于原生程序。
+
+先用 npm 官方登录流程授权发布账号；按 `release.json` 先发布两个平台 `.tgz`，再发布主包，验证指定版本安装、服务和 MCP 后设置 latest。首次公开发布使用 `--access public`，同名同版本不可覆盖。Windows 的 npm 原生安装验收单独记录；复用原程序的校验和提供方验收时明确说明。源码没有声明新的开源许可，因此 npm 元数据保留 UNLICENSED，随包分发第三方许可证。
+
+安装到独立目录后，使用 `node development/npm-smoke.mjs --node-modules <安装目录/node_modules> --output <新的验收目录>` 检查 npm 入口、原生主程序 SHA-256、服务启动与停止、两个网页、live MCP 和网页会话。验收创建独立数据目录，不使用客户数据，不启动搜索。
+
 ## 安装与运行完整性
 
 主程序、内嵌 Codex 插件和 Library 配套构建。组件版本号可以独立演进，但目标架构、二进制哈希、资源哈希和接口能力必须匹配。保留已有账号数据、主密钥、数据目录、端口和用户已授权的 Chrome 身份。不创建独立浏览器。

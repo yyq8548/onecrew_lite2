@@ -1,4 +1,5 @@
 import type { LocalServiceStatus } from "@onecrew/runtime-contracts/status";
+import productMetadata from "../../package.json" with { type: "json" };
 
 export interface ClientDetection { client: "codex"; executable: string; version: string; pluginProtocol: "local_marketplace_v1"; semanticAuthority: false }
 export interface ClientConfiguration { mcpServers: { onecrew_lite: { command: string; args: string[] } } }
@@ -12,4 +13,4 @@ export interface ClientAdapter {
   status(refresh?: boolean): Promise<LocalServiceStatus["plugin"]>;
   uninstall(): Promise<LocalServiceStatus["plugin"]>;
 }
-export const runtimeCompatibility = Object.freeze({ protocol: 2, minimum: "0.9.1", maximum: "0.9.1" });
+export const runtimeCompatibility = Object.freeze({ protocol: 2, minimum: productMetadata.version, maximum: productMetadata.version });

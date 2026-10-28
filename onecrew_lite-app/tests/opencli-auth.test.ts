@@ -16,7 +16,7 @@ test("已移除平台不能探测登录或构造登录检查命令", () => {
 test("登录观察使用原生whoami，cookie观察不提升为已验证登录", () => {
   assert.deepEqual(creatorAuthProbe("twitter"), { site: "onecrew-twitter-auth", full: true, addon: true });
   assert.deepEqual(creatorAuthProbe("youtube"), { site: "onecrew-youtube-auth", full: true, addon: true });
-  assert.throws(() => creatorAuthProbe("zhihu"));
+  assert.deepEqual(creatorAuthProbe("zhihu"), { site: "onecrew-zhihu-auth", full: true, addon: true });
   const site = "onecrew-twitter-auth";
   assert.equal(decodeCreatorAuthStatus([{ site, status: "logged_in", checked: "quick", identity: "private" }], site).status, "session_detected");
   assert.deepEqual(decodeCreatorAuthStatus([{ site, status: "error", checked: "full", error: "COMMAND_EXEC: Current-account identity could not be verified" }], site), { status: "unknown", method: "full", issue: "auth_signal_unavailable" });

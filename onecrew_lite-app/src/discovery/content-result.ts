@@ -13,7 +13,7 @@ const text = z.string().refine(value => value.isWellFormed()), stop = z.enum(["o
 export function validateDiscoveryContentResult(claim: DiscoveryContentClaim, raw: unknown, failure: string | null): Record<string, unknown> | null {
   discoveryContentClaim.parse(claim);
   if (failure !== null) { stop.parse(failure); if (raw !== null) throw new Error("discovery_content_result_invalid"); return null; }
-  const native = z.record(text, z.unknown()).parse(raw), maximum = claim.platform === "hackernews" ? 40000 : ["linkedin", "pixiv", "zhihu"].includes(claim.platform) ? 24000 : 16000;
+  const native = z.record(text, z.unknown()).parse(raw), maximum = claim.platform === "hackernews" ? 40000 : ["linkedin", "pixiv", "zhihu", "xiaohongshu"].includes(claim.platform) ? 24000 : 16000;
   if (Buffer.byteLength(stringifyApplicationJson(native)) > maximum) throw new Error("discovery_content_result_too_large");
   if (claim.platform === "instagram") {
     if (!/^https:\/\/www\.instagram\.com\/[a-z0-9_.]{1,30}\/$/u.test(claim.source_url) || !/^[1-9][0-9]{0,24}$/u.test(claim.author_id) && claim.author_id !== claim.source_url) throw new Error("discovery_content_result_invalid");

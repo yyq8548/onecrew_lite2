@@ -11,18 +11,18 @@ const report: OpenCliSetupReport = {
   daemon_running: true, extension_connected: true,
   profiles: [{ context_id: "work", alias: "campaign" }], issue: null,
   search_capabilities: [{ platform: "youtube", command: "youtube/search", browser_required: true, registered: false }],
-  addons: [{ id: "onecrew-site-auth", state: "ready" }, { id: "onecrew-youtube", state: "ready" }, { id: "onecrew-tiktok", state: "missing" }, { id: "onecrew-bilibili", state: "ready" }, { id: "onecrew-tiktok-profile", state: "ready" }, { id: "onecrew-bilibili-profile", state: "ready" }, { id: "onecrew-bilibili-video", state: "ready" }, { id: "onecrew-twitter-identity", state: "ready" }, { id: "onecrew-twitter-post-identity", state: "ready" }, { id: "onecrew-twitter-post-content", state: "ready" }, { id: "onecrew-browser-search", state: "ready" }],
+  addons: [{ id: "onecrew-site-auth", state: "ready" }, { id: "onecrew-zhihu", state: "ready" }, { id: "onecrew-xiaohongshu", state: "ready" }, { id: "onecrew-youtube", state: "ready" }, { id: "onecrew-tiktok", state: "missing" }, { id: "onecrew-bilibili", state: "ready" }, { id: "onecrew-tiktok-profile", state: "ready" }, { id: "onecrew-bilibili-profile", state: "ready" }, { id: "onecrew-bilibili-video", state: "ready" }, { id: "onecrew-twitter-identity", state: "ready" }, { id: "onecrew-twitter-post-identity", state: "ready" }, { id: "onecrew-twitter-post-content", state: "ready" }, { id: "onecrew-browser-search", state: "ready" }],
 };
 
 describe("OpenCLI setup selection", () => {
   it("accepts every adapter in the backend installation inventory", () => {
     const ids = Object.keys(OPENCLI_ADDON_FILES);
-    expect(ids).toHaveLength(11);
+    expect(ids).toHaveLength(13);
     const addons = ids.map(id => ({ id, state: "ready" }));
     expect(openCliSetupReportSchema.parse({ ...report, addons }).addons).toEqual(addons);
   });
   it("accepts the full installed search adapter inventory", () => {
-    expect(openCliSetupReportSchema.parse(report).addons).toHaveLength(11);
+    expect(openCliSetupReportSchema.parse(report).addons).toHaveLength(13);
   });
   it("repairs only after explicit approval and keeps disconnected readback honest", async () => {
     const disconnected = { ...report, daemon_running: true, extension_connected: false, profiles: [], issue: "extension_unavailable" };

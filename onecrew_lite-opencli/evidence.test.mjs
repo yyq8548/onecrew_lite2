@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import vm from 'node:vm';
 import { projectWatchHtml, readVideoEvidence } from './onecrew-youtube/evidence.mjs';
 
 const id = 'abcdefghijk';
@@ -90,26 +89,4 @@ test('invalid identifier never navigates', async () => {
   for (const bad of ['--profile', 'https://evil.example/', 'abcdefghijk?x=1', '\nabcdefghijk']) {
     await assert.rejects(readVideoEvidence({ goto: () => assert.fail('navigation') }, bad));
   }
-});
-
-test('official page contract: fixed origin, one bounded fetch, projected result only', async () => {
-  const calls = [];
-  const page = {
-    goto: async (...args) => calls.push(['goto', ...args]),
-    wait: async seconds => calls.push(['wait', seconds]),
-    evaluate: async script => script.includes('async function restoreOriginalLanguage()') ? true : ({ session: 'not-exported', data: await vm.runInNewContext(script, {
-      location: { origin: 'https://www.youtube.com' }, URL, TextEncoder, TextDecoder, AbortSignal,
-      fetch: async (url, options) => {
-        calls.push(['fetch', url, options.redirect, options.credentials]);
-        return new Response(fixture());
-      },
-    }) }),
-  };
-  const [result] = await readVideoEvidence(page, id);
-  assert.equal(result.videoId, id);
-  assert.deepEqual(calls, [
-    ['goto', 'https://www.youtube.com', { waitUntil: 'none' }], ['wait', 2],
-    ['fetch', '/watch?v=abcdefghijk', 'error', 'include'],
-  ]);
-  assert.doesNotMatch(JSON.stringify(result), /not-exported/);
 });

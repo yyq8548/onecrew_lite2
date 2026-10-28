@@ -1,54 +1,58 @@
-# OneCrew Lite
+# onecrew_lite
 
-TypeScript 本地程序：生成搜索计划，读取创作者资料和内容，按证据评分，在动态表格整理推荐，通过邮件页 Gmail 批量发送邮件。
+从一句话需求出发，寻找合适的创作者，整理资料，再通过 Gmail 联系。
 
-当前源码版本为 **0.9.0**，默认分支为 `codex/typescript-unified-gmail`。
+**源码与 Mac 版本：0.9.4** · Windows 安装包保持 0.9.1 · 中文 / English
 
-## Mac installer
+当前实现为 TypeScript，源码与构建入口位于仓库根目录。0.9.4 包含知乎、小红书搜索和原 R4 的搜索跳转、粉丝判断及结果表格同步修复，保留已有账号、表格、搜索结果和证据校验。安装包与提示词见 [Mac 分发目录](mac_installer/README.md)。
 
-当前 Mac 包：**OneCrew Lite 0.9.0 · Apple Silicon ARM64 · R4**。
+## 从需求到合作
 
-- [Mac 安装包、校验记录和安装提示词](mac_installer/)
-- [给 Codex 的安装提示词](mac_installer/CODEX-PROMPT.md)
-- [完整 Mac 安装指南](mac_installer/INSTALL-CODEX.md)
-- [Windows 电脑拉取源码与构建步骤](mac_installer/WINDOWS-BUILD.zh-CN.md)
-- [合并与部署流程](docs/release/合并与部署流程.md)
+输入「帮我在 TikTok 找 10 位耳机测评博主，粉丝不少于 5000」，在工作台确认搜索计划后开始查找。
 
-Mac 包为独立程序，使用 ad-hoc 签名，未进行 Apple 公证，保持 `productionReady: false`。R4 包含 LinkedIn 条件识别、联系页、评分队列和断点恢复修复，以及权限预检和断点续装提示词。实测同一任务完成 30 人并保留原结果。安装时保留原数据和登录，主程序和配套插件分别核实版本。
+- **理解需求**：提取商品、创作者类别、平台、人数与粉丝要求，生成对应搜索词；也可使用高级设置或手动输入。
+- **查找与筛选**：读取平台内容和作者资料，结合证据判断匹配程度，支持暂停、继续和调整计划。
+- **整理结果**：在动态表格查看主页、粉丝量、核实状态、匹配评分及公开联系方式，按粉丝量排序。
+- **邮件联系**：连接 Gmail，支持单封和批量发送，集中查看通过 onecrew_lite 发出的邮件及其回复。
+- **工作台与对话**：在浏览器操作，也可通过 Codex 插件查看进度和调用工具。
 
-## Windows installer
+平台可读数据受登录状态、页面变化和公开范围影响。缺失信息保留为未知；搜索结果仍需结合证据判断。
 
-当前安装包：**OneCrew Lite 0.9.0 · Windows x64**。
+## 安装与使用
 
-- [下载 Windows 安装包 ZIP](windows_installer/OneCrew-Lite-0.9.0-Windows-x64.zip)
-- [仓库中的 windows_installer 文件夹](windows_installer/)
-- [发布校验记录](windows_installer/OneCrew-Lite-0.9.0-Windows-x64.zip.release.json)
-- [SHA-256 文件](windows_installer/OneCrew-Lite-0.9.0-Windows-x64.zip.sha256)
-- [通用 Codex 安装提示词](windows_installer/OneCrew-Lite-0.9.0-Windows-x64-CODEX-PROMPT.zh-CN.md)
+Mac 用户使用本仓库的 [0.9.4 安装包和提示词](mac_installer/README.md)，Windows 用户继续使用 [原安装目录](windows_installer/)。由目标电脑上的 AI 客户端校验并安装预构建程序，保留原账号、数据、密钥、端口、Chrome 身份和结果。本次只更新 GitHub，npm 和公司网站尚未更新到 0.9.4。
 
-完整解压 ZIP，按包内 INSTALL-CODEX.md 先校验再分步安装。自动识别首次安装和升级，保留已有账号、主密钥、表格、端口和浏览器授权。
+程序与客户端配套插件分别核实。用户完成必要权限、登录、浏览器授权和客户端重启；最后确认状态卡、工作台与原结果表。Mac ARM64 成品使用 ad-hoc 签名，未经过 Apple 公证。安装验收保持搜索停止。
 
-搜索使用日常 Chrome 的官方 OpenCLI 扩展；工作台和动态表格使用 Codex 内置浏览器。对外发送只保留邮件页 Gmail 批量发送，需要用户确认。后台表格同步保留。
+## 完整源码
 
-Windows 文件沿用远端已发布内容，本次未重新构建或更改 `windows_installer`。其验收及许可证记录见原发布记录。新版 Mac 的验收范围和限制见 [RELEASE-STATUS.md](mac_installer/RELEASE-STATUS.md)；Mac Intel 尚未构建和验收。
+| 目录 | 内容 |
+| --- | --- |
+| [onecrew_lite-app](onecrew_lite-app/) | CLI、本地服务、平台读取、当前对话模型规划与评分、配套插件与打包 |
+| [onecrew_lite-web](onecrew_lite-web/) | 工作台和浏览器授权界面 |
+| [onecrew_lite-mcp-ui](onecrew_lite-mcp-ui/) | 对话状态卡和操作卡 |
+| [onecrew_lite-opencli](onecrew_lite-opencli/) | 已审核的只读平台适配器 |
+| [onecrew_lite-contracts](onecrew_lite-contracts/) | 网页、MCP 与业务共享接口 |
+| [onecrew_lite-library](onecrew_lite-library/) | 动态表格服务、结果同步、创作者视图与导出 |
 
-## 源码与构建
+仓库保留源码、测试、构建脚本、依赖锁文件和平台分发文件。登录凭据、客户数据库和运行缓存不提交仓库。
 
-业务程序、工作台、MCP 页面、适配器、共享合同和动态表格分别位于 onecrew_lite-app、onecrew_lite-web、onecrew_lite-mcp-ui、onecrew_lite-opencli、onecrew_lite-contracts、onecrew_lite-library。
+## 构建
 
-使用 Node.js **26.7.0**、pnpm **10.32.1** 和根目录锁文件。Windows 原生依赖需要对应 C++ 构建工具。
+使用 Node.js 26.7.0 和 pnpm 10.32.1，在仓库根目录执行：
 
-```powershell
+```sh
 pnpm install --frozen-lockfile
-pnpm check:independence
 pnpm build:tables
 pnpm typecheck
 pnpm check:contracts
 pnpm build:ui
-pnpm test:app
-pnpm test:opencli
 ```
 
-配套构建、安装验证和清理要求见 [development/README.md](development/README.md)。账号凭据、客户数据、浏览器配置和依赖缓存不提交仓库。
+原生程序使用 `pnpm build:candidate`，明确指定版本、目标架构、对应 Node 程序及两份网页资源。具体参数及验证要求见 [开发说明](development/README.md)。Mac 和 Windows 分别保留原生验收记录，成品从网站分发。
 
-本仓库尚未对项目整体授予开源许可。第三方许可证和声明保留在所属目录中。
+进一步阅读：[动态表格](onecrew_lite-library/README.md) · [合并与部署流程](docs/release/合并与部署流程.md)
+
+## 项目状态
+
+本仓库公开可读，尚未对项目整体授予开源许可。第三方组件的许可证和声明保留在相应目录中。

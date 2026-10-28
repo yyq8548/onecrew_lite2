@@ -13,7 +13,7 @@ import { discoveryPublicPageRead, type DiscoveryReviewMaterial } from "./review-
 
 const contactObject = z.record(z.string(), z.unknown());
 type PublicPage = z.infer<typeof discoveryPublicPageRead>;
-const nativeSocialPlatforms = ["twitter", "instagram", "tiktok", "douyin", "linkedin", "facebook", "youtube"];
+const nativeSocialPlatforms = ["twitter", "instagram", "tiktok", "douyin", "linkedin", "facebook", "youtube", "xiaohongshu"];
 export function loadDiscoveryContactLookupLinks(database: DatabaseSync, candidate: string, revision: number): [string, string][] {
   if (!database.isTransaction) throw new Error("contact_projection_requires_snapshot");
   const links: [string, string][] = [];
@@ -103,7 +103,7 @@ export function loadDiscoveryRecommendationContacts(database: DatabaseSync, camp
   const profile = material.native_profile;
   if (profile) for (const text of [profile.bio, profile.self_declared_location]) if (text != null) routes.push(...extractDiscoveryContacts(text, profile.profile_url, author, profile.observed_at, "author_published"));
   const platform = material.native_platform ?? material.hit.platform;
-  if (["twitter", "instagram", "tiktok", "douyin", "linkedin", "facebook", "youtube"].includes(platform)) {
+  if (nativeSocialPlatforms.includes(platform)) {
     const url = profile?.profile_url ?? material.hit.author_url ?? (platform === "youtube" ? `https://www.youtube.com/channel/${author}` : null);
     const captured = profile?.observed_at ?? material.hit.author_observed_at ?? (platform === "youtube" ? material.hit.captured_at : null);
     if (url !== null && captured !== null && discoverySocialProfile(url) && discoveryContactPlatform(url) === platform) routes.push({ kind: "social_profile", original_value: url, normalized_value: url, source_url: url, source_excerpt: "Verified native author account", captured_at: captured, native_author_id: author, attribution: "author_published" });
