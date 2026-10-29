@@ -10,4 +10,4 @@
 
 版本、源码提交、源码摘要、依赖锁摘要、程序和 ZIP 大小及 SHA-256 以同名 `.release.json` 和包内 `runtime-manifest.json` 为准。本包使用 ad-hoc 签名，未经过 Apple 公证，标记 `productionReady=false`。
 
-0.9.9 为本地版本，尚未发布官网或 npm。Windows 分发目录、Pro 与公司配置保持原样。
+0.9.9 已在本机安装验收，本次同步到个人 GitHub，替换旧 Mac 安装包；尚未发布官网或 npm。Windows 分发目录、Pro 与公司配置保持原样。
