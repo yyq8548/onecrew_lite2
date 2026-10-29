@@ -17,10 +17,10 @@
       "platform": "win32",
       "arch": "x64",
       "executable": "onecrew_lite.exe",
-      "executableBytes": 171970376,
-      "executableSha256": "8c9dc9c1f101813afb6261ca2742a18f365b1d2dfeba5f5dc5ecda6040e184f8",
-      "runtimeManifestSha256": "0346bcac590beca41f91feb755f8f721772522ed960135549bb472633a5a5793",
-      "buildCheckout": "9774f8d64c4005e55c347ea2639c95c582032ec0",
+      "executableBytes": 171970888,
+      "executableSha256": "db060e49f843383049b32b43427e14e2d386d715d987f0bf5dd653661c615ac8",
+      "runtimeManifestSha256": "97a62f79f614174310fcd798314bbfa02533dc48e75e43d5814109c66e0237cc",
+      "buildCheckout": "28a669e303d450f8aee08fab40a2de199e167739",
       "sourceDirty": false
     }
   }
