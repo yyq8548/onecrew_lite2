@@ -1,0 +1,76 @@
+{
+  "version": "0.9.9",
+  "sourceCommit": "beb75290403b55fc062b1052e3816bf18df3bcbb",
+  "sourceDirty": false,
+  "inputs": {
+    "darwin-arm64": {
+      "version": "0.9.9",
+      "platform": "darwin",
+      "arch": "arm64",
+      "executable": "onecrew_lite",
+      "size": 61650764,
+      "sha256": "18ea8820cfb58a89265d5f3641544e31d892de7cbcdeb38d144d45b233a28689",
+      "executableSha256": "0d5821d1de5445eddb575fcb5332583952395bc0df05b0848b24d9855cf89467",
+      "buildCheckout": "beb75290403b55fc062b1052e3816bf18df3bcbb",
+      "sourceDirty": false
+    },
+    "win32-x64": {
+      "version": "0.9.9",
+      "platform": "win32",
+      "arch": "x64",
+      "executable": "onecrew_lite.exe",
+      "executableBytes": 171971912,
+      "executableSha256": "b95206eff4b3acf414979d42a9150ba02b65b4ffbfb7b21af4f9f6d8442d2b77",
+      "runtimeManifestSha256": "77619fbca5da9c18d4fbe9252ceab56c513a895418c288d2f54e8eb3f0caed40",
+      "buildCheckout": "dff061edb3d5f545ae4f22090e2ce081bd27f6f6",
+      "sourceDirty": false
+    }
+  },
+  "packages": [
+    {
+      "name": "@onecrew/lite-darwin-arm64",
+      "version": "0.9.9",
+      "license": "UNLICENSED",
+      "homepage": "https://onecrewai.io",
+      "publishConfig": {
+        "access": "public",
+        "registry": "https://registry.npmjs.org/"
+      },
+      "filename": "onecrew-lite-darwin-arm64-0.9.9.tgz",
+      "size": 62601670,
+      "unpackedSize": 212837207,
+      "integrity": "sha512-/l+/A9Ra/sJwkFMpGgx2ovYhLd93ruQx5X+VjTUPNc2zwnaC+lYpEjm49PWhElvFA++D8JOLqVVIeAwSxjSWsA==",
+      "shasum": "12bf51c42e1b40c6168cbfb2bd6f29bebcf9d253"
+    },
+    {
+      "name": "@onecrew/lite-win32-x64",
+      "version": "0.9.9",
+      "license": "UNLICENSED",
+      "homepage": "https://onecrewai.io",
+      "publishConfig": {
+        "access": "public",
+        "registry": "https://registry.npmjs.org/"
+      },
+      "filename": "onecrew-lite-win32-x64-0.9.9.tgz",
+      "size": 58090575,
+      "unpackedSize": 173185589,
+      "integrity": "sha512-+r3oIDmRBj0ucSbCnxzRVdK/G5baTuDVzoMHTIuNYI/dbDe3EvAvlBeoWTlGOqusad4Dj5Kp2P4n7RRUv9TdkQ==",
+      "shasum": "80d7e0e8b9b6b5cbb528a0f95c8a80dc19e2cd73"
+    },
+    {
+      "name": "@onecrew/lite",
+      "version": "0.9.9",
+      "license": "UNLICENSED",
+      "homepage": "https://onecrewai.io",
+      "publishConfig": {
+        "access": "public",
+        "registry": "https://registry.npmjs.org/"
+      },
+      "filename": "onecrew-lite-0.9.9.tgz",
+      "size": 3607,
+      "unpackedSize": 8748,
+      "integrity": "sha512-zNvyms6PVfh5vtT8eUYJiw35G4gMBeMecf1MreIyFqF2TpJJ9mm7W7f5WTnpV0KiKbYKcUPS92BxAjZf1T09Rw==",
+      "shasum": "ac6f1308a4c6a819b43633ebd775ea086efd791d"
+    }
+  ]
+}

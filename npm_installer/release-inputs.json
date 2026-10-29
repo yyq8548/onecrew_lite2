@@ -1,0 +1,27 @@
+{
+  "version": "0.9.9",
+  "platforms": {
+    "darwin-arm64": {
+      "version": "0.9.9",
+      "platform": "darwin",
+      "arch": "arm64",
+      "executable": "onecrew_lite",
+      "size": 61650764,
+      "sha256": "18ea8820cfb58a89265d5f3641544e31d892de7cbcdeb38d144d45b233a28689",
+      "executableSha256": "0d5821d1de5445eddb575fcb5332583952395bc0df05b0848b24d9855cf89467",
+      "buildCheckout": "beb75290403b55fc062b1052e3816bf18df3bcbb",
+      "sourceDirty": false
+    },
+    "win32-x64": {
+      "version": "0.9.9",
+      "platform": "win32",
+      "arch": "x64",
+      "executable": "onecrew_lite.exe",
+      "executableBytes": 171971912,
+      "executableSha256": "b95206eff4b3acf414979d42a9150ba02b65b4ffbfb7b21af4f9f6d8442d2b77",
+      "runtimeManifestSha256": "77619fbca5da9c18d4fbe9252ceab56c513a895418c288d2f54e8eb3f0caed40",
+      "buildCheckout": "dff061edb3d5f545ae4f22090e2ce081bd27f6f6",
+      "sourceDirty": false
+    }
+  }
+}
