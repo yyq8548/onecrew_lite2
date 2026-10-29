@@ -6,10 +6,10 @@
       "platform": "darwin",
       "arch": "arm64",
       "executable": "onecrew_lite",
-      "size": 61650764,
-      "sha256": "18ea8820cfb58a89265d5f3641544e31d892de7cbcdeb38d144d45b233a28689",
-      "executableSha256": "0d5821d1de5445eddb575fcb5332583952395bc0df05b0848b24d9855cf89467",
-      "buildCheckout": "beb75290403b55fc062b1052e3816bf18df3bcbb",
+      "size": 61646339,
+      "sha256": "41a7bd21cf6d29d294ba9ae1a12b39017bb514784a4f840cdc0a80f104fef6d9",
+      "executableSha256": "5d04f48f2ae1e268007000b28b4f67237064f038568970afe170dadc72d17fb4",
+      "buildCheckout": "fe10572db9a47a8bf94de32d8551b50bd223c59f",
       "sourceDirty": false
     },
     "win32-x64": {
@@ -17,10 +17,10 @@
       "platform": "win32",
       "arch": "x64",
       "executable": "onecrew_lite.exe",
-      "executableBytes": 171970888,
-      "executableSha256": "db060e49f843383049b32b43427e14e2d386d715d987f0bf5dd653661c615ac8",
-      "runtimeManifestSha256": "97a62f79f614174310fcd798314bbfa02533dc48e75e43d5814109c66e0237cc",
-      "buildCheckout": "28a669e303d450f8aee08fab40a2de199e167739",
+      "executableBytes": 171969352,
+      "executableSha256": "9ee57201d40907d43c7721d8d56b7be65368cb85b2d038d5bc3cab40b0b92481",
+      "runtimeManifestSha256": "2ef3cd30d0b8bbaacea70043e086a0129eabc9bcd0a1cdc874ede3320f66a03d",
+      "buildCheckout": "fe10572db9a47a8bf94de32d8551b50bd223c59f",
       "sourceDirty": false
     }
   }
