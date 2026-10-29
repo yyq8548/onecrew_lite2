@@ -15,7 +15,7 @@ export function weiboProfilePlan(authorId: string) {
     return parsed.success ? parsed.data[0]! : invalid();
   } } satisfies ReviewedOpenCliRead<unknown>;
 }
-const postFields = ["id", "mblogid", "author", "text", "created_at", "source", "reposts", "comments", "likes", "pic_count", "url", "retweeted_from", "retweeted_text"] as const;
+const postFields = ["id", "mblogid", "author", "text", "created_at", "source", "reposts", "comments", "likes", "pic_count", "url", "retweeted_from", "retweeted_text", "text_completeness"] as const;
 export function weiboCommentsPlan(nativePostId: string) {
   if (!numeric(nativePostId)) throw new OpenCliError("opencli_invalid_input");
   const plan = nativeCommentsPlan({ kind: "weibo_post", source: nativePostId }, 5);
@@ -44,7 +44,8 @@ export function weiboPostPlan(source: string) {
     if (!numeric(id) || BigInt(id) > BigInt(Number.MAX_SAFE_INTEGER) || get("mblogid") !== post || get("url") !== source || !name.trim() || [...name].length > 200 || /\p{Cc}/u.test(name) || /[\p{Cc}&&[^\n\r\t]]/v.test(original)) return invalid();
     const characters = [...original];
     const count = (key: string) => { const value = fields.get(key); return value !== undefined && /^\d+$/u.test(value) && Number.isSafeInteger(Number(value)) ? Number(value) : null; };
-    const observations = nativeContentObservations.parse({ published_at: fields.get("created_at") || null, like_count: count("likes"), comment_count: count("comments"), share_count: count("reposts"), text_completeness: "unknown" });
-    return { post_id: id, author_id: authorId, author: name, source_url: source, text: characters.slice(0, 4000).join(""), text_truncated: characters.length > 4000, text_completeness_known: false, is_repost: fields.has("retweeted_from") || fields.has("retweeted_text"), observations };
+    const completeness = characters.length > 4000 ? "truncated" : fields.get("text_completeness") ?? "unknown";
+    const observations = nativeContentObservations.parse({ published_at: fields.get("created_at") || null, like_count: count("likes"), comment_count: count("comments"), share_count: count("reposts"), text_completeness: completeness });
+    return { post_id: id, author_id: authorId, author: name, source_url: source, text: characters.slice(0, 4000).join(""), text_truncated: completeness === "truncated", text_completeness_known: completeness !== "unknown", is_repost: fields.has("retweeted_from") || fields.has("retweeted_text"), observations };
   } } satisfies ReviewedOpenCliRead<unknown>;
 }

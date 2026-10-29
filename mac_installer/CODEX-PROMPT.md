@@ -1,10 +1,10 @@
-# OneCrew Lite 0.9.6 R1 · Mac 安装提示词
+# OneCrew Lite 0.9.6 R2 · Mac 安装提示词
 
-将下面提示词交给目标 Mac 上的 AI 客户端，同时提供 0.9.6 R1 ZIP、同名发布记录和 SHA-256 文件。公司网站与 npm 发布状态以发布记录为准。
+将下面提示词交给目标 Mac 上的 AI 客户端，同时提供 0.9.6 R2 ZIP、同名发布记录和 SHA-256 文件。R2 尚未发布到公司网站或 npm。
 
 ---
 
-Install or update OneCrew Lite 0.9.6 R1 on my Apple Silicon Mac using the supplied OneCrew-Lite-0.9.6-Mac-arm64-R1.zip and its matching release record and SHA-256 file. Follow the complete INSTALL-CODEX.md included in this archive. This revision fixes host wait timers, overlaps reads of different verified authors with scoring, reuses saved author materials with their original sources and dates, and filters guest and promotional contact links while preserving identity and evidence validation. It retains Xiaohongshu and Zhihu through the existing Chrome login, Library migration and companion-plugin fixes. Use this supplied ZIP, including when upgrading an npm installation. The ZIP includes its runtime and supports ARM64 only. Compare the installed version and executable hash, and update if different. Preserve all account data, tables and search results. Do not start or resume any search.
+Install or update OneCrew Lite 0.9.6 R2 on my Apple Silicon Mac using the supplied OneCrew-Lite-0.9.6-Mac-arm64-R2.zip and its matching release record and SHA-256 file. Follow the complete INSTALL-CODEX.md included in this archive. This revision fixes Zhihu content reads, TikTok and Douyin search, and contact and Weibo completeness flags. It retains concurrent reading and scoring, saved evidence, identity validation, Library migration and companion-plugin fixes. Use this supplied ZIP, including when upgrading an npm installation. The ZIP includes its runtime and supports ARM64 only. Compare the installed version and executable hash, and update if different. Preserve all account data, tables and search results. Do not start or resume any search.
 
 I authorize the necessary local download, integrity checks, installation, backup and migration of existing Lite data, stopping and starting its verified services, selected-client plugin or MCP setup, and localhost, browser and Library checks. Execute the commands yourself. Use the client's supported approval mechanism for sandbox, EPERM, EACCES, network or localhost restrictions; request the specific command and paths, retry after approval, and continue from the checkpoint. In Codex, request `require_escalated` when the command tool supports it. This prompt does not itself change system permissions. Preserve other applications and client settings. I complete sign-in, browser authorization, required security consent and client restart.
 

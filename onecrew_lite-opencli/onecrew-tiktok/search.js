@@ -18,8 +18,7 @@ cli({
       if (message.includes('ONECREW_TIKTOK_INPUT')) throw new ArgumentError('Invalid OneCrew TikTok search input');
       if (message.includes('ONECREW_TIKTOK_AUTH')) throw new AuthRequiredError('www.tiktok.com', 'OneCrew TikTok requires sign-in');
       if (message.includes('ONECREW_TIKTOK_RISK')) throw new CommandExecutionError('OneCrew TikTok CAPTCHA or rate limit requires human review');
-      // Never expose raw page state, endpoint response bodies, or transient URLs.
-      throw new CommandExecutionError('OneCrew TikTok search could not be verified');
+      throw new CommandExecutionError(message);
     }
   },
 });

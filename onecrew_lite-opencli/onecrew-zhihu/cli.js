@@ -1,7 +1,7 @@
 import { cli, Strategy } from '@jackwener/opencli/registry';
 import { ArgumentError, AuthRequiredError, CommandExecutionError } from '@jackwener/opencli/errors';
 import { withOwnedSearchPage } from '../onecrew-browser-search/owned-page.mjs';
-import { fetchZhihuPage, zhihuSearchRows, zhihuProfile, zhihuContent } from './read.mjs';
+import { fetchZhihuPage, zhihuSearchRows, zhihuProfile, zhihuContent, observeZhihuContent } from './read.mjs';
 
 for (const name of ['search', 'profile', 'content']) cli({
   site: 'onecrew-zhihu', name, access: 'read', domain: 'www.zhihu.com', strategy: Strategy.COOKIE, navigateBefore: false,
@@ -22,8 +22,10 @@ for (const name of ['search', 'profile', 'content']) cli({
       const answer = /^https:\/\/www\.zhihu\.com\/question\/([1-9][0-9]{0,19})\/answer\/([1-9][0-9]{0,19})$/.exec(args.source);
       const article = /^https:\/\/zhuanlan\.zhihu\.com\/p\/([1-9][0-9]{0,19})$/.exec(args.source);
       if (!answer && !article) throw new ArgumentError('Invalid Zhihu content URL');
-      destination = answer ? args.source : destination;
-      endpoint = answer ? `https://www.zhihu.com/api/v4/answers/${answer[2]}?include=content,author,question` : `https://www.zhihu.com/api/v4/articles/${article[1]}?include=content,author,title`;
+      await owned.goto(args.source);
+      const raw = await owned.evaluate(`(${observeZhihuContent.toString()})(${JSON.stringify(args.source)})`);
+      const data = raw && 'session' in Object(raw) && 'data' in Object(raw) ? raw.data : raw;
+      return [zhihuContent(data, args.source, args.author)];
     }
     await owned.goto(destination);
     const raw = await owned.evaluate(`(${fetchZhihuPage.toString()})(${JSON.stringify(endpoint)})`);

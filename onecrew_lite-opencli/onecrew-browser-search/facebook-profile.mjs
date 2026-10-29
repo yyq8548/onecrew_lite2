@@ -138,13 +138,13 @@ export async function readFacebookContactPanel(source,id,ownerName) {
       if((headings.length===1||ownerName) && selected.length===1 && !loading) {
         const scope=selected[0].closest('[role="tablist"]')?.parentElement;
         if(!scope||scope.querySelector('[role="feed"],[role="article"]')) throw new Error('ONECREW_FB_CONTACT_INVALID');
-        const parts=[];const links=[];let size=0;
+        const parts=[];const links=[];let size=0,truncated=false;
         const walk=document.createTreeWalker(scope,NodeFilter.SHOW_TEXT);
         while(walk.nextNode()) {
           const node=walk.currentNode;
           if(!node.parentElement||!visible(node.parentElement)) continue;
           const text=node.textContent.trim();if(!text) continue;
-          if(size+text.length+1>12000){break;}
+          if(size+text.length+1>12000){truncated=true;break;}
           parts.push(text);size+=text.length+1;
         }
         for(const anchor of scope.querySelectorAll('a[href]')) {
@@ -166,9 +166,7 @@ export async function readFacebookContactPanel(source,id,ownerName) {
             }
           } catch {}
         }
-        // Selected About is an author-bound partial observation, never proof that
-        // all asynchronous contact fields have arrived or that no email exists.
-        return {id,source_url:source,title:(ownerName||headings[0].textContent.trim()).slice(0,200),contact_text:parts.join('\n'),contact_links:links,truncated:true};
+        return {id,source_url:source,title:(ownerName||headings[0].textContent.trim()).slice(0,200),contact_text:parts.join('\n'),contact_links:links,truncated};
       }
     }
     if(attempt<11) await new Promise(resolve=>setTimeout(resolve,500));

@@ -75,3 +75,32 @@ export function zhihuContent(data, source, expectedId) {
   return { ...identity, source_url: source, text: data.plain_text, public_links: data.public_links,
     ...(answer ? { answer_id: answer[2], question_id: answer[1] } : { article_id: article[1], title: data.title }) };
 }
+
+export async function observeZhihuContent(source) {
+  if (location.origin + location.pathname !== source) throw new Error('ONECREW_ZHIHU_CONTENT_ROUTE');
+  const answer = /^https:\/\/www\.zhihu\.com\/question\/(\d+)\/answer\/(\d+)$/.exec(source);
+  const article = /^https:\/\/zhuanlan\.zhihu\.com\/p\/(\d+)$/.exec(source);
+  if (!answer && !article) throw new Error('ONECREW_ZHIHU_INVALID_CONTENT_URL');
+  const id = answer?.[2] ?? article[1];
+  for (let attempt = 0; attempt < 20; attempt++) {
+    const script = document.querySelector('#js-initialData');
+    if (script) {
+      const initial = JSON.parse(script.textContent, (_key, value, context) => typeof value === 'number' && !Number.isSafeInteger(value) && context?.source && /^\d+$/.test(context.source) ? context.source : value);
+      const entities = initial.initialState?.entities;
+      const entry = (answer ? entities?.answers : entities?.articles)?.[id];
+      if (entry) {
+        if (entry.contentNeedTruncated === true || typeof entry.content !== 'string' || !entry.content.trim()) throw new Error('ONECREW_ZHIHU_INVALID_CONTENT_INCOMPLETE');
+        const body = new DOMParser().parseFromString(entry.content, 'text/html');
+        const links = [...body.querySelectorAll('a[href]')].map(anchor => {
+          const url = new URL(anchor.getAttribute('href'), source);
+          return url.hostname === 'link.zhihu.com' ? url.searchParams.get('target') : url.href;
+        }).filter(value => value && /^(https:\/\/|mailto:)/.test(value));
+        return { id: entry.id, title: entry.title, question: answer ? { id: typeof entry.question === 'object' ? entry.question.id : entry.question } : undefined,
+          author: { id: entry.author?.id, name: entry.author?.name, url_token: entry.author?.urlToken },
+          plain_text: body.body.textContent.trim(), public_links: [...new Set(links)].slice(0, 10), content_need_truncated: false };
+      }
+    }
+    if (attempt < 19) await new Promise(resolve => setTimeout(resolve, 250));
+  }
+  throw new Error('ONECREW_ZHIHU_CONTENT_UNAVAILABLE');
+}

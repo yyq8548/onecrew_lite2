@@ -60,11 +60,11 @@ export function linkedinExperiencePlan(handle: string, account: string) {
 }
 export function linkedinContactPlan(handle: string, account: string) {
   handle = target(handle, account); const source = `https://www.linkedin.com/in/${handle}/overlay/contact-info/`;
-  const schema = z.strictObject({ adapter_version: z.literal("1.0.0"), author_handle: z.literal(handle), account_id: z.literal(account), source_url: z.literal(source), title: label.refine(value => [...value].length <= 200), contact_text: bounded(8000), contact_links: z.array(publicLink).max(10), truncated: z.literal(true), evidence_source: z.literal("visible_contact_dialog") });
+  const schema = z.strictObject({ adapter_version: z.literal("1.0.0"), author_handle: z.literal(handle), account_id: z.literal(account), source_url: z.literal(source), title: label.refine(value => [...value].length <= 200), contact_text: bounded(8000), contact_links: z.array(publicLink).max(10), truncated: z.boolean(), evidence_source: z.literal("visible_contact_dialog") });
   return { site: "onecrew-linkedin-reader", name: "contact", args: ["-f", "json", "--", handle, account], addons: ["onecrew-browser-search"], foregroundBrowser: true, maximumBytes: 32000, decode(value: unknown) {
     const row = one(schema, value); const excerpt = `${row.contact_links.map(link => `Website: ${link}`).join("\n")}\n${row.contact_text}`;
     if (Buffer.byteLength(excerpt) > 20000) throw new OpenCliError("opencli_output_too_large");
-    return { requested_url: source, document_url: source, title: row.title, markdown_excerpt: excerpt, truncated: true };
+    return { requested_url: source, document_url: source, title: row.title, markdown_excerpt: excerpt, truncated: row.truncated };
   } } satisfies ReviewedOpenCliRead<unknown>;
 }
 export function linkedinCommentsPlan(handle: string, account: string, source: string) {

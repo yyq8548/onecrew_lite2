@@ -15,7 +15,7 @@ for (const [site, name] of [
   ['douyin','search'], ['weibo','search'], ['tieba','search'],
   ['google','search'], ['yahoo','search'],
 ]) {
-  await import(new URL(`clis/${site}/${name}.js`, root));
+  const nativeModule = await import(new URL(`clis/${site}/${name}.js`, root));
   const native = getRegistry().get(`${site}/${name}`);
   if (native?.access !== 'read' || !native.browser || typeof native.func !== 'function')
     throw new Error('Reviewed native search unavailable');
@@ -23,6 +23,17 @@ for (const [site, name] of [
     func:(page,args) => withOwnedSearchPage(page, async owned => {
       try {
         if (site === 'facebook') return await readFacebookCreatorResults(owned, args);
+        if (site === 'douyin') {
+          const limit = nativeModule.parseSearchLimit(args.limit);
+          await owned.goto('https://www.douyin.com/search/' + encodeURIComponent(args.query) + '?type=video', {settleMs:0});
+          const raw = await owned.evaluate(`(${readDouyinCardsWhenReady.toString()})(${readSearchStop.toString()})`);
+          const result = raw && 'session' in Object(raw) && 'data' in Object(raw) ? raw.data : raw;
+          if (result.state === 'auth') throw new AuthRequiredError(native.domain, 'Douyin search requires sign-in');
+          if (result.state === 'risk') throw new CommandExecutionError('Douyin CAPTCHA or rate limit requires human review');
+          const projected = nativeModule.projectSearchCards(result.cards, limit);
+          if (projected.invalidCount) throw new CommandExecutionError('Douyin search cards lack video URL or description');
+          return normalizeBrowserRows(site, projected.rows, limit);
+        }
         if (site === 'linkedin') {
           if (typeof args.keywords !== 'string' || !args.keywords.trim()
             || !Number.isInteger(args.limit) || args.limit < 1 || args.limit > 10)
@@ -67,4 +78,20 @@ for (const [site, name] of [
         throw error;
       }
     })});
+}
+
+async function readDouyinCardsWhenReady(readStop) {
+  for (let attempt = 0; attempt < 30; attempt++) {
+    const cards = [...document.querySelectorAll('[data-e2e="scroll-list"] li')].map(li => {
+      const anchor = li.querySelector('a[href*="/video/"]');
+      if (!anchor) return null;
+      return {href:anchor.getAttribute('href'),leafTexts:[...li.querySelectorAll('*')].filter(node=>!node.children.length).map(node=>node.textContent.trim()).filter(Boolean)};
+    }).filter(Boolean);
+    if (cards.length) return {state:'rendered',cards};
+    const state = readStop();
+    if (state === 'auth' || state === 'risk') return {state,cards:[]};
+    if (/暂无相关搜索结果|没有找到相关结果|搜索结果为空|暂无结果/.test(document.body?.innerText ?? '')) return {state:'empty',cards:[]};
+    if (attempt < 29) await new Promise(resolve=>setTimeout(resolve,500));
+  }
+  throw new Error('ONECREW_DOUYIN_SEARCH_TIMEOUT');
 }
