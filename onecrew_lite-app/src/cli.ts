@@ -93,7 +93,9 @@ export async function runCli(args: string[]): Promise<void> {
     if (!values.vault || !values["master-key"]) throw new CliError("Vault and master key paths are required for unified identity");
     if (!lstatSync(directory, { throwIfNoEntry: false })) await createPrivateDirectory(directory);
   }
+  if (process.env.ONECREW_LITE_DIAGNOSTICS === "1") process.stderr.write("[DEBUG-win099] data-directory-verify\n");
   await verifyPrivateDirectory(directory);
+  if (process.env.ONECREW_LITE_DIAGNOSTICS === "1") process.stderr.write("[DEBUG-win099] data-directory-verified\n");
   if (command === "repair") {
     for (const name of Object.keys(values)) if (!["data-dir", "client"].includes(name)) throw new CliError("Repair uses the saved original service configuration; only data-dir and client are accepted");
     const result = await repairInstallation(directory, values.client === "codex" ? "codex" : "mcp");
@@ -115,6 +117,7 @@ export async function runCli(args: string[]): Promise<void> {
     return;
   }
   if (command === "mcp") {
+    if (process.env.ONECREW_LITE_DIAGNOSTICS === "1") process.stderr.write("[DEBUG-win099] mcp-module-load\n");
     const { serveMcpStdio } = await import("./service/mcp-adapter.ts");
     await serveMcpStdio(directory);
     return;

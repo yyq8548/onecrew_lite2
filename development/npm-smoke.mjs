@@ -46,7 +46,7 @@ assert.equal(createHash('sha256').update(await readFile(binary)).digest('hex'), 
 assert.equal(JSON.parse(await readFile(path.join(path.dirname(binary), 'candidate.json'), 'utf8')).productVersion, platformManifest.version);
 let running = false;
 const client = new Client({ name: 'onecrew-lite-npm-acceptance', version: catalog.version });
-const transport = new StdioClientTransport({ command: process.execPath, args: [entry, 'mcp', '--stdio', '--data-dir', data], stderr: 'pipe' });
+const transport = new StdioClientTransport({ command: process.execPath, args: [entry, 'mcp', '--stdio', '--data-dir', data], stderr: 'pipe', env: { ONECREW_LITE_DIAGNOSTICS: '1' } });
 transport.stderr?.on('data', bytes => appendFileSync(path.join(output, 'mcp-stderr.log'), bytes));
 try {
   const first = await invoke('start');
