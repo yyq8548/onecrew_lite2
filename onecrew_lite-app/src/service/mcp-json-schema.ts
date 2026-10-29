@@ -88,22 +88,32 @@ export class McpJsonSchemaValidator implements jsonSchemaValidator {
   }
 }
 export class FrozenMcpOutputValidator {
-  readonly #tools = new Map<string, ValidateFunction>();
-  readonly #operations = new Map<string, ValidateFunction>();
+  readonly #tools = new Map<string, () => ValidateFunction>();
+  readonly #operations = new Map<string, () => ValidateFunction>();
   constructor(data: McpCatalogueData, surface: string) {
     const validator = ajv();
-    const compile = (raw: unknown) => { const transformed = transformSchema(raw, false); if (!record(transformed)) throw new Error("mcp_json_schema_invalid"); return validator.compile(transformed); };
+    const lazyValidator = (raw: unknown) => {
+      let compiled: ValidateFunction | undefined;
+      return () => {
+        if (!compiled) {
+          const transformed = transformSchema(raw, false);
+          if (!record(transformed)) throw new Error("mcp_json_schema_invalid");
+          compiled = validator.compile(transformed);
+        }
+        return compiled;
+      };
+    };
     const tools = data.tools.find(value => value.surface.toLowerCase() === surface)?.tools;
     if (!tools) throw new Error("mcp_surface_manifest_missing");
-    for (const tool of tools) if (typeof tool.name === "string" && record(tool.outputSchema)) this.#tools.set(tool.name, compile(tool.outputSchema));
-    for (const entry of data.entries) if (entry.kind === "operation") this.#operations.set(entry.metadata.id, compile(entry.output_schema));
+    for (const tool of tools) if (typeof tool.name === "string" && record(tool.outputSchema)) this.#tools.set(tool.name, lazyValidator(tool.outputSchema));
+    for (const entry of data.entries) if (entry.kind === "operation") this.#operations.set(entry.metadata.id, lazyValidator(entry.output_schema));
   }
   validate(tool: string, value: unknown): void {
-    const validator = this.#tools.get(tool);
+    const validator = this.#tools.get(tool)?.();
     if (!validator || !validator(value)) throw new Error("mcp_output_contract_mismatch");
     if (tool === "onecrew_tool_execute" && record(value) && Array.isArray(value.outcomes)) for (const outcome of value.outcomes) {
       if (record(outcome) && outcome.status === "completed") {
-        const operation = typeof outcome.operation_id === "string" ? this.#operations.get(outcome.operation_id) : undefined;
+        const operation = typeof outcome.operation_id === "string" ? this.#operations.get(outcome.operation_id)?.() : undefined;
         if (!operation || !operation(outcome.result)) throw new Error("mcp_operation_output_contract_mismatch");
       }
     }

@@ -38,9 +38,7 @@ const workspaceCardTool = { name: "onecrew_workspace_card_request", description:
 // stdio 只转发给持有实例锁的服务；账号、数据库、确认权威和发送队列均由该服务持有。
 export async function createMcpAdapter(directory: string, surface: McpSurface = "full") {
   mcpSurface.parse(surface);
-  if (process.env.ONECREW_LITE_DIAGNOSTICS === "1") process.stderr.write("[DEBUG-win099] mcp-resources-load\n");
   const resources = await loadMcpAppResources(), registry = await loadCurrentMcpRegistry();
-  if (process.env.ONECREW_LITE_DIAGNOSTICS === "1") process.stderr.write("[DEBUG-win099] mcp-resources-loaded\n");
   const selected = registry.tools.find(value => value.surface.toLowerCase() === surface);
   if (!selected) throw new Error("mcp_surface_manifest_missing");
   const ui = { ui: { resourceUri: resources.uri, visibility: ["model", "app"] }, "openai/outputTemplate": resources.uri };
@@ -49,7 +47,6 @@ export async function createMcpAdapter(directory: string, surface: McpSurface = 
     return { ...tool, ...(tool.outputSchema ? { outputSchema: nativeMcpOutputSchema(tool.outputSchema) } : {}), ...(tool.name === "onecrew_result_present" ? { _meta: ui } : {}) };
   })];
   const frozenOutputs = new FrozenMcpOutputValidator(registry, surface);
-  if (process.env.ONECREW_LITE_DIAGNOSTICS === "1") process.stderr.write("[DEBUG-win099] mcp-validators-loaded\n");
   const version = getPackagedRuntime()?.manifest.productVersion ?? "0.9.1";
   const server = new Server({ name: "onecrew_lite", version }, { capabilities: { tools: {}, resources: {} }, jsonSchemaValidator: new McpJsonSchemaValidator(), instructions: "Bootstrap: onecrew_status, onecrew_login, onecrew_login_cancel, onecrew_logout, onecrew_web, onecrew_repair. For an explicit One-click repair / 一键修复 request, call onecrew_repair even while the main service is stopped and follow its returned steps, preserving data and stopped searches. Discover only registered operations through onecrew_tool_search, get their exact contract with onecrew_tool_get, and execute at most eight calls. Present each new result_ref once with onecrew_result_present and the conversation locale. Wait for actual user confirmation; never invent bindings or a confirmed plan. MCP has no mail or social sending capability." });
   let session: { runtime: string; descriptor: RuntimeDescriptor; id: string } | undefined;
@@ -182,5 +179,4 @@ export async function serveMcpStdio(directory: string): Promise<void> {
   process.stdin.once("end", close);
   process.stdin.once("close", close);
   await server.connect(new StdioServerTransport());
-  if (process.env.ONECREW_LITE_DIAGNOSTICS === "1") process.stderr.write("[DEBUG-win099] mcp-server-connected\n");
 }

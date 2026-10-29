@@ -46,35 +46,28 @@ assert.equal(createHash('sha256').update(await readFile(binary)).digest('hex'), 
 assert.equal(JSON.parse(await readFile(path.join(path.dirname(binary), 'candidate.json'), 'utf8')).productVersion, platformManifest.version);
 let running = false;
 const client = new Client({ name: 'onecrew-lite-npm-acceptance', version: catalog.version });
-const transport = new StdioClientTransport({ command: process.execPath, args: [entry, 'mcp', '--stdio', '--data-dir', data], stderr: 'pipe', env: { ONECREW_LITE_DIAGNOSTICS: '1' } });
+const transport = new StdioClientTransport({ command: process.execPath, args: [entry, 'mcp', '--stdio', '--data-dir', data], stderr: 'pipe' });
 transport.stderr?.on('data', bytes => appendFileSync(path.join(output, 'mcp-stderr.log'), bytes));
 try {
   const first = await invoke('start');
-  console.log('[DEBUG-win099] service-started', timings.start);
   running = true;
   assert.equal(first.state, 'running');
   assert.equal((await invoke('status')).instance_id, first.instance_id);
-  console.log('[DEBUG-win099] service-status', timings.status);
   for (const route of ['/', '/library']) {
     const response = await fetch(`http://127.0.0.1:${first.port}${route}`);
     assert.equal(response.status, 200);
     assert.match(await response.text(), /<script[^>]+src=/u);
   }
-  console.log('[DEBUG-win099] web-pages-ready');
   const mcpStartedAt = performance.now();
   await client.connect(transport);
   timings.mcp_connect = Math.round(performance.now() - mcpStartedAt);
-  console.log('[DEBUG-win099] mcp-connected', Math.round(performance.now() - mcpStartedAt));
   assert.ok((await client.listTools()).tools.some(tool => tool.name === 'onecrew_status'));
-  console.log('[DEBUG-win099] mcp-tools-listed');
   const status = await client.callTool({ name: 'onecrew_status', arguments: {} });
-  console.log('[DEBUG-win099] mcp-status-returned');
   assert.ok(!status.isError);
   const account = JSON.parse(status.content.find(block => block.type === 'text').text);
   assert.equal(account.instance_id, first.instance_id);
   assert.equal(account.resource_identity.executable_sha256, catalog.platforms[target].executableSha256);
   for (const destination of ['workbench', 'library']) {
-    console.log('[DEBUG-win099] workspace', destination);
     const opened = await client.callTool({ name: 'onecrew_workspace_open', arguments: { destination } });
     assert.ok(!opened.isError);
     assert.equal(opened.structuredContent.instance_id, first.instance_id);
