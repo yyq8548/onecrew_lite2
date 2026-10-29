@@ -1,30 +1,14 @@
-# OneCrew Lite 0.9.9 Mac 验证
+# OneCrew Lite 0.9.9 Mac 发布包验证
 
-日期：2026-10-29。平台：Apple Silicon Mac。
+日期：2026-10-29，Apple Silicon Mac。Mac 同时提供 ZIP 和 npm，Windows 仅通过 npm 分发，旧 windows_installer 不变。
 
-## 来源与安装包
+- Mac 构建提交：`beb75290403b55fc062b1052e3816bf18df3bcbb`，构建时工作区干净。
+- ZIP：`OneCrew-Lite-0.9.9-Mac-arm64.zip`，61,650,764 字节。
+- ZIP SHA-256：`18ea8820cfb58a89265d5f3641544e31d892de7cbcdeb38d144d45b233a28689`。
+- 原生程序 SHA-256：`0d5821d1de5445eddb575fcb5332583952395bc0df05b0848b24d9855cf89467`。
+- 523 项包内文件和校验清单通过；ad-hoc 签名，未公证，保留 productionReady=false 和原始许可证证据列表。
+- 实际本地 npm 安装、入口解析、程序哈希、后台服务启动与停止、工作台、Library、stdio live MCP 和两个网页授权会话通过，合计 15.292 秒。
+- 安装验证使用独立测试目录，没有操作客户账号、原表格、搜索结果或当前 Mac 安装，没有恢复搜索或读取创作者账号。
+- 搜索和评分继续使用已验证的 0.9.9 实现；本次新增 Windows 运行库和 npm 分发支持。知乎活动搜索入口已移除，历史材料保留。
 
-- 构建源码提交：`064061d1fb24f9c4c1bc9fed03096e43175dcd8c`，构建时工作区干净。
-- ZIP：`OneCrew-Lite-0.9.9-Mac-arm64.zip`。
-- ZIP 大小：61,650,519 字节。
-- ZIP SHA-256：`5460fd9c5af136a3bd76a748fd4327b32ec7e84cca2fa899d8eb353393634217`。
-- 程序 SHA-256：`f8c8a4748de23eff9f05c3c240646a87dc6f83b9716481554ce324e112e26196`。
-- 523 项包内文件及 ad-hoc 签名校验通过，未经过 Apple 公证。
-
-## 功能与数据
-
-- 应用类型检查、相关回归、前端和适配器测试及构建通过。
-- 知乎的搜索、登录、主页、正文、评论和补读入口已移除。活动搜索来源为 10 个，适配器为 12 个。
-- 原账号、安装身份、端口、Chrome 身份和表格保持不变。
-- 安装前后 1,046 条候选、794 份主页和 427 份正文的全部字段摘要一致。
-- 历史知乎表格中的 10 个推荐、粉丝数和 95／85／70／40 评分继续可读；旧知乎任务不再提供继续搜索入口。
-- 用户重启后，新版配套插件的原生 MCP 调用通过。本地服务与 OpenCLI 守护进程已使用原配置恢复，浏览器和 Library 均 ready。
-- 本次安装和验收没有启动或恢复搜索，没有重新读取成功账号。
-
-## 本次 GitHub 更新范围
-
-同步已验证源码及 Mac 分发文件。安装包继续使用上述实际构建提交；分发提交只更新文件、文档和发布记录。
-
-个人仓库默认分支为 `codex/typescript-unified-gmail`。保留其原提交历史；`windows_installer` 沿用更新前的完整内容，目录树摘要为 `62e1e60d58358a6def6e760eda08ea196d314d69`。
-
-本次不发布 npm、公司 GitLab、官网或 Pro。
+npm 主包与两个平台包版本均为 0.9.9，实际文件大小与 npm SRI 见 `npm_installer/release.json`。Windows 原生验收、公司 MR、网站部署和最终入口在 `docs/releases/lite-0.9.9.md` 单独记录，不能用本机 Mac 检查代替 Windows 运行结果。

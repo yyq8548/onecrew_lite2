@@ -1,6 +1,12 @@
 name: Windows npm native acceptance
 on:
   workflow_dispatch:
+  push:
+    branches: [feat/lite-release-099-20261029]
+    paths:
+      - .github/workflows/windows-npm-check.yml
+      - development/npm-smoke.mjs
+      - npm_installer/**
 permissions:
   contents: read
 jobs:
