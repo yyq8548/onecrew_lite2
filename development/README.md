@@ -23,6 +23,8 @@ Library 的统一安装包网页使用 pnpm --filter onecrew_lite_tables build:w
 
 使用 pnpm build:candidate，并明确提供 --output、--product-version、--target、--node、--web-assets 和 --library-web-assets。后两项分别指向 onecrew_lite-web/dist 和 onecrew_lite-library/web/dist。支持 win32-x64、darwin-arm64、darwin-x64；每个目标使用配套的 Node 26.7.0 程序。输出目录必须不存在。
 
+每次更新使用独立语义版本号，安装包、安装目录和提示词使用该版本，不增加 R1、R2 等修订后缀。Mac 客户包使用 `development/package-macos-customer.mts`，明确提供 `--candidate-zip`、`--source-commit`、`--output` 和 `--product-version`；文件名为 `OneCrew-Lite-<版本>-Mac-arm64.zip`。
+
 ## npm 分发
 
 使用当前已发布的 Mac ARM64 和 Windows x64 ZIP 生成 `@onecrew/lite`、`@onecrew/lite-darwin-arm64`、`@onecrew/lite-win32-x64` 三个同版本包：
