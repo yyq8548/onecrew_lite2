@@ -21,7 +21,7 @@ export function DiscoveryOverview({ campaign, counts, stage, running, busy, prof
   syncPending?: boolean; syncErrorKey?: ReturnType<typeof discoveryLibraryFailureKey>; syncedAt?: number | bigint | null; failurePhase?: string; failureCode?: string;
   pipeline?: ExecutionStatus["pipeline"];
   deferredHits?: readonly { reason: string }[]; excludedSources?: readonly { name: string; reason: ExclusionReason }[];
-  onSync: () => void; onStart: () => void; onPause: () => void; onAnother: () => void; onExpanded: () => void; canExpand: boolean; onIssues: () => void; onFailure?: () => void;
+  onSync: () => void; onStart?: () => void; onPause: () => void; onAnother: () => void; onExpanded: () => void; canExpand: boolean; onIssues: () => void; onFailure?: () => void;
 }) {
   const { t, i18n } = useTranslation("shell");
   const zh = i18n.language.startsWith("zh");
@@ -101,7 +101,7 @@ export function DiscoveryOverview({ campaign, counts, stage, running, busy, prof
       {syncFailed && <p role="alert" className="text-sm text-destructive">{t(`opencliPilot.${syncErrorKey ?? "newResultsSyncFailed"}`)}</p>}
     </div>
     {campaign.phase === "active" && <div className="space-y-2">
-      {!running && stage !== "needs_evidence" && <Button variant="outline" disabled={profileChanged || busy} onClick={onStart}><Play className="size-4" aria-hidden />{t("opencliPilot.automaticStart")}</Button>}
+      {!running && onStart && stage !== "needs_evidence" && <Button variant="outline" disabled={profileChanged || busy} onClick={onStart}><Play className="size-4" aria-hidden />{t("opencliPilot.automaticStart")}</Button>}
       {running && <p className="max-w-prose text-sm leading-relaxed text-muted-foreground">{t("opencliPilot.pauseEffect")}</p>}
     </div>}
   </section>;

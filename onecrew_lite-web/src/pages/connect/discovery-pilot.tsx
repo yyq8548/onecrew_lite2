@@ -387,6 +387,7 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
       requires_ai_tool_demo: requireDemo, requires_public_tool_url: requireToolLink } });
   };
   const current = campaign.data;
+  const hasAvailableSources = current?.scopes.some(scope => availablePlatforms.includes(scope.platform)) ?? false;
   const followerThresholdSummary = (plan: DiscoveryCampaign) => t(plan.criteria.min_subscribers_source === "requirements" ? "opencliPilot.groupedFollowerThreshold"
     : plan.criteria.min_subscribers_source === "default" && plan.scopes.some(scope => scope.platform === "linkedin")
       ? plan.scopes.every(scope => scope.platform === "linkedin") ? "opencliPilot.linkedinDefaultFollowers" : "opencliPilot.mixedDefaultFollowers"
@@ -688,7 +689,7 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
             return { name: platformDisplayName(platform), reason };
           })}
           onFailure={() => { setPlatformsOpen(true); requestAnimationFrame(() => platformDetails.current?.scrollIntoView({ block: "center", behavior: "smooth" })); }}
-          onSync={() => librarySync.mutate(current.id)} onStart={() => { void startAutomatic(); }}
+           onSync={() => librarySync.mutate(current.id)} onStart={hasAvailableSources ? () => { void startAutomatic(); } : undefined}
           onPause={() => { startGeneration.current += 1; pauseExecution.mutate(current.id); }} onAnother={startAnother} onExpanded={startExpanded}
           canExpand={availablePlatforms.some(platform => !current.scopes.some(scope => scope.platform === platform))}
            onIssues={() => { const issue = current.platform_runs.find(run => availablePlatforms.includes(run.platform) && !excludedPlatforms.includes(run.platform) && ["unauthorized", "technical_stop", "risk_control_stop"].includes(run.status)); if (issue) setActivePlatform(issue.platform); setPlatformsOpen(true); requestAnimationFrame(() => platformDetails.current?.scrollIntoView({ block: "start", behavior: "smooth" })); }} />
@@ -714,7 +715,7 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
 
         </CollapsibleContent></Collapsible>}
         {current.criteria.automatic_query_expansion === true && <p className="text-sm text-muted-foreground">{t("opencliPilot.automaticQueries")}</p>}
-        {current.phase === "draft" && <div className="flex flex-wrap gap-2">
+         {current.phase === "draft" && hasAvailableSources && <div className="flex flex-wrap gap-2">
           <Button disabled={approve.isPending || profileChanged} onClick={() => approve.mutate(true)}>{approve.isPending && <Loader2 className="size-4 animate-spin" />}{t("opencliPilot.approveAndStart")}</Button>
           <Button variant="outline" disabled={approve.isPending || profileChanged} onClick={() => approve.mutate(false)}>{t("opencliPilot.approveOnly")}</Button>
         </div>}
