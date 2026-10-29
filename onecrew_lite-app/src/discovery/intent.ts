@@ -7,6 +7,7 @@ export const discoveryIntentProposal = z.strictObject({
   original_request: text, goal: text, category: proposedDiscoveryConstraint(text), region: proposedDiscoveryConstraint(text), language: proposedDiscoveryConstraint(text),
   min_subscribers: proposedDiscoveryConstraint(z.union([z.number().int().safe().nonnegative(), z.bigint().min(0n).max(18446744073709551615n)])),
   quality_filter: proposedDiscoveryConstraint(proposedQualityFilter).optional(),
+  occupational_review_applicability: z.enum(["required", "not_required", "unknown"]).default("unknown").describe("Assess the complete objective, category, every hard condition and all quality-filter branches. Use required for a requested employer, occupational role or employment relationship; not_required only when none is required; unknown when applicability is unclear."),
   excluded_platforms: z.array(z.strictObject({ platform: text, excerpt: text })),
   other_hard_conditions: z.array(z.strictObject({ description: text, excerpt: text })),
   soft_preferences: z.array(z.strictObject({ description: text, excerpt: text.nullable() })), suggested_keywords: z.array(text),

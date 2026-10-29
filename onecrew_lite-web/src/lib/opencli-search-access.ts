@@ -9,7 +9,7 @@ export const OPENCLI_NON_SEARCH_PLATFORMS: readonly string[] = Object.freeze(["g
 
 const requiresLogin = new Set([
   "bilibili", "instagram", "twitter", "linkedin", "facebook",
-  "douyin", "weibo", "jike", "linux-do",
+  "douyin", "weibo", "jike", "linux-do", "xiaohongshu",
   "linkedin-learning", "douban-books", "douban-music",
 ]);
 const publicBrowser = new Set([

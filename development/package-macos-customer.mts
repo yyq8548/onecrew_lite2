@@ -9,12 +9,11 @@ import { readDevelopmentBuildIdentity } from '../onecrew_lite-app/src/service/bu
 
 const { values } = parseArgs({ options: {
   'candidate-zip': { type: 'string' }, 'source-commit': { type: 'string' },
-  output: { type: 'string' }, revision: { type: 'string' },
+  output: { type: 'string' },
   'product-version': { type: 'string' }, 'allow-dirty-candidate': { type: 'boolean' },
 }, strict: true });
-assert(values['candidate-zip'] && values['source-commit'] && values.output && values.revision && values['product-version']);
+assert(values['candidate-zip'] && values['source-commit'] && values.output && values['product-version']);
 assert.match(values['source-commit'], /^[a-f0-9]{40}$/u);
-assert.match(values.revision, /^R[1-9][0-9]*$/u);
 assert.equal(execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), values['source-commit']);
 const dirty = execFileSync('git', ['status', '--porcelain'], { encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 }).trim().length > 0;
 assert(!dirty || values['allow-dirty-candidate'] === true, 'Dirty source requires explicit local-candidate permission');
@@ -64,7 +63,7 @@ const output = resolve(values.output);
 await mkdir(resolve(output, '..'), { recursive: true });
 await writeFile(output, bytes, { flag: 'wx' });
 const receipt = {
-  product: 'onecrew_lite', version: candidate.productVersion, revision: values.revision, target: candidate.target,
+  product: 'onecrew_lite', version: candidate.productVersion, target: candidate.target,
   sourceCommit: values['source-commit'], sourceTreeSha256: identity.source_tree_sha256,
   sourceDirty: dirty,
   dependencyLockSha256: identity.dependency_lock_sha256,

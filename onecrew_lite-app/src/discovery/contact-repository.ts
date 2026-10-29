@@ -7,13 +7,13 @@ import { loadDiscoveryReviewBasis } from "./review-basis.ts";
 import { buildDiscoveryReviewMaterial } from "./review-material.ts";
 import { stripUnauditedDiscoveryProofs } from "./review-proof-audit.ts";
 import { discoveryProfileContactFields } from "./contact-profile.ts";
-import { discoveryObservesLink, discoveryPromotional } from "./contact-navigation.ts";
+import { discoveryObservesLink, discoveryPromotional, discoveryThirdPartyLink } from "./contact-navigation.ts";
 import type { PreparedDiscoveryReview } from "./review-submission.ts";
 import { discoveryPublicPageRead, type DiscoveryReviewMaterial } from "./review-material.ts";
 
 const contactObject = z.record(z.string(), z.unknown());
 type PublicPage = z.infer<typeof discoveryPublicPageRead>;
-const nativeSocialPlatforms = ["twitter", "instagram", "tiktok", "douyin", "linkedin", "facebook", "youtube"];
+const nativeSocialPlatforms = ["twitter", "instagram", "tiktok", "douyin", "linkedin", "facebook", "youtube", "xiaohongshu"];
 export function loadDiscoveryContactLookupLinks(database: DatabaseSync, candidate: string, revision: number): [string, string][] {
   if (!database.isTransaction) throw new Error("contact_projection_requires_snapshot");
   const links: [string, string][] = [];
@@ -49,7 +49,7 @@ export function observeDiscoveryReviewContacts(database: DatabaseSync, prepared:
   const evidence = parseApplicationJson(prepared.evidence_json);
   if (!discoveryScorePasses(prepared.receipt.verdict, evidence, prepared.receipt.native_author_id)) return;
   const material = buildDiscoveryReviewMaterial(prepared.basis), contacts: DiscoveryContact[] = [];
-  const add = (text: string, source: string, captured: number | bigint, attribution: DiscoveryContact["attribution"]) => contacts.push(...extractDiscoveryContacts(text, source, material.native_author_id, captured, attribution));
+  const add = (text: string, source: string, captured: number | bigint, attribution: DiscoveryContact["attribution"]) => contacts.push(...extractDiscoveryContacts(text, source, material.native_author_id, captured, attribution, material.hit.author_label ?? ""));
   const fields = discoveryProfileContactFields(database, material), profile = material.native_profile;
   if (profile) add(fields, profile.profile_url, profile.observed_at, "author_published");
   else if (material.native_platform === "youtube") {
@@ -86,8 +86,21 @@ export function loadDiscoveryContactObservations(database: DatabaseSync, campaig
       AND ((?5=1 AND kind='social_profile' AND attribution='author_published') OR (?5=0 AND (kind IN ('email','telegram') OR (kind IN ('hidden_email','social_profile','whatsapp','wechat','wechat_official','website','messenger','phone') AND attribution='author_published'))))
     ORDER BY normalized_value,source_url LIMIT 100`);
   statement.setReadBigInts(true);
-  return statement.all(campaign, revision, candidate, author, Number(socialOnly)).map(row => discoveryContact.parse({ ...row, captured_at: typeof row.captured_at === "bigint" && row.captured_at >= BigInt(Number.MIN_SAFE_INTEGER) && row.captured_at <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(row.captured_at) : row.captured_at, native_author_id: author, attribution: row.attribution === "author_published" ? "author_published" : "unconfirmed" })).filter(contact => (contact.attribution === "author_published" || !discoveryNonContact(contact.source_url))
+  const contacts = statement.all(campaign, revision, candidate, author, Number(socialOnly)).map(row => discoveryContact.parse({ ...row, captured_at: typeof row.captured_at === "bigint" && row.captured_at >= BigInt(Number.MIN_SAFE_INTEGER) && row.captured_at <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(row.captured_at) : row.captured_at, native_author_id: author, attribution: row.attribution === "author_published" ? "author_published" : "unconfirmed" })).filter(contact => (contact.attribution === "author_published" || !discoveryNonContact(contact.source_url))
     && (contact.kind !== "email" || extractDiscoveryContacts(contact.source_excerpt, contact.source_url, author, contact.captured_at, contact.attribution).some(current => current.kind === "email" && current.normalized_value === contact.normalized_value)));
+  if (!contacts.length) return contacts;
+  const row = database.prepare("SELECT display_name,profile_url,evidence_json FROM discovery_candidates WHERE id=? AND discovery_campaign_id=? AND criteria_revision=? AND platform_account_id=?").get(candidate, campaign, revision, author)!;
+  const owner = z.string().parse(row.display_name), evidence = contactObject.parse(parseApplicationJson(z.string().parse(row.evidence_json))), texts = new Map<string, string[]>();
+  const add = (source: string, value: unknown) => { if (typeof value === "string") texts.set(source, [...texts.get(source) ?? [], value]); };
+  if (Array.isArray(evidence.source_urls) && typeof evidence.source_urls[0] === "string") add(evidence.source_urls[0], evidence.video_description);
+  for (const profile of database.prepare("SELECT native_profile_json FROM discovery_profile_reads WHERE discovery_campaign_id=? AND expected_revision=? AND author_id=? AND status='completed' AND stop_code IS NULL").all(campaign, revision, author)) {
+    const native = contactObject.parse(parseApplicationJson(z.string().parse(profile.native_profile_json)));
+    for (const key of ["bio", "biography", "description", "sign"]) add(z.string().parse(row.profile_url), native[key]);
+  }
+  for (const page of database.prepare("SELECT requested_url,document_url,markdown_excerpt FROM discovery_public_page_reads WHERE candidate_id=? AND status='completed' AND stop_code IS NULL").all(candidate)) {
+    add(z.string().parse(page.requested_url), page.markdown_excerpt); if (typeof page.document_url === "string") add(page.document_url, page.markdown_excerpt);
+  }
+  return contacts.filter(contact => !(texts.get(contact.source_url) ?? [contact.source_excerpt]).some(text => discoveryThirdPartyLink(contact.original_value, text, owner) || discoveryPromotional(contact.original_value, text)));
 }
 
 export function loadDiscoveryRecommendationContacts(database: DatabaseSync, campaign: string, revision: number, candidate: string, author: string, hit: string): DiscoveryContact[] {
@@ -103,7 +116,7 @@ export function loadDiscoveryRecommendationContacts(database: DatabaseSync, camp
   const profile = material.native_profile;
   if (profile) for (const text of [profile.bio, profile.self_declared_location]) if (text != null) routes.push(...extractDiscoveryContacts(text, profile.profile_url, author, profile.observed_at, "author_published"));
   const platform = material.native_platform ?? material.hit.platform;
-  if (["twitter", "instagram", "tiktok", "douyin", "linkedin", "facebook", "youtube"].includes(platform)) {
+  if (nativeSocialPlatforms.includes(platform)) {
     const url = profile?.profile_url ?? material.hit.author_url ?? (platform === "youtube" ? `https://www.youtube.com/channel/${author}` : null);
     const captured = profile?.observed_at ?? material.hit.author_observed_at ?? (platform === "youtube" ? material.hit.captured_at : null);
     if (url !== null && captured !== null && discoverySocialProfile(url) && discoveryContactPlatform(url) === platform) routes.push({ kind: "social_profile", original_value: url, normalized_value: url, source_url: url, source_excerpt: "Verified native author account", captured_at: captured, native_author_id: author, attribution: "author_published" });

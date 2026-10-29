@@ -5,8 +5,9 @@ import { chmod, copyFile, lstat, mkdir, readFile, readdir, realpath, writeFile }
 import { basename, dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { createPayloadManifest, payloadDigest, payloadBaseSchema } from "./payload-manifest.ts";
-import { parseApplicationJson } from "../contracts/application-json.ts";
+import { parseApplicationJson, stringifyApplicationJson } from "../contracts/application-json.ts";
 import { readDevelopmentBuildIdentity } from "../service/build-identity.ts";
+import { buildCurrentMcpRegistry, parseCurrentMcpRegistry } from "../service/mcp-catalogue.ts";
 import JSZip from "jszip";
 import { load } from "cheerio";
 import { OPENCLI_ADDON_FILES } from "../platforms/opencli/addons.ts";
@@ -19,8 +20,9 @@ const appPackage = pathToFileURL(join(root, "onecrew_lite-app", "package.json"))
 const exists = async (path: string) => lstat(path).then(() => true, error => { if (error.code === "ENOENT") return false; throw error; });
 const json = async (path: string) => parseApplicationJson(await readFile(path)) as Record<string, unknown>;
 
-export async function buildCandidate(options: { output: string; productVersion: string; target: "win32-x64" | "darwin-arm64" | "darwin-x64"; nodePath: string; webAssets: string; libraryWebAssets: string }): Promise<void> {
+export async function buildCandidate(options: { output: string; productVersion: string; target: "win32-x64" | "darwin-arm64" | "darwin-x64"; nodePath: string; webAssets: string; libraryWebAssets: string; windowsRuntime?: string }): Promise<void> {
   if (process.version !== "v26.7.0") throw new Error("package.node_version_required");
+  if (options.target === "win32-x64" && !options.windowsRuntime) throw new Error("package.windows_runtime_required");
   const output = resolve(options.output);
   if (await exists(output)) throw new Error("package.output_already_exists");
   for (const [directory, prefix] of [[options.webAssets, "/assets/"], [options.libraryWebAssets, "/library/assets/"]] as const) {
@@ -127,7 +129,9 @@ export async function buildCandidate(options: { output: string; productVersion: 
   const telegramPackage = findPackageJSON("@mtcute/node", appPackage); if (!telegramPackage) throw new Error("package.telegram_runtime_missing");
   await stagePackage("@mtcute/wasm", pathToFileURL(await realpath(telegramPackage)).href, join(stage, "node_modules", "@mtcute", "wasm"), new Map());
   for (const directory of ["storage", "migration", "discovery"]) for (const name of await readdir(join(root, "onecrew_lite-app", "src", directory))) if (/\.(?:sql|ps1|json)$/u.test(name) || name === "assets") await copyTree(join(root, "onecrew_lite-app", "src", directory, name), join(stage, "resources", directory, name));
-  await copyTree(join(root, "onecrew_lite-app", "src", "service", "mcp-registry-data.json"), join(stage, "resources", "mcp-registry-data.json"));
+  const currentRegistry = Buffer.from(stringifyApplicationJson(await buildCurrentMcpRegistry()));
+  parseCurrentMcpRegistry(currentRegistry);
+  await writeFile(join(stage, "resources", "mcp-current-registry.json"), currentRegistry, { flag: "wx" });
   await copyTree(join(root, "onecrew_lite-app", "src", "service", "workflow-guides.json"), join(stage, "resources", "workflow-guides.json"));
   await copyTree(join(root, "onecrew_lite-app", "src", "service", "windows-host.ps1"), join(stage, "resources", "service", "windows-host.ps1"));
   await copyTree(join(root, "onecrew_lite-app", "src", "service", "windows-executable-path.ps1"), join(stage, "resources", "service", "windows-executable-path.ps1"));
@@ -155,6 +159,15 @@ export async function buildCandidate(options: { output: string; productVersion: 
   await copyTree(join(root, "pnpm-lock.yaml"), join(stage, "build", "pnpm-lock.yaml"));
   const nodeLicense = options.target.startsWith("darwin-") ? join(dirname(options.nodePath), "..", "LICENSE") : join(dirname(options.nodePath), "LICENSE");
   await copyTree(nodeLicense, join(stage, "licenses", "node.txt")); components.push({ name: "node", version: process.version.slice(1), license: "MIT", licenseFiles: ["licenses/node.txt"] });
+  if (options.target === "win32-x64") {
+    const sourcePath = join(root, "development", "windows-runtime.json"), source = await json(sourcePath);
+    const dll = join(options.windowsRuntime!, "vcruntime140.dll");
+    if (payloadDigest(await readFile(dll)) !== source.dllSha256) throw new Error("package.windows_runtime_hash_mismatch");
+    await copyTree(dll, join(stage, "runtime", "vcruntime140.dll"));
+    await copyTree(sourcePath, join(stage, "runtime", "source.json"));
+    await copyTree(join(root, "development", "windows-runtime-notice.txt"), join(stage, "licenses", "Visual-C++-Runtime.txt"));
+    components.push({ name: "Microsoft Visual C++ Runtime", version: String(source.version), license: "Microsoft-Visual-C++-Runtime", licenseFiles: ["licenses/Visual-C++-Runtime.txt"], licenseEvidence: "declared_only" });
+  }
   const files: { path: string; size: number; sha256: string; executable: boolean }[] = [];
   async function inventory(directory: string): Promise<void> {
     for (const entry of await readdir(directory, { withFileTypes: true })) {
@@ -206,8 +219,8 @@ export async function buildCandidate(options: { output: string; productVersion: 
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const { values } = parseArgs({ options: { output: { type: "string" }, "product-version": { type: "string" }, target: { type: "string" }, node: { type: "string" }, "web-assets": { type: "string" }, "library-web-assets": { type: "string" } }, strict: true });
+  const { values } = parseArgs({ options: { output: { type: "string" }, "product-version": { type: "string" }, target: { type: "string" }, node: { type: "string" }, "web-assets": { type: "string" }, "library-web-assets": { type: "string" }, "windows-runtime": { type: "string" } }, strict: true });
   if (!values.output || !values["product-version"] || !values.target || !values.node || !values["web-assets"] || !values["library-web-assets"]) throw new Error("package.explicit_build_inputs_required");
   const target = payloadBaseSchema.shape.target.parse(values.target);
-  await buildCandidate({ output: values.output, productVersion: values["product-version"], target, nodePath: values.node, webAssets: values["web-assets"], libraryWebAssets: values["library-web-assets"] });
+  await buildCandidate({ output: values.output, productVersion: values["product-version"], target, nodePath: values.node, webAssets: values["web-assets"], libraryWebAssets: values["library-web-assets"], ...(values["windows-runtime"] ? { windowsRuntime: values["windows-runtime"] } : {}) });
 }

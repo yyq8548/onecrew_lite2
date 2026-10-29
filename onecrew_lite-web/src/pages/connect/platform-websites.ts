@@ -5,6 +5,7 @@ const websites: Record<string, string> = {
   linkedin: "https://www.linkedin.com/", facebook: "https://www.facebook.com/",
   bilibili: "https://www.bilibili.com/", weixin: "https://weixin.sogou.com/",
   douyin: "https://www.douyin.com/",
+  xiaohongshu: "https://www.xiaohongshu.com/",
   weibo: "https://weibo.com/", medium: "https://medium.com/",
   substack: "https://substack.com/", "apple-podcasts": "https://podcasts.apple.com/",
   tieba: "https://tieba.baidu.com/", bluesky: "https://bsky.app/",

@@ -24,7 +24,7 @@ test("同一真实连接复用验证，结构和版本变化后重新拒绝非�
   database.exec("DROP INDEX creators_by_group");
   assert.throws(() => assertValidatedCreatorConnection(database), /frozen structure differs/);
   database.exec(String(index.sql)); assertValidatedCreatorConnection(database);
-  database.exec("PRAGMA user_version=97");
+  database.exec("PRAGMA user_version=98");
   assert.throws(() => assertValidatedCreatorConnection(database), /unsupported/);
   database.exec("PRAGMA user_version=90"); assertValidatedCreatorConnection(database);
   assert.throws(() => validateCreatorSchemaVersion(database, 91), /requires version/);
@@ -45,9 +45,9 @@ test("new Creator SQLite matches the frozen schema contract across every schema 
       created.exec("PRAGMA foreign_keys=ON");
       assert.doesNotThrow(()=>new GmailBulkRepository(created));
       assert.doesNotThrow(()=>new GmailMailboxRepository(created));
-      assert.equal(created.prepare("PRAGMA user_version").get()!.user_version, 96);
+      assert.equal(created.prepare("PRAGMA user_version").get()!.user_version, 97);
       const additions = new Set(["discovery_linkedin_experience_reads", "discovery_source_targets", "discovery_web_author_pages", "discovery_web_author_edges", "discovery_search_materials", "discovery_identity_observations"]);
-      const changed = new Set(["discovery_contact_observations", "discovery_web_source_reads", ...additions]);
+      const changed = new Set(["discovery_contact_observations", "discovery_web_source_reads", "discovery_profile_reads", "discovery_content_reads", ...additions]);
       const previous = creatorSchemaSnapshot(original);
       assert.deepEqual(creatorSchemaSnapshot(created).tables.filter(table=>!additions.has(table.name)), previous.tables);
       assert.deepEqual(creatorSchemaSnapshot(created).objects.filter(item => !changed.has(String(item.name))), previous.objects.filter(item => !changed.has(String(item.name))));

@@ -21,7 +21,7 @@ test("real unified SEA cold and warm launches serve both UIs, native SQLite/PGli
   await mkdir(scratch, { recursive: true });
   const root = await createPrivateDirectory(join(scratch, `sea-acceptance-${randomUUID()}`)), directory = join(root, "data");
   const binary = resolve(executable!), manifest = parsePayloadManifest(await readFile(join(dirname(binary), "runtime-manifest.json")));
-  for (const resource of ["node_modules/@mtcute/wasm/mtcute.wasm", "node_modules/@mtcute/wasm/mtcute-simd.wasm", "resources/workflow-guides.json", "resources/browser/browser-profile-acl.ps1"]) assert.ok(manifest.files.some(file => file.path === resource), resource);
+  for (const resource of ["node_modules/@mtcute/wasm/mtcute.wasm", "node_modules/@mtcute/wasm/mtcute-simd.wasm", "resources/workflow-guides.json", "resources/mcp-current-registry.json", "resources/browser/browser-profile-acl.ps1"]) assert.ok(manifest.files.some(file => file.path === resource), resource);
   const archive = parseApplicationJson(await readFile(join(dirname(binary), "archive.json"))) as { path: string; bytes: number; sha256: string };
   const archiveBytes = await readFile(join(dirname(binary), archive.path)); assert.equal(archiveBytes.length, archive.bytes); assert.equal(payloadDigest(archiveBytes), archive.sha256);
   const cacheParent = process.platform === "darwin" ? join(root, "Library", "Caches") : root;

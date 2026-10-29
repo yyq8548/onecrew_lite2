@@ -5,7 +5,6 @@ import { readBilibiliProfile } from './onecrew-bilibili-profile/profile.mjs';
 import { readBilibiliVideo } from './onecrew-bilibili-video/video.mjs';
 import { searchTikTok } from './onecrew-tiktok/search.mjs';
 import { readTikTokProfile } from './onecrew-tiktok-profile/profile.mjs';
-import { readVideoEvidence } from './onecrew-youtube/evidence.mjs';
 import { readTwitterIdentity } from './onecrew-twitter-identity/profile.mjs';
 import { readTwitterPostAuthor } from './onecrew-twitter-post-identity/post.mjs';
 
@@ -15,7 +14,6 @@ for (const [name, read] of [
   ['Bilibili video', page => readBilibiliVideo(page, 'BV1xx411c7mD', '8420618')],
   ['TikTok search', page => searchTikTok(page, 'AI', 5)],
   ['TikTok profile', page => readTikTokProfile(page, 'creator', '123456789')],
-  ['YouTube evidence', page => readVideoEvidence(page, 'abcdefghijk')],
   ['X identity', page => readTwitterIdentity(page, 'creator', () => assert.fail('must not discover an operation'))],
   ['X post identity', page => readTwitterPostAuthor(page, 'creator', '123456789', () => assert.fail('must not discover an operation'))],
 ]) {

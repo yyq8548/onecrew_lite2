@@ -43,7 +43,7 @@ export const discoveryReadFailure = z.object({
 export type DiscoveryReadFailure = z.infer<typeof discoveryReadFailure>;
 export const discoveryReadFailures = z.array(discoveryReadFailure).max(20);
 const activity = z.object({
-  pipeline: z.object({ active_pending: u32, queued_scores: u32, running_scores: u32, discovery_held: z.boolean(), contact_pending: z.boolean() }).strict().optional(),
+  pipeline: z.object({ active_pending: u32, queued_scores: u32, running_scores: u32, discovery_held: z.boolean(), contact_pending: z.boolean(), recommendations_complete: z.boolean().optional() }).strict().optional(),
   campaign_id: text, brief: text, stage: z.enum(["ready", "searching", "verifying", "pausing", "paused", "finished", "needs_evidence", "error"]), stale: z.boolean(),
   attempted: creatorU64, login_required: creatorU64, read_errors: creatorU64, restricted: creatorU64, total: creatorU64,
   pending: u32, qualified: u32, target: u32, used: u32,

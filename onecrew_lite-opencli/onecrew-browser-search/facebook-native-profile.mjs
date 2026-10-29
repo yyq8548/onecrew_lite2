@@ -107,7 +107,7 @@ export function projectFacebookNativeContact(data,id,base,source) {
     const url=new URL(link);
     if(!['http:','https:'].includes(url.protocol)||url.username||url.password||link.length>2048||/[\u0000-\u001f\u007f]/.test(link)) invalid('CONTACT_LINK_URL');
   }
-  return {adapter_version:'2.0.0',id,source_url:source,observed_profile_url:facebookVanitySource(base),title:data.title,contact_text:data.contact_text,contact_links:data.contact_links,truncated:true};
+  return {adapter_version:'2.0.0',id,source_url:source,observed_profile_url:facebookVanitySource(base),title:data.title,contact_text:data.contact_text,contact_links:data.contact_links,truncated:data.truncated!==false};
 }
 
 export async function observeFacebookNativeContact(source,id,base,collect,readHeader,readStop) {
@@ -151,8 +151,8 @@ export async function observeFacebookNativeContact(source,id,base,collect,readHe
     for(const anchor of main.querySelectorAll('a[href]')) {
       if(eligible(anchor)&&/^(?:mailto|tel):/i.test(anchor.href)) scopes.add(anchor);
     }
-    const parts=[],links=[];let size=0;
-    const addText=value=>{const text=value.trim();if(text&&!parts.includes(text)&&size+text.length+1<=12000){parts.push(text);size+=text.length+1;}};
+    const parts=[],links=[];let size=0,truncated=false;
+    const addText=value=>{const text=value.trim();if(!text||parts.includes(text))return;if(size+text.length+1>12000){truncated=true;return;}parts.push(text);size+=text.length+1;};
     for(const scope of scopes) {
       const walk=document.createTreeWalker(scope,NodeFilter.SHOW_TEXT);
       while(walk.nextNode()) if(walk.currentNode.parentElement&&eligible(walk.currentNode.parentElement)) addText(walk.currentNode.textContent);
@@ -170,11 +170,13 @@ export async function observeFacebookNativeContact(source,id,base,collect,readHe
           if(value&&value.length<=320&&!/[\u0000-\u001f\u007f\ufffd]/.test(value)) addText(value);
         } else {
           const messenger=url.href===`https://www.facebook.com/messages/t/${owner.id}/`;
-          if((messenger||['http:','https:'].includes(url.protocol)&&url.hostname!=='facebook.com'&&!url.hostname.endsWith('.facebook.com'))&&!url.username&&!url.password&&url.href.length<=2048&&!links.includes(url.href)&&links.length<10) links.push(url.href);
+          if((messenger||['http:','https:'].includes(url.protocol)&&url.hostname!=='facebook.com'&&!url.hostname.endsWith('.facebook.com'))&&!url.username&&!url.password&&url.href.length<=2048&&!links.includes(url.href)) {
+            if(links.length<10)links.push(url.href);else truncated=true;
+          }
         }
       }
     }
-    return {id:owner.id,source_url:source,observed_profile_url:base,title:owner.display_name,contact_text:parts.join('\n'),contact_links:links};
+    return {id:owner.id,source_url:source,observed_profile_url:base,title:owner.display_name,contact_text:parts.join('\n'),contact_links:links,truncated};
   }
 }
 

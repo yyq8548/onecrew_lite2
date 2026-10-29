@@ -23,12 +23,13 @@ export const browserBindingManifestSchema = z.discriminatedUnion("format", [
 export interface VerifiedBrowserAccountDirectory { readonly directory: string; readonly owner: z.infer<typeof ownerSchema>; assertOwned(): void }
 export interface BrowserAccountDirectoryResolver { accountDirectory(context: AccountContext): Promise<VerifiedBrowserAccountDirectory> }
 export interface VerifiedOwnedBrowserProfile extends VerifiedOpenCliBrowserBinding { readonly directory: string }
+export interface VerifiedOwnedChromeDirectory { readonly path: string; readonly identity: string }
 // 仅专用扩展注册流程可签发此证明。请求字段、alias 和连通状态都不能替代目录归属证明。
 export interface TrustedExtensionContextProofVerifier {
-  verify(input: Readonly<{ contextId: string; deviceId: string; profileDirectory: string; proof: string; accountId: string; tenantId: string; baseId: string }>): Promise<void>;
+  verify(input: Readonly<{ contextId: string; deviceId: string; profileDirectory: string; proof: string; accountId: string; tenantId: string; baseId: string }>): Promise<VerifiedOwnedChromeDirectory>;
 }
 function sameOwner(a: z.infer<typeof ownerSchema>, b: z.infer<typeof ownerSchema>) { return a.accountId === b.accountId && a.tenantId === b.tenantId && a.baseId === b.baseId; }
-export async function verifyOwnedChromeDirectory(root: string, directory: string): Promise<Readonly<{ path: string; identity: string }>> {
+export async function verifyOwnedChromeDirectory(root: string, directory: string): Promise<VerifiedOwnedChromeDirectory> {
   const absoluteRoot = resolve(root); const absolute = resolve(directory); const difference = relative(absoluteRoot, absolute);
   if (!isAbsolute(directory) || !difference || isAbsolute(difference) || difference === ".." || difference.startsWith(`..${sep}`)) throw new Error("Chrome profile directory is outside the app-owned profile root");
   await verifyPrivateDirectory(absoluteRoot); await verifyPrivateDirectory(absolute);
@@ -152,8 +153,7 @@ export class AccountBrowserBindingResolver {
         const profile = await this.vault.profile(legacy.profileId);
         if (profile.platform === "telegram" || profile.provider_account_id !== legacy.providerAccountId || profile.revision !== legacy.vaultRevision || resolve(profile.browserProfileDirectory) !== resolve(legacy.profileDirectory)) throw new OpenCliError("opencli_profile_unavailable");
       }
-      const directory = await verifyAccountOwnedChromeDirectory(account.directory, binding.profileDirectory);
-      await proofVerifier.verify({ ...owner, contextId: binding.contextId, deviceId: binding.deviceId, profileDirectory: directory.path, proof: binding.extensionProof });
+      const directory = await proofVerifier.verify({ ...owner, contextId: binding.contextId, deviceId: binding.deviceId, profileDirectory: binding.profileDirectory, proof: binding.extensionProof });
       account.assertOwned(); this.accounts.assertCurrent(context); await this.identities.assertCurrent(identity);
       return { contextId: binding.contextId, directory: directory.path, fingerprint: createHash("sha256").update(bytes).update(directory.identity).digest("hex") };
     };

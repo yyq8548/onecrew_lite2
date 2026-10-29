@@ -72,7 +72,7 @@ for (const legacyVersion of Array.from({ length: 11 }, (_, index) => 27 + index)
       }
     }
     finally { staged.close(); }
-    assert.deepEqual(await upgradeCreatorStagingCopy({ sourcePath, stagingPath }), { fromVersion: legacyVersion, toVersion: 96 });
+    assert.deepEqual(await upgradeCreatorStagingCopy({ sourcePath, stagingPath }), { fromVersion: legacyVersion, toVersion: 97 });
     const current = new DatabaseSync(stagingPath, { readOnly: true });
     try {
       validateCreatorSchema(current);
@@ -209,7 +209,7 @@ for (const version of Array.from({ length: 52 }, (_, index) => 38 + index)) {
       validateCreatorSchemaVersion(staged, version);
       staged.close();
       stagedClosed = true;
-      assert.deepEqual(await upgradeCreatorStagingCopy({ sourcePath, stagingPath }), { fromVersion: version, toVersion: 96 });
+      assert.deepEqual(await upgradeCreatorStagingCopy({ sourcePath, stagingPath }), { fromVersion: version, toVersion: 97 });
       const current = new DatabaseSync(stagingPath, { readOnly: true });
       try {
         validateCreatorSchema(current);

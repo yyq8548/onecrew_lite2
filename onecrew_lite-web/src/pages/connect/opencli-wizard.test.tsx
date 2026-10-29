@@ -24,10 +24,10 @@ describe("OpenCLI platform connection inventory", () => {
       expect(new URL(platformWebsite(platform)!).protocol).toBe("https:");
     }
     expect(platformWebsite("unknown-platform")).toBeUndefined();
-    expect(platformWebsite("xiaohongshu")).toBeUndefined();
+    expect(platformWebsite("xiaohongshu")).toBe("https://www.xiaohongshu.com/");
     expect(platformWebsite("rednote")).toBeUndefined();
     const platforms = SEARCH_PLATFORM_GROUPS.flatMap(group => group.platforms);
-    expect(platforms).not.toContain("xiaohongshu");
+    expect(platforms).toContain("xiaohongshu");
     expect(platforms).not.toContain("rednote");
   });
   for (const [locale, catalog] of [["zh-CN", zh], ["en-US", en]] as const) {
@@ -60,7 +60,7 @@ describe("OpenCLI platform connection inventory", () => {
       await i18n.init({ lng: locale, ns: ["shell"], defaultNS: "shell", resources: { [locale]: { shell: catalog } }, interpolation: { escapeValue: false } });
       let calls = 0;
       const render = (state: "missing" | "ready" | "conflict" | "unavailable", pending = false, failed = false) => renderToStaticMarkup(
-        <I18nextProvider i18n={i18n}><OpenCliAddonSetup report={{ version: "1.8.8", addons: [{ id: "onecrew-site-auth", state: "ready" }, { id: "onecrew-youtube", state: "ready" }, { id: "onecrew-tiktok", state: "ready" }, { id: "onecrew-bilibili", state: "ready" }, { id: "onecrew-tiktok-profile", state: "ready" }, { id: "onecrew-bilibili-profile", state: "ready" }, { id: "onecrew-bilibili-video", state: "ready" }, { id: "onecrew-twitter-identity", state: "ready" }, { id: "onecrew-twitter-post-identity", state: "ready" }, { id: "onecrew-twitter-post-content", state: "ready" }, { id: "onecrew-browser-search", state }] }} pending={pending} failed={failed} onInstall={() => { calls += 1; }} /></I18nextProvider>,
+        <I18nextProvider i18n={i18n}><OpenCliAddonSetup report={{ version: "1.8.8", addons: [{ id: "onecrew-site-auth", state: "ready" }, { id: "onecrew-xiaohongshu", state: "ready" }, { id: "onecrew-youtube", state: "ready" }, { id: "onecrew-tiktok", state: "ready" }, { id: "onecrew-bilibili", state: "ready" }, { id: "onecrew-tiktok-profile", state: "ready" }, { id: "onecrew-bilibili-profile", state: "ready" }, { id: "onecrew-bilibili-video", state: "ready" }, { id: "onecrew-twitter-identity", state: "ready" }, { id: "onecrew-twitter-post-identity", state: "ready" }, { id: "onecrew-twitter-post-content", state: "ready" }, { id: "onecrew-browser-search", state }] }} pending={pending} failed={failed} onInstall={() => { calls += 1; }} /></I18nextProvider>,
       );
       expect(render("missing")).toContain(catalog.opencli.installAddons);
       expect(render("missing")).toContain(catalog.opencli.addonsDetails);

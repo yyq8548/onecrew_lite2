@@ -35,3 +35,28 @@ test("identity refresh completes before session epoch validation and operation e
   assert.equal(invoked, false);
   assert.equal(await registry.execute("local.identity.read", {}, "account", after.epoch), "account");
 });
+
+test("one authorized request reuses its identity while later and detached operations refresh", async () => {
+  const accounts = new AccountContextService();
+  const context = accounts.activate({ user: { id: "account", email: "user@example.com" }, tenantId: "tenant", baseId: "base", deviceId: "device", source: "access" });
+  let refreshes = 0;
+  const registry = new OperationRegistry(accounts, async () => { refreshes++; });
+  registry.register("local.identity.read", z.strictObject({}), async (_, current) => current.principal.user.id);
+  let release!: () => void;
+  const pending = new Promise<void>(resolve => { release = resolve; });
+  let detached!: Promise<unknown>;
+  await registry.withAuthorizedAccount(context, async () => {
+    assert.deepEqual(await Promise.all([registry.execute("local.identity.read", {}, "account", context.epoch), registry.execute("local.identity.read", {}, "account", context.epoch)]), ["account", "account"]);
+    detached = pending.then(() => registry.execute("local.identity.read", {}, "account", context.epoch));
+    assert.equal(refreshes, 0);
+  });
+  release();
+  await detached;
+  assert.equal(refreshes, 1);
+  await registry.execute("local.identity.read", {}, "account", context.epoch);
+  assert.equal(refreshes, 2);
+  await registry.withAuthorizedAccount(context, async () => {
+    accounts.activate(context.principal);
+    await assert.rejects(registry.execute("local.identity.read", {}, "account", context.epoch), { code: "access.account_changed" });
+  });
+});

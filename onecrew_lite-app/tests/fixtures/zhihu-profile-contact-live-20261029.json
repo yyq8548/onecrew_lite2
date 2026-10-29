@@ -1,0 +1,17 @@
+{
+  "captured_at": "2026-10-29T07:10:06.514Z",
+  "profile": {
+    "author_id": "279045eb0cbf71d362d880a9d1d62566",
+    "url_token": "DavidAlphaFox",
+    "author_label": "TTalkIM",
+    "author_url": "https://www.zhihu.com/people/DavidAlphaFox",
+    "follower_count": 2697,
+    "bio": "https://ttalk.im\nMake Lisp Great Again",
+    "bio_status": "complete"
+  },
+  "contact": {
+    "source_url": "https://zhuanlan.zhihu.com/p/2049833353482860184",
+    "original_value": "https://www.kimi-cli.com/zh/guides/interaction.html设置",
+    "source_excerpt": "Kimi Code CLI，可以启用「YOLO 模式」来自动批准所有工具调用： 你也可以在配置文件中设置 default_yolo = true，每次启动时默认开启 YOLO 模式。 详见 配置文件。 开启 YOLO 模式后，底部状态栏会显示黄色的 YOLO 标识。 再次输入 /yolo 可关闭。https://www.kimi-cli.com/zh/guides/interaction.html设置 里面也可以直接开放“Yolo Mode”扩展阅读Claude Code 最佳实践一个编程小白想建一个嵌入了AI能够交互的网站要从哪一步开始？从vibe coding到真正可用，“文科生”该升级哪些能力？"
+  }
+}

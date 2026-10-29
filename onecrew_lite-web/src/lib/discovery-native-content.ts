@@ -15,15 +15,28 @@ const zhihuAuthor = { author_id: z.string().regex(/^[a-f0-9]{32}$/), url_token: 
   author_label: label, author_url: z.string().url(), source_url: z.string().url(), text: text(16000).refine(value => value.trim().length > 0), public_links: links };
 const zhihuArticle = z.object({ ...zhihuAuthor, article_id: numeric, title: text(2000) }).strict();
 const zhihuAnswer = z.object({ ...zhihuAuthor, answer_id: numeric, question_id: numeric }).strict();
+const xiaohongshuBody = z.object({ note_id: z.string().regex(/^[a-f0-9]{24}$/), author_id: z.string().regex(/^[a-f0-9]{24}$/), author_label: label,
+  author_url: z.string().url(), source_url: z.string().url(), title: text(2000), text: text(16000).refine(value => !!value.trim()),
+  tags: z.array(text(200)).max(30), text_truncated: z.boolean(), text_completeness_known: z.literal(true) }).strict();
 const caption = z.object({ post_id: z.string(), author_id: z.string(), source_url: z.string().url(),
   text: text(16000), text_truncated: z.boolean() }).strict();
 
 /** Exact owner receipt shapes. Search titles and arbitrary JSON cannot pass as native text. */
-export const additionalNativeContentSchema = z.union([linkedinBody, weiboBody, zhihuArticle, zhihuAnswer]);
-export const additionalNativePlatforms = ["linkedin", "pixiv", "weibo", "zhihu", "instagram", "facebook"] as const;
+export const additionalNativeContentSchema = z.union([linkedinBody, weiboBody, zhihuArticle, zhihuAnswer, xiaohongshuBody]);
+export const additionalNativePlatforms = ["linkedin", "pixiv", "weibo", "zhihu", "instagram", "facebook", "xiaohongshu"] as const;
 type Claim = { platform: string; author_id: string; source_url: string };
 
 export function additionalNativeContentBound(claim: Claim, value: unknown): boolean {
+  if (claim.platform === "xiaohongshu") {
+    const parsed = xiaohongshuBody.safeParse(value);
+    if (!parsed.success) return false;
+    const body = parsed.data, url = new URL(body.source_url);
+    return body.author_id === claim.author_id && body.author_url === `https://www.xiaohongshu.com/user/profile/${claim.author_id}`
+      && body.source_url === claim.source_url && url.origin === 'https://www.xiaohongshu.com' && url.pathname === `/explore/${body.note_id}`
+      && !url.username && !url.password && !url.hash && url.searchParams.getAll('xsec_token').length === 1
+      && /^[A-Za-z0-9_+/=-]{1,512}$/.test(url.searchParams.get('xsec_token') || '') && url.searchParams.get('xsec_source') === 'pc_search'
+      && [...url.searchParams.keys()].every(key => ['xsec_token', 'xsec_source'].includes(key));
+  }
   if (claim.platform === "linkedin") {
     const result = linkedinBody.safeParse(value);
     return result.success && result.data.author_handle === claim.author_id
@@ -66,6 +79,7 @@ export function additionalNativeReviewBound(platform: string, claim: Claim, valu
     return body.account_id === author && body.profile_url === profile && claim.source_url === hitSource;
   }
   if (claim.author_id !== author || (platform !== "facebook" && claim.source_url !== hitSource)) return false;
+  if (platform === "xiaohongshu") return xiaohongshuBody.parse(value).author_url === profile;
   if (platform === "zhihu") return z.union([zhihuArticle, zhihuAnswer]).parse(value).author_url === profile;
   if (platform === "weibo") return profile === `https://weibo.com/u/${author}`;
   if (platform === "pixiv") return profile === `https://www.pixiv.net/users/${author}`;

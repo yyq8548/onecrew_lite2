@@ -9,6 +9,19 @@ const campaign = { brief: "水杯", phase: "active", target_count: 100, max_call
   scopes: [{ platform: "youtube" }], platform_runs: [] } as unknown as DiscoveryCampaign;
 
 describe("New plan entry", () => {
+  it("shows the saved plan without continue when its start action is unavailable", async () => {
+    const i18n = createInstance();
+    await i18n.init({ lng: "en-US", resources: { "en-US": { shell: { opencliPilot: {
+      automaticStart: "Continue",
+    } } } } });
+    const html = renderToStaticMarkup(<I18nextProvider i18n={i18n}><DiscoveryOverview
+      campaign={campaign} counts={undefined} stage="finished" running={false} busy={false}
+      profileChanged={false} syncing={false} library={null} syncFailed={false} canExpand={false}
+      onSync={() => {}} onPause={() => {}} onAnother={() => {}} onExpanded={() => {}} onIssues={() => {}}
+    /></I18nextProvider>);
+    expect(html).not.toContain("Continue</button>");
+    expect(html).toContain("水杯");
+  });
   it("explains exhausted scope without offering continue or pause", async () => {
     const i18n = createInstance();
     await i18n.init({ lng: "en-US", resources: { "en-US": { shell: { opencliPilot: {

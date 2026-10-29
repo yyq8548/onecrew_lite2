@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { discoveryLanguageSample } from "./review-material.ts";
 import { blueskyPostTarget, validBlueskyDid } from "../platforms/opencli/bluesky.ts";
+import { xiaohongshuNoteId } from "../platforms/opencli/xiaohongshu.ts";
 
 const text = z.string().refine(value => value.isWellFormed());
 const u32 = z.number().int().min(0).max(4_294_967_295);
@@ -41,6 +42,7 @@ export function validDiscoveryLanguageSample(raw: unknown, claim: DiscoveryLangu
   if (platform === "google" || platform === "yahoo") platform = /^https:\/\/www\.douyin\.com\/video\/[1-9][0-9]{0,19}$/u.test(claim.root_url) ? "douyin" : twitterSource(claim.root_url) ? "twitter" : "youtube";
   const prefix = `${sample.source_url}#comment-`;
   const anchors = (maximum: number, nonempty: boolean) => unique(comments.map(comment => comment.source_url)) && comments.every(comment => comment.source_url.startsWith(prefix) && numeric(comment.source_url.slice(prefix.length), maximum) && bounded(comment.text, 2000, nonempty));
+  if (platform === "xiaohongshu") return /^[a-f0-9]{24}$/u.test(sample.author_id) && xiaohongshuNoteId(sample.source_url) !== null && bounded(sample.text, 16000, true) && comments.length === 0;
   if (platform === "douyin") return /^MS4wLjABAAAA[A-Za-z0-9_-]{8,88}$/u.test(sample.author_id) && claim.author_handle === claim.author_id && /^https:\/\/www\.douyin\.com\/video\/[1-9][0-9]{0,19}$/u.test(sample.source_url) && bounded(sample.text, 12000, true) && anchors(20, false);
   if (platform === "linkedin") return /^ACo[A-Za-z0-9_-]{16,125}$/u.test(sample.author_id) && /^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$/u.test(claim.author_handle) && !["me", "self"].includes(claim.author_handle.toLowerCase()) && /^https:\/\/www\.linkedin\.com\/feed\/update\/urn:li:activity:[1-9][0-9]{0,19}\/$/u.test(sample.source_url) && bounded(sample.text, 16000, true) && anchors(20, false);
   if (platform === "hackernews") {

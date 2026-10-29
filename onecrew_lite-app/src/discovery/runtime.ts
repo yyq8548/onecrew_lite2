@@ -26,7 +26,8 @@ import { discoveryExecutionInput } from "./execution-supervisor.ts";
 import { DiscoveryWorkspace, workspacePresence } from "./workspace.ts";
 import { HostSemanticClient, HostOperationRuns, hostWorkOwner, hostWorkClaimInput, hostWorkSubmitInput, hostWorkGetInput } from "./host-work.ts";
 
-export interface DiscoveryLibraryProjection { readiness(context: AccountContext): Promise<void>; publish(context: AccountContext, campaign: string, revision: number): Promise<DiscoveryExecutionLibrary> }
+export interface DiscoveryLibraryPublishOptions { readonly reuse_unchanged: true }
+export interface DiscoveryLibraryProjection { readiness(context: AccountContext): Promise<void>; publish(context: AccountContext, campaign: string, revision: number, options?: DiscoveryLibraryPublishOptions): Promise<DiscoveryExecutionLibrary> }
 export interface DiscoveryRuntimeConfiguration { accounts: AccountContextService; repositories: DiscoveryRepositoryResolver; directories: AccountDatabases; dependencies?: DiscoveryDependencyResolver; supervisor: DiscoveryExecutionSupervisor; library: DiscoveryLibraryProjection; onStarted?(context: AccountContext, campaign: string): void }
 
 // 统一主程序创建并注入唯一supervisor；本模块不创建第二个准入锁或账号选择器。
@@ -49,21 +50,21 @@ export function createDiscoveryRuntime(configuration: DiscoveryRuntimeConfigurat
     return selected;
   }
   function assertAccepting(context: AccountContext): void { accounts.assertCurrent(context); if (closing) throw new Error("discovery_execution_stopping"); }
-  async function publish(context: AccountContext, campaign: string, draining = false, expectedRevision?: number): Promise<DiscoveryExecutionLibrary> {
+  async function publish(context: AccountContext, campaign: string, draining = false, expectedRevision?: number, options?: DiscoveryLibraryPublishOptions): Promise<DiscoveryExecutionLibrary> {
     const assertAdmission = () => { if (draining) accounts.assertCurrent(context); else assertAccepting(context); };
     assertAdmission(); const owned = await repositories.resolve(context); owned.assertOwned(); assertAdmission();
     if (owned.owner.accountId !== context.principal.user.id || owned.owner.tenantId !== context.principal.tenantId || owned.owner.baseId !== context.principal.baseId) throw new Error("discovery_repository_owner_mismatch");
     const plan = owned.repository.getPlan(campaign); if (expectedRevision !== undefined && plan.revision !== expectedRevision) throw new Error("discovery_revision_changed");
     await library.readiness(context); assertAdmission(); owned.assertOwned();
     for (let attempt = 0; ; attempt++) {
-      const outcome = await library.publish(context, campaign, plan.revision).then(value => ({ ok: true as const, value }), error => ({ ok: false as const, error: error as unknown }));
+      const outcome = await library.publish(context, campaign, plan.revision, options).then(value => ({ ok: true as const, value }), error => ({ ok: false as const, error: error as unknown }));
       if (outcome.ok) return outcome.value;
       if (!(outcome.error instanceof Error) || !("code" in outcome.error) || outcome.error.code !== "library_source_stale" || attempt === 2) throw outcome.error;
       await yieldTurn(); assertAdmission(); owned.assertOwned();
       if (owned.repository.getPlan(campaign).revision !== plan.revision) throw new Error("discovery_revision_changed");
     }
   }
-  const scheduler = new DiscoveryScheduler({ accounts, repositories, directories: configuration.directories, supervisor, advances, matcher, metrics: context => workspace.metrics(context), library: { readiness: context => library.readiness(context), publish: (context, campaign, revision) => publish(context, campaign, true, revision) }, ...(configuration.dependencies ? { dependencies: configuration.dependencies } : {}), ...(configuration.onStarted ? { onStarted: configuration.onStarted } : {}) });
+  const scheduler = new DiscoveryScheduler({ accounts, repositories, directories: configuration.directories, supervisor, advances, matcher, metrics: context => workspace.metrics(context), library: { readiness: context => library.readiness(context), publish: (context, campaign, revision, options) => publish(context, campaign, true, revision, options) }, ...(configuration.dependencies ? { dependencies: configuration.dependencies } : {}), ...(configuration.onStarted ? { onStarted: configuration.onStarted } : {}) });
   function stopAcceptingWork(): void { closing = true; configuration.dependencies?.stopSemantic?.(); drafts.stopAcceptingWork(); supervisor.stopAcceptingWork(); }
   return Object.freeze({
     blocksBackendSync: () => supervisor.blocksBackendSync(),
@@ -107,7 +108,8 @@ export function createDiscoveryRuntime(configuration: DiscoveryRuntimeConfigurat
       registry.register("onecrew_discovery_queries_expand", z.strictObject({ input: discoveryAdvanceInput }), async ({ input }, context) => {
         assertAccepting(context);
         return runs.start(hostWorkOwner(context), { kind: "queries", input }, () => supervisor.ownTask(context, async () => {
-          const expanded = await new DiscoveryQueryRoundExecutor(accounts, repositories, configuration.dependencies).expand(context, input.campaign_id, input.expected_revision, input.excluded_platforms);
+          const metrics = await workspace.metrics(context);
+          const expanded = await new DiscoveryQueryRoundExecutor(accounts, repositories, configuration.dependencies).expand(context, input.campaign_id, input.expected_revision, input.excluded_platforms, undefined, failure => metrics.enqueueFailure(input.campaign_id, { recorded_at: Date.now(), step: "query_audit", platform: failure.platform, target_id: null, call_number: null, code: failure.stop_code, diagnostic: failure.diagnostic }));
           const owned = await repositories.resolve(context); owned.assertOwned(); assertAccepting(context);
           return { expanded, campaign: owned.repository.getPlan(input.campaign_id) };
         }), input.campaign_id);

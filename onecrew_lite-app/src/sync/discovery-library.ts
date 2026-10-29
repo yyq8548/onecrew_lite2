@@ -2,6 +2,8 @@ import { isDeepStrictEqual } from "node:util";
 import { TableDataError, type createEmbeddedTables } from "onecrew_lite_tables/embedded";
 import type { AccountContext, AccountContextService } from "../identity/account-context.ts";
 import type { AccountDatabases } from "../identity/account-databases.ts";
+import type { DiscoveryExecutionLibrary } from "../discovery/execution-supervisor.ts";
+import type { DiscoveryLibraryPublishOptions } from "../discovery/runtime.ts";
 
 export class LibraryProjectionError extends Error {
   readonly status = 503;
@@ -47,6 +49,12 @@ const columns = [
 type Tables = Awaited<ReturnType<typeof createEmbeddedTables>>;
 type SavedRow = Awaited<ReturnType<Tables["data"]["getDiscoveryState"]>>["rows"][number];
 type IngestRow = Parameters<Tables["data"]["ingestDiscoverySources"]>[1]["rows"][number];
+type SuccessfulProjection = {
+  projection: Parameters<Tables["data"]["publishDiscoveryIdentity"]>[1];
+  table: Awaited<ReturnType<Tables["data"]["ensureDiscoveryCampaignTable"]>>;
+  name: { name: string; previous_auto_name: string };
+  receipt: DiscoveryExecutionLibrary;
+};
 function timestamp(value: number | bigint): number {
   const result = Number(value);
   if (!Number.isSafeInteger(result) || result <= 0) throw new LibraryProjectionError("library_contact_timestamp_invalid");
@@ -54,6 +62,7 @@ function timestamp(value: number | bigint): number {
 }
 
 export function createDiscoveryLibraryProjection(accounts: AccountContextService, databases: AccountDatabases, tables: Tables, origin: string) {
+  const successful = new WeakMap<AccountContext, Map<string, SuccessfulProjection>>();
   async function tenant(context: AccountContext) {
     accounts.assertCurrent(context);
     const actual = await tables.tenants.resolve(context.principal.user);
@@ -79,7 +88,7 @@ export function createDiscoveryLibraryProjection(accounts: AccountContextService
       accounts.assertCurrent(context); resolved.assertOwned();
       return { campaign_id: campaign, table_id: table.id, web_url: `${origin}/library/${encodeURIComponent(table.id)}`, total_hits: rows.total, inserted_rows: 0 };
     },
-    async publish(context: AccountContext, campaign: string, revision: number) {
+    async publish(context: AccountContext, campaign: string, revision: number, options?: DiscoveryLibraryPublishOptions) {
       const selected = await tenant(context);
       const resolved = await databases.discoveryResolver().resolve(context);
       const assertCurrent = () => { accounts.assertCurrent(context); resolved.assertOwned(); };
@@ -117,9 +126,6 @@ export function createDiscoveryLibraryProjection(accounts: AccountContextService
           after = last;
         }
       };
-      const known = await state();
-      const expected = new Set(snapshot.rows.map(row => row.hit.id));
-      if ([...known.keys()].some(id => !expected.has(id))) throw new LibraryProjectionError("library_foreign_source_row");
       const matches = (source: typeof snapshot.rows[number], saved: SavedRow | undefined) => saved !== undefined && saved.criteria_revision === snapshot.criteria_revision && saved.source_revision === snapshot.source_revision && saved.candidate_id === source.candidate_id && saved.native_author_id === source.native_author_id && saved.verdict === source.verdict && saved.evidence_version === source.evidence_version && isDeepStrictEqual(saved.reasons, source.reasons) && isDeepStrictEqual(saved.contacts, source.contacts ?? []);
       const currentMaterial = () => {
         assertCurrent();
@@ -129,11 +135,26 @@ export function createDiscoveryLibraryProjection(accounts: AccountContextService
       const identity = publication.material.identity;
       const projection = { table_id: table.id, campaign_id: campaign, projection_format: 1 as const, criteria_revision: snapshot.criteria_revision, source_revision: snapshot.source_revision, source_hash: snapshot.snapshot_hash, identity_revision: publication.identity_revision, identity_hash: identity.snapshot_hash, source_rows: snapshot.rows.map(row => ({ search_hit_id: row.hit.id, candidate_id: row.candidate_id, native_author_id: row.native_author_id, evidence_version: row.evidence_version })), groups: identity.groups.map(group => ({ group_id: group.group_id, has_same_author_review: group.has_same_author_review, decision_ids: group.decision_ids, members: group.members.map(member => ({ candidate_id: member.candidate_id, platform: member.platform, native_author_id: member.native_author_id, display_name: member.display_name, profile_url: member.profile_url, source_hit_ids: member.sources.map(row => row.hit.id) })) })) };
       const expectedIdentity = { state: "current", projection };
+      const remember = (inserted_rows: number): DiscoveryExecutionLibrary => {
+        const receipt = { campaign_id: campaign, table_id: table.id, web_url: `${origin}/library/${encodeURIComponent(table.id)}`, total_hits: snapshot.rows.length, inserted_rows };
+        let campaigns = successful.get(context);
+        if (!campaigns) { campaigns = new Map(); successful.set(context, campaigns); }
+        campaigns.set(campaign, { projection, table, name, receipt: { ...receipt } });
+        return receipt;
+      };
+      const previous = successful.get(context)?.get(campaign);
+      if (options?.reuse_unchanged && previous && !repairValues && isDeepStrictEqual(previous.projection, projection) && isDeepStrictEqual(previous.table, table) && isDeepStrictEqual(previous.name, name)) {
+        const savedIdentity = await libraryCall(() => tables.data.getDiscoveryIdentity(selected, { table_id: table.id, campaign_id: campaign })); assertCurrent();
+        if (isDeepStrictEqual(savedIdentity, expectedIdentity)) { currentMaterial(); return { ...previous.receipt, inserted_rows: 0 }; }
+      }
+      const known = await state();
+      const expected = new Set(snapshot.rows.map(row => row.hit.id));
+      if ([...known.keys()].some(id => !expected.has(id))) throw new LibraryProjectionError("library_foreign_source_row");
       if (!repairValues && known.size === snapshot.rows.length && snapshot.rows.every(row => matches(row, known.get(row.hit.id)))) {
         currentMaterial();
         const savedIdentity = await libraryCall(() => tables.data.getDiscoveryIdentity(selected, { table_id: table.id, campaign_id: campaign }));
         assertCurrent(); currentMaterial();
-        if (isDeepStrictEqual(savedIdentity, expectedIdentity)) return { campaign_id: campaign, table_id: table.id, web_url: `${origin}/library/${encodeURIComponent(table.id)}`, total_hits: snapshot.rows.length, inserted_rows: 0 };
+        if (isDeepStrictEqual(savedIdentity, expectedIdentity)) return remember(0);
       }
       for (let offset = 0; offset < snapshot.rows.length; offset += 100) {
         assertCurrent();
@@ -162,7 +183,7 @@ export function createDiscoveryLibraryProjection(accounts: AccountContextService
       const readback = await libraryCall(() => tables.data.getDiscoveryIdentity(selected, { table_id: table.id, campaign_id: campaign })); assertCurrent();
       if (!isDeepStrictEqual(readback, expectedIdentity)) throw new LibraryProjectionError("library_readback_incomplete");
       currentMaterial();
-      return { campaign_id: campaign, table_id: table.id, web_url: `${origin}/library/${encodeURIComponent(table.id)}`, total_hits: snapshot.rows.length, inserted_rows: finalRows.size - known.size };
+      return remember(finalRows.size - known.size);
     },
   };
 }

@@ -1,0 +1,13 @@
+Microsoft Visual C++ Runtime (x64)
+Copyright Microsoft Corporation. All rights reserved.
+
+vcruntime140.dll is an unmodified Microsoft redistributable included for the
+Windows native HTTP module. Its license is separate from OneCrew Lite.
+
+Microsoft license terms:
+https://aka.ms/VCRedistLicense
+
+Redistributable files and deployment terms:
+https://learn.microsoft.com/cpp/windows/redistributing-visual-cpp-files
+
+The source download and SHA-256 checksums are recorded in runtime/source.json.

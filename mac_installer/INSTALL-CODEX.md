@@ -1,4 +1,4 @@
-# OneCrew Lite 0.9.3 · Mac ARM64 · R1 安装指南
+# OneCrew Lite 0.9.9 · Mac ARM64 安装指南
 
 由用户 Mac 上的当前 AI 客户端执行。目标为 Apple Silicon Mac，程序已包含运行环境。安装验收保留账号、数据、主密钥、端口、原 Chrome 身份、证据、评分和结果，搜索保持停止。
 
@@ -20,13 +20,13 @@
 
 使用本目录或用户提供的以下同一组文件：
 
-- `OneCrew-Lite-0.9.3-Mac-arm64-R1.zip`
-- `OneCrew-Lite-0.9.3-Mac-arm64-R1.zip.release.json`
-- `OneCrew-Lite-0.9.3-Mac-arm64-R1.zip.sha256`
+- `OneCrew-Lite-0.9.9-Mac-arm64.zip`
+- `OneCrew-Lite-0.9.9-Mac-arm64.zip.release.json`
+- `OneCrew-Lite-0.9.9-Mac-arm64.zip.sha256`
 
-ZIP 使用用户提供的安装包与同名校验文件，或官网的 0.9.3 下载及发布记录；安装提示词见 [CODEX-PROMPT.md](CODEX-PROMPT.md)。官网下载要求 HTTPS、HTTP 200、证书校验有效并禁止跟随重定向。下载遇到权限限制先按第 1 节申请；实际 DNS、连接或超时失败时，只使用已启用且可核实的本机代理设置重试原地址一次。保持证书验证和系统网络设置原状，不猜测代理端口。
+本版使用本目录或用户提供的安装包与同名校验文件，尚未发布到 npm 或官网；安装提示词见 [CODEX-PROMPT.md](CODEX-PROMPT.md)。已通过 ZIP 或 npm 安装的用户均按下文识别原安装并升级，保留原数据。
 
-用 `plutil -p` 读取发布记录，确认 `product=onecrew_lite`、`version=0.9.3`、`revision=R1`、`target=darwin-arm64`。记录 ZIP 的 `bytes`、`sha256`、程序的 `executableSha256`、源码提交和摘要。官网已直接提供版本、准确字节数和 SHA-256 时，使用这些值作为 ZIP 发布记录。以 `stat -f '%z'` 和 `shasum -a 256` 核对 ZIP 的确切大小和 SHA-256。缺少记录或校验不符时停止。
+用 `plutil -p` 读取发布记录，确认 `product=onecrew_lite`、`version=0.9.9`、`target=darwin-arm64`。记录 ZIP 的 `bytes`、`sha256`、程序的 `executableSha256`、源码提交和摘要。以 `stat -f '%z'` 和 `shasum -a 256` 核对 ZIP 的确切大小和 SHA-256。缺少记录或校验不符时停止。
 
 在用户工作目录中用 `/usr/bin/ditto -x -k` 解压到一个新的目录。将 `packageDir` 设置为其中 `OneCrew-Lite` 文件夹的实际绝对路径。执行：
 
@@ -61,7 +61,7 @@ chmod 755 "$packageDir/onecrew_lite"
 
 从独立 Library 的原服务记录核实 `libraryDataDir`。旧 Mac 常见路径为 `~/Library/Application Support/io.onecrewai.onecrew_lite` 和 `~/Library/Application Support/onecrew_lite_tables`，只用于查找，不能据此替代实际核实。数据、密钥缺失或归属冲突时停止该步骤；没有原安装或数据时才使用默认目录 `~/Library/Application Support/OneCrewLite/TypeScript`，由启动流程初始化。
 
-将 `dataDir`、`vaultPath`、`masterKeyPath`、`installDir` 设为已核实的绝对路径。首次安装默认使用 `~/Applications/OneCrewLite/releases/0.9.3-R1`；已有安装使用新的独立版本目录，保留旧程序直到验收完成。新数据目录使用 `install -d -m 700 "$dataDir"`，已有目录保持原样。
+将 `dataDir`、`vaultPath`、`masterKeyPath`、`installDir` 设为已核实的绝对路径。首次安装默认使用 `~/Applications/OneCrewLite/releases/0.9.9`；已有安装使用新的独立版本目录，保留旧程序直到验收完成。新数据目录使用 `install -d -m 700 "$dataDir"`，已有目录保持原样。
 
 ## 5. 安装、升级和启动
 
@@ -125,7 +125,7 @@ Codex 执行：
 "$installDir/onecrew_lite" codex-status --data-dir "$dataDir" --refresh
 ```
 
-要求配套插件为本机生成的完整 `0.9.3+codex.<64 位摘要>`，已安装、已启用并完成新鲜核实。完整摘要与本机程序和数据路径相关，不套用打包电脑的摘要。找不到已安装的 Codex CLI 时定位当前客户端附带的 CLI，通过 `--codex-executable` 指定绝对路径。保留其他插件和配置。
+要求配套插件为本机生成的完整 `0.9.9+codex.<64 位摘要>`，已安装、已启用并完成新鲜核实。完整摘要与本机程序和数据路径相关，不套用打包电脑的摘要。找不到已安装的 Codex CLI 时定位当前客户端附带的 CLI，通过 `--codex-executable` 指定绝对路径。保留其他插件和配置。
 
 完成注册后，若宿主仍加载旧配套进程，集中请求一次重载或重启；之后只执行尚未完成的 live MCP 和页面验收，复用已完成安装和授权。`mcp_operation_output_contract_mismatch` 需要核对运行中配套进程，不能当成平台读取失败。
 
@@ -137,7 +137,7 @@ Codex 执行：
 
 没有可用 MCP 时，由 AI 对已核实程序执行 `repair --data-dir "$dataDir" --client codex`；其他客户端使用 `--client mcp`。程序缺失或没有原启动记录时，从本指南实际安装断点继续，保持原数据和路径。权限仍按第 1 节审批，登录及浏览器授权由用户完成。
 
-通过 live `onecrew_status` 核实 0.9.3、实际程序哈希、原账号和安装身份，以及当前客户端连接。确认 `discovery.host_work.claim/get/submit` 与 `discovery.host_operation.get` 可发现，安装验收只检查能力，不领取或执行暂停任务。使用原表格链接和已保存任务结果验证历史数据仍可读。
+通过 live `onecrew_status` 核实 0.9.9、实际程序哈希、原账号和安装身份，以及当前客户端连接。确认 `discovery.host_work.claim/get/submit` 与 `discovery.host_operation.get` 可发现，安装验收只检查能力，不领取或执行暂停任务。使用原表格链接和已保存任务结果验证历史数据仍可读。
 
 调用 `onecrew_web`，使用可用 UI 工具打开并读取只读状态卡、可见工作台及当前任务原结果表；没有任务时显示 Library。保持工作台选中并保留表格标签页。仅返回 URL 或排队打开不算页面验收完成。客户端缺少相应能力时如实列为待完成，不宣称通过。
 

@@ -15,11 +15,11 @@ import { resolveOpenCliInstallation } from "../src/platforms/opencli/installatio
 
 const bundled = fileURLToPath(new URL("../../onecrew_lite-opencli/", import.meta.url));
 
-test("当前11来源使用审核后的只读入口，YouTube绑定独立页面", async () => {
+test("当前来源清单使用审核后的只读入口，YouTube绑定独立页面", async () => {
   const fixture = z.object({ sources: z.array(z.object({ platform: z.string(), command: z.string(), browser_required: z.literal(true), registered: z.literal(true) })) }).parse(JSON.parse(await readFile(new URL("./fixtures/registered-sources.json", import.meta.url), "utf8")));
   const sources = Object.entries(CREATOR_SEARCH_SOURCES).filter(([, source]) => source.discovery).map(([platform, source]) => ({ platform, command: `${source.site}/${source.name}`, browser_required: true, registered: true }));
   const expected = fixture.sources.map(source => source.platform === "youtube" ? { ...source, command: "onecrew-search-youtube/search" } : source.platform === "yahoo" ? { ...source, command: "onecrew-search-yahoo/search" } : source);
-  assert.equal(sources.length, 11);
+  assert.equal(sources.length, 12);
   assert.deepEqual(sources, expected);
   for (const source of RETIRED_CREATOR_SOURCES) assert.throws(() => creatorSearchSource(source), { code: "opencli_read_command_unavailable" });
   for (const source of ["reddit", "pinterest", "google", "yahoo"]) assert.throws(() => creatorSearchArguments("profile", source, "query", 1), { code: "opencli_read_command_unavailable" });

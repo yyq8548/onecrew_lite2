@@ -107,14 +107,13 @@ test('auth opens one owned tab without a second navigation that Chrome rejects',
     setActivePage: id => calls.push(id),
     goto: () => { throw new Error('Navigation rejected.'); },
   };
-  await openProbePage(page, 'https://www.zhihu.com/');
-  assert.deepEqual(calls, ['https://www.zhihu.com/', 'owned-target']);
+  await openProbePage(page, 'https://www.instagram.com/');
+  assert.deepEqual(calls, ['https://www.instagram.com/', 'owned-target']);
 });
 
 test('fixed-origin self endpoints qualify only actual self identity and never emit it', async () => {
   const payloads = {
     instagram: { status: 'ok', user: { pk: 'private' } },
-    zhihu: { url_token: 'private', id: 'private' },
   };
   for (const site of Object.keys(payloads)) {
     const context = {

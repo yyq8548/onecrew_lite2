@@ -49,7 +49,7 @@ export type DiscoveryIdentityMergeMaterial = z.infer<typeof discoveryIdentityMer
 const draftPhase = z.enum(["checking_connection", "checking_codex", "planning", "validating_plan", "saving_plan", "finished", "failed"]);
 export const discoveryDraftProgress = z.object({ id: text, phase: draftPhase, elapsed_ms: creatorU64, phase_elapsed_ms: creatorU64, timings: z.array(z.object({ phase: draftPhase, elapsed_ms: creatorU64 }).strict()), error_code: nullableText, unsupported_conditions: strings }).strict();
 export const discoveryExecutionStatus = z.object({
-  pipeline: z.object({ active_pending: u32, queued_scores: u32, running_scores: u32, discovery_held: z.boolean(), contact_pending: z.boolean() }).strict().optional(),
+  pipeline: z.object({ active_pending: u32, queued_scores: u32, running_scores: u32, discovery_held: z.boolean(), contact_pending: z.boolean(), recommendations_complete: z.boolean().optional() }).strict().optional(),
   campaign_id: text, revision: u32, stage: z.enum(["ready", "searching", "verifying", "pausing", "paused", "finished", "needs_evidence", "error"]), used: u32,
   deferred_hits: z.array(z.object({ reason: text, search_hit_id: text }).strict()), deferred_scores: u32, excluded_platforms: strings,
   failure_code: nullableText, failure_phase: nullableText, reason: nullableText, sync_error: nullableText, sync_pending: z.boolean(), synced_at: creatorU64.nullable(), updated_at: creatorU64,

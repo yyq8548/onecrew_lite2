@@ -162,7 +162,7 @@ describe("Campaign paginated result presentation", () => {
   it("selects the remaining catalog without retired sources when every entry is registered", async () => {
     vi.stubGlobal("window", { localStorage: { getItem: () => null } });
     const all = SEARCH_PLATFORM_GROUPS.flatMap(group => group.platforms);
-    expect(all).toHaveLength(44);
+    expect(all).toHaveLength(45);
     expect(all).not.toContain("reddit");
     expect(all).not.toContain("pinterest");
     expect(all).not.toContain("zhihu");

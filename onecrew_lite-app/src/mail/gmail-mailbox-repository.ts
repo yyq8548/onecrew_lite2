@@ -38,7 +38,7 @@ const columns = {
 export class GmailMailboxRepository {
   readonly #db: DatabaseSync;
   constructor(db: DatabaseSync) {
-    if (![90, 91, 92, 93, 94, 95, 96].includes(Number(db.prepare("PRAGMA user_version").get()!.user_version)) || db.prepare("PRAGMA foreign_keys").get()!.foreign_keys !== 1) throw new Error("Gmail mailbox mapping requires a supported Creator schema with foreign keys");
+    if (![90, 91, 92, 93, 94, 95, 96, 97].includes(Number(db.prepare("PRAGMA user_version").get()!.user_version)) || db.prepare("PRAGMA foreign_keys").get()!.foreign_keys !== 1) throw new Error("Gmail mailbox mapping requires a supported Creator schema with foreign keys");
     for (const [table, expected] of Object.entries(columns)) {
       if (db.prepare(`PRAGMA table_info(${table})`).all().map(row => row.name).join("|") !== expected.join("|")) throw new Error(`Incompatible ${table} mapping columns`);
     }

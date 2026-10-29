@@ -1,0 +1,38 @@
+name: Windows npm native acceptance
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows-npm:
+    runs-on: windows-2025
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26.7.0
+      - name: Install package manager
+        run: npm.cmd install --global pnpm@10.32.1 --ignore-scripts
+      - name: Install test dependencies
+        run: pnpm.cmd install --frozen-lockfile --ignore-scripts
+      - name: Install the actual npm tarballs
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          npm.cmd install --prefix .scratch/npm-native --include=optional --ignore-scripts ./npm_installer/onecrew-lite-win32-x64-0.9.9.tgz ./npm_installer/onecrew-lite-0.9.9.tgz
+          if ($LASTEXITCODE -ne 0) { throw 'Local Windows npm installation failed' }
+      - name: Verify Windows program, service, web and live MCP
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          node development/npm-smoke.mjs --catalog npm_installer/release-inputs.json --node-modules .scratch/npm-native/node_modules --output .scratch/windows-native-smoke
+          if ($LASTEXITCODE -ne 0) { throw 'Windows native acceptance failed' }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-npm-native-acceptance
+          path: |
+            .scratch/windows-native-smoke/acceptance.json
+            .scratch/windows-native-smoke/data/service.log
+          if-no-files-found: warn

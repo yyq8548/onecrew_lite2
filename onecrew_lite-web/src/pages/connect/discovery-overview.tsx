@@ -21,7 +21,7 @@ export function DiscoveryOverview({ campaign, counts, stage, running, busy, prof
   syncPending?: boolean; syncErrorKey?: ReturnType<typeof discoveryLibraryFailureKey>; syncedAt?: number | bigint | null; failurePhase?: string; failureCode?: string;
   pipeline?: ExecutionStatus["pipeline"];
   deferredHits?: readonly { reason: string }[]; excludedSources?: readonly { name: string; reason: ExclusionReason }[];
-  onSync: () => void; onStart: () => void; onPause: () => void; onAnother: () => void; onExpanded: () => void; canExpand: boolean; onIssues: () => void; onFailure?: () => void;
+  onSync: () => void; onStart?: () => void; onPause: () => void; onAnother: () => void; onExpanded: () => void; canExpand: boolean; onIssues: () => void; onFailure?: () => void;
 }) {
   const { t, i18n } = useTranslation("shell");
   const zh = i18n.language.startsWith("zh");
@@ -29,6 +29,7 @@ export function DiscoveryOverview({ campaign, counts, stage, running, busy, prof
   const runs = campaign.platform_runs;
   const executionErrorKey = discoveryExecutionFailureKey(failureCode);
   const attempted = runs.filter(run => run.status !== "unsearched").length;
+  const supplementing = running && pipeline?.recommendations_complete === true && pipeline.contact_pending && stage !== "pausing";
   const phase = ["read", "score", "admission", "readback", "execution"].includes(failurePhase ?? "") ? failurePhase as "read" | "score" | "admission" | "readback" | "execution" : "execution";
   return <section className="space-y-6" aria-label={t("opencliPilot.overview")}>
     <div className="flex flex-wrap items-start justify-between gap-3">
@@ -47,8 +48,8 @@ export function DiscoveryOverview({ campaign, counts, stage, running, busy, prof
     </div>
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p role="status" className="flex items-center gap-2 text-sm font-medium">{running && <Loader2 className="size-4 animate-spin" aria-hidden />}{t(stage === "error" && failurePhase ? `opencliPilot.failure.${phase}` : `opencliPilot.stages.${stage}`)}</p>
-        {running && <Button className="h-11" disabled={stage === "pausing"} onClick={onPause}><Pause className="size-4" aria-hidden />{t(stage === "pausing" ? "opencliPilot.stages.pausing" : "opencliPilot.automaticPause")}</Button>}
+        <p role="status" className="flex items-center gap-2 text-sm font-medium">{running && <Loader2 className="size-4 animate-spin" aria-hidden />}{supplementing ? (zh ? "推荐已完成，正在补充公开联系方式" : "Recommendations complete; collecting public contact details") : t(stage === "error" && failurePhase ? `opencliPilot.failure.${phase}` : `opencliPilot.stages.${stage}`)}</p>
+        {running && <Button className="h-11" disabled={stage === "pausing"} onClick={onPause}><Pause className="size-4" aria-hidden />{supplementing ? (zh ? "暂停补充" : "Pause contact collection") : t(stage === "pausing" ? "opencliPilot.stages.pausing" : "opencliPilot.automaticPause")}</Button>}
       </div>
       <dl className="grid grid-cols-2 gap-x-6 gap-y-4 border-y py-4 lg:grid-cols-4">
         {[ [t("opencliPilot.qualifiedAccounts"), `${n(counts?.qualified)}/${n(campaign.target_count)}`],
@@ -61,7 +62,7 @@ export function DiscoveryOverview({ campaign, counts, stage, running, busy, prof
           ? `活跃待核实 ${n(pipeline.active_pending)} · 评分排队 ${n(pipeline.queued_scores)} · 等待当前对话评估／提交 ${n(pipeline.running_scores)}`
           : `Active reviews ${n(pipeline.active_pending)} · Scores queued ${n(pipeline.queued_scores)} · Awaiting current conversation evaluation/submission ${n(pipeline.running_scores)}`}</p>
         {pipeline.running_scores > 0 && <p>{zh ? "这些材料尚未完成模型评估和提交。后台可并发读取和同步；对话中断或额度用完时保留断点。" : "These materials still await completed model evaluation and submission. Background reads and sync can run concurrently; progress is saved if the conversation stops or reaches its usage limit."}</p>}
-        {pipeline.contact_pending && <p>{zh ? "仍有公开联系方式待补充" : "Public contact details still need supplementing"}</p>}
+        {pipeline.contact_pending && <p>{pipeline.recommendations_complete ? (zh ? "推荐人数已达标；仍有公开联系方式待补充，已有结果可使用。" : "Recommendation targets are met. Saved results are available while public contact details remain pending.") : (zh ? "仍有公开联系方式待补充" : "Public contact details still need supplementing")}</p>}
         {pipeline.discovery_held && <p role="status">{zh
           ? "待核实累计达到 10 人，已暂停发现新账号；优先完成现有核实，降至 5 人后继续搜索。"
           : "Reviews reached 10. New account discovery is on hold while existing reviews finish; search resumes at 5."}</p>}
@@ -100,7 +101,7 @@ export function DiscoveryOverview({ campaign, counts, stage, running, busy, prof
       {syncFailed && <p role="alert" className="text-sm text-destructive">{t(`opencliPilot.${syncErrorKey ?? "newResultsSyncFailed"}`)}</p>}
     </div>
     {campaign.phase === "active" && <div className="space-y-2">
-      {!running && stage !== "needs_evidence" && <Button variant="outline" disabled={profileChanged || busy} onClick={onStart}><Play className="size-4" aria-hidden />{t("opencliPilot.automaticStart")}</Button>}
+      {!running && onStart && stage !== "needs_evidence" && <Button variant="outline" disabled={profileChanged || busy} onClick={onStart}><Play className="size-4" aria-hidden />{t("opencliPilot.automaticStart")}</Button>}
       {running && <p className="max-w-prose text-sm leading-relaxed text-muted-foreground">{t("opencliPilot.pauseEffect")}</p>}
     </div>}
   </section>;

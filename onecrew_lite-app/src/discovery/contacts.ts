@@ -1,16 +1,18 @@
 import type { z } from "zod";
 import type { discoveryContact } from "./library-material.ts";
 import { isIP } from "node:net";
+import { discoveryPromotional, discoveryThirdPartyLink } from "./contact-attribution.ts";
 
 export type DiscoveryContact = z.infer<typeof discoveryContact>;
 const host = (value: string): string | null => { const name = URL.parse(value)?.hostname.replace(/^www\./u, ""); return name === "twitter.com" ? "x.com" : name === "space.bilibili.com" ? "bilibili.com" : name === "m.facebook.com" ? "facebook.com" : name ?? null; };
-export function discoveryContactPlatform(value: string): string | null { return ({ "youtube.com": "youtube", "bilibili.com": "bilibili", "x.com": "twitter", "instagram.com": "instagram", "facebook.com": "facebook", "tiktok.com": "tiktok", "douyin.com": "douyin", "linkedin.com": "linkedin", "bsky.app": "bluesky" } as Record<string, string>)[host(value) ?? ""] ?? null; }
+export function discoveryContactPlatform(value: string): string | null { return ({ "youtube.com": "youtube", "bilibili.com": "bilibili", "x.com": "twitter", "instagram.com": "instagram", "facebook.com": "facebook", "tiktok.com": "tiktok", "douyin.com": "douyin", "linkedin.com": "linkedin", "bsky.app": "bluesky", "xiaohongshu.com": "xiaohongshu" } as Record<string, string>)[host(value) ?? ""] ?? null; }
 export function discoverySocialProfile(value: string): boolean {
   const url = URL.parse(value); if (!url) return false;
   const hostname = url.hostname.replace(/^www\./u, ""), path = url.pathname;
   if (url.protocol === "https:" && hostname === "facebook.com" && path === "/profile.php" && !url.username && !url.password && !url.port && !url.hash) { const pairs = [...url.searchParams]; return pairs.length === 1 && pairs[0]![0] === "id" && /^[1-9][0-9]{0,19}$/u.test(pairs[0]![1]); }
   if (url.protocol !== "https:" || url.username || url.password || url.port || url.search || url.hash || value.includes("...") || value.includes("…")) return false;
   const parts = path.replace(/^\/+|\/+$/gu, "").split("/"), handle = (part: string) => Buffer.byteLength(part) <= 128 && /^[\p{Alphabetic}\p{Number}_.%\-]+$/u.test(part);
+  if (hostname === "xiaohongshu.com") return /^\/user\/profile\/[a-f0-9]{24}$/u.test(path);
   if (["instagram.com", "x.com", "twitter.com"].includes(hostname)) return parts.length === 1 && handle(parts[0]!) && !["home", "explore", "search", "i", "accounts", "reel", "reels", "p"].includes(parts[0]!);
   if (hostname === "tiktok.com") return parts.length === 1 && parts[0]!.startsWith("@") && handle(parts[0]!.slice(1));
   if (hostname === "douyin.com") return parts.length === 2 && parts[0] === "user" && /^MS4wLjABAAAA[A-Za-z0-9_-]{8,88}$/u.test(parts[1]!);
@@ -37,18 +39,7 @@ export function discoveryNonContact(source: string): boolean {
     || name === "cherryxtrfy.com" && ["/mice/", "/xtrfy-"].some(prefix => path.startsWith(prefix))
     || [...url.searchParams.keys()].some(key => ["partner_id", "sca_ref", "aff_id"].includes(key));
 }
-function thirdParty(source: string, text: string): boolean {
-  let credits = false, found = false;
-  for (const line of text.split(/\r?\n/u)) {
-    const label = line.trim().replace(/^#+/u, "").trim().toLowerCase(); if (!label) { credits = false; continue; }
-    const explicit = ["follow the staff", "follow our staff", "follow the guests", "guest:", "guests:", "edited by:", "filmed by:", "关注工作人员", "關注工作人員", "嘉宾：", "嘉賓：", "制作人员：", "製作人員：", "出演者：", "ゲスト：", "출연진:", "게스트:", "invitados:", "invités :", "gäste:"].some(prefix => label.startsWith(prefix));
-    if (!line.includes("https://") && /[:：]$/u.test(label)) credits = explicit; else if (explicit) credits = true;
-    if (Buffer.byteLength(line) <= 16000 && line.split(/\s+/u).some(token => !token.includes("...") && !token.includes("…") && token.replace(/^[()[\]<>,.;!"']+|[()[\]<>,.;!"']+$/gu, "") === source)) { found = true; if (!credits) return false; }
-  }
-  return found;
-}
-
-export function extractDiscoveryContacts(text: string, source: string, author: string, capturedAt: number | bigint, attribution: DiscoveryContact["attribution"]): DiscoveryContact[] {
+export function extractDiscoveryContacts(text: string, source: string, author: string, capturedAt: number | bigint, attribution: DiscoveryContact["attribution"], owner = ""): DiscoveryContact[] {
   const url = URL.parse(source);
   if (Buffer.byteLength(text) > 20000 || !author || Buffer.byteLength(author) > 128 || Buffer.byteLength(source) > 2048 || capturedAt <= 0 || !url || url.protocol !== "https:" || !url.hostname || url.username || url.password) return [];
   const contacts: DiscoveryContact[] = [], seen = new Set<string>(), telegramBoundaries = new Set<number>();
@@ -78,7 +69,7 @@ export function extractDiscoveryContacts(text: string, source: string, author: s
     const normalized = `https://t.me/${match[1]!}`; if (seen.has(normalized)) continue; seen.add(normalized); push("telegram", match[0].trim(), normalized, sourceLine(match.index, match[0].length));
   }
   for (const match of text.matchAll(/https:\/\/[^\s<>"']+/gu)) {
-    const value = match[0].replace(/[.,;)\]]+$/u, ""); if (!discoverySocialProfile(value) || host(value) === host(source) || thirdParty(value, text) || seen.has(value)) continue; seen.add(value); push("social_profile", value, value, sourceLine(match.index, value.length));
+    const value = match[0].replace(/[.,;)\]]+$/u, ""); if (!discoverySocialProfile(value) || host(value) === host(source) || seen.has(value)) continue; seen.add(value); push("social_profile", value, value, sourceLine(match.index, value.length));
   }
   if (attribution === "author_published") {
     for (const match of text.matchAll(/(?:https?:\/\/|www\.)[^\s<>"']+/gu)) {
@@ -91,7 +82,7 @@ export function extractDiscoveryContacts(text: string, source: string, author: s
       const hostname = target.hostname;
       if (!hostname.includes(".") || isIP(hostname.replace(/^\[|\]$/gu, "")) || /(?:^|\.)(?:localhost|local|internal|test)$/iu.test(hostname)
         || discoveryContactPlatform(target.href) !== null || ["t.me", "telegram.me", "wa.me", "vt.tiktok.com", "vm.tiktok.com"].includes(hostname)
-        || discoveryNonContact(target.href) || thirdParty(original, text) || !/(?:website|contact|business|官网|官網|网站|網站|商务|商務|合作)/iu.test(excerpt)) continue;
+        || discoveryNonContact(target.href) || !/(?:website|contact|business|官网|官網|网站|網站|商务|商務|合作)/iu.test(excerpt)) continue;
       seen.add(original); push("website", original, original, excerpt);
     }
     for (const match of text.matchAll(/(?:phone|mobile|telephone|tel|电话|電話|手机|手機)[ \t]*[:：][ \t]*(\+?[0-9][0-9 ()-]{5,23}[0-9])/giu)) {
@@ -116,5 +107,5 @@ export function extractDiscoveryContacts(text: string, source: string, author: s
     }
     contacts.push(...messaging);
   }
-  return contacts;
+  return contacts.filter(contact => !discoveryThirdPartyLink(contact.original_value, text, owner) && !discoveryPromotional(contact.original_value, text));
 }

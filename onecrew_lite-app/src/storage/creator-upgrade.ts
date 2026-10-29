@@ -20,7 +20,7 @@ import { migrateCreatorPublicContactEdge } from "./creator-public-contact-edge.t
 import { migrateCreatorWebProfileEdge } from "./creator-web-profile-edge.ts";
 import { migrateCreatorInstagramDomEdge } from "./creator-instagram-dom-edge.ts";
 
-export async function upgradeCreatorStagingCopy({ sourcePath, stagingPath }: { sourcePath: string; stagingPath: string }): Promise<{ fromVersion: number; toVersion: 96 }> {
+export async function upgradeCreatorStagingCopy({ sourcePath, stagingPath }: { sourcePath: string; stagingPath: string }): Promise<{ fromVersion: number; toVersion: 97 }> {
   const source = resolve(sourcePath);
   const staging = resolve(stagingPath);
   if (source === staging) throw new Error("Creator upgrade requires a distinct staging copy");
@@ -35,9 +35,9 @@ export async function upgradeCreatorStagingCopy({ sourcePath, stagingPath }: { s
     // 原 v87→88 重建关联父表，明确要求外层关闭 FK，提交前完整 foreign_key_check。
     db.exec("PRAGMA busy_timeout=5000; PRAGMA foreign_keys=OFF; BEGIN IMMEDIATE");
     const fromVersion = Number(db.prepare("PRAGMA user_version").get()!.user_version);
-    if (fromVersion < 27 || fromVersion > 96) throw new Error(`Creator upgrade from ${fromVersion} is not implemented; existing data remains unchanged`);
+    if (fromVersion < 27 || fromVersion > 97) throw new Error(`Creator upgrade from ${fromVersion} is not implemented; existing data remains unchanged`);
     validateCreatorSchemaVersion(db, fromVersion);
-    for (let version = fromVersion; version < 96; version++) {
+    for (let version = fromVersion; version < 97; version++) {
       switch (version) {
         case 27: case 28: case 29:
           db.exec(readStorageSql(`creator-${version}-to-${version + 1}.sql`));
@@ -208,6 +208,9 @@ export async function upgradeCreatorStagingCopy({ sourcePath, stagingPath }: { s
         case 95:
           migrateCreatorInstagramDomEdge(db);
           break;
+        case 96:
+          migrateCreatorReceiptPlatformEdge(db, 96);
+          break;
         default: throw new Error(`Creator migration edge ${version} is not registered`);
       }
       db.exec(`PRAGMA user_version=${version + 1}`);
@@ -218,7 +221,7 @@ export async function upgradeCreatorStagingCopy({ sourcePath, stagingPath }: { s
     if (after.dev !== isolated.dev || after.ino !== isolated.ino || after.nlink !== 1n) throw new Error("Creator staging file identity changed");
     db.exec("COMMIT");
     committed = true;
-    return { fromVersion, toVersion: 96 };
+    return { fromVersion, toVersion: 97 };
   } finally {
     try { if (!committed && db.isTransaction) db.exec("ROLLBACK"); }
     finally { db.close(); }

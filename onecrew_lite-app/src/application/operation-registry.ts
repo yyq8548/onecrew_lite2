@@ -1,4 +1,5 @@
 import type { z } from "zod";
+import { AsyncLocalStorage } from "node:async_hooks";
 import { assertOperationAvailable } from "../contracts/retired-operations.ts";
 import { AccountContextService, type AccountContext } from "../identity/account-context.ts";
 
@@ -12,6 +13,7 @@ export class OperationRegistry {
   #accounts: AccountContextService;
   #operations = new Map<string, RegisteredOperation>();
   readonly #verifyIdentity: (() => Promise<void>) | undefined;
+  readonly #authorized = new AsyncLocalStorage<{ context: AccountContext; active: boolean }>();
 
   constructor(accounts: AccountContextService, verifyIdentity?: () => Promise<void>) {
     this.#accounts = accounts;
@@ -46,8 +48,19 @@ export class OperationRegistry {
     operation.validate(input);
   }
 
+  async withAuthorizedAccount<T>(context: AccountContext, operation: () => Promise<T>): Promise<T> {
+    this.#accounts.assertCurrent(context);
+    const request = { context, active: true };
+    return this.#authorized.run(request, async () => {
+      try { return await operation(); }
+      finally { request.active = false; }
+    });
+  }
+
   async execute(name: string, input: unknown, accountId: string, epoch: string): Promise<unknown> {
-    await this.#verifyIdentity?.();
+    const authorized = this.#authorized.getStore();
+    if (!authorized?.active || authorized.context.principal.user.id !== accountId || authorized.context.epoch !== epoch) await this.#verifyIdentity?.();
+    else this.#accounts.assertCurrent(authorized.context);
     const context = this.#accounts.forSession(accountId, epoch);
     assertOperationAvailable(name);
     const operation = this.#operations.get(name);

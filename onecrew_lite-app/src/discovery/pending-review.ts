@@ -3,7 +3,7 @@ import { z } from "zod";
 import { parseApplicationJson } from "../contracts/application-json.ts";
 import { discoveryJsonValue, discoveryMaterialDigest } from "./library-material.ts";
 import { findDiscoveryReviewBasis } from "./review-basis.ts";
-import { buildDiscoveryReviewMaterial } from "./review-material.ts";
+import { buildDiscoveryReviewMaterial, type DiscoveryReviewBasis } from "./review-material.ts";
 import { DiscoveryLinkedinExperienceRepository } from "./linkedin-experience.ts";
 
 const object = (value: unknown): Record<string, unknown> => value !== null && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
@@ -16,7 +16,7 @@ export function discoveryObservationVersion(raw: unknown): string {
 
 export const pendingReviewLabels = { awaiting_score: "等待最新证据评分", needs_content: "等待补充必需证据", needs_identity: "缺少账号身份依据", read_blocked: "读取受阻，本轮已停止", insufficient_after_read: "证据不足，核实结束", needs_requirement: "等待补充必需联系方式" } as const;
 export type PendingReviewState = keyof typeof pendingReviewLabels;
-export function pendingReview(db: DatabaseSync, campaign: string, revision: number, candidate: string): { state: PendingReviewState; next_action: string; last_processed_at: number; stop_code: string | null; gap: string | null } | null {
+export function pendingReview(db: DatabaseSync, campaign: string, revision: number, candidate: string, verified?: { readonly hit: string; readonly basis: DiscoveryReviewBasis | null }): { state: PendingReviewState; next_action: string; last_processed_at: number; stop_code: string | null; gap: string | null } | null {
   const row = db.prepare(`SELECT c.updated_at,c.evidence_json,h.id AS hit_id,h.platform,h.profile_ref FROM discovery_candidates c
     LEFT JOIN discovery_search_hits h ON h.discovery_campaign_id=c.discovery_campaign_id AND h.profile_ref=c.source_profile_ref
       AND h.source_url=json_extract(c.evidence_json,'$.source_urls[0]')
@@ -29,7 +29,8 @@ export function pendingReview(db: DatabaseSync, campaign: string, revision: numb
     UNION ALL SELECT stop_code,created_at AS updated_at,'language' AS kind FROM discovery_language_samples WHERE discovery_campaign_id=?1 AND criteria_revision=?2 AND candidate_id=?4 AND status='failed'
     UNION ALL SELECT stop_code,updated_at,'platform' AS kind FROM discovery_platform_runs WHERE discovery_campaign_id=?1 AND platform=?5 AND profile_ref=?6 AND stop_code IN ('opencli_auth_required','opencli_risk_control')
   ) ORDER BY updated_at DESC LIMIT 1`).get(campaign, revision, row.hit_id ?? null, candidate, row.platform ?? null, row.profile_ref ?? null);
-  const basis = typeof row.hit_id === "string" ? findDiscoveryReviewBasis(db, campaign, revision, row.hit_id) : null;
+  // 仅在同一同步只读事务中复用已验证结果，并保持结果所属的 hit 一致。
+  const basis = verified && verified.hit === row.hit_id ? verified.basis : typeof row.hit_id === "string" ? findDiscoveryReviewBasis(db, campaign, revision, row.hit_id) : null;
   const saved = typeof review.review_id === "string" ? db.prepare("SELECT material_json FROM discovery_evidence_reviews WHERE id=?1 AND discovery_campaign_id=?2 AND criteria_revision=?3 AND candidate_id=?4").get(review.review_id, campaign, revision, candidate) : undefined;
   if (basis) last = Math.max(last, Number(basis.native_profile?.observed_at ?? 0), Number(basis.native_content?.captured_at ?? 0));
   const sampleTime = db.prepare("SELECT MAX(created_at) AS time FROM discovery_language_samples WHERE discovery_campaign_id=?1 AND criteria_revision=?2 AND candidate_id=?3").get(campaign, revision, candidate);

@@ -46,7 +46,7 @@ export function planDiscoveryStep(repository: DiscoveryStepSource, campaignId: s
   const held = policy.heldQueryHits ?? [];
   const authorReview = policy.holdDiscovery ? undefined : repository.webAuthorReady(campaignId, revision, blocked)[0]; if (authorReview) return { kind: "resolve_article", search_hit_id: authorReview.claim.search_hit_id };
   const requiredPage = repository.nextPublicPage(campaignId, contactBlocked, true); if (requiredPage) return { kind: "read_public_page", profile_ref: requiredPage.profile_ref, candidate_id: requiredPage.candidate_id, requested_url: requiredPage.requested_url };
-  for (const platform of ["youtube", "twitter", "bilibili", "tiktok", "instagram", "weibo", "bluesky", "zhihu", "hackernews", "pixiv", "linkedin", "douyin"]) {
+  for (const platform of ["youtube", "twitter", "bilibili", "tiktok", "instagram", "weibo", "bluesky", "hackernews", "pixiv", "linkedin", "douyin", "xiaohongshu"]) {
     if (platforms.has(platform) && !blocked.includes(platform)) { const hit = repository.nextContentHit(campaignId, platform); if (hit) return { kind: "read_content", search_hit_id: hit }; }
   }
   if (!policy.holdDiscovery) {

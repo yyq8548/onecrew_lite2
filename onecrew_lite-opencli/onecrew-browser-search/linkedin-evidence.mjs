@@ -379,7 +379,7 @@ export function projectLinkedinContact(data,handle,account) {
     author_label:data.title,headline:'',bio:'',follower_text:'',public_links:data.contact_links,contact_links:[]},handle);
   return {adapter_version:'1.0.0',author_handle:handle,account_id:account,source_url:data.source_url,
     title:checked.author_label,contact_text:data.contact_text,contact_links:checked.public_links,
-    truncated:true,evidence_source:'visible_contact_dialog'};
+    truncated:data.truncated!==false,evidence_source:'visible_contact_dialog'};
 }
 
 // The native dialog and background header must identify the same observed
@@ -417,7 +417,7 @@ export function observeLinkedinContact(source,handle,account,readProfile) {
   if(!authorLinks.length) return null;
   if(authorLinks.some(node=>!equivalentSourceUrl(node.href,source))) throw new Error('ONECREW_LINKEDIN_INVALID_CONTACT_DIALOG_OWNER');
   const emails=[],links=[],published=[];
-  let linkBytes=0;
+  let linkBytes=0,truncated=false;
   for(const anchor of anchors) {
     let url;
     try {url=new URL(anchor.href);} catch {continue;}
@@ -430,7 +430,9 @@ export function observeLinkedinContact(source,handle,account,readProfile) {
       let email;
       try {email=decodeURIComponent(url.pathname);} catch {continue;}
       if(email.length<=254 && /^[A-Za-z0-9.!#$%&'*+\/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9.-]*[A-Za-z0-9])?\.[A-Za-z]{2,}$/.test(email)
-          && !/\s/.test(email) && !emails.includes(email) && emails.length<10) emails.push(email);
+          && !/\s/.test(email) && !emails.includes(email)) {
+        if(emails.length<10) emails.push(email); else truncated=true;
+      }
       continue;
     }
     if(url.origin===location.origin && url.pathname==='/safety/go/') {
@@ -440,13 +442,13 @@ export function observeLinkedinContact(source,handle,account,readProfile) {
       try {url=new URL(target);} catch {continue;}
     }
     if(!['https:','http:'].includes(url.protocol) || url.origin===location.origin || url.username || url.password || url.port
-        || url.href.length>2048 || links.includes(url.href) || links.length>=10) continue;
+        || url.href.length>2048 || links.includes(url.href)) continue;
     const size=new TextEncoder().encode(url.href).length;
-    if(linkBytes+size>6000) continue;
+    if(links.length>=10 || linkBytes+size>6000){truncated=true;continue;}
     links.push(url.href);linkBytes+=size;
   }
   return {author_handle:handle,account_id:account,source_url:`${source}overlay/contact-info/`,title:[...profile.author_label].slice(0,200).join(''),
-    contact_text:[...emails,...published].join('\n'),contact_links:links};
+    contact_text:[...emails,...published].join('\n'),contact_links:links,truncated};
 }
 
 export async function readLinkedinContact(page,handle,account,ownedPage) {

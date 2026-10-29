@@ -16,9 +16,10 @@ export function classifyIdentity(result) {
 // Executed in the fixed provider origin. Return a boolean, never account details.
 export async function observeCurrentAccount(site, allowRequest = true) {
   if (site === 'linkedin-learning') site = 'linkedin';
-  const origins = { bilibili: 'https://www.bilibili.com', tiktok: 'https://www.tiktok.com', instagram: 'https://www.instagram.com', facebook: 'https://www.facebook.com', zhihu: 'https://www.zhihu.com', douyin: 'https://www.douyin.com', linkedin: 'https://www.linkedin.com', weibo: 'https://weibo.com', tieba: 'https://tieba.baidu.com', medium: 'https://medium.com', nowcoder: 'https://www.nowcoder.com', douban: 'https://www.douban.com', pixiv: 'https://www.pixiv.net' };
+  const origins = { bilibili: 'https://www.bilibili.com', tiktok: 'https://www.tiktok.com', instagram: 'https://www.instagram.com', facebook: 'https://www.facebook.com', douyin: 'https://www.douyin.com', linkedin: 'https://www.linkedin.com', weibo: 'https://weibo.com', tieba: 'https://tieba.baidu.com', medium: 'https://medium.com', nowcoder: 'https://www.nowcoder.com', douban: 'https://www.douban.com', pixiv: 'https://www.pixiv.net' };
   origins.twitter = 'https://x.com';
   origins.youtube = 'https://www.youtube.com';
+  origins.xiaohongshu = 'https://www.xiaohongshu.com';
   if (/\/challenge\/|\/checkpoint\/|captcha|security\/check/.test(location.pathname)) return {};
   const visible = selector => Array.from(document.querySelectorAll(selector)).some(node => node.getClientRects().length > 0);
   const visibleText = (selector, pattern) => Array.from(document.querySelectorAll(selector)).some(node => node.getClientRects().length > 0 && pattern.test((node.textContent || '').trim()));
@@ -27,6 +28,14 @@ export async function observeCurrentAccount(site, allowRequest = true) {
   if (visible(captchaSelector)) return {};
   if (site === 'douban' && location.origin === 'https://accounts.douban.com' && location.pathname.startsWith('/passport/login') && visible('input[name="username"], input[name="phone"]')) return { authenticated: false };
   if (location.origin !== origins[site]) return {};
+  if (site === 'xiaohongshu') {
+    if (visibleText('.login-container,.login-modal,.login-main', /登录|扫码/) || location.pathname.startsWith('/login')) return { authenticated: false };
+    const own = [...document.querySelectorAll('header a[href],aside a[href],.side-bar a[href]')].some(node => {
+      const url = new URL(node.href, location.origin);
+      return node.getClientRects().length && /^(我|Me)$/i.test(node.textContent.trim()) && url.origin === origins.xiaohongshu && /^\/user\/profile\/[a-f0-9]{24}$/.test(url.pathname);
+    });
+    return own ? { authenticated: true } : {};
+  }
   if (site === 'youtube') {
     // 当前访问者配置和顶部账号按钮共同证明登录，不读取视频作者资料。
     const loggedIn = globalThis.ytcfg?.get?.('LOGGED_IN');
@@ -170,7 +179,7 @@ export async function observeCurrentAccount(site, allowRequest = true) {
     return {authenticated: data.code === 0 && data.data?.isLogin === true && validId(data.data?.mid) ? true : undefined};
   }
   if (site === 'tieba' && visibleText('h1, h2, h3, button, [role="dialog"]', /^(登录贴吧|登录 探索更多内容)$/)) return { authenticated: false };
-  const paths = { instagram: '/api/v1/accounts/current_user/?edit=true', zhihu: '/api/v4/me?include=url_token', linkedin: '/voyager/api/me', weibo: '/ajax/config/get_config', tieba: '/dc/common/tbs' };
+  const paths = { instagram: '/api/v1/accounts/current_user/?edit=true', linkedin: '/voyager/api/me', weibo: '/ajax/config/get_config', tieba: '/dc/common/tbs' };
   const headers = site === 'instagram' ? { 'X-IG-App-ID': '936619743392459', Accept: 'application/json' } : { Accept: 'application/json' };
   if (site === 'linkedin') {
     // Existing same-origin request token stays inside the provider page.
@@ -184,7 +193,6 @@ export async function observeCurrentAccount(site, allowRequest = true) {
   if (!(response.headers.get('content-type') || '').includes('json')) return {};
   const data = await response.json();
   if (site === 'instagram') return { authenticated: data.status === 'ok' && !!data.user?.pk ? true : undefined };
-  if (site === 'zhihu') return { authenticated: !!data.url_token && !!(data.uid || data.id) ? true : undefined };
   if (site === 'linkedin') return { authenticated: !!data.miniProfile?.publicIdentifier ? true : undefined };
   // This fixed config endpoint returns the current session UID; an explicit
   // anonymous flag overrides it. Public profile responses are never queried.
@@ -194,9 +202,10 @@ export async function observeCurrentAccount(site, allowRequest = true) {
 }
 
 export async function readSiteLogin(page, site) {
-  const urls = { bilibili: 'https://www.bilibili.com/', tiktok: 'https://www.tiktok.com/explore', instagram: 'https://www.instagram.com/', facebook: 'https://www.facebook.com/me', zhihu: 'https://www.zhihu.com/', douyin: 'https://www.douyin.com/user/self', linkedin: 'https://www.linkedin.com/feed/', 'linkedin-learning': 'https://www.linkedin.com/learning/', weibo: 'https://weibo.com/', tieba: 'https://tieba.baidu.com/', medium: 'https://medium.com/', nowcoder: 'https://www.nowcoder.com/', douban: 'https://www.douban.com/mine/', pixiv: 'https://www.pixiv.net/' };
+  const urls = { bilibili: 'https://www.bilibili.com/', tiktok: 'https://www.tiktok.com/explore', instagram: 'https://www.instagram.com/', facebook: 'https://www.facebook.com/me', douyin: 'https://www.douyin.com/user/self', linkedin: 'https://www.linkedin.com/feed/', 'linkedin-learning': 'https://www.linkedin.com/learning/', weibo: 'https://weibo.com/', tieba: 'https://tieba.baidu.com/', medium: 'https://medium.com/', nowcoder: 'https://www.nowcoder.com/', douban: 'https://www.douban.com/mine/', pixiv: 'https://www.pixiv.net/' };
   urls.twitter = 'https://x.com/home';
   urls.youtube = 'https://www.youtube.com/';
+  urls.xiaohongshu = 'https://www.xiaohongshu.com/explore';
   if (!urls[site]) throw new Error('Unsupported authentication site');
   const target = await openProbePage(page, urls[site]);
   const attempts = site === 'tiktok' ? 5 : 3;

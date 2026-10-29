@@ -1,7 +1,8 @@
 // Source projection runs inside the selected official OpenCLI browser page.
 export function projectSearch(data, limit) {
   const fail = () => { throw new Error('ONECREW_TIKTOK_INVALID'); };
-  if (data?.status_code !== 0 || !Array.isArray(data.data) || data.data.length > 200) fail();
+  if (!Array.isArray(data?.data) || data.data.length > 200)
+    throw new Error(`ONECREW_TIKTOK_INVALID status=${JSON.stringify(data?.status_code)} data_type=${Array.isArray(data?.data) ? 'array' : typeof data?.data} count=${Array.isArray(data?.data) ? data.data.length : 'unknown'}`);
   const rows = [];
   const seen = new Set();
   for (const entry of data.data) {
@@ -27,6 +28,7 @@ export function projectSearch(data, limit) {
       url: 'https://www.tiktok.com/@' + author + '/video/' + id });
     if (rows.length === limit) break;
   }
+  if (!rows.length && data.status_code !== 0) throw new Error(`ONECREW_TIKTOK_INVALID status=${JSON.stringify(data.status_code)} message=${String(data.status_msg ?? '').slice(0, 300)}`);
   return rows;
 }
 
@@ -40,7 +42,7 @@ export async function readSearchPage(query, limit, project) {
   });
   if (response.status === 401) throw new Error('ONECREW_TIKTOK_AUTH');
   if (response.status === 429) throw new Error('ONECREW_TIKTOK_RISK');
-  if (!response.ok || !response.body) throw new Error('ONECREW_TIKTOK_HTTP');
+  if (!response.ok || !response.body) throw new Error(`ONECREW_TIKTOK_HTTP HTTP ${response.status}`);
   const reader = response.body.getReader();
   const decoder = new TextDecoder('utf-8', { fatal: true });
   let size = 0, text = '';

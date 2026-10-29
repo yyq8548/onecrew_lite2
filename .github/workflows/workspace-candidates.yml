@@ -44,6 +44,14 @@ jobs:
       - name: Prepare Mac native tools
         if: runner.os == 'macOS'
         run: brew install cmake ninja nasm
+      - name: Prepare Windows runtime
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $sevenZip = (Get-Command 7z.exe -ErrorAction Stop).Source
+          node development/prepare-windows-runtime.mjs --seven-zip $sevenZip --output dist/windows-runtime
+          if ($LASTEXITCODE -ne 0) { throw 'Windows runtime preparation failed' }
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
       - name: Check source independence
@@ -57,11 +65,14 @@ jobs:
           pnpm typecheck
           pnpm check:contracts
       - name: Build standalone candidate
+        shell: bash
         env:
           TARGET: ${{ matrix.target }}
         run: |
           test "$(node -p 'process.platform+"-"+process.arch')" = "$TARGET"
-          pnpm build:candidate --output "dist/native-candidates/$TARGET" --product-version 0.9.1 --target "$TARGET" --node "$(node -p 'process.execPath')" --web-assets onecrew_lite-web/dist --library-web-assets onecrew_lite-library/web/dist
+          runtime=()
+          if [ "$TARGET" = win32-x64 ]; then runtime=(--windows-runtime dist/windows-runtime); fi
+          pnpm build:candidate --output "dist/native-candidates/$TARGET" --product-version "$(node -p 'require("./onecrew_lite-app/package.json").version')" --target "$TARGET" --node "$(node -p 'process.execPath')" --web-assets onecrew_lite-web/dist --library-web-assets onecrew_lite-library/web/dist "${runtime[@]}"
       - name: Run TypeScript and adapter tests
         env:
           ONECREW_SEA_CANDIDATE_EXECUTABLE: ${{ github.workspace }}/dist/native-candidates/${{ matrix.target }}/${{ runner.os == 'Windows' && 'onecrew_lite.exe' || 'onecrew_lite' }}

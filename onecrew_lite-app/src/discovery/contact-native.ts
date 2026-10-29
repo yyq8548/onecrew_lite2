@@ -39,7 +39,8 @@ export function loadDiscoveryNativeContactMaterial(database: DatabaseSync, raw: 
   if (author === null) return null;
   const row = database.prepare(`SELECT h.id FROM discovery_search_hits h JOIN discovery_candidates c ON c.discovery_campaign_id=h.discovery_campaign_id
     AND c.source_platform=h.platform AND c.source_profile_ref=h.profile_ref
-    WHERE c.id=? AND c.discovery_campaign_id=? AND c.criteria_revision=? AND c.source_profile_ref=? AND h.source_url=json_extract(c.evidence_json,'$.source_urls[0]')`).get(input.candidate_id, input.campaign_id, input.expected_revision, input.profile_ref);
+    WHERE c.id=? AND c.discovery_campaign_id=? AND c.criteria_revision=? AND c.source_profile_ref=? AND(h.source_url=json_extract(c.evidence_json,'$.source_urls[0]')
+      OR(c.platform='youtube' AND json_type(c.evidence_json,'$.retained_youtube')='object' AND EXISTS(SELECT 1 FROM discovery_video_identity_bindings b JOIN discovery_video_completions v ON v.search_hit_id=b.search_hit_id WHERE b.search_hit_id=h.id AND b.candidate_id=c.id AND b.criteria_revision=c.criteria_revision))) ORDER BY h.captured_at,h.id LIMIT 1`).get(input.candidate_id, input.campaign_id, input.expected_revision, input.profile_ref);
   if (!row) return null;
   const material = buildDiscoveryReviewMaterial(loadDiscoveryReviewBasis(database, input.campaign_id, input.expected_revision, text.parse(row.id), true));
   if (material.candidate_id !== input.candidate_id || material.native_author_id !== author) throw new Error("contact_source_author_mismatch");
@@ -56,7 +57,7 @@ function nativeTexts(material: DiscoveryReviewMaterial): (string | null | undefi
 }
 export function discoveryAuthorObservesLink(database: DatabaseSync, material: DiscoveryReviewMaterial, url: string): boolean {
   const fields = discoveryProfileContactFields(database, material);
-  return discoveryObservesLink(fields, url) || nativeTexts(material).some(text => text != null && discoveryObservesLink(text, url) && !discoveryPromotional(url, text) && !discoveryThirdPartyLink(url, text)) || material.public_pages.some(page => page.status === "completed" && page.stop_code === null && discoveryYoutubeProfileUrl(material) === page.requested_url && discoveryObservesLink(page.markdown_excerpt, url) && !discoveryPromotional(url, page.markdown_excerpt) && !discoveryThirdPartyLink(url, page.markdown_excerpt));
+  return discoveryObservesLink(fields, url) || nativeTexts(material).some(text => text != null && discoveryObservesLink(text, url) && !discoveryPromotional(url, text) && !discoveryThirdPartyLink(url, text, material.hit.author_label ?? "")) || material.public_pages.some(page => page.status === "completed" && page.stop_code === null && discoveryYoutubeProfileUrl(material) === page.requested_url && discoveryObservesLink(page.markdown_excerpt, url) && !discoveryPromotional(url, page.markdown_excerpt) && !discoveryThirdPartyLink(url, page.markdown_excerpt, material.hit.author_label ?? ""));
 }
 export function discoveryNativeLinkSource(database: DatabaseSync, input: DiscoveryPublicPageInput): readonly [string, string, string, string] | null {
   const material = loadDiscoveryNativeContactMaterial(database, input);
@@ -65,10 +66,10 @@ export function discoveryNativeLinkSource(database: DatabaseSync, input: Discove
   const youtube = discoveryYoutubeProfileUrl(material);
   if (youtube === input.requested_url) return source(input.requested_url);
   const fields = discoveryProfileContactFields(database, material);
-  for (const text of [...nativeTexts(material), fields]) if (text != null && discoveryObservesLink(text, input.requested_url) && !discoveryPromotional(input.requested_url, text) && !discoveryThirdPartyLink(input.requested_url, text)) return source(text);
+  for (const text of [...nativeTexts(material), fields]) if (text != null && discoveryObservesLink(text, input.requested_url) && !discoveryPromotional(input.requested_url, text) && !discoveryThirdPartyLink(input.requested_url, text, material.hit.author_label ?? "")) return source(text);
   for (const page of material.public_pages) {
     if (page.status !== "completed" || page.stop_code !== null) continue;
-    if (youtube === page.requested_url && discoveryObservesLink(page.markdown_excerpt, input.requested_url) && !discoveryPromotional(input.requested_url, page.markdown_excerpt) && !discoveryThirdPartyLink(input.requested_url, page.markdown_excerpt)) return source(page.markdown_excerpt);
+    if (youtube === page.requested_url && discoveryObservesLink(page.markdown_excerpt, input.requested_url) && !discoveryPromotional(input.requested_url, page.markdown_excerpt) && !discoveryThirdPartyLink(input.requested_url, page.markdown_excerpt, material.hit.author_label ?? "")) return source(page.markdown_excerpt);
     if (discoveryAuthorObservesLink(database, material, page.requested_url) && page.document_url !== null && discoveryContactPageLinks(page.document_url, page.markdown_excerpt).includes(input.requested_url)) return source(page.markdown_excerpt);
   }
   for (const [link, query] of loadDiscoveryContactLookupLinks(database, input.candidate_id, input.expected_revision)) if (link === input.requested_url) return source(query);
@@ -97,7 +98,7 @@ export function nextDiscoveryNativeContactLink(database: DatabaseSync, campaign:
     const observed = (text: string) => {
       for (const token of text.split(/\p{White_Space}+/u)) {
         const url = trimDiscoveryLink(token);
-        if (url.startsWith("https://") && Buffer.byteLength(url) <= 2048 && !url.includes("...") && !url.includes("…") && !discoveryCommunityInvite(url) && !discoveryThirdPartyLink(url, text)) links.push(url);
+        if (url.startsWith("https://") && Buffer.byteLength(url) <= 2048 && !url.includes("...") && !url.includes("…") && !discoveryCommunityInvite(url) && !discoveryThirdPartyLink(url, text, material.hit.author_label ?? "") && !discoveryPromotional(url, text)) links.push(url);
       }
     };
     for (const text of [...texts, fields]) if (text != null) observed(text);
@@ -111,7 +112,7 @@ export function nextDiscoveryNativeContactLink(database: DatabaseSync, campaign:
     for (const url of links) {
       const key = discoveryContactReadKey(url);
       if (seen.has(key)) continue; seen.add(key);
-      if (discoveryNonContact(url) || material.public_pages.some(page => page.status !== "reading" && (discoveryContactReadKey(page.requested_url) === key || page.document_url !== null && discoveryContactReadKey(page.document_url) === key)) || discoveryContactPriority(url, youtube) >= 4 && texts.some(text => text != null && discoveryPromotional(url, text))) continue;
+      if (discoveryNonContact(url) || material.public_pages.some(page => page.status !== "reading" && (discoveryContactReadKey(page.requested_url) === key || page.document_url !== null && discoveryContactReadKey(page.document_url) === key))) continue;
       const prior = database.prepare("SELECT status,call_number FROM discovery_public_page_reads WHERE candidate_id=? AND requested_url=?").get(row.id, url);
       const eligible = prior === undefined ? row.status === "completed" : prior.status === "reading" && row.status === "technical_stop" && row.active_query === `page:${row.id}:${z.number().int().min(0).max(4294967295).parse(prior.call_number)}`;
       if (!eligible) continue;

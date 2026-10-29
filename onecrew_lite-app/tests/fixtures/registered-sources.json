@@ -75,6 +75,14 @@
     {
       "allowed_values": [],
       "browser_required": true,
+      "command": "onecrew-xiaohongshu/search",
+      "platform": "xiaohongshu",
+      "registered": true,
+      "scope_kind": "query"
+    },
+    {
+      "allowed_values": [],
+      "browser_required": true,
       "command": "onecrew-search-google/search",
       "platform": "google",
       "registered": true,

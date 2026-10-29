@@ -13,6 +13,7 @@ export const CREATOR_SEARCH_SOURCES: Readonly<Record<string, SearchSource>> = Ob
   bilibili: { site: "onecrew-bilibili", name: "search", maximum: 50, addon: "onecrew-bilibili", discovery: true },
   douyin: { site: "onecrew-search-douyin", name: "search", maximum: 30, addon: "onecrew-browser-search", discovery: true },
   weibo: { site: "onecrew-search-weibo", name: "search", maximum: 50, addon: "onecrew-browser-search", discovery: true },
+  xiaohongshu: { site: "onecrew-xiaohongshu", name: "search", maximum: 20, addon: "onecrew-xiaohongshu", discovery: true },
   google: { site: "onecrew-search-google", name: "search", maximum: 50, addon: "onecrew-browser-search", discovery: true },
   yahoo: { site: "onecrew-search-yahoo", name: "search", maximum: 7, addon: "onecrew-browser-search", discovery: true },
   tieba: { site: "onecrew-search-tieba", name: "search", maximum: 20, addon: "onecrew-browser-search", discovery: false },

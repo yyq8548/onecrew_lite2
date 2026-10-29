@@ -104,8 +104,9 @@ export class OwnerResults {
       if (call.schema_revision !== operation.input_revision) throw new Error("schema_revision_mismatch");
       this.#inputs.validateOperation(operation.metadata.id, operation.input_revision, operation.input_schema, call.arguments);
       const handler = handlers.find(value => value.operation_id === call.operation_id);
-      if (handler) handler.validate(call);
-      else if (!(call.operation_id in ownerOperationRevisions)) throw new Error("mcp_handler_unavailable");
+      if (handler) {
+        if (operation.approval !== "attended_prompt") handler.validate(call);
+      } else if (!(call.operation_id in ownerOperationRevisions)) throw new Error("mcp_handler_unavailable");
       if (operation.connection.kind === "none" && call.connection !== null) throw new Error("operation_connection_mismatch");
       if (operation.connection.kind !== "none" && !handler?.validatesConnection) throw new Error("mcp_verified_connection_handler_unavailable");
       if (handler?.requiresSearchPlan) this.authorizeNativeSearch(selected.account, { operation_id: call.operation_id, schema_revision: call.schema_revision, connection: call.connection, arguments: call.arguments });

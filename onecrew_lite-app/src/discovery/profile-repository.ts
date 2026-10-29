@@ -23,12 +23,12 @@ const profileStops = new Set(["opencli_timeout", "opencli_output_too_large", "op
 for (const code of NATIVE_READ_FAILURE_CODES) profileStops.add(code);
 for (const code of PLATFORM_READ_FAILURE_CODES) if (code.startsWith("linkedin_profile_") || code.startsWith("facebook_profile_")) profileStops.add(code);
 export interface DiscoveryProfileReceipt { claim: DiscoveryProfileClaim; status: string; native_profile: Record<string, unknown> | null; stop_code: string | null; captured_at: number | bigint }
-const sourcePlatforms = ["bilibili", "tiktok", "twitter", "facebook", "instagram", "weibo", "bluesky", "zhihu", "hackernews", "pixiv", "linkedin"];
+const sourcePlatforms = ["bilibili", "tiktok", "twitter", "facebook", "instagram", "weibo", "bluesky", "hackernews", "pixiv", "linkedin", "xiaohongshu"];
 
 export function validateDiscoveryProfileResult(claim: DiscoveryProfileClaim, native: Record<string, unknown> | null, stop: string | null): void {
   if (native === null) { if (stop !== null && profileStops.has(stop)) return; throw new Error("discovery_profile_result_invalid"); }
   if (stop !== null || Buffer.byteLength(stringifyApplicationJson(native)) > 16000) throw new Error("discovery_profile_result_invalid");
-  const key = ({ bilibili: "mid", tiktok: "id", twitter: "handle", facebook: "id", instagram: "id", weibo: "id", bluesky: "did", zhihu: "author_id", hackernews: "author_id", pixiv: "author_id", linkedin: "author_handle" } as Record<string, string>)[claim.platform];
+  const key = ({ bilibili: "mid", tiktok: "id", twitter: "handle", facebook: "id", instagram: "id", weibo: "id", bluesky: "did", zhihu: "author_id", hackernews: "author_id", pixiv: "author_id", linkedin: "author_handle", xiaohongshu: "author_id" } as Record<string, string>)[claim.platform];
   if (!key || native[key] !== claim.author_id || native[claim.platform === "zhihu" ? "author_url" : "profile_url"] !== claim.author_url) throw new Error("discovery_profile_result_invalid");
   if (claim.platform === "instagram") validateSavedDiscoveryInstagramProfile(claim.author_id, native);
   else if (claim.platform === "twitter") {
@@ -69,7 +69,7 @@ export class DiscoveryProfileRepository {
       JOIN discovery_platform_runs r ON r.discovery_campaign_id=c.id AND r.platform=h.platform AND r.profile_ref=h.profile_ref
       LEFT JOIN discovery_profile_reads p ON p.discovery_campaign_id=c.id AND p.platform=h.platform AND p.profile_ref=h.profile_ref AND p.author_id=a.author_id
       WHERE c.id=?1 AND c.phase='active' AND v.approved_at IS NOT NULL
-        AND h.platform IN ('bilibili','tiktok','twitter','facebook','instagram','weibo','bluesky','zhihu','hackernews','pixiv','linkedin')
+        AND h.platform IN ('bilibili','tiktok','twitter','facebook','instagram','weibo','bluesky','hackernews','pixiv','linkedin','xiaohongshu')
         AND h.platform NOT IN(SELECT value FROM json_each(?2)) AND h.id NOT IN(SELECT value FROM json_each(?3))
         AND (?4 IS NULL OR h.platform=?4)
         AND NOT EXISTS(SELECT 1 FROM json_each(v.criteria_json,'$.excluded_accounts') excluded WHERE json_extract(excluded.value,'$.profile_url')=a.author_url)
@@ -170,16 +170,16 @@ export class DiscoveryProfileRepository {
   }
   #project(receipt: DiscoveryProfileReceipt): void {
     const native = receipt.native_profile; if (native === null || receipt.status !== "completed") return;
-    const claim = receipt.claim, key = ({ bilibili: "name", weibo: "name", tiktok: "display_name", facebook: "display_name", instagram: "display_name", bluesky: "display_name", twitter: "name", hackernews: "username", zhihu: "author_label", pixiv: "author_label", linkedin: "author_label", douyin: "author_label" } as Record<string, string>)[claim.platform];
+    const claim = receipt.claim, key = ({ bilibili: "name", weibo: "name", tiktok: "display_name", facebook: "display_name", instagram: "display_name", bluesky: "display_name", twitter: "name", hackernews: "username", zhihu: "author_label", pixiv: "author_label", linkedin: "author_label", douyin: "author_label", xiaohongshu: "author_label" } as Record<string, string>)[claim.platform];
     const name = key === undefined ? undefined : native[key];
     if (typeof name !== "string" || !name.trim() || /\p{Cc}/u.test(name)) return;
     const followers = typeof native.follower_count === "bigint" ? native.follower_count : typeof native.follower_count === "number" ? BigInt(native.follower_count) : null;
-    if (!["twitter", "facebook", "instagram", "weibo", "bluesky", "zhihu", "hackernews", "pixiv", "linkedin", "douyin"].includes(claim.platform) && followers === null) throw new Error("discovery_profile_follower_count_missing");
+    if (!["twitter", "facebook", "instagram", "weibo", "bluesky", "zhihu", "hackernews", "pixiv", "linkedin", "douyin", "xiaohongshu"].includes(claim.platform) && followers === null) throw new Error("discovery_profile_follower_count_missing");
     const account = claim.platform === "twitter" ? text.parse(this.#db.prepare("SELECT account_id FROM discovery_profile_identity_matches WHERE search_hit_id=?").get(claim.search_hit_id)!.account_id) : claim.platform === "linkedin" ? text.parse(native.account_id) : claim.author_id;
     const criteria = discoveryCriteriaForPlatform(parseApplicationJson(text.parse(this.#db.prepare("SELECT criteria_json FROM discovery_campaign_revisions WHERE discovery_campaign_id=? AND revision=? AND approved_at IS NOT NULL").get(claim.campaign_id, claim.expected_revision)!.criteria_json)), claim.platform);
     const evidence = { source_urls: [claim.source_url, claim.author_url], subscribers_raw: claim.platform === "douyin" || ["facebook", "instagram"].includes(claim.platform) && followers === null ? typeof native.follower_text === "string" ? native.follower_text : null : followers === null ? null : String(followers), subscribers_source_url: claim.author_url, author_identity_kind: "native_id", author_identity_search_hit_id: claim.platform === "twitter" ? claim.search_hit_id : null, captured_at: receipt.captured_at };
     const assessment = claim.platform === "facebook" && native.follower_text === "" ? { verdict: "rejected" as const, reasons: ["followers_unavailable"], subscribers: null } : claim.platform === "instagram" && native.private_account === true ? { verdict: "rejected" as const, reasons: ["private_account"], subscribers: followers } : claim.platform === "instagram" && followers === null ? assessDiscoveryInstagram(criteria, evidence, account, typeof native.follower_text === "string" ? native.follower_text : null) : claim.platform === "douyin" && followers === null ? assessDiscoveryDouyin(criteria, evidence, account, typeof native.follower_text === "string" ? native.follower_text : null) : claim.platform === "facebook" && followers === null ? assessDiscoveryFacebook(criteria, evidence, account, typeof native.follower_text === "string" ? native.follower_text : null) : assessDiscoveryProfile(criteria, evidence, account, followers);
-    const biography = native[["weibo", "linkedin", "douyin"].includes(claim.platform) ? "bio" : claim.platform === "tiktok" ? "signature" : claim.platform === "bilibili" ? "sign" : "biography"];
+    const biography = native[["weibo", "linkedin", "douyin", "zhihu", "xiaohongshu"].includes(claim.platform) ? "bio" : claim.platform === "tiktok" ? "signature" : claim.platform === "bilibili" ? "sign" : "biography"];
     const bioStatus = ["complete", "truncated", "missing", "unavailable", "unknown"].includes(String(native.bio_status)) ? native.bio_status : native.bio_truncated === true ? "truncated" : native.bio_truncated === false || claim.platform === "tiktok" ? typeof biography === "string" && biography.trim() ? "complete" : "missing" : "unknown";
     Object.assign(evidence, { profile_bio_status: bioStatus, profile_bio_status_source_url: claim.author_url });
     const saved = stringifyApplicationJson(assessedDiscoveryEvidence(evidence, assessment)); if (Buffer.byteLength(saved) > 16384) throw new Error("discovery_profile_evidence_too_large");

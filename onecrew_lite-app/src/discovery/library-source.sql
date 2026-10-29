@@ -43,7 +43,7 @@ WITH bindings AS (
    AND (
     (p.platform='bilibili' AND json_extract(p.native_profile_json,'$.mid')=a.author_id)
     OR (p.platform IN ('tiktok','facebook','instagram','weibo') AND json_extract(p.native_profile_json,'$.id')=a.author_id)
-    OR (p.platform IN ('zhihu','hackernews','pixiv') AND json_extract(p.native_profile_json,'$.author_id')=a.author_id)
+    OR (p.platform IN ('zhihu','hackernews','pixiv','xiaohongshu') AND json_extract(p.native_profile_json,'$.author_id')=a.author_id)
     OR (p.platform='douyin' AND json_extract(p.native_profile_json,'$.author_id')=a.author_id
       AND EXISTS(SELECT 1 FROM discovery_douyin_author_reads joint WHERE joint.search_hit_id=h.id
         AND joint.discovery_campaign_id=h.discovery_campaign_id AND joint.expected_revision=?2

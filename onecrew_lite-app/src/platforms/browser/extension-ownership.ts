@@ -5,7 +5,7 @@ import type { AccountContext, AccountContextService } from "../../identity/accou
 import { verifyPrivateFile } from "../../storage/private-backup.ts";
 import { readVaultMasterKey } from "../../storage/vault-reader.ts";
 import { parseApplicationJson } from "../../contracts/application-json.ts";
-import { browserBindingManifestSchema, verifyAccountOwnedChromeDirectory, type BrowserAccountDirectoryResolver, type TrustedExtensionContextProofVerifier } from "./binding.ts";
+import { browserBindingManifestSchema, verifyAccountOwnedChromeDirectory, type BrowserAccountDirectoryResolver, type TrustedExtensionContextProofVerifier, type VerifiedOwnedChromeDirectory } from "./binding.ts";
 import { VerifiedManagedExtensionContext } from "./extension-challenge.ts";
 
 type ProofInput = Parameters<TrustedExtensionContextProofVerifier["verify"]>[0];
@@ -20,7 +20,7 @@ export class ManagedBrowserOwnership implements TrustedExtensionContextProofVeri
   readonly #directories: BrowserAccountDirectoryResolver;
   readonly #pending = new Map<string, Promise<unknown>>();
   constructor(accounts: AccountContextService, directories: BrowserAccountDirectoryResolver) { this.#accounts = accounts; this.#directories = directories; }
-  async verify(input: ProofInput): Promise<void> {
+  async verify(input: ProofInput): Promise<VerifiedOwnedChromeDirectory> {
     const context = this.#accounts.current(), expected = owner(context);
     if (!sameOwner(input, expected) || input.deviceId !== context.principal.deviceId || !/^v1\.[A-Za-z0-9_-]{43}$/u.test(input.proof)) throw new Error("browser.extension_owner_mismatch");
     const account = await this.#directories.accountDirectory(context);
@@ -31,6 +31,7 @@ export class ManagedBrowserOwnership implements TrustedExtensionContextProofVeri
       const actual = Buffer.from(input.proof.slice(3), "base64url"), expectedProof = createHmac("sha256", key).update(signingBytes({ ...input, profileDirectory: directory.path }, directory.identity)).digest();
       if (actual.length !== expectedProof.length || !timingSafeEqual(actual, expectedProof)) throw new Error("browser.extension_proof_invalid");
       account.assertOwned(); this.#accounts.assertCurrent(context);
+      return directory;
     } finally { key.fill(0); }
   }
   async register(context: AccountContext, verified: VerifiedManagedExtensionContext): Promise<Readonly<{ bindingId: string; contextId: string }>> {

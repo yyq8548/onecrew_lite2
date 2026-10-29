@@ -1,6 +1,6 @@
 import { getAsset, isSea } from "node:sea";
 import { lstat, realpath } from "node:fs/promises";
-import { join } from "node:path";
+import { delimiter, join } from "node:path";
 import { homedir } from "node:os";
 import { createRequire } from "node:module";
 import { createHash } from "node:crypto";
@@ -30,6 +30,7 @@ for (const part of ["OneCrewLite", "cache", "runtime"]) {
 }
 const payloadRoot = await realpath(await materializePayload(manifest, path => new Uint8Array(getAsset(path)), directory, permissions));
 await permissions.verify(payloadRoot);
+if (process.platform === "win32") process.env.PATH = `${join(payloadRoot, "runtime")}${delimiter}${process.env.PATH ?? ""}`;
 Object.defineProperty(globalThis, Symbol.for("onecrew_lite.verified_payload"), { value: Object.freeze({ payloadRoot, payloadSha256: manifest.payloadSha256, executablePath }), writable: false, configurable: false });
 const loader = join(payloadRoot, "app", "runtime-loader.cjs");
 const cli = await createRequire(loader)(loader);

@@ -70,3 +70,33 @@ export async function readWeiboEvidence(page, args, kind, ownPage) {
     return [kind === 'profile' ? projectWeiboProfile(payload, args.id) : projectWeiboRecent(payload, args.id)];
   });
 }
+
+export async function fetchWeiboPost(id, readId) {
+  if (location.origin==='https://passport.weibo.com') throw new Error('ONECREW_WEIBO_AUTH');
+  if (location.origin!=='https://weibo.com') throw new Error('ONECREW_WEIBO_SOURCE_INVALID');
+  const get = async path => {
+    const response = await fetch(path, {credentials:'include',signal:AbortSignal.timeout(15000)});
+    if (response.status===401 || new URL(response.url).hostname==='passport.weibo.com') throw new Error('ONECREW_WEIBO_AUTH');
+    if (response.status===403 || response.status===429) throw new Error(`ONECREW_WEIBO_RISK HTTP ${response.status}`);
+    if (!response.ok) throw new Error(`ONECREW_WEIBO_HTTP HTTP ${response.status}`);
+    return response.json();
+  };
+  const post = await get('/ajax/statuses/show?id='+encodeURIComponent(id));
+  const postId = readId(post), authorId = readId(post.user);
+  const plain = html => new DOMParser().parseFromString(html, 'text/html').body.textContent.trim();
+  let text = typeof post.text_raw==='string' ? post.text_raw : plain(post.text ?? '');
+  let completeness = post.isLongText===false || post.is_long_text===false ? 'complete' : 'unknown';
+  if (post.isLongText || post.is_long_text) {
+    const long = await get('/ajax/statuses/longtext?id='+postId);
+    if (typeof long.data?.longTextContent!=='string' || !long.data.longTextContent.trim()) throw new Error('ONECREW_WEIBO_LONGTEXT_UNAVAILABLE');
+    text=plain(long.data.longTextContent);completeness='complete';
+  }
+  const result = {id:postId,mblogid:post.mblogid,author:post.user.screen_name,text,created_at:post.created_at,
+    source:plain(post.source ?? ''),reposts:post.reposts_count,comments:post.comments_count,likes:post.attitudes_count,pic_count:post.pic_num,
+    url:`https://weibo.com/${authorId}/${post.mblogid}`,text_completeness:completeness};
+  if (post.retweeted_status) {
+    result.retweeted_from=post.retweeted_status.user?.screen_name ?? '';
+    result.retweeted_text=post.retweeted_status.text_raw ?? plain(post.retweeted_status.text ?? '');
+  }
+  return Object.fromEntries(Object.entries(result).filter(([,value])=>value!==undefined));
+}

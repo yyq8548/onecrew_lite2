@@ -13,6 +13,7 @@ import { validateDiscoveryRetainedContent, validateDiscoveryRetainedProfile } fr
 import { validateDiscoveryContentResult } from "./content-result.ts";
 import { linkedinConnectionObservation, linkedinExperiencePlan } from "../platforms/opencli/linkedin.ts";
 import { sameYoutubeVideoSource } from "../platforms/opencli/youtube.ts";
+import { loadRetainedYoutubeEvidence } from "./youtube-retained.ts";
 import { assessDiscoveryYoutube, discoveryCriteriaForPlatform, parseDiscoverySubscribers, parseDiscoveryDouyinFollowers, parseDiscoveryFacebookFollowers, parseDiscoveryInstagramFollowers } from "./qualification.ts";
 
 const scopesSchema = z.array(z.strictObject({ platform: z.string(), profile_ref: z.string(), keywords: z.array(z.string()) }));
@@ -59,11 +60,11 @@ export function loadDiscoveryReviewBasis(database: DatabaseSync, campaign: strin
       JOIN discovery_content_identity_bindings b ON b.search_hit_id=h.id AND b.identity_search_hit_id=h.id AND b.profile_search_hit_id=h.id`;
     candidateJoin = `JOIN discovery_candidates c ON c.discovery_campaign_id=d.id AND c.criteria_revision=d.current_revision
       AND c.platform=h.platform AND c.source_profile_ref=h.profile_ref AND c.platform_account_id=b.account_id`;
-  } else if (["tiktok", "instagram"].includes(platform)) {
+  } else if (["tiktok", "instagram", "xiaohongshu"].includes(platform)) {
     sourceJoin = `JOIN discovery_search_authors s ON s.search_hit_id=h.id
       JOIN discovery_profile_reads p ON p.search_hit_id=h.id AND p.discovery_campaign_id=d.id AND p.expected_revision=d.current_revision
       AND p.platform=h.platform AND p.profile_ref=h.profile_ref AND p.author_id=s.author_id
-      AND p.status='completed' AND p.stop_code IS NULL AND json_extract(p.native_profile_json,'$.id')=s.author_id`;
+      AND p.status='completed' AND p.stop_code IS NULL AND json_extract(p.native_profile_json,'$.${platform === "xiaohongshu" ? "author_id" : "id"}')=s.author_id`;
     candidateJoin = `JOIN discovery_candidates c ON c.discovery_campaign_id=d.id AND c.criteria_revision=d.current_revision
       AND c.platform=h.platform AND c.source_profile_ref=h.profile_ref AND c.platform_account_id=s.author_id
       AND h.source_url=json_extract(c.evidence_json,'$.source_urls[0]')`;
@@ -128,8 +129,9 @@ export function loadDiscoveryReviewBasis(database: DatabaseSync, campaign: strin
   }
   if (platform === "youtube") {
     const evidence = object(parse(basis.evidence_json)), sources = evidence.source_urls;
+    const retained = loadRetainedYoutubeEvidence(database, evidence, basis.native_author_id, basis.hit.profile_ref);
     // 旧版回执没有视频标题字段，保留其材料结构及历史身份回执的摘要。
-    if (typeof evidence.video_title === "string" && Array.isArray(sources) && sameYoutubeVideoSource(sources[0], basis.hit.source_url) && assessDiscoveryYoutube({}, evidence, basis.native_author_id).subscribers !== null && typeof evidence.subscribers_raw === "string") {
+    if (typeof evidence.video_title === "string" && Array.isArray(sources) && (retained !== null || sameYoutubeVideoSource(sources[0], basis.hit.source_url)) && assessDiscoveryYoutube({}, evidence, basis.native_author_id).subscribers !== null && typeof evidence.subscribers_raw === "string") {
       const estimate = parseDiscoverySubscribers(evidence.subscribers_raw)!;
       const profileUrl = `https://www.youtube.com/channel/${basis.native_author_id}`;
       basis.native_followers = estimate.lower === estimate.upper ? estimate.nominal : null;
@@ -137,6 +139,7 @@ export function loadDiscoveryReviewBasis(database: DatabaseSync, campaign: strin
       basis.native_profile = { profile_url: profileUrl, observed_at: z.number().int().positive().safe().parse(evidence.captured_at) };
       basis.hit.author_id = basis.native_author_id; basis.hit.author_url = profileUrl; basis.hit.author_observed_at = basis.native_profile.observed_at;
     }
+    if (retained) basis.native_content = { claim: { campaign_id: campaign, expected_revision: revision, search_hit_id: hit, platform: "youtube", profile_ref: basis.hit.profile_ref, author_id: basis.native_author_id, source_url: retained.source_url, call_number: retained.call_number }, status: "completed", stop_code: null, captured_at: z.number().int().positive().parse(evidence.captured_at), native_content: { source_url: retained.source_url, author_id: basis.native_author_id, text: `${z.string().parse(evidence.video_title)}\n\n${z.string().parse(evidence.video_description)}`, retained_source_hit_id: retained.search_hit_id } };
   }
   if (webSource) {
     const read = loadDiscoveryWebSourceReceipt(database, campaign, hit), evidence = object(parse(basis.evidence_json)), native = read.native, profile = object(native.profile), content = object(native.content);
@@ -184,6 +187,24 @@ export function loadDiscoveryReviewBasis(database: DatabaseSync, campaign: strin
       }
     }
     basis.hit.author_id = profile.claim.author_id; basis.hit.author_url = profile.claim.author_url; basis.hit.author_observed_at = profile.captured_at;
+  }
+  if (platform === "xiaohongshu") {
+    const profile = loadDiscoveryProfileReceipt(database, campaign, hit), authorUrl = profile.claim.author_url;
+    if (profile.status !== "completed" || profile.stop_code !== null || profile.claim.expected_revision !== revision || profile.claim.profile_ref !== basis.hit.profile_ref || profile.claim.author_id !== basis.native_author_id || profile.claim.source_url !== basis.hit.source_url) throw new Error("review_native_profile_binding_unavailable");
+    const native = validateDiscoveryRetainedProfile(platform, profile.claim.author_id, authorUrl, profile.claim.source_url, profile.native_profile);
+    basis.native_followers = typeof native.follower_count === "number" ? native.follower_count : null;
+    const previews = z.array(z.object({ title: z.string() })).parse(native.visible_posts);
+    basis.native_profile = { web_text: previews.map(post => post.title).join("\n"), profile_url: authorUrl, observed_at: profile.captured_at, bio: bounded(native.bio, 8000), bio_status: native.bio_status === "complete" ? "complete" : "missing", self_declared_location: null };
+    const saved = database.prepare("SELECT 1 FROM discovery_content_reads WHERE discovery_campaign_id=? AND search_hit_id=?").get(campaign, hit);
+    if (saved) {
+      const content = loadDiscoveryContentReceipt(database, campaign, hit);
+      if (content.status === "completed" && content.stop_code === null) {
+        if (content.claim.expected_revision !== revision || content.claim.platform !== platform || content.claim.profile_ref !== basis.hit.profile_ref || content.claim.author_id !== basis.native_author_id || content.claim.source_url !== basis.hit.source_url || content.claim.call_number <= profile.claim.call_number) throw new Error("review_native_content_binding_unavailable");
+        validateDiscoveryRetainedContent(platform, content.claim.author_id, content.claim.source_url, content.native_content);
+        basis.native_content = content;
+      }
+    }
+    basis.hit.author_id = profile.claim.author_id; basis.hit.author_url = authorUrl; basis.hit.author_observed_at = profile.captured_at;
   }
   if (platform === "tiktok") {
     const stored = database.prepare(`SELECT s.author_id,s.author_url,s.observed_at,p.native_profile_json,p.updated_at

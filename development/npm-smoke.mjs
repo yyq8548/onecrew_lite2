@@ -10,7 +10,7 @@ import { parseArgs, promisify } from 'node:util';
 const require = createRequire(new URL('../onecrew_lite-app/package.json', import.meta.url));
 const { Client } = await import(pathToFileURL(require.resolve('@modelcontextprotocol/sdk/client/index.js')));
 const { StdioClientTransport } = await import(pathToFileURL(require.resolve('@modelcontextprotocol/sdk/client/stdio.js')));
-const { values } = parseArgs({ options: { 'node-modules': { type: 'string' }, output: { type: 'string' } } });
+const { values } = parseArgs({ options: { 'node-modules': { type: 'string' }, output: { type: 'string' }, catalog: { type: 'string' } } });
 assert.ok(values['node-modules'] && values.output, 'Required: --node-modules <installed node_modules> --output <new smoke directory>');
 const modules = path.resolve(values['node-modules']);
 const output = path.resolve(values.output);
@@ -18,7 +18,7 @@ await mkdir(output);
 const data = path.join(output, 'data');
 const entry = path.join(modules, '@onecrew/lite/bin/onecrew-lite.cjs');
 const execute = promisify(execFile);
-const catalog = JSON.parse(await readFile(new URL('./npm-release-inputs.json', import.meta.url), 'utf8'));
+const catalog = JSON.parse(await readFile(values.catalog ? path.resolve(values.catalog) : new URL('./npm-release-inputs.json', import.meta.url), 'utf8'));
 const startedAt = performance.now();
 const timings = {};
 

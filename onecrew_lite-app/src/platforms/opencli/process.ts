@@ -17,7 +17,7 @@ export function classifyOpenCliFailure(exitCode: number | null, stdout: Uint8Arr
   const diagnostics = { stage: "process_exit", exit_code: exitCode, stdout: new TextDecoder().decode(stdout), stderr: new TextDecoder().decode(stderr) };
   const output = `${diagnostics.stdout} ${diagnostics.stderr}`.toLowerCase();
   const failure = (code: OpenCliErrorCode) => new OpenCliError(code, exitCode, diagnostics);
-  const families = ["onecrew_instagram_search", "onecrew_linkedin", "onecrew_fb_profile", "onecrew_fb_contact", "onecrew_facebook_search"];
+  const families = ["onecrew_instagram_search", "onecrew_linkedin", "onecrew_fb_profile", "onecrew_fb_contact", "onecrew_facebook_search", "onecrew_xiaohongshu"];
   if (families.some(family => output.includes(`${family}_risk`))) return failure("opencli_risk_control");
   if (families.some(family => new RegExp(`${family}_auth(?:[^a-z]|$)`, "u").test(output))) return failure("opencli_auth_required");
   if (exitCode === 77 || ["auth_required", "not logged in", "http 401 - make sure you are logged in to instagram"].some(marker => output.includes(marker))) return failure("opencli_auth_required");
@@ -25,12 +25,14 @@ export function classifyOpenCliFailure(exitCode: number | null, stdout: Uint8Arr
   const native = classifyNativeReadFailure(output);
   if (native) return failure(native);
   if (["onecrew_instagram_recent_source_", "onecrew_instagram_recent_invalid_", "onecrew_linkedin_invalid", "onecrew_weibo_profile_invalid", "onecrew_weibo_followers_invalid", "onecrew_weibo_id_conflict", "onecrew_weibo_id_invalid", "onecrew_weibo_recent_invalid", "onecrew_weibo_recent_id_invalid", "onecrew_douyin_invalid", "onecrew_pixiv_invalid", "onecrew_facebook_source_invalid", "onecrew_facebook_source_ambiguous", "onecrew_facebook_comments_invalid", "onecrew_facebook_comments_unavailable", "onecrew_fb_recent_invalid", "onecrew_fb_recent_unavailable", "onecrew_fb_identity_invalid", "onecrew_fb_profile_invalid", "onecrew_fb_contact_invalid", "onecrew_fb_original_unavailable"].some(marker => output.includes(marker))) return failure("opencli_invalid_output");
-  if (exitCode === 75 && output.split(/\r?\n/u).some(line => line.trim() === "code: timeout") || output.includes("onecrew_instagram_search_timeout")) return failure("opencli_timeout");
+  if (exitCode === 75 && output.split(/\r?\n/u).some(line => line.trim() === "code: timeout") || output.includes("onecrew_instagram_search_timeout") || output.includes("onecrew_xiaohongshu_page_timeout")) return failure("opencli_timeout");
   return failure("opencli_command_failed");
 }
 function classifyNativeReadFailure(output: string): OpenCliErrorCode | null {
-  if (["onecrew_youtube_search_bootstrap_timeout", "onecrew_youtube_page_timeout", "onecrew_profile_timeout"].some(marker => output.includes(marker))) return "opencli_timeout";
+  if (["onecrew_youtube_search_bootstrap_timeout", "onecrew_youtube_page_timeout", "onecrew_profile_timeout", "onecrew_xiaohongshu_page_timeout"].some(marker => output.includes(marker))) return "opencli_timeout";
   const stages: readonly (readonly [string, OpenCliErrorCode])[] = [
+    ["onecrew_xiaohongshu_unavailable", "provider_source_unavailable"],
+    ["onecrew_xiaohongshu_", "provider_response_shape_invalid"],
     ["onecrew_linkedin_invalid_contact_profile_route", "linkedin_contact_profile_route"],
     ["onecrew_linkedin_invalid_contact_dialog_owner", "linkedin_contact_dialog_owner_conflict"],
     ["onecrew_linkedin_invalid_contact_owner", "linkedin_contact_owner_conflict"],

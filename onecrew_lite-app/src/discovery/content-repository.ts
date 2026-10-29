@@ -39,9 +39,9 @@ export class DiscoveryContentRepository {
       LEFT JOIN discovery_content_reads content ON content.search_hit_id=h.id
       WHERE c.id=?1 AND c.phase='active' AND h.platform=?2 AND h.id NOT IN(SELECT value FROM json_each(?3)) AND p.status='completed' AND p.expected_revision=c.current_revision
       AND(h.platform!='instagram' OR COALESCE(json_extract(p.native_profile_json,'$.private_account'),0)!=1)
-      AND(h.platform!='instagram' OR content.status='reading' OR EXISTS(SELECT 1 FROM discovery_candidates pending
+      AND(h.platform NOT IN('instagram','xiaohongshu') OR content.status='reading' OR EXISTS(SELECT 1 FROM discovery_candidates pending
         JOIN discovery_evidence_reviews reviewed ON reviewed.id=json_extract(pending.evidence_json,'$.reviewed_selection.review_id')
-        WHERE pending.discovery_campaign_id=c.id AND pending.criteria_revision=c.current_revision AND pending.platform='instagram'
+        WHERE pending.discovery_campaign_id=c.id AND pending.criteria_revision=c.current_revision AND pending.platform=h.platform
           AND pending.source_profile_ref=h.profile_ref AND pending.platform_account_id=a.author_id AND pending.verdict='pending'
           AND reviewed.discovery_campaign_id=c.id AND reviewed.criteria_revision=c.current_revision AND reviewed.search_hit_id=h.id
           AND reviewed.candidate_id=pending.id AND reviewed.native_author_id=pending.platform_account_id AND reviewed.profile_ref=h.profile_ref
@@ -71,7 +71,7 @@ export class DiscoveryContentRepository {
       if (!head) throw new Error("discovery_content_not_approved"); const counter = z.object({ used_calls: u32 }).parse(head);
       const row = this.#db.prepare(`SELECT h.platform,h.profile_ref,a.author_id,h.source_url FROM discovery_search_hits h JOIN discovery_search_authors a ON a.search_hit_id=h.id
         JOIN discovery_profile_reads p ON p.discovery_campaign_id=h.discovery_campaign_id AND p.platform=h.platform AND p.profile_ref=h.profile_ref AND p.author_id=a.author_id AND p.status='completed' AND p.expected_revision=?3
-        WHERE h.id=?1 AND h.discovery_campaign_id=?2 AND h.platform IN('bilibili','twitter','facebook','instagram','weibo','bluesky','zhihu','hackernews','pixiv','linkedin')
+        WHERE h.id=?1 AND h.discovery_campaign_id=?2 AND h.platform IN('bilibili','twitter','facebook','instagram','weibo','bluesky','hackernews','pixiv','linkedin','xiaohongshu')
         AND(h.platform!='instagram' OR COALESCE(json_extract(p.native_profile_json,'$.private_account'),0)!=1)
         AND h.id=(SELECT h2.id FROM discovery_search_hits h2 JOIN discovery_search_authors a2 ON a2.search_hit_id=h2.id WHERE h2.discovery_campaign_id=h.discovery_campaign_id AND h2.platform=h.platform AND h2.profile_ref=h.profile_ref AND a2.author_id=a.author_id ORDER BY h2.captured_at,COALESCE((SELECT position FROM discovery_search_positions WHERE search_hit_id=h2.id),9223372036854775807),h2.id LIMIT 1)`).get(hit, campaign, revision);
       if (!row) throw new Error("discovery_content_profile_observation_missing");

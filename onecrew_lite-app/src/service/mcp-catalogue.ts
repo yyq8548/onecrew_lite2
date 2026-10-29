@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { z } from "zod";
 import { parseApplicationJson } from "../contracts/application-json.ts";
 import { assertOperationAvailable } from "../contracts/retired-operations.ts";
-import { runtimeAssetPath } from "../packaging/runtime-context.ts";
+import { getPackagedRuntime, runtimeAssetPath } from "../packaging/runtime-context.ts";
 import { mcpSurface, type McpSurface } from "./mcp-sessions.ts";
 import { mcpEffect, mcpEntryId, mcpToolkit, mcpToolGetInput } from "./mcp-contracts.ts";
 import { discoveryContact } from "../discovery/library-material.ts";
@@ -28,14 +28,21 @@ export type McpExecutionContract = z.infer<typeof executionContract>;
 export type McpCatalogueData = z.infer<typeof source>;
 export const originalMcpRegistrySha256 = "a63a789c4e0ec45ac7ec5ae0121ee1793f5c159551ab4c68258ab20117870d50";
 
-export async function loadOriginalMcpRegistry(): Promise<McpCatalogueData> {
-  const bytes = await readFile(runtimeAssetPath("mcp-registry-data.json", new URL("./mcp-registry-data.json", import.meta.url)));
-  if (createHash("sha256").update(bytes).digest("hex") !== originalMcpRegistrySha256) throw new Error("mcp_registry_source_changed");
+export function parseCurrentMcpRegistry(bytes: Uint8Array | string): McpCatalogueData {
   const data = source.parse(parseApplicationJson(bytes));
   if (new Set(data.entries.map(value => value.metadata.id)).size !== data.entries.length) throw new Error("mcp_registry_duplicate_entry");
   return data;
 }
+export async function loadOriginalMcpRegistry(): Promise<McpCatalogueData> {
+  const bytes = await readFile(runtimeAssetPath("mcp-registry-data.json", new URL("./mcp-registry-data.json", import.meta.url)));
+  if (createHash("sha256").update(bytes).digest("hex") !== originalMcpRegistrySha256) throw new Error("mcp_registry_source_changed");
+  return parseCurrentMcpRegistry(bytes);
+}
 export async function loadCurrentMcpRegistry(): Promise<McpCatalogueData> {
+  if (!getPackagedRuntime()) return buildCurrentMcpRegistry();
+  return parseCurrentMcpRegistry(await readFile(runtimeAssetPath("mcp-current-registry.json", new URL("./mcp-current-registry.json", import.meta.url))));
+}
+export async function buildCurrentMcpRegistry(): Promise<McpCatalogueData> {
   const data = await loadOriginalMcpRegistry();
   const template = data.entries.find((entry): entry is McpOperationEntry => entry.kind === "operation" && entry.metadata.id === "onecrew.discovery.advance")!;
   const basicInput = { type: "object", additionalProperties: false, required: ["campaign_id", "expected_revision"], properties: { campaign_id: { type: "string", minLength: 1 }, expected_revision: { type: "integer", minimum: 1, maximum: 4294967295 } } };
