@@ -41,4 +41,5 @@ jobs:
           path: |
             .scratch/windows-native-smoke/acceptance.json
             .scratch/windows-native-smoke/data/service.log
+            .scratch/windows-native-smoke/mcp-stderr.log
           if-no-files-found: warn
