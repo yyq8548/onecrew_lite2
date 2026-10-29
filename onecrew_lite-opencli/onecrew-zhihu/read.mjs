@@ -10,7 +10,9 @@ export function zhihuProfile(data, expectedId, token) {
   if (identity.author_id !== expectedId || identity.url_token !== token) throw new Error('ONECREW_ZHIHU_INVALID_PROFILE_OWNER');
   const followers = data.follower_count ?? null;
   if (followers !== null && (!Number.isSafeInteger(followers) || followers < 0)) throw new Error('ONECREW_ZHIHU_INVALID_FOLLOWERS');
-  return { ...identity, follower_count: followers, bio: [data.headline, data.description].filter(value => typeof value === 'string' && value.trim()).join('\n') };
+  const bio = [data.headline, data.description].filter(value => typeof value === 'string' && value.trim()).join('\n');
+  const bio_status = typeof data.headline === 'string' && typeof data.description === 'string' ? bio.trim() ? 'complete' : 'missing' : 'unknown';
+  return { ...identity, follower_count: followers, bio, bio_status };
 }
 
 export function zhihuSearchRows(data, limit) {
@@ -46,7 +48,11 @@ export async function fetchZhihuPage(url) {
   if (!data || typeof data !== 'object') return { failure: { status: response.status, code: 'INVALID_JSON', message: 'Expected JSON response' } };
   if (data.error) return { failure: { status: response.status, code: data.error.code ?? null, message: String(data.error.message || 'API error').slice(0, 500) } };
   // DOMParser 解析页面正文与简介，不手写 HTML 解析器。
-  const plain = html => new DOMParser().parseFromString(html, 'text/html').body.textContent.trim();
+  const plain = html => {
+    const document = new DOMParser().parseFromString(html, 'text/html');
+    for (const node of document.querySelectorAll('br,p,div,li,h1,h2,h3,h4,blockquote,pre,tr,a')) node.after('\n');
+    return document.body.textContent.trim();
+  };
   if (typeof data.content === 'string') {
     const document = new DOMParser().parseFromString(data.content, 'text/html');
     data.plain_text = document.body.textContent.trim();
@@ -95,6 +101,7 @@ export async function observeZhihuContent(source) {
           const url = new URL(anchor.getAttribute('href'), source);
           return url.hostname === 'link.zhihu.com' ? url.searchParams.get('target') : url.href;
         }).filter(value => value && /^(https:\/\/|mailto:)/.test(value));
+        for (const node of body.querySelectorAll('br,p,div,li,h1,h2,h3,h4,blockquote,pre,tr,a')) node.after('\n');
         return { id: entry.id, title: entry.title, question: answer ? { id: typeof entry.question === 'object' ? entry.question.id : entry.question } : undefined,
           author: { id: entry.author?.id, name: entry.author?.name, url_token: entry.author?.urlToken },
           plain_text: body.body.textContent.trim(), public_links: [...new Set(links)].slice(0, 10), content_need_truncated: false };

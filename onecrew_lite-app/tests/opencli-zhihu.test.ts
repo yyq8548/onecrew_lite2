@@ -6,12 +6,14 @@ import { zhihuReadPlan } from '../src/platforms/opencli/zhihu.ts';
 import { classifyOpenCliFailure } from '../src/platforms/opencli/process.ts';
 import { decodeCreatorSearch } from '../src/platforms/opencli/search-results.ts';
 import { creatorProfileSource } from '../src/platforms/opencli/profile-source.ts';
+import { discoveryPromotional } from '../src/discovery/contact-attribution.ts';
 // @ts-expect-error 浏览器适配器是运行时 JavaScript 模块。
 import { zhihuIdentity, zhihuProfile, zhihuContent, zhihuSearchRows } from '../../onecrew_lite-opencli/onecrew-zhihu/read.mjs';
 
 const captured = JSON.parse(await readFile(new URL('./fixtures/zhihu-answer-live-20261026.json', import.meta.url), 'utf8'));
 const data = captured.body, author = data.author.id;
 const source = `https://www.zhihu.com/question/${data.question.id}/answer/${data.id}`;
+const regression = JSON.parse(await readFile(new URL('./fixtures/zhihu-profile-contact-live-20261029.json', import.meta.url), 'utf8'));
 
 test('真实知乎回答保留原生作者、长整数ID和完整正文，原证据校验可用', () => {
   const $ = load(data.content);
@@ -28,9 +30,17 @@ test('真实知乎回答保留原生作者、长整数ID和完整正文，原证
 test('真实作者材料缺少粉丝数时保持未知，主页仍通过身份校验', () => {
   const profile = zhihuProfile(data.author, author, data.author.url_token);
   assert.equal(profile.follower_count, null);
+  assert.equal(profile.bio_status, 'unknown');
   assert.equal(zhihuReadPlan('profile', author, profile.author_url).decode([profile]).follower_count, null);
   assert.equal(creatorProfileSource('zhihu', author, profile.author_url), data.author.url_token);
   assert.throws(() => zhihuProfile(data.author, '0'.repeat(32), data.author.url_token));
+});
+
+test('真实新主页保存简介完整性，旧文章中的第三方文档不作为作者网站', () => {
+  const profile = regression.profile;
+  assert.deepEqual(zhihuReadPlan('profile', profile.author_id, profile.author_url).decode([profile]), profile);
+  assert.equal(profile.bio_status, 'complete');
+  assert.equal(discoveryPromotional(regression.contact.original_value, regression.contact.source_excerpt), true);
 });
 
 test('知乎搜索作者与主页绑定进入现有搜索解码', () => {

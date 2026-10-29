@@ -30,8 +30,10 @@ export function discoveryPromotional(source: string, text: string): boolean {
     if (!line.includes("https://") && /products? (?:used|mentioned)|shop (?:the|this) (?:look|video)|使用(?:的)?产品|使用產品|产品清单|產品清單|本期好物|优惠(?:码|碼)/iu.test(line)) productSection = true;
     if (!discoveryObservesLink(line, source)) return false;
     const label = (line.trim() === source ? `${lines[index - 1] ?? ""} ${line}` : line).trim().toLowerCase();
-    if (["business inquiries", "business enquiries", "contact me", "my website", "商务联系", "商務聯絡", "合作洽谈", "我的官网", "我的官網"].some(word => label.includes(word))) return false;
+    if (["business inquiries", "business enquiries", "contact me", "my website", "our website", "商务联系", "商務聯絡", "合作洽谈", "我的官网", "我的官網"].some(word => label.includes(word)) || /^(?:website|官网|官網|网站|網站)\s*[:：]/u.test(label)) return false;
     const url = URL.parse(source);
+    if (url && (/(?:^|\.)(?:docs?|developers?)\./iu.test(url.hostname) || /\/(?:docs?|guides?|reference|downloads?|install)(?:\/|$)/iu.test(url.pathname))
+      && !/\b(?:my|our)\s+(?:docs?|documentation|website|site)\b|(?:我的|我们的|本人)(?:文档|官网|网站)/iu.test(label)) return true;
     if (productSection || /(?:affiliate|discount|coupon|promo code|sponsored|shopmy|折扣|优惠|優惠|购买|購買|产品链接|產品連結|masterclass|donat(?:e|ion)|一站式.*工具)/iu.test(label) || url?.hostname.endsWith(".pxf.io")) return true;
     if (["contact", "business", "website", "email", "联系", "商务", "官网"].some(word => label.includes(word))) return false;
     return ["use code ", "discount code ", "sizing chart", "typing demo", "my tutorials", "my unboxing", "ranking spreadsheet", "my edited version", "affiliate links", "keyboard supplies", "sponsored links", "video setup", "photo setup", "stream setup", "newsletter", "get your", "my gear", "my setup"].some(word => label.includes(word)) || label.startsWith("$") || ["buy ", "shop ", "my mouse", "my books:", "my affiliates:", "购买", "购买链接", "优惠链接"].some(word => label.startsWith(word));

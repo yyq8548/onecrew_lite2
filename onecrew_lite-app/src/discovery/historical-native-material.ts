@@ -11,7 +11,7 @@ export function publicLink(value: string): boolean {
   const host = url.hostname; return url.protocol === "https:" && !url.username && !url.password && !url.port && isIP(host.replace(/^\[|\]$/gu, "")) === 0 && host.includes(".") && !host.endsWith(".") && !["localhost", "local", "internal", "test", "invalid", "onion", "home.arpa"].some(suffix => host === suffix || host.endsWith(`.${suffix}`));
 }
 const zhAuthor = { author_id: z.string().regex(/^[a-f0-9]{32}$/u), url_token: z.string().regex(/^[A-Za-z0-9_-]{1,128}$/u), author_label: label, author_url: z.string() };
-const zhProfile = z.strictObject({ ...zhAuthor, follower_count: count.nullable(), bio: text(8000) }).refine(value => value.author_url === `https://www.zhihu.com/people/${value.url_token}`);
+const zhProfile = z.strictObject({ ...zhAuthor, follower_count: count.nullable(), bio: text(8000), bio_status: z.enum(["complete", "missing", "unknown"]).optional() }).refine(value => value.author_url === `https://www.zhihu.com/people/${value.url_token}`);
 const pixivProfile = z.strictObject({ adapter_version: z.literal("1.0.0"), author_id: numeric, author_label: label, profile_url: z.string(), follower_count: z.null(), bio: text(8000), public_links: z.array(z.string().refine(publicLink)).max(10), evidence_source: z.literal("native_ajax_response") }).refine(value => value.profile_url === `https://www.pixiv.net/users/${value.author_id}`);
 const hnProfile = z.strictObject({ author_id: hnAuthor, username: z.string(), biography_html: text(16000), biography: text(8000), profile_url: z.string(), created: count, karma: count, follower_count: z.null() }).refine(value => value.username === value.author_id && value.profile_url === `https://news.ycombinator.com/user?id=${value.author_id}`);
 
