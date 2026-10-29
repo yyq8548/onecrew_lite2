@@ -9,4 +9,5 @@ export interface DiscoveryPipelineStatus {
   running_scores: number;
   discovery_held: boolean;
   contact_pending: boolean;
+  recommendations_complete?: boolean;
 }

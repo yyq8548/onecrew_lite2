@@ -34,11 +34,11 @@ test("真实历史库在实例锁内独立备份升级，全部旧表记录和�
   const result = await upgradeLocalAccountDatabases(lease);
   assert.equal(result.state, "upgraded"); assert.equal(result.accounts.length, 1);
   const account = result.accounts[0]!;
-  assert.equal(account.directory, value.directory); assert.equal(account.from_version, 90); assert.equal(account.to_version, 96); assert.ok(account.backup_path);
+  assert.equal(account.directory, value.directory); assert.equal(account.from_version, 90); assert.equal(account.to_version, 97); assert.ok(account.backup_path);
   await verifyPrivateFile(account.backup_path);
   assert.deepEqual(fingerprintSqlite(account.backup_path), original);
   const current = fingerprintSqlite(value.database);
-  assert.equal(current.version, 96); assert.equal(inspectLegacyDatabase(value.database, "creator").state, "current");
+  assert.equal(current.version, 97); assert.equal(inspectLegacyDatabase(value.database, "creator").state, "current");
   for (const table of original.tables.filter(table => table.name !== "discovery_campaigns")) assert.deepEqual(current.tables.find(row => row.name === table.name), table);
   using oldDatabase = new DatabaseSync(account.backup_path, { readOnly: true });
   using newDatabase = new DatabaseSync(value.database, { readOnly: true });
@@ -47,7 +47,7 @@ test("真实历史库在实例锁内独立备份升级，全部旧表记录和�
   assert.deepEqual(await readFile(value.manifest), ownerBytes);
   assert.notEqual((await lstat(value.database, { bigint: true })).ino, originalIdentity.ino);
   const publishedBytes = await readFile(value.database), entries = await readdir(value.root);
-  assert.deepEqual(await upgradeLocalAccountDatabases(lease), { state: "current", accounts: [{ directory: value.directory, from_version: 96, to_version: 96 }] });
+  assert.deepEqual(await upgradeLocalAccountDatabases(lease), { state: "current", accounts: [{ directory: value.directory, from_version: 97, to_version: 97 }] });
   assert.deepEqual(await readFile(value.database), publishedBytes); assert.deepEqual(await readdir(value.root), entries);
   const operation = entries.find(name => name.startsWith("creator-upgrade-")); assert.ok(operation);
   const state = JSON.parse(await readFile(join(value.root, operation, "state.json"), "utf8"));

@@ -11,7 +11,7 @@ export type WorkspaceActivity = {
   library_sync_pending?: boolean;
   deferred_scores?: number;
   pending_breakdown?: { awaiting_score: number; needs_content: number; needs_identity: number; read_blocked: number; insufficient_after_read: number; needs_requirement: number };
-  pipeline?: { active_pending: number; queued_scores: number; running_scores: number; discovery_held: boolean; contact_pending: boolean };
+  pipeline?: { active_pending: number; queued_scores: number; running_scores: number; discovery_held: boolean; contact_pending: boolean; recommendations_complete?: boolean };
   failure_code?: string;
   library_sync_error?: string;
   library_synced_at?: number;
@@ -48,7 +48,8 @@ export function parseWorkspaceActivity(value: unknown): WorkspaceActivity | null
   if (data.pipeline !== undefined) {
     const pipeline = data.pipeline as Record<string, unknown>;
     if (!pipeline || typeof pipeline !== "object" || Array.isArray(pipeline)
-      || Object.keys(pipeline).sort().join() !== "active_pending,contact_pending,discovery_held,queued_scores,running_scores"
+      || Object.keys(pipeline).filter(key => key !== "recommendations_complete").sort().join() !== "active_pending,contact_pending,discovery_held,queued_scores,running_scores"
+      || pipeline.recommendations_complete !== undefined && typeof pipeline.recommendations_complete !== "boolean"
       || typeof pipeline.discovery_held !== "boolean" || typeof pipeline.contact_pending !== "boolean"
       || [pipeline.active_pending, pipeline.queued_scores, pipeline.running_scores].some(value => typeof value !== "number" || !Number.isSafeInteger(value) || value < 0)) throw new Error("invalid pipeline status");
   }

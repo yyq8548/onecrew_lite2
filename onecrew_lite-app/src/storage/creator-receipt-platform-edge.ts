@@ -1,11 +1,11 @@
 import type { DatabaseSync } from "node:sqlite";
 
 const tables = ["discovery_profile_reads", "discovery_content_reads", "discovery_profile_identity_matches", "discovery_content_identity_bindings", "discovery_facebook_content_targets"];
-const additions = new Map<number, string[]>([[66, ["instagram"]], [67, ["weibo"]], [68, ["bluesky"]], [69, ["zhihu"]], [70, ["hackernews"]], [71, ["pinterest"]], [73, ["pixiv", "linkedin", "douyin"]]]);
+const additions = new Map<number, string[]>([[66, ["instagram"]], [67, ["weibo"]], [68, ["bluesky"]], [69, ["zhihu"]], [70, ["hackernews"]], [71, ["pinterest"]], [73, ["pixiv", "linkedin", "douyin"]], [96, ["xiaohongshu"]]]);
 const identifier = (name: string) => `"${name.replaceAll('"', '""')}"`;
 const platformList = (values: string[]) => `('${values.join("','")}')`;
 
-// 原 v66–74 的 native receipt 平台扩展；保留五张父子表、全部显式对象与历史行。
+// 扩展 native receipt 平台；保留五张父子表、全部显式对象与历史行。
 export function migrateCreatorReceiptPlatformEdge(db: DatabaseSync, version: number, reverse = false): void {
   const added = additions.get(version);
   if (!added) throw new Error(`Receipt platform migration ${version} is not registered`);

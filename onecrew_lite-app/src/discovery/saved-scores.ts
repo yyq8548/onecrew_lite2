@@ -53,8 +53,9 @@ export class SavedDiscoveryScores {
     if (new Set(hits).size !== hits.length) throw new Error("score_queue_file_invalid");
     return state;
   }
-  load(): Promise<SavedDiscoveryScore[]> { return serialized(async () => (await this.#read()).active); }
-  loadDeferred(): Promise<z.infer<typeof deferredScore>[]> { return serialized(async () => (await this.#read()).deferred); }
+  loadState(): Promise<ScoreState> { return serialized(() => this.#read()); }
+  async load(): Promise<SavedDiscoveryScore[]> { return (await this.loadState()).active; }
+  async loadDeferred(): Promise<z.infer<typeof deferredScore>[]> { return (await this.loadState()).deferred; }
   async #update(edit: (state: ScoreState) => ScoreState): Promise<void> {
     const before = await this.#read(), state = edit(before);
     if (isDeepStrictEqual(before, state)) return;

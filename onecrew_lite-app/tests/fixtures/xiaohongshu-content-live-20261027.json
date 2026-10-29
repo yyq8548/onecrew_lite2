@@ -1,0 +1,24 @@
+[
+  {
+    "note_id": "6ac12ee0000000000a025494",
+    "author_id": "680dc928000000000e02eeb0",
+    "author_label": "烦死了这破deck",
+    "author_url": "https://www.xiaohongshu.com/user/profile/680dc928000000000e02eeb0",
+    "source_url": "https://www.xiaohongshu.com/explore/6ac12ee0000000000a025494?xsec_token=ABGDm5-8EQuSHxUAFfSn70VGNDWE3olwK1dbfJ1vJ2LAw%3D&xsec_source=pc_search",
+    "title": "用最简单的语言解释AI Agent该怎么搭",
+    "text": "后台很多私信问我AI agent到底怎么搭，今天把整个流程捋一遍，用最直白的话说清楚。\n\t\n先区分一个最基础的东西：chatbot只是回复消息，而AI agent能reason、能调用工具、能记住上下文、能自己完成一连串任务。你让它“查一下这个客户最近的订单然后回一封邮件”，它会自己分成几步做完。\n\t\n搭一个agent，我自己的流程就七步。\n\t\n第一步，先想清楚目标。这个agent解决什么问题？给谁用？怎么衡量成没成？比如“自动处理客服ticket，把回复准确率做到90%以上”。没有清晰目标，后面很容易迷失。\n\t\n第二步，选模型。要复杂推理、多步决策的，比如做金融分析，用Large Reasoning Model。普通客服、写文案，用LLM就够了，GPT、Claude、Gemini、DeepSeek都行。只想做分类、简单routing，Small Language Model又快又便宜。\n\t\n第三步，选framework。LangChain适合做工具集成和memory，CrewAI是给多agent协作用的，n8n适合no-code的workflow。新手我一般建议从LangChain或者n8n开始，教程多，也比较容易找到人交流。\n\t\n第四步，上memory。这块最容易被忽略。没有记忆，agent每次都要从零开始。cache放当前对话，episodic memory记用户偏好和历史，file system放文档和知识库。有了这些，它才会越用越懂你。\n\t\n第五步，连接外部工具。用function calling或者MCP去查CRM、发邮件、调API。一个能用工具的agent，往往比一个不会用工具的大模型强得多。\n\t\n第六步，管好context。对话一长，token就烧钱。该总结的总结，该扔的扔，动态判断什么信息重要。这步做好了，质量和成本才两头顾得上。\n\t\n第七步，测试。把API、memory、工具逐个测，再测edge case，比如用户输入含糊不清怎么办。重点盯task success rate、幻觉率、每个task的成本。\n\t\n最后说一句，别一上来就想要个全能的。先解决一个特别窄的问题，跑通了再加能力。AI agent现在还在很早期，能把它从一个模糊概念变成一个真能干活的东西，本身就是壁垒。\n\t\n#ai创业 #mbb #战略咨询 #aiagent #automation #tech #硅谷 #北美创业 #留学生活howto",
+    "tags": [
+      "#ai创业",
+      "#mbb",
+      "#战略咨询",
+      "#aiagent",
+      "#automation",
+      "#tech",
+      "#硅谷",
+      "#北美创业",
+      "#留学生活howto"
+    ],
+    "text_truncated": false,
+    "text_completeness_known": true
+  }
+]

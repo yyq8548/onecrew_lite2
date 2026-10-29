@@ -28,10 +28,12 @@ import { linkedinProfilePlan, linkedinContentPlan, linkedinExperiencePlan, linke
 import { facebookIdentityPlan, facebookProfilePlan, facebookContactPlan } from "./facebook-profile.ts";
 import { facebookRecentPlan, facebookReelPlan, facebookLanguagePlan, facebookNativeOriginalPlan } from "./facebook-language.ts";
 import { creatorProfileSource } from "./profile-source.ts";
+import { xiaohongshuReadPlan } from "./xiaohongshu.ts";
 import { instagramProfileIdentityPlan, tiktokProfileIdentityPlan } from "./profile-identity.ts";
 import { creatorAuthArguments, creatorAuthProbe, decodeCreatorAuthStatus } from "./auth-status.ts";
 import type { OpenCliAuthObservation } from "./auth-status.ts";
 import { openCliLoginPage } from "./login-pages.ts";
+import { zhihuReadPlan } from "./zhihu.ts";
 
 // 由应用唯一的账号设置与 Chrome 连接映射提供。请求里的 profile 字段不是身份凭据。
 export interface VerifiedOpenCliBrowserBinding {
@@ -54,7 +56,8 @@ export class OpenCliReader {
     this.#installation = Object.freeze({ ...configuration.installation }); this.#addons = configuration.addons; this.version = version; this.#registry = registry; this.#onFailure = configuration.onFailure;
   }
   withDiagnostics(onFailure: (error: OpenCliError) => void): OpenCliReader {
-    return new OpenCliReader({ installation: this.#installation, addons: this.#addons, onFailure }, this.version, this.#registry);
+    const prior = this.#onFailure;
+    return new OpenCliReader({ installation: this.#installation, addons: this.#addons, onFailure: prior ? error => { prior(error); onFailure(error); } : onFailure }, this.version, this.#registry);
   }
   static async inspect(addons: OpenCliAddons, installation?: TrustedOpenCliProcess, signal?: AbortSignal): Promise<OpenCliReader> {
     const selected = installation ?? await resolveOpenCliInstallation();
@@ -107,6 +110,8 @@ export class OpenCliReader {
   async creatorProfileEvidence(binding: VerifiedOpenCliBrowserBinding, site: string, authorId: string, authorUrl: string) {
     const username = creatorProfileSource(site, authorId, authorUrl);
     switch (site) {
+      case "xiaohongshu": return this.#native(binding, xiaohongshuReadPlan("profile", authorId, authorUrl));
+      case "zhihu": return this.#native(binding, zhihuReadPlan("profile", authorId, authorUrl));
       case "linkedin": return this.linkedinPublicProfile(binding, username);
       case "weibo": return this.weiboPublicProfile(binding, authorId);
       case "facebook": return this.facebookPublicProfile(binding, authorId);
@@ -192,7 +197,7 @@ export class OpenCliReader {
   async #native<T>(binding: VerifiedOpenCliBrowserBinding, plan: ReviewedOpenCliRead<T>): Promise<T> {
     validateOpenCliProfile(binding.profile);
     if (plan.public ? !this.#registry.hasPublicRead(plan.site, plan.name) : !this.#registry.hasBrowserRead(plan.site, plan.name)) throw new OpenCliError("opencli_read_command_unavailable");
-    await Promise.all(plan.addons.map(addon => this.#addons.requireReady(addon)));
+    const verifyAddons = await this.#addons.prepare(plan.addons);
     if (plan.public) await this.#requireVersion(binding); else await this.checkBrowserProfile(binding);
     const args = ["--profile", binding.profile, plan.site, plan.name, ...plan.args];
     const output = await this.#run(args, OPENCLI_READ_TIMEOUT, binding, false, plan.foregroundBrowser).then(value => value, error => {
@@ -200,8 +205,7 @@ export class OpenCliReader {
       throw error;
     });
     if (output === null) return plan.emptyOn66!();
-    await this.#requireVersion(binding);
-    await Promise.all(plan.addons.map(addon => this.#addons.requireReady(addon)));
+    await Promise.all([this.#requireVersion(binding), verifyAddons()]);
     if (plan.maximumBytes !== undefined && Buffer.byteLength(output.stdout) > plan.maximumBytes) throw new OpenCliError("opencli_output_too_large");
     return this.#decode(output, `${plan.site}/${plan.name}:decode`, async () => plan.decode(await parseOpenCliJson(output.stdout)));
   }
@@ -233,6 +237,8 @@ export class OpenCliReader {
   twitterRecentContent(binding: VerifiedOpenCliBrowserBinding, handle: string) { return this.#native(binding, twitterRecentContentPlan(handle)); }
   bilibiliSourceVideoEvidence(binding: VerifiedOpenCliBrowserBinding, sourceUrl: string) { return this.#native(binding, bilibiliVideoPlan(sourceUrl)); }
   weiboPublicProfile(binding: VerifiedOpenCliBrowserBinding, authorId: string) { return this.#native(binding, weiboProfilePlan(authorId)); }
+  zhihuContent(binding: VerifiedOpenCliBrowserBinding, authorId: string, source: string) { return this.#native(binding, zhihuReadPlan("content", authorId, source)); }
+  xiaohongshuContent(binding: VerifiedOpenCliBrowserBinding, authorId: string, source: string) { return this.#native(binding, xiaohongshuReadPlan("content", authorId, source)); }
   weiboPostEvidence(binding: VerifiedOpenCliBrowserBinding, sourceUrl: string) { return this.#native(binding, weiboPostPlan(sourceUrl)); }
   weiboOriginalComments(binding: VerifiedOpenCliBrowserBinding, nativePostId: string) { return this.#native(binding, weiboCommentsPlan(nativePostId)); }
   douyinPublicProfile(binding: VerifiedOpenCliBrowserBinding, authorId: string) { return this.#native(binding, douyinProfilePlan(authorId)); }

@@ -33,8 +33,9 @@ test("八项Discovery实际注册读取使用唯一账号SQLite，严格旧Web�
     repository.create({ id: "actual-local-plan", brief: "找鞋子作者", opencli_version: "1.8.8", criteria: {}, scopes: [{ platform: "youtube", profile_ref: "work", keywords: ["shoe review"] }], target_count: 2 }); repository.approve("actual-local-plan", 1);
     assert.equal((await execute("onecrew_discovery_campaign_get", { id: "actual-local-plan" }) as { id: string }).id, "actual-local-plan");
     assert.equal((await execute("onecrew_discovery_campaigns_recent", {}) as unknown[]).length, 1);
-    const writeInput = { id: "registered-write", brief: "键盘作者", opencli_version: "1.8.8", criteria: {}, scopes: [{ platform: "youtube", profile_ref: "work", keywords: ["keyboard review"] }], target_count: 2 };
+    const writeInput = { id: "registered-write", brief: "键盘作者", opencli_version: "1.8.8", criteria: { occupational_review_applicability: "not_required" }, scopes: [{ platform: "youtube", profile_ref: "work", keywords: ["keyboard review"] }], target_count: 2 };
     assert.equal((await execute("onecrew_discovery_campaign_create", { input: writeInput }) as { phase: string }).phase, "draft");
+    assert.equal(repository.getPlan(writeInput.id).criteria.occupational_review_applicability, "unknown");
     assert.equal((await execute("onecrew_discovery_campaign_approve", { id: writeInput.id, expectedRevision: 1 }) as { phase: string }).phase, "active");
     assert.equal(registry.names().includes("onecrew_discovery_budget_increase"), false);
     const targetInput = { campaign_id: writeInput.id, expected_revision: 1, expected_target_count: 2, new_target_count: 1, decision_id: "registered-target" };

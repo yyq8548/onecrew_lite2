@@ -60,12 +60,12 @@ export class DiscoveryWorkspace {
     const stale = !execution && performance.now() - selection.seen > 45000, reading = campaign.platform_runs.some(run => run.status === "searching");
     const reported = selection.stage;
     const targets = owned.repository.sourceProgress(campaign.id), reached = targets.length ? targets.every(source => source.qualified >= source.target_count) : counts.qualified >= campaign.target_count;
-    const currentStage = execution?.stage ?? (!reading && reached ? "finished" : ["pausing", "paused", "error"].includes(reported) ? reported : reading ? "searching" : stale ? "paused" : reported);
+    const currentStage = execution?.stage ?? (["pausing", "paused", "error"].includes(reported) ? reported : !reading && reached ? "finished" : reading ? "searching" : stale ? "paused" : reported);
     const count = (status: string) => campaign.platform_runs.filter(run => run.status === status).length;
     const pipeline = execution?.pipeline;
     const activity = activitySchema.parse({ campaign_id: campaign.id, brief: campaign.brief, stage: currentStage, qualified: counts.qualified, pending: counts.pending, pending_breakdown: owned.repository.pendingReviewCounts(campaign.id, campaign.revision), target: campaign.target_count, attempted: campaign.platform_runs.length - count("unsearched"), total: campaign.scopes.length, used: campaign.used_calls, login_required: count("unauthorized"), read_errors: BigInt(failures) > BigInt(counts.public_page_errors) ? failures : counts.public_page_errors, read_failures: readFailures, current_read_stops: count("technical_stop"), read_operation_stops: stops, restricted: count("risk_control_stop"), stale,
       ...(execution ? { updated_at: execution.updated_at, deferred_scores: execution.deferred_scores, ...(execution.library || execution.sync_pending ? { library_sync_pending: execution.sync_pending } : {}), ...(execution.failure_phase !== null ? { failure_phase: execution.failure_phase } : {}), ...(execution.failure_code !== null ? { failure_code: execution.failure_code } : {}), ...(execution.sync_error !== null ? { library_sync_error: execution.sync_error } : {}), ...(execution.synced_at !== null ? { library_synced_at: execution.synced_at } : {}) } : {}),
-      ...(pipeline ? { pipeline } : {}),
+      ...(pipeline ? { pipeline: { ...pipeline, recommendations_complete: reached } } : {}),
       ...(!["searching", "verifying"].includes(currentStage) && selection.stop ? { stop: selection.stop } : {}) });
     const history = this.#history.get(account) ?? [], index = history.findIndex(item => item.campaign_id === activity.campaign_id);
     if (index >= 0) history[index] = structuredClone(activity); else history.push(structuredClone(activity)); this.#history.set(account, history);

@@ -6,6 +6,8 @@ const nativeLock = createRequire(import.meta.url)("fs-native-extensions") as { t
 
 // 只读适配器分发清单；测试文件不作为可执行插件分发。
 export const OPENCLI_ADDON_FILES = Object.freeze({
+  "onecrew-zhihu": ["cli.js", "read.mjs"],
+  "onecrew-xiaohongshu": ["cli.js", "page.mjs", "read.mjs"],
   "onecrew-youtube": ["language.mjs", "language.js", "evidence.mjs", "channel.mjs", "channel-contact.js", "video-evidence.js", "hidden-email.mjs", "hidden-email-store.mjs"],
   "onecrew-tiktok": ["search.mjs", "search.js"],
   "onecrew-bilibili": ["search.mjs", "search.js"],
@@ -42,7 +44,13 @@ export class OpenCliAddons {
     this.#bundledRoot = bundledRoot;
     this.#installedRoot = join(userHome, ".opencli", "clis");
   }
-  async state(id: OpenCliAddonId): Promise<OpenCliAddonState> {
+  async #bundledFile(id: OpenCliAddonId, name: string): Promise<Buffer> {
+    const source = join(this.#bundledRoot, id, name);
+    const metadata = await lstat(source);
+    if (!metadata.isFile() || metadata.isSymbolicLink()) throw new OpenCliError("opencli_invalid_output");
+    return readFile(source);
+  }
+  async #state(id: OpenCliAddonId, expectedFile: (name: string) => Promise<Buffer>): Promise<OpenCliAddonState> {
     const directory = join(this.#installedRoot, id);
     const state = await directoryState(directory);
     if (state) return state;
@@ -51,10 +59,7 @@ export class OpenCliAddons {
     const names = OPENCLI_ADDON_FILES[id];
     if (entries.value.length !== names.length || entries.value.some(name => !names.some(expected => expected === name))) return "conflict";
     for (const name of names) {
-      const source = join(this.#bundledRoot, id, name);
-      const expectedMetadata = await lstat(source);
-      if (!expectedMetadata.isFile() || expectedMetadata.isSymbolicLink()) throw new OpenCliError("opencli_invalid_output");
-      const expected = await readFile(source);
+      const expected = await expectedFile(name);
       const path = join(directory, name);
       const metadata = await lstat(path).then(value => ({ value }), error => ({ error: error as NodeJS.ErrnoException }));
       if ("error" in metadata) return metadata.error.code === "ENOENT" ? "missing" : "unavailable";
@@ -65,7 +70,25 @@ export class OpenCliAddons {
     }
     return "ready";
   }
+  async state(id: OpenCliAddonId): Promise<OpenCliAddonState> { return this.#state(id, name => this.#bundledFile(id, name)); }
   async requireReady(id: OpenCliAddonId): Promise<void> { if (await this.state(id) !== "ready") throw new OpenCliError("opencli_read_command_unavailable"); }
+  async prepare(ids: readonly OpenCliAddonId[]): Promise<() => Promise<void>> {
+    const snapshots = await Promise.all([...new Set(ids)].map(async id => {
+      const files = new Map<string, Buffer>();
+      const state = await this.#state(id, async name => {
+        const bytes = await this.#bundledFile(id, name);
+        files.set(name, bytes);
+        return bytes;
+      });
+      if (state !== "ready") throw new OpenCliError("opencli_read_command_unavailable");
+      return { id, files };
+    }));
+    return async () => {
+      await Promise.all(snapshots.map(async ({ id, files }) => {
+        if (await this.#state(id, async name => files.get(name)!) !== "ready") throw new OpenCliError("opencli_read_command_unavailable");
+      }));
+    };
+  }
   async status(): Promise<{ id: OpenCliAddonId; state: OpenCliAddonState }[]> {
     return Promise.all((Object.keys(OPENCLI_ADDON_FILES) as OpenCliAddonId[]).map(async id => ({ id, state: await this.state(id) })));
   }

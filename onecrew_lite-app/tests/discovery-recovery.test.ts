@@ -16,10 +16,10 @@ test("schema90真实领取升级至当前版本后，中断恢复保留读取记
   const original = new DatabaseSync(sourcePath, { readOnly: true });
   try { validateCreatorSchemaVersion(original, 90); } finally { original.close(); }
   await backupLegacyDatabase(sourcePath, path, "creator");
-  assert.deepEqual(await upgradeCreatorStagingCopy({ sourcePath, stagingPath: path }), { fromVersion: 90, toVersion: 96 });
+  assert.deepEqual(await upgradeCreatorStagingCopy({ sourcePath, stagingPath: path }), { fromVersion: 90, toVersion: 97 });
   const db = new DatabaseSync(path);
   try {
-    validateCreatorSchemaVersion(db, 96);
+    validateCreatorSchemaVersion(db, 97);
     const repo = new DiscoveryRepository(db);
     repo.create({ id: "unresolved-search", brief: "找鞋子作者", opencli_version: "1.8.8", criteria: {}, scopes: [{ platform: "youtube", profile_ref: "work", keywords: ["shoe review"] }], target_count: 2 }); repo.approve("unresolved-search", 1);
     const search = repo.claimSearch("unresolved-search", 1, "youtube", "work"), before = db.prepare("SELECT id,used_calls FROM discovery_campaigns ORDER BY id").all();

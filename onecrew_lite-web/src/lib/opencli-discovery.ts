@@ -12,6 +12,7 @@ const campaignSchema = z.object({
   opencli_version: z.string(),
   criteria: z.object({ min_subscribers: u64.optional(), min_followers: u64.optional(), region: z.string().optional(), language: z.string().optional(), category: z.string().optional(), requires_ai_tool_demo: z.boolean().optional(), requires_public_tool_url: z.boolean().optional() }).passthrough(),
   target_count: z.number(), used_calls: z.number(),
+  source_targets: z.record(z.string(), z.number().int().positive()).optional(),
   scopes: z.array(z.object({ platform: z.string(), profile_ref: z.string(), keywords: z.array(z.string()) })),
   platform_runs: z.array(runSchema),
 });
@@ -186,7 +187,7 @@ const contentSchema = z.object({
   language_sample: z.object({ author_id: z.string(), source_url: z.string().url(), text: z.string().max(16000),
     comments: z.array(z.object({ source_url: z.string().url(), text: z.string().max(2000) }).strict()).max(5) }).strict().optional(),
   claim: z.object({ campaign_id: z.string(), expected_revision: z.number().int().positive(), search_hit_id: z.string(),
-    platform: z.enum(["bilibili", "twitter", "facebook", "youtube", "tiktok", "douyin", "instagram", "weibo", "zhihu", "pixiv", "linkedin", "google", "yahoo"]), profile_ref: z.string(), author_id: z.string(), source_url: z.string().url(),
+    platform: z.enum(["bilibili", "twitter", "facebook", "youtube", "tiktok", "douyin", "instagram", "weibo", "zhihu", "pixiv", "linkedin", "google", "yahoo", "xiaohongshu"]), profile_ref: z.string(), author_id: z.string(), source_url: z.string().url(),
     call_number: z.number().int().positive() }),
   status: z.enum(["reading", "completed", "failed"]), native_content: z.union([additionalNativeContentSchema, z.object({
     bvid: z.string(), author_id: z.string(), author: z.string(), source_url: z.string().url(),

@@ -309,6 +309,8 @@ export function isSocialProfile(value: string): boolean {
       );
     if (host === 'douyin.com')
       return parts.length === 2 && parts[0] === 'user' && /^MS4wLjABAAAA[A-Za-z0-9_-]{8,88}$/.test(parts[1]);
+    if (host === 'xiaohongshu.com')
+      return /^\/user\/profile\/[a-f0-9]{24}$/.test(u.pathname);
     if (host === 'tiktok.com')
       return parts.length === 1 && parts[0].startsWith('@') && handle(parts[0].slice(1));
     if (host === 'space.bilibili.com') return parts.length === 1 && /^\d+$/.test(parts[0]);

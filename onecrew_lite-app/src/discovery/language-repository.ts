@@ -13,7 +13,7 @@ import { discoveryReadPlatformStatus, sourceLocalReadFailure } from "./stops.ts"
 import { discoveryLanguageClaim, validDiscoveryLanguageSample, type DiscoveryLanguageClaim, type DiscoveryLanguageSample } from "./language-contracts.ts";
 
 const eligibleSql = readFileSync(runtimeAssetPath("discovery/language-eligible.sql", new URL("./language-eligible.sql", import.meta.url)), "utf8");
-const platforms = new Set(["twitter", "youtube", "bilibili", "tiktok", "facebook", "instagram", "weibo", "bluesky", "zhihu", "hackernews", "linkedin", "douyin", "google", "yahoo"]);
+const platforms = new Set(["twitter", "youtube", "bilibili", "tiktok", "facebook", "instagram", "weibo", "bluesky", "zhihu", "hackernews", "linkedin", "douyin", "google", "yahoo", "xiaohongshu"]);
 const text = z.string().refine(value => value.isWellFormed());
 const object = (value: unknown) => z.record(z.string(), z.unknown()).parse(value);
 function observedSource(read: ReturnType<typeof loadDiscoveryContentReceipt>): string | null {
@@ -53,7 +53,7 @@ export class DiscoveryLanguageRepository {
     return this.#transaction(() => {
       const active = this.#db.prepare("SELECT 1 FROM discovery_language_samples s JOIN discovery_platform_runs p ON p.discovery_campaign_id=s.discovery_campaign_id WHERE s.discovery_campaign_id=?1 AND s.criteria_revision=?2 AND s.candidate_id=?3 AND s.search_hit_id=?4 AND s.ordinal=?5 AND s.call_number=?6 AND s.status='reading' AND p.platform=?7 AND p.profile_ref=?8 AND p.status='searching' AND p.active_query=?9").get(claim.campaign_id, claim.revision, claim.candidate_id, claim.search_hit_id, claim.ordinal, claim.call_number, claim.platform, claim.profile_ref, `language:${claim.search_hit_id}:${claim.call_number}`);
       if (!active) throw new Error("language_claim_changed");
-      const body = ["douyin", "linkedin", "hackernews", "zhihu", "bluesky", "instagram", "weibo"].includes(claim.platform) ? loadDiscoveryContentReceipt(this.#db, claim.campaign_id, claim.search_hit_id) : null;
+      const body = ["douyin", "linkedin", "hackernews", "zhihu", "bluesky", "instagram", "weibo", "xiaohongshu"].includes(claim.platform) ? loadDiscoveryContentReceipt(this.#db, claim.campaign_id, claim.search_hit_id) : null;
       const profile = claim.platform === "linkedin" ? loadDiscoveryProfileReceipt(this.#db, claim.campaign_id, claim.search_hit_id) : null;
       const web = ["google", "yahoo"].includes(claim.platform) ? loadDiscoveryWebSourceReceipt(this.#db, claim.campaign_id, claim.search_hit_id) : null;
       const joint = claim.platform === "douyin" ? this.#db.prepare("SELECT expected_revision,profile_ref,source_url,post_id,call_number,status,stop_code,author_id,duplicate_of FROM discovery_douyin_author_reads WHERE discovery_campaign_id=? AND search_hit_id=?").get(claim.campaign_id, claim.search_hit_id) : null;
@@ -98,7 +98,7 @@ export class DiscoveryLanguageRepository {
         if (!web.is_primary_source || web.status !== "completed" || web.expected_revision !== revision || web.profile_ref !== basis.hit.profile_ref || web.native_author_id !== basis.native_author_id) throw new Error("language_native_content_binding_invalid");
         authorHandle = web.target_platform === "twitter" ? twitterHandle(web.source_url) : basis.native_author_id;
         root = web.target_platform === "youtube" ? `https://www.youtube.com/watch?v=${web.video_id}` : web.source_url;
-      } else if (["youtube", "bilibili", "weibo", "bluesky", "zhihu", "hackernews", "douyin"].includes(platform)) { authorHandle = basis.native_author_id; root = basis.hit.source_url; }
+      } else if (["youtube", "bilibili", "weibo", "bluesky", "zhihu", "hackernews", "douyin", "xiaohongshu"].includes(platform)) { authorHandle = basis.native_author_id; root = basis.hit.source_url; }
       else { const identity = object(object(content?.native_content).identity); authorHandle = text.parse(identity.handle); root = text.parse(identity.source_url); }
       const claim = discoveryLanguageClaim.parse({ campaign_id: campaign, revision, search_hit_id: hit, candidate_id: basis.candidate_id, platform, profile_ref: basis.hit.profile_ref, author_id: basis.native_author_id, author_handle: authorHandle, root_url: root, ordinal: previous.length + 1, call_number: used.used_calls, previous_urls: previous.map(sample => sample.source_url), saved_content_urls: savedContentUrls });
       this.#db.prepare("INSERT INTO discovery_language_samples(discovery_campaign_id,criteria_revision,candidate_id,search_hit_id,ordinal,call_number,status,sample_json,stop_code,created_at,sample_format_version) VALUES(?1,?2,?3,?4,?5,?6,'reading',NULL,NULL,?7,2)").run(campaign, revision, claim.candidate_id, hit, claim.ordinal, claim.call_number, now);

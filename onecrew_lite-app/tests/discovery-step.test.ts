@@ -17,7 +17,7 @@ async function withCurrentFixture(fixture: string, check: (database: DatabaseSyn
   const stagingPath = join(root, "staging", "creator.sqlite");
   try {
     await backupLegacyDatabase(sourcePath, stagingPath, "creator");
-    assert.deepEqual(await upgradeCreatorStagingCopy({ sourcePath, stagingPath }), { fromVersion: 90, toVersion: 96 });
+    assert.deepEqual(await upgradeCreatorStagingCopy({ sourcePath, stagingPath }), { fromVersion: 90, toVersion: 97 });
     using database = new DatabaseSync(stagingPath, { readOnly: true });
     check(database);
   } finally {

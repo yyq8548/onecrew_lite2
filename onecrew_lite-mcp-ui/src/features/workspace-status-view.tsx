@@ -10,6 +10,7 @@ export function WorkspaceStatusView({ phase, activity, error, libraryError, loca
   const stages = zh ? { ready: "等待继续", searching: "正在搜索", verifying: "正在核实", pausing: "暂停中", paused: "已暂停", finished: "本轮搜索结束", needs_evidence: "等待核实证据", error: "读取结果未确认" }
     : { ready: "Ready to continue", searching: "Searching", verifying: "Verifying", pausing: "Pausing", paused: "Paused", finished: "Search round ended", needs_evidence: "Evidence needed", error: "Read outcome unconfirmed" };
   const interrupted = phase === "disconnected" || !!error;
+  const supplementing = activity?.pipeline?.recommendations_complete === true && activity.pipeline.contact_pending && ["searching", "verifying"].includes(activity.stage);
   const title = historical ? (zh ? "历史任务记录" : "Previous task record")
     : interrupted ? (zh ? "状态更新已中断" : "Status updates interrupted")
     : phase === "failed" ? (zh ? "onecrew_lite 启动异常" : "onecrew_lite startup failed")
@@ -17,6 +18,7 @@ export function WorkspaceStatusView({ phase, activity, error, libraryError, loca
     : libraryError && activity?.library_sync_pending !== false ? (zh ? "动态表格未连接" : "Results table unavailable")
     : activity?.stale ? (zh ? "工作台状态待更新" : "Workbench status needs refresh")
     : activity?.stage === "error" && activity.failure_phase === "score" ? (zh ? "评分中断" : "Scoring interrupted")
+    : supplementing ? (zh ? "推荐已完成，正在补充公开联系方式" : "Recommendations complete; collecting public contact details")
     : activity ? stages[activity.stage] : (zh ? "onecrew_lite 本地服务已连接" : "onecrew_lite local service connected");
   const number = (value: number) => new Intl.NumberFormat(locale).format(value);
   const reasons = zh ? {
@@ -46,7 +48,7 @@ export function WorkspaceStatusView({ phase, activity, error, libraryError, loca
           <CardDescription>{zh
             ? `活跃待核实 ${activity.pipeline.active_pending} · 评分排队 ${activity.pipeline.queued_scores} · 待模型评估／提交 ${activity.pipeline.running_scores}`
             : `Active reviews ${activity.pipeline.active_pending} · Scores queued ${activity.pipeline.queued_scores} · Awaiting model evaluation/submission ${activity.pipeline.running_scores}`}</CardDescription>
-          {activity.pipeline.contact_pending && <CardDescription>{zh ? "仍有公开联系方式待补充" : "Public contact details still need supplementing"}</CardDescription>}
+          {activity.pipeline.contact_pending && <CardDescription>{activity.pipeline.recommendations_complete ? (zh ? "推荐人数已达标；仍有公开联系方式待补充，已有结果可使用。" : "Recommendation targets are met. Saved results are available while public contact details remain pending.") : (zh ? "仍有公开联系方式待补充" : "Public contact details still need supplementing")}</CardDescription>}
           {activity.pipeline.discovery_held && <CardDescription>{zh
             ? "待核实累计达到 10 人，已暂停发现新账号；优先完成现有核实，降至 5 人后继续搜索。"
             : "Reviews reached 10. New account discovery is on hold while existing reviews finish; search resumes at 5."}</CardDescription>}

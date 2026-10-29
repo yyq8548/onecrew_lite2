@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { setTimeout as waitForQueries } from "node:timers/promises";
 import type { AccountContext, AccountContextService } from "../identity/account-context.ts";
 import { stringifyApplicationJson } from "../contracts/application-json.ts";
 import type { DiscoveryScope } from "./contracts.ts";
@@ -17,12 +16,18 @@ import type { DiscoveryQueryFeedback } from "./query-feedback.ts";
 const text = z.string().refine(value => value.isWellFormed());
 export const discoveryQueryRoundProposal = z.object({ scopes: z.array(z.strictObject({ platform: text, keywords: z.array(text) })) });
 export type DiscoveryQueryRoundProposal = z.infer<typeof discoveryQueryRoundProposal>;
+class DiscoveryQueryNoProgressError extends DiscoveryQueryAuditError {}
+export interface DiscoveryQueryExpansionFailure {
+  platform: string; profile_ref: string;
+  stop_code: "query_expansion_failed" | "query_expansion_no_progress";
+  diagnostic: DiscoveryQueryAuditError["diagnostics"];
+}
 export function validateDiscoveryQueryRound(proposal: DiscoveryQueryRoundProposal, eligible: readonly DiscoveryScope[], language: string): DiscoveryScope[] | null {
   if (proposal.scopes.length === 0 || proposal.scopes.length > 3) return null;
   const additions: DiscoveryScope[] = [], script = discoveryQueryScript(language), nonLatin = /[\u3400-\u9fff\u3040-\u30ff\uac00-\ud7af\u1100-\u11ff\u0400-\u052f\u0600-\u06ff]/u;
   for (const scope of proposal.scopes) {
     const prior = eligible.find(value => value.platform === scope.platform);
-    if (!prior || scope.keywords.length === 0 || scope.keywords.length > 8 || script && !scope.keywords.some(query => script.test(query)) || isEnglishDiscoveryLanguage(language) && scope.keywords.some(query => !/[A-Za-z]/u.test(query) || nonLatin.test(query))) return null;
+    if (!prior || additions.some(addition => addition.platform === scope.platform) || scope.keywords.length === 0 || scope.keywords.length > 8 || script && !scope.keywords.some(query => script.test(query)) || isEnglishDiscoveryLanguage(language) && scope.keywords.some(query => !/[A-Za-z]/u.test(query) || nonLatin.test(query))) return null;
     const seen = new Set(prior.keywords.map(query => query.trim().toLowerCase()));
     for (const query of scope.keywords) {
       const normalized = query.trim().toLowerCase();
@@ -60,8 +65,7 @@ export async function proposeDiscoveryQueryRound(client: SemanticStructuredClien
           return prior !== undefined && scope.keywords.every(word => prior.keywords.some(previous => previous.trim().toLowerCase() === word.trim().toLowerCase()));
         });
         correction = { kind: "format", issues: [exhausted ? "The last proposal supplied no new queries. Generate different relevant retrieval angles within the same approved platforms and conditions." : "The last proposal failed platform, language, length or duplicate validation. Supply 1–8 distinct valid queries per eligible platform, with no previously used queries."] };
-        if (!exhausted && ++corrections >= 3) throw new DiscoveryQueryAuditError("format", correction.issues);
-        await waitForQueries(2000, undefined, { signal });
+        if (++corrections >= 3) throw exhausted ? new DiscoveryQueryNoProgressError("format", correction.issues) : new DiscoveryQueryAuditError("format", correction.issues);
         continue;
       }
     }
@@ -78,7 +82,7 @@ export async function proposeDiscoveryQueryRound(client: SemanticStructuredClien
 export class DiscoveryQueryRoundExecutor {
   readonly accounts: AccountContextService; readonly repositories: DiscoveryRepositoryResolver; readonly dependencies: DiscoveryDependencyResolver | undefined;
   constructor(accounts: AccountContextService, repositories: DiscoveryRepositoryResolver, dependencies?: DiscoveryDependencyResolver) { this.accounts = accounts; this.repositories = repositories; this.dependencies = dependencies; }
-  async expand(context: AccountContext, campaignId: string, revision: number, excluded: readonly string[] = [], cancellation?: AbortSignal): Promise<boolean> {
+  async expand(context: AccountContext, campaignId: string, revision: number, excluded: readonly string[] = [], cancellation?: AbortSignal, onPlatformFailure?: (failure: DiscoveryQueryExpansionFailure) => void | Promise<void>): Promise<boolean> {
     const signal = cancellation ? AbortSignal.any([context.signal, cancellation]) : context.signal;
     this.accounts.assertCurrent(context); signal.throwIfAborted();
     const owned = await this.repositories.resolve(context);
@@ -105,9 +109,22 @@ export class DiscoveryQueryRoundExecutor {
     if (eligible.length === 0) return false;
     const client = scopedSemanticClient(await this.dependencies.semantic(context), { kind: "queries", campaign_id: campaignId, revision }), guidance = await loadBundledDiscoveryQueryGuidance(); await assertCurrent();
     const approved_execution = { ...(campaign.source_targets ? { source_targets: campaign.source_targets } : {}), excluded_platforms: [...new Set([...excluded, ...stopped, ...INACTIVE_CREATOR_SOURCES])].filter(platform => campaign.scopes.some(scope => scope.platform === platform)) };
-    const additions = await proposeDiscoveryQueryRound(client, { brief: campaign.brief, criteria: campaign.criteria, target: campaign.target_count, counts, eligible, all_previous_queries: campaign.scopes, registered_sources: sources, approved_execution, candidate_sample: feedback, query_feedback: queryFeedback }, guidance, signal, assertCurrent);
-    await assertCurrent();
-    owned.repository.appendQueries(context.principal.user.id, campaignId, revision, campaign.scopes, additions);
+    for (let offset = 0; offset < eligible.length; offset += 3) {
+      const outcomes = await Promise.allSettled(eligible.slice(offset, offset + 3).map(async scope => {
+        const outcome = await proposeDiscoveryQueryRound(client, { brief: campaign.brief, criteria: campaign.criteria, target: campaign.target_count, counts, eligible: [scope], all_previous_queries: campaign.scopes, registered_sources: sources, approved_execution, candidate_sample: feedback, query_feedback: queryFeedback }, guidance, signal, assertCurrent).then(additions => ({ additions }), (error: unknown) => { if (error instanceof DiscoveryQueryAuditError) return { error }; throw error; });
+        await assertCurrent();
+        const current = owned.repository.getPlan(campaignId);
+        if (current.revision !== revision || current.approved_at === null || current.phase !== "active") throw new Error("query_round_campaign_changed");
+        if ("error" in outcome) {
+          const stop_code = outcome.error instanceof DiscoveryQueryNoProgressError ? "query_expansion_no_progress" : "query_expansion_failed";
+          owned.repository.recordQueryExpansionFailure(campaignId, revision, scope, stop_code);
+          await onPlatformFailure?.({ platform: scope.platform, profile_ref: scope.profile_ref, stop_code, diagnostic: outcome.error.diagnostics });
+        } else owned.repository.appendQueries(context.principal.user.id, campaignId, revision, current.scopes, outcome.additions);
+      }));
+      const failures = outcomes.filter(outcome => outcome.status === "rejected");
+      await assertCurrent();
+      if (failures.length) throw failures[0]!.reason;
+    }
     return true;
   }
 }

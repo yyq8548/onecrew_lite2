@@ -92,7 +92,7 @@ export function buildDiscoveryDraft(raw: unknown, rawPlan: unknown, sources: rea
   if (plan.min_subscribers_in_requirements && (min.state !== "unspecified" || !plan.intent.other_hard_conditions.length && !(plan.intent.quality_filter?.state === "specified" && qualityFilterNodes(plan.intent.quality_filter.value).some(node => node.kind === "condition")))) invalid("intent_invalid");
   const thresholdSource = input.min_followers_override !== null || min.state !== "unspecified" ? "explicit" : plan.min_subscribers_in_requirements ? "requirements" : previous ? previous.criteria.min_subscribers_source : "default";
   const threshold = input.min_followers_override ?? (plan.min_subscribers_in_requirements ? 0 : min.state === "specified" ? min.value : min.state === "unrestricted" ? 0 : previous ? previous.criteria.min_subscribers ?? previous.criteria.min_followers ?? 0 : plan.scopes.every(scope => scope.platform === "linkedin") ? 0 : 2000);
-  const criteria: Record<string, unknown> = { category: inheritedText("category"), region: "", language: inheritedText("language"), min_subscribers: threshold, requires_ai_tool_demo: false, requires_public_tool_url: false };
+  const criteria: Record<string, unknown> = { category: inheritedText("category"), region: "", language: inheritedText("language"), min_subscribers: threshold, requires_ai_tool_demo: false, requires_public_tool_url: false, occupational_review_applicability: plan.intent.occupational_review_applicability };
   if (thresholdSource !== undefined) criteria.min_subscribers_source = thresholdSource;
   const requirements = [...plan.intent.other_hard_conditions];
   const quality = plan.intent.quality_filter;

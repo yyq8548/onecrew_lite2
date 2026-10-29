@@ -5,8 +5,9 @@ import { chmod, copyFile, lstat, mkdir, readFile, readdir, realpath, writeFile }
 import { basename, dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { createPayloadManifest, payloadDigest, payloadBaseSchema } from "./payload-manifest.ts";
-import { parseApplicationJson } from "../contracts/application-json.ts";
+import { parseApplicationJson, stringifyApplicationJson } from "../contracts/application-json.ts";
 import { readDevelopmentBuildIdentity } from "../service/build-identity.ts";
+import { buildCurrentMcpRegistry, parseCurrentMcpRegistry } from "../service/mcp-catalogue.ts";
 import JSZip from "jszip";
 import { load } from "cheerio";
 import { OPENCLI_ADDON_FILES } from "../platforms/opencli/addons.ts";
@@ -127,7 +128,9 @@ export async function buildCandidate(options: { output: string; productVersion: 
   const telegramPackage = findPackageJSON("@mtcute/node", appPackage); if (!telegramPackage) throw new Error("package.telegram_runtime_missing");
   await stagePackage("@mtcute/wasm", pathToFileURL(await realpath(telegramPackage)).href, join(stage, "node_modules", "@mtcute", "wasm"), new Map());
   for (const directory of ["storage", "migration", "discovery"]) for (const name of await readdir(join(root, "onecrew_lite-app", "src", directory))) if (/\.(?:sql|ps1|json)$/u.test(name) || name === "assets") await copyTree(join(root, "onecrew_lite-app", "src", directory, name), join(stage, "resources", directory, name));
-  await copyTree(join(root, "onecrew_lite-app", "src", "service", "mcp-registry-data.json"), join(stage, "resources", "mcp-registry-data.json"));
+  const currentRegistry = Buffer.from(stringifyApplicationJson(await buildCurrentMcpRegistry()));
+  parseCurrentMcpRegistry(currentRegistry);
+  await writeFile(join(stage, "resources", "mcp-current-registry.json"), currentRegistry, { flag: "wx" });
   await copyTree(join(root, "onecrew_lite-app", "src", "service", "workflow-guides.json"), join(stage, "resources", "workflow-guides.json"));
   await copyTree(join(root, "onecrew_lite-app", "src", "service", "windows-host.ps1"), join(stage, "resources", "service", "windows-host.ps1"));
   await copyTree(join(root, "onecrew_lite-app", "src", "service", "windows-executable-path.ps1"), join(stage, "resources", "service", "windows-executable-path.ps1"));

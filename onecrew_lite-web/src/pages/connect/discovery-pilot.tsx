@@ -49,7 +49,7 @@ import { discoveryHitsCsv, loadAllDiscoveryHits } from "./library-csv-export";
 // New drafts start with every registered entry. Saved Campaign scopes remain frozen.
 export const SEARCH_PLATFORM_GROUPS = [
   { label: "overseas", platforms: ["youtube", "tiktok", "instagram", "twitter", "linkedin", "linkedin-salesnav", "facebook", "producthunt-posts"] },
-  { label: "chinese", platforms: ["bilibili", "weixin", "douyin", "weibo", "hupu", "juejin-hot", "weread", "douban-books", "douban-music"] },
+  { label: "chinese", platforms: ["bilibili", "weixin", "douyin", "weibo", "zhihu", "xiaohongshu", "hupu", "juejin-hot", "weread", "douban-books", "douban-music"] },
   { label: "publications", platforms: ["medium", "medium-tag", "substack", "apple-podcasts", "archive", "devto-tag", "lesswrong-tag", "lobsters-tag", "linkedin-learning"] },
   { label: "other", platforms: ["bluesky", "jike", "hackernews", "linux-do", "nowcoder", "v2ex-node", "stackoverflow", "stackoverflow-tag", "stackoverflow-users", "hf-spaces", "hf-models", "hf-datasets", "dribbble-shots", "dribbble-designers", "google", "google-images", "duckduckgo", "yahoo"] },
 ] as const;
@@ -552,7 +552,9 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
     } finally { preflightBusy.current = false; setCheckingStartLogin(false); }
   };
 
-  const stage = !running && current && counts.data && counts.data.qualified >= current.target_count ? "finished"
+  const recommendationsComplete = currentExecution?.pipeline?.recommendations_complete
+    ?? (current && counts.data && Object.keys(current.source_targets ?? {}).length === 0 && counts.data.qualified >= current.target_count);
+  const stage = !running && currentExecution?.stage !== "paused" && runCheckpoint?.reason !== "user_paused" && recommendationsComplete ? "finished"
     : currentExecution?.stage ?? discoveryStage(current, executionRunning(activeExecution), pausing,
       runCheckpoint && (runCheckpoint.campaign_id !== current?.id || runCheckpoint.revision !== current?.revision) ? "" : executionStatus);
   const runHistory = current ? loadRunHistory(window.localStorage, current.id) : [];

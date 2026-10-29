@@ -1,0 +1,15 @@
+{
+  "id": "06433495-4cd6-4f50-8568-9e8bf3d18a9f",
+  "discovery_campaign_id": "yt-ai-agent-094r2-20261028",
+  "criteria_revision": 1,
+  "platform": "youtube",
+  "source_profile_ref": "d5pskwub",
+  "platform_account_id": "UC0yHbz4OxdQFwmVX2BBQqLg",
+  "display_name": "AI Master",
+  "profile_url": "https://www.youtube.com/channel/UC0yHbz4OxdQFwmVX2BBQqLg",
+  "verdict": "qualified",
+  "evidence_json": "{\"source_urls\":[\"https://www.youtube.com/watch?v=bcM9dP_uXJU&pp=ygURQUkgYWdlbnQgdHV0b3JpYWw%3D\",\"https://www.youtube.com/watch?v=bcM9dP_uXJU\"],\"subscribers_raw\":\"34.3万位订阅者\",\"subscribers_source_url\":\"https://www.youtube.com/watch?v=bcM9dP_uXJU\",\"captured_at\":1793227231,\"video_title\":\"How to Build an AI Agent with Claude Code (Claude AI Agent Tutorial)\",\"video_description\":\"#sponsored Get your 30-day free trial here! https://gohighlevel.com/aimaster\\n\\n🧠 Get the full agent-building playbook on AI Master → https://aimaster.me/yt/agent_claude\\n\\nMost people use Claude wrong — they paste a task into chat and call it an agent. A real agent has a process, knows when it's uncertain, and asks before it acts. In this tutorial I show you how to build one with no code, no APIs, no developer setup — just Claude Desktop and a folder on your computer.\\n\\nWe cover the 3 levels of working with Claude, how to set up your Claude Code workspace, why the CLAUDE.md file is the most important piece of the whole system, and how planning mode stops Claude from guessing. Then we build two real agents live. Plus the 5 mistakes that kill most agent builds.\\n\\nChapters:\\n00:20 What an AI Agent Actually Is\\n03:05 The Three Things That Make an Agent Real\\n04:32 Setting Up Your Workspace\\n05:38 CLAUDE.md — The File That Changes Everything\\n08:11 The Habit That Makes or Breaks Results\\n10:13 How Agent Systems Are Actually Structured\\n12:04 Building Your First Real Workflow\\n13:51 Running the Agent on a Live Task\\n15:22 Iterating on the Output\\n16:26 Building a Second Workflow\\n17:53 The Five Mistakes That Kill Agent Workflows\\n20:12 Expanding Your Agent Stack Over Tim\\n\\n#claude #aiagents #claudetutorial #aiautomation #aimaster\",\"video_observations\":{\"duration_seconds\":1327,\"published_at\":\"2026-06-30T07:26:45-07:00\",\"text_completeness\":\"complete\",\"view_count\":842992},\"public_links\":[\"https://gohighlevel.com/aimaster\",\"https://aimaster.me/yt/agent_claude\"],\"public_link_observations\":[{\"label\":\"https://gohighlevel.com/aimaster\",\"source\":\"shortDescription\",\"url\":\"https://gohighlevel.com/aimaster\"},{\"label\":\"https://aimaster.me/yt/agent_claude\",\"source\":\"shortDescription\",\"url\":\"https://aimaster.me/yt/agent_claude\"},{\"label\":\"https://gohighlevel.com/aimaster\",\"source\":\"attributedDescription.commandRuns\",\"url\":\"https://gohighlevel.com/aimaster\"},{\"label\":\"https://aimaster.me/yt/agent_claude\",\"source\":\"attributedDescription.commandRuns\",\"url\":\"https://aimaster.me/yt/agent_claude\"}]}",
+  "created_at": 1793227231,
+  "updated_at": 1793227241,
+  "source_platform": "youtube"
+}

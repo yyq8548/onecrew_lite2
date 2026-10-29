@@ -185,13 +185,14 @@ export class DiscoveryRepository {
     const held = new Set<string>(policy.heldQueryHits ?? this.lowYieldUnreadHits(campaign));
     for (const [hit, source] of bases) {
       const rows = this.#db.prepare(`SELECT h.id FROM discovery_search_hits h LEFT JOIN discovery_search_authors a ON a.search_hit_id=h.id LEFT JOIN discovery_search_authors held ON held.search_hit_id=?2 LEFT JOIN discovery_identity_reads i ON i.search_hit_id=h.id
-        WHERE h.discovery_campaign_id=?1 AND(h.platform!=?3 OR h.id=?2 OR a.author_id=held.author_id OR a.author_id=?4 OR i.account_id=?4
+        WHERE h.discovery_campaign_id=?1 AND(h.platform!=?3 OR h.id=?2 OR a.author_id=held.author_id OR a.author_id=?4 OR i.account_id=?4 OR(?3='youtube' AND a.author_id IS NULL)
         OR EXISTS(SELECT 1 FROM discovery_video_identity_bindings b WHERE b.search_hit_id=h.id AND b.native_author_id=?4) OR h.source_url IN(SELECT source_url FROM discovery_search_hits WHERE id=?2))`).all(campaign, hit, platform, source.native_author_id);
       for (const row of rows) held.add(z.string().parse(row.id));
     }
     const excludedHits = [...held].sort((left, right) => Buffer.compare(Buffer.from(left), Buffer.from(right)));
     if (platform === "youtube") {
-      const language = this.nextLanguage(campaign, platform, excludedHits); return language ? { kind: "read_content", search_hit_id: language } : null;
+      const language = this.nextLanguage(campaign, platform, excludedHits); if (language) return { kind: "read_content", search_hit_id: language };
+      const video = !policy.holdDiscovery && this.nextVideoHit(campaign, excludedHits); return video ? { kind: "read_video", profile_ref: video.profile_ref, search_hit_id: video.id } : null;
     }
     const content = this.nextContentHit(campaign, platform, excludedHits); if (content) return { kind: "read_content", search_hit_id: content };
     if (platform === "linkedin" && !policy.holdDiscovery) {
@@ -303,7 +304,7 @@ export class DiscoveryRepository {
     return this.#transaction(() => this.pendingScoreHits(campaign, revision, [...excluded, ...this.reachedSources(campaign)]).flatMap(hit => {
       const basis = findDiscoveryReviewBasis(this.#db, campaign, revision, hit);
       if (!basis) return [];
-      const pending = pendingReview(this.#db, campaign, revision, basis.candidate_id);
+      const pending = pendingReview(this.#db, campaign, revision, basis.candidate_id, { hit, basis });
       return pending?.state === "awaiting_score" ? [{ search_hit_id: hit, candidate_id: basis.candidate_id, ...pending }] : [];
     }), true);
   }
@@ -319,7 +320,7 @@ export class DiscoveryRepository {
         for (const row of rows) {
           const candidate = z.string().parse(row.id);
           if (candidates.has(candidate)) continue;
-          const pending = pendingReview(this.#db, campaign, revision, candidate);
+          const pending = pendingReview(this.#db, campaign, revision, candidate, { hit, basis });
           if (pending && ["awaiting_score", "needs_content", "needs_identity", "needs_requirement"].includes(pending.state)) candidates.add(candidate);
         }
       }
@@ -503,6 +504,20 @@ export class DiscoveryRepository {
         }
       }
       this.#db.prepare("UPDATE discovery_campaigns SET updated_at=? WHERE id=?").run(now, claim.planId);
+    });
+  }
+  recordQueryExpansionFailure(id: string, revision: number, expected: DiscoveryScope, stopCode: "query_expansion_failed" | "query_expansion_no_progress"): void {
+    if (stopCode !== "query_expansion_failed" && stopCode !== "query_expansion_no_progress") throw new Error("query_round_invalid");
+    this.#transaction(() => {
+      const head = this.#head(id, revision);
+      const scope = this.#scopes(id, revision, head.scope_json).find(value => value.platform === expected.platform && value.profile_ref === expected.profile_ref);
+      if (!scope) throw new Error("query_round_outside_scope");
+      if (stringifyApplicationJson(scope) !== stringifyApplicationJson(expected)) throw new Error("query_round_plan_changed");
+      if (this.#run(id, scope.platform, scope.profile_ref).status !== "completed") throw new Error("query_round_platform_stopped");
+      if (this.#next(id, scope) !== null) throw new Error("query_round_not_exhausted");
+      const now = Math.floor(Date.now() / 1000);
+      if (this.#db.prepare("UPDATE discovery_platform_runs SET status='technical_stop',stop_code=?,updated_at=? WHERE discovery_campaign_id=? AND platform=? AND profile_ref=? AND status='completed'").run(stopCode, now, id, scope.platform, scope.profile_ref).changes !== 1) throw new Error("query_round_platform_stopped");
+      this.#db.prepare("UPDATE discovery_campaigns SET updated_at=? WHERE id=?").run(now, id);
     });
   }
   appendQueries(accountId: string, id: string, revision: number, expected: readonly DiscoveryScope[], additions: readonly DiscoveryScope[]): void {

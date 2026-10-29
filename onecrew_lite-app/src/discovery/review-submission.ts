@@ -44,7 +44,7 @@ export function prepareDiscoveryReview(account: string, raw: unknown, basis: Dis
   if (platform === "douyin" && material.native_follower_estimate) assessment = assessDiscoveryDouyin(material.criteria, evidence, material.native_author_id, material.native_follower_estimate.display);
   else if (platform === "facebook" && material.native_follower_estimate) assessment = assessDiscoveryFacebook(material.criteria, evidence, material.native_author_id, material.native_follower_estimate.display);
   else if (platform === "instagram" && material.native_follower_estimate) assessment = assessDiscoveryInstagram(material.criteria, evidence, material.native_author_id, material.native_follower_estimate.display);
-  else if (["facebook", "linkedin", "instagram", "weibo", "douyin"].includes(platform)) assessment = assessDiscoveryProfile(material.criteria, evidence, material.native_author_id, material.native_followers ?? null);
+  else if (["facebook", "linkedin", "instagram", "weibo", "douyin", "zhihu", "xiaohongshu"].includes(platform)) assessment = assessDiscoveryProfile(material.criteria, evidence, material.native_author_id, material.native_followers ?? null);
   else if (["twitter", "tiktok", "bilibili"].includes(platform)) { if (material.native_followers === undefined) throw new Error("review_native_followers_unavailable"); assessment = assessDiscoveryProfile(material.criteria, evidence, material.native_author_id, material.native_followers); }
   else assessment = assessDiscoveryYoutube(material.criteria, evidence, material.native_author_id);
   if (platform === "linkedin" && basis.native_profile?.experience_checked === true && assessment.verdict === "pending") {

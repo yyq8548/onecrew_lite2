@@ -51,8 +51,10 @@ export class DiscoveryContentExecutor {
         value = await this.reader.twitterPostContent(browser, claim.author_id, post, owned.repository.contentNativeIdentity(claim));
       } else if (claim.platform === "bilibili") value = await this.reader.bilibiliVideoEvidence(browser, claim.source_url, claim.author_id);
       else if (claim.platform === "weibo") value = await this.reader.weiboPostEvidence(browser, claim.source_url);
+      else if (claim.platform === "zhihu") value = await this.reader.zhihuContent(browser, claim.author_id, claim.source_url);
+      else if (claim.platform === "xiaohongshu") value = await this.reader.xiaohongshuContent(browser, claim.author_id, claim.source_url);
       else throw new OpenCliError("opencli_read_command_unavailable");
-      if (Buffer.byteLength(stringifyApplicationJson(value)) > 16000) throw new OpenCliError("opencli_output_too_large"); return { reused: false as const, native: value };
+      if (Buffer.byteLength(stringifyApplicationJson(value)) > (["zhihu", "xiaohongshu"].includes(claim.platform) ? 24000 : 16000)) throw new OpenCliError("opencli_output_too_large"); return { reused: false as const, native: value };
     })().then(value => ({ ok: true as const, value }), error => ({ ok: false as const, error: error as unknown }));
     owned.assertOwned();
     if (observed.ok) return observed.value.reused ? observed.value.receipt : experience ? owned.repository.finishLinkedinExperience(claim,observed.value.native,null) : owned.repository.finishContent(claim, observed.value.native, null);

@@ -233,7 +233,7 @@ export class DiscoverySemanticMatcher {
         const compact = await this.#client.structured({ ...options, schema: structuredSemanticSchema(compactScoreProposal), decode: compactScoreProposal }).then(value => value, error => { throw discoveryMatchFailure(error); });
         proposal = expandScoreProposal(compact, payload.bundle);
       }
-      if ((payload.material.native_platform ?? payload.material.hit.platform) === "linkedin" && (proposal.selection.outcome === "supported" || professionalReview !== undefined)) {
+      if ((payload.material.native_platform ?? payload.material.hit.platform) === "linkedin" && object(payload.material.criteria).occupational_review_applicability !== "not_required" && (proposal.selection.outcome === "supported" || professionalReview !== undefined)) {
         if (professionalReview === undefined) {
           const started = performance.now();
           const reviewed = await this.#client.structured({ ...buildCompactProfessionalRequest(payload.objective, payload.material, payload.bundle), scope: { ...hostScope, kind: "professional_review" }, schema: structuredSemanticSchema(compactProfessionalReview), decode: compactProfessionalReview, planning: false, signal, ...(onUsage ? { onUsage } : {}), assertCurrent: async () => { this.#assert(context, payload.owned); signal.throwIfAborted(); } }).then(value => value, error => { throw discoveryMatchFailure(error); });

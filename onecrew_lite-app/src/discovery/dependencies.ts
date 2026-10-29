@@ -1,4 +1,6 @@
 import { homedir } from "node:os";
+import { stat } from "node:fs/promises";
+import { join } from "node:path";
 import type { AccountContext, AccountContextService } from "../identity/account-context.ts";
 import type { VerifiedMailIdentityProvider } from "../mail/gmail-access.ts";
 import { runtimeAssetPath } from "../packaging/runtime-context.ts";
@@ -7,6 +9,7 @@ import type { PlatformVaultReader } from "../platforms/browser/platform-vault.ts
 import { OpenCliAddons } from "../platforms/opencli/addons.ts";
 import { OpenCliError } from "../platforms/opencli/errors.ts";
 import { OpenCliReader } from "../platforms/opencli/reader.ts";
+import { resolveOpenCliInstallation } from "../platforms/opencli/installation.ts";
 import type { SemanticStructuredClient } from "./semantic-client.ts";
 import { HostSemanticClient, type HostWorkNotice } from "./host-work.ts";
 import type { DiscoveryBrowserResolver } from "./search-execution.ts";
@@ -26,6 +29,7 @@ export interface TrustedDiscoveryConfiguration {
 // 创建工厂不探测CLI、读取凭据、安装扩展或打开浏览器。配置只由受信主程序提供。
 export function createDefaultDiscoveryDependencies(configuration: TrustedDiscoveryConfiguration): DiscoveryDependencyResolver {
   const semanticClients = new WeakMap<AccountContext, Promise<HostSemanticClient>>(), shutdown = new AbortController();
+  const readEnvironments = new WeakMap<AccountContext, { key: string; value: Promise<DiscoveryReadEnvironment> }>();
   return Object.freeze({
     stopSemantic() { shutdown.abort(new Error("discovery_semantic_stopping")); },
     async reads(context: AccountContext): Promise<DiscoveryReadEnvironment> {
@@ -38,10 +42,27 @@ export function createDefaultDiscoveryDependencies(configuration: TrustedDiscove
       }
       const home = configuration.openCliHome ? await configuration.openCliHome(context) : homedir();
       configuration.accounts.assertCurrent(context);
-      const addons = new OpenCliAddons(runtimeAssetPath("opencli-addons", new URL("../../../onecrew_lite-opencli", import.meta.url)), home);
-      const reader = await OpenCliReader.inspect(addons, undefined, context.signal);
+      const installation = await resolveOpenCliInstallation();
+      const addonRoot = join(home, ".opencli", "clis");
+      const files = [installation.executable, ...installation.script ? [installation.script] : [], addonRoot];
+      const versions = await Promise.all(files.map(path => stat(path).then(value => [path, value.dev, value.ino, value.size, value.mtimeMs, value.ctimeMs], error => {
+        if (path === addonRoot && (error as NodeJS.ErrnoException).code === "ENOENT") return [path, null];
+        throw error;
+      })));
+      const key = JSON.stringify([home, versions]);
+      let entry = readEnvironments.get(context);
+      if (!entry || entry.key !== key) {
+        const value = (async () => {
+          const addons = new OpenCliAddons(runtimeAssetPath("opencli-addons", new URL("../../../onecrew_lite-opencli", import.meta.url)), home);
+          const reader = await OpenCliReader.inspect(addons, installation, context.signal);
+          return Object.freeze({ reader: reader.withDiagnostics(() => { if (readEnvironments.get(context)?.value === value) readEnvironments.delete(context); }), browsers });
+        })();
+        entry = { key, value }; readEnvironments.set(context, entry);
+        void value.then(() => undefined, () => { if (readEnvironments.get(context)?.value === value) readEnvironments.delete(context); });
+      }
+      const environment = await entry.value;
       configuration.accounts.assertCurrent(context);
-      return Object.freeze({ reader, browsers });
+      return environment;
     },
     async semantic(context: AccountContext): Promise<SemanticStructuredClient> {
       configuration.accounts.assertCurrent(context);

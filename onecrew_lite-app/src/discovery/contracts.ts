@@ -15,6 +15,7 @@ export const discoverySourceTargets = z.record(text.regex(/^[a-z\d-]{1,64}$/u), 
 export const discoveryCriteria = z.record(z.string(), z.unknown()).superRefine((value, context) => {
   const fail = (path: string, message: string) => context.addIssue({ code: "custom", path: [path], message });
   if (Buffer.byteLength(stringifyApplicationJson(value)) > 16384) fail("", "criteria_too_large");
+  if (value.occupational_review_applicability !== undefined && !z.enum(["required", "not_required", "unknown"]).safeParse(value.occupational_review_applicability).success) fail("occupational_review_applicability", "invalid_occupational_review_applicability");
   if (Object.hasOwn(value, "min_subscribers") && Object.hasOwn(value, "min_followers")) fail("min_followers", "competing_follower_thresholds");
   for (const key of ["min_subscribers", "min_followers"]) if (Object.hasOwn(value, key) && !z.union([z.number().int().safe().nonnegative(), z.bigint().min(0n).max(18446744073709551615n)]).safeParse(value[key]).success) fail(key, "invalid_follower_threshold");
   for (const key of ["requires_ai_tool_demo", "requires_public_tool_url"]) if (Object.hasOwn(value, key) && typeof value[key] !== "boolean") fail(key, "invalid_evidence_requirement");

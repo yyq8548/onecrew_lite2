@@ -7,7 +7,7 @@ SELECT EXISTS(
    AND review.policy_version IN ('initial-match-evaluation-v1','selection-quality-evaluation-v2')
    AND review.material_hash=COALESCE(json_extract(c.evidence_json,'$.reviewed_selection.material_hash'),json_extract(c.evidence_json,'$.reviewed_match.material_hash'))
    AND review.native_author_id=COALESCE(json_extract(c.evidence_json,'$.reviewed_selection.native_author_id'),json_extract(c.evidence_json,'$.reviewed_match.native_author_id'))
- WHERE d.id=?1 AND h.id=?2 AND h.platform IN ('twitter','youtube','bilibili','tiktok','facebook','instagram','weibo','bluesky','zhihu','hackernews','linkedin','douyin','google','yahoo') AND c.verdict='pending'
+ WHERE d.id=?1 AND h.id=?2 AND h.platform IN ('twitter','youtube','bilibili','tiktok','facebook','instagram','weibo','bluesky','zhihu','hackernews','linkedin','douyin','google','yahoo','xiaohongshu') AND c.verdict='pending'
    AND c.criteria_revision=d.current_revision AND d.phase='active' AND v.approved_at IS NOT NULL
    AND __DISCOVERY_READ_AVAILABLE__
    AND (json_extract(v.criteria_json,'$.language') IS NOT NULL OR h.platform='tiktok')
@@ -85,7 +85,7 @@ SELECT EXISTS(
      AND json_extract(f.value,'$.outcome')='insufficient')
    AND coalesce(json_array_length(review.material_json,'$.language_samples'),0) = (SELECT COUNT(*) FROM discovery_language_samples s WHERE s.candidate_id=c.id AND s.criteria_revision=d.current_revision AND s.status='completed')
    AND (SELECT COUNT(*) FROM discovery_language_samples s WHERE s.candidate_id=c.id AND s.criteria_revision=d.current_revision)<1
-   AND (h.platform NOT IN ('instagram','weibo','bluesky','zhihu','hackernews') OR NOT EXISTS(SELECT 1 FROM discovery_language_samples s WHERE s.candidate_id=c.id AND s.criteria_revision=d.current_revision))
+   AND (h.platform NOT IN ('instagram','weibo','bluesky','zhihu','hackernews','xiaohongshu') OR NOT EXISTS(SELECT 1 FROM discovery_language_samples s WHERE s.candidate_id=c.id AND s.criteria_revision=d.current_revision))
    AND (h.platform!='facebook' OR EXISTS(SELECT 1 FROM discovery_facebook_content_targets t
      WHERE t.search_hit_id=h.id AND t.discovery_campaign_id=d.id AND t.expected_revision=d.current_revision
        AND t.status='completed' AND t.stop_code IS NULL

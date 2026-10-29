@@ -3,9 +3,19 @@ import { renderToStaticMarkup } from "react-dom/server";
 import type { App } from "@modelcontextprotocol/ext-apps";
 import { parseWorkspaceStatus, retainWorkspaceActivity, mergeWorkspaceHistory, historyForWorkspaceView, WorkspaceStatusCard, type WorkspaceStatus } from "./workspace-status";
 import type { WorkspaceActivity } from "@mcp-ui/lib/result-contract/workspace";
+import { WorkspaceStatusView } from "./workspace-status-view";
 const snapshot: WorkspaceStatus = { kind: "workspace", url: "http://127.0.0.1:22124", library_url: "http://127.0.0.1:8091/library", library_error: null, locale: "zh-CN", startup: "ready", workspace_activity: null, workspace_activity_error: null };
 function parse(value: unknown) { return parseWorkspaceStatus({ content: [], _meta: { "onecrew/workspace": value } }); }
 describe("workspace bootstrap contract", () => {
+  it("distinguishes completed recommendations, contact collection and a user pause", () => {
+    const activity: WorkspaceActivity = { campaign_id: "yt-ai-agent-094r2-20261028", brief: "YouTube AI Agent", stage: "verifying", qualified: 30, pending: 0, target: 30, attempted: 1, total: 1, used: 101, login_required: 0, read_errors: 1, restricted: 0, stale: false, pipeline: { active_pending: 0, queued_scores: 0, running_scores: 0, discovery_held: false, contact_pending: true, recommendations_complete: true } };
+    const render = (value: WorkspaceActivity) => renderToStaticMarkup(<WorkspaceStatusView phase="ready" activity={value} error={null} libraryError={null} locale="zh-CN" updatedAt={null} />);
+    expect(render(activity)).toContain("推荐已完成，正在补充公开联系方式");
+    expect(render({ ...activity, pipeline: { ...activity.pipeline!, recommendations_complete: false } })).toContain("正在核实");
+    const paused = render({ ...activity, stage: "paused" });
+    expect(paused).toContain("已暂停");
+    expect(paused).not.toContain("正在补充公开联系方式");
+  });
   it("starts a newly mounted card at its plan without duplicating older history", () => {
     const first = { campaign_id: "first" } as WorkspaceActivity;
     const second = { campaign_id: "second" } as WorkspaceActivity;

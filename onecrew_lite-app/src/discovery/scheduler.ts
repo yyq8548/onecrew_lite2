@@ -63,7 +63,8 @@ export class DiscoveryScheduler {
     const configuration = this.#configuration, { context, input } = owner, owned = await configuration.repositories.resolve(context); owned.assertOwned();
     const directory = await resolveDiscoveryScoreDirectory(configuration.directories, context), queue = new SavedDiscoveryScores(directory, input.campaign_id, input.expected_revision), metrics = await configuration.metrics(context);
     const metricsWriter = new DiscoveryMetricsWriter(metrics);
-    const restored = [...await queueWork(() => queue.load()), ...await queueWork(() => queue.loadDeferred())], jobs: ScoreJob[] = [], attempted = new Set<string>(), lane = new DiscoveryProjectionLane(), failures: unknown[] = [];
+    const restoredState = await queueWork(() => queue.loadState());
+    const restored = [...restoredState.active, ...restoredState.deferred], jobs: ScoreJob[] = [], attempted = new Set<string>(), lane = new DiscoveryProjectionLane(), failures: unknown[] = [];
     owned.repository.reprojectCompletedContacts(input.campaign_id, input.expected_revision);
     const restoredHits = new Set(restored.map(item => item.hit));
     for (const { search_hit_id: hit } of owned.repository.readyReviews(input.campaign_id, input.expected_revision, [...input.excluded_platforms, ...INACTIVE_CREATOR_SOURCES])) {
@@ -82,17 +83,18 @@ export class DiscoveryScheduler {
       const next = discoveryShouldHold(holdDiscovery, active);
       if (next !== holdDiscovery) metrics.enqueue(input.campaign_id, next ? "pipeline.discovery_held" : "pipeline.discovery_resumed", 0);
       holdDiscovery = next;
-      owner.change(status => { status.pipeline = { active_pending: active, queued_scores: jobs.filter(job => job.state === "queued").length, running_scores: jobs.filter(job => job.state === "running").length, discovery_held: holdDiscovery, contact_pending: owned.repository.nextPublicPage(input.campaign_id, unavailable) !== null }; });
+      const targets = owned.repository.sourceProgress(input.campaign_id), complete = targets.length ? targets.every(source => source.qualified >= source.target_count) : owned.repository.countCandidates(input.campaign_id, unavailable).qualified >= owned.repository.getPlan(input.campaign_id).target_count;
+      owner.change(status => { status.pipeline = { active_pending: active, queued_scores: jobs.filter(job => job.state === "queued").length, running_scores: jobs.filter(job => job.state === "running").length, discovery_held: holdDiscovery, contact_pending: owned.repository.nextPublicPage(input.campaign_id, unavailable) !== null, recommendations_complete: complete }; });
     };
     let readAhead = 0, finalStage: DiscoveryExecutionStage = "paused", finalReason = "execution_interrupted", fatal = false;
     const reads: ReadJob[] = [];
     let attemptedRead: { result: DiscoveryAdvanceResult; started: number } | undefined;
     const elapsed = (start: number) => Math.floor(performance.now() - start), started = performance.now(); metrics.enqueue(input.campaign_id, "pipeline.started", 0);
-    const sync = async () => {
+    const sync = async (reuseUnchanged = false) => {
       const began = performance.now();
       const version = recommendationVersion;
       owner.change(status => { status.sync_pending = true; });
-      const result = await configuration.library.publish(context, input.campaign_id, input.expected_revision).then(value => ({ ok: true as const, value }), error => ({ ok: false as const, error: error as unknown }));
+      const result = await configuration.library.publish(context, input.campaign_id, input.expected_revision, reuseUnchanged ? { reuse_unchanged: true } : undefined).then(value => ({ ok: true as const, value }), error => ({ ok: false as const, error: error as unknown }));
       owner.change(status => {
         if (result.ok) { status.library = result.value; status.sync_error = null; status.sync_pending = version !== recommendationVersion; status.synced_at = Date.now(); }
         else { status.sync_error = discoveryExecutionFailureCode(result.error); status.sync_pending = true; }
@@ -153,13 +155,14 @@ export class DiscoveryScheduler {
     };
     const enqueue = async (hit: string, deferred: string[]): Promise<boolean> => {
       if (jobs.some(job => job.hit === hit)) return true;
-      await queueWork(() => queue.add({ hit, deferred_platforms: deferred })); const preparedAt = performance.now();
+      const preparedAt = performance.now();
       const prepared = await (async () => (await configuration.matcher(context)).prepare(context, { campaign_id: input.campaign_id, expected_revision: input.expected_revision, search_hit_id: hit }))().then(value => ({ ok: true as const, value }), error => ({ ok: false as const, error: error as unknown }));
       metrics.enqueue(input.campaign_id, "score.prepare", elapsed(preparedAt));
       if (!prepared.ok) { await queueWork(() => queue.defer({ hit, deferred_platforms: deferred }, discoveryExecutionFailureCode(prepared.error))); return recordScore(hit, prepared); }
       if (prepared.value.state !== "model") { await queueWork(() => queue.remove(hit)); return recordScore(hit, { ok: true, saved: prepared.value.state === "cached" }); }
       if (owner.signal.aborted) return true;
       if (attempted.has(prepared.value.prepared.evidenceKey)) { await queueWork(() => queue.remove(hit)); return true; }
+      await queueWork(() => queue.add({ hit, deferred_platforms: deferred }));
       attempted.add(prepared.value.prepared.evidenceKey); jobs.push({ hit, deferred, prepared: prepared.value.prepared, preparedAt, queuedAt: performance.now(), state: "queued" }); launch(); return true;
     };
     const work = await (async () => {
@@ -212,7 +215,9 @@ export class DiscoveryScheduler {
           if (["search_exhausted", "needs_evidence"].includes(result.step.kind)
             && result.campaign.platform_runs.some(run => run.status === "completed" && !unavailable.includes(run.platform))) {
             if (!configuration.dependencies) throw new Error("discovery_dependency_unavailable");
-            const expanded = await new DiscoveryQueryRoundExecutor(configuration.accounts, configuration.repositories, configuration.dependencies).expand(context, input.campaign_id, input.expected_revision, input.excluded_platforms, owner.signal);
+            const expanded = await new DiscoveryQueryRoundExecutor(configuration.accounts, configuration.repositories, configuration.dependencies).expand(context, input.campaign_id, input.expected_revision, unavailable, owner.signal, failure => {
+              metrics.enqueueFailure(input.campaign_id, { recorded_at: Date.now(), step: "query_audit", platform: failure.platform, target_id: null, call_number: null, code: failure.stop_code, diagnostic: failure.diagnostic });
+            });
             if (expanded) continue;
           }
           ({ stage: finalStage, reason: finalReason } = terminal(holdDiscovery && result.step.kind === "busy" ? "needs_evidence" : result.step.kind)); break;
@@ -260,7 +265,7 @@ export class DiscoveryScheduler {
     if (!context.signal.aborted) updatePipeline();
     const drained = await lane.close().then(() => ({ ok: true as const }), error => ({ ok: false as const, error: error as unknown })); if (!drained.ok) failures.push(drained.error);
     if (!context.signal.aborted) {
-      const finalSync = await sync().then(() => ({ ok: true as const }), error => ({ ok: false as const, error: error as unknown }));
+      const finalSync = await sync(true).then(() => ({ ok: true as const }), error => ({ ok: false as const, error: error as unknown }));
       if (!finalSync.ok) {
         failures.push(finalSync.error);
         owner.change(status => { if (status.failure_code === null) { status.failure_code = discoveryExecutionFailureCode(finalSync.error); status.failure_phase = status.failure_code.startsWith("access.") ? "account" : "sync"; } });

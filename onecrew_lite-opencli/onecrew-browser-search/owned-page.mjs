@@ -1,4 +1,6 @@
+import { Script } from 'node:vm';
 import { restoreOriginalLanguage } from './original-language.mjs';
+const { buildEvaluateExpression } = await import(new URL('./browser/utils.js', import.meta.resolve('@jackwener/opencli')));
 
 // One owned target per navigation. Never retry another profile or close user tabs.
 export async function withOwnedSearchPage(page, task) {
@@ -35,6 +37,12 @@ export async function withOwnedSearchPage(page, task) {
     };
     if (key === 'evaluate') return async (...args) => {
       if (target) await step(()=>object.setActivePage(target));
+      const expression = buildEvaluateExpression(args[0], args.slice(1));
+      let combined = true;
+      try { new Script('(' + expression + '\n)'); }
+      catch (error) { if (!(error instanceof SyntaxError)) throw error; combined = false; }
+      if (combined) return step(()=>object.evaluate('(async()=>{await (' + restoreOriginalLanguage.toString() + ')();return (' + expression + '\n);})()'));
+      // 语句和词法块保留原执行方式及 JavaScript completion value。
       await step(()=>object.evaluate('(' + restoreOriginalLanguage.toString() + ')()'));
       return step(()=>object.evaluate(...args));
     };

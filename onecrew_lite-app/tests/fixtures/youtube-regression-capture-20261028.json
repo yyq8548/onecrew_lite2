@@ -1,0 +1,224 @@
+{
+  "provenance": {
+    "captured_at": "2026-10-28",
+    "source_campaign": "yt-ai-agent-094r2-20261028",
+    "description": "Selected real saved search hits, author bindings and native YouTube evidence; no new provider requests."
+  },
+  "historical": {
+    "campaign": {
+      "id": "16a5063c-b0fe-438e-9f75-8cd5be11cac4",
+      "phase": "active",
+      "current_revision": 1,
+      "target_count": 30,
+      "max_calls": null,
+      "used_calls": 129,
+      "created_at": 1792634535,
+      "updated_at": 1792637215
+    },
+    "revision": {
+      "discovery_campaign_id": "16a5063c-b0fe-438e-9f75-8cd5be11cac4",
+      "revision": 1,
+      "brief_json": "\"测试新版速度：仅在 X（Twitter）、YouTube、LinkedIn 三个平台寻找 AI Agent（人工智能智能体）相关账号，每个平台10个，共30个。X和YouTube粉丝至少2000；LinkedIn不要求followers或connections数量。语言和地区不限。本人简介、当前工作或公开内容任一项能证明AI Agent相关性即可；搜索关键词命中不能作为匹配证据。匹配和质量分开，不设置最低质量档位。优先展示公开邮箱，没有邮箱不淘汰。保留已有数据和旧任务，复用成功读取的账号及联系方式材料，不重复读取成功账号。只在缺少必需证据时补读，不读取YouTube字幕。关键词不足时按原条件自动补充。记录搜索成功率、命中率、各阶段耗时、待核实队列变化和具体失败原因，比较新旧效率，分别记录新读取与缓存复用，不修改代码。\\nDefault search entries when no platform is requested: youtube\"",
+      "opencli_version": "1.8.8",
+      "criteria_json": "{\"category\":\"AI Agent（人工智能智能体）相关账号\",\"region\":\"\",\"language\":\"\",\"min_subscribers\":0,\"requires_ai_tool_demo\":false,\"requires_public_tool_url\":false,\"min_subscribers_source\":\"requirements\",\"quality_filter\":null,\"requirements\":[{\"description\":\"按平台审核规模：X 和 YouTube 的 followers 均须至少2000，比较为 >=2000；LinkedIn 的 followers 和 connections 均无数量要求。此门槛仅适用于指定平台，不设置全局粉丝门槛。\",\"excerpt\":\"X和YouTube粉丝至少2000；LinkedIn不要求followers或connections数量。\"},{\"description\":\"相关性证据采用 OR：本人简介证明 AI Agent 相关性，或者当前工作证明 AI Agent 相关性，或者公开内容证明 AI Agent 相关性，满足任一项即可。搜索关键词命中本身不能作为匹配证据。\",\"excerpt\":\"本人简介、当前工作或公开内容任一项能证明AI Agent相关性即可；搜索关键词命中不能作为匹配证据。\"}],\"contact_preference\":\"public_email_first\",\"contact_search_terms\":[\"email\",\"business cooperation\",\"contact\",\"official website\"],\"automatic_query_expansion\":true,\"table_subject\":\"AI Agent（人工智能智能体）相关账号\"}",
+      "scope_json": "[{\"platform\":\"twitter\",\"profile_ref\":\"d5pskwub\",\"keywords\":[\"\\\"AI Agent\\\" technical explanation -filter:replies -filter:retweets\",\"\\\"AI Agent\\\" tutorial\",\"\\\"AI Agent\\\" project demo\",\"\\\"AI Agent\\\" deployment experience\",\"AI Agent 技术解析\",\"AI Agent 开发实践\",\"人工智能智能体 应用案例\"]},{\"platform\":\"youtube\",\"profile_ref\":\"d5pskwub\",\"keywords\":[\"AI Agent explained\",\"AI Agent development tutorial\",\"AI Agent project walkthrough\",\"AI Agent deployment experience\",\"人工智能智能体 技术解析\",\"AI Agent 开发教程\",\"AI Agent 应用案例\"]},{\"platform\":\"linkedin\",\"profile_ref\":\"d5pskwub\",\"keywords\":[\"AI Agent researcher\",\"AI Agent engineer\",\"AI Agent educator\",\"AI Agent developer\",\"人工智能智能体 研究员\",\"AI Agent 技术讲师\",\"AI Agent 产品负责人\"]}]",
+      "approved_at": 1792634645
+    },
+    "run": {
+      "discovery_campaign_id": "16a5063c-b0fe-438e-9f75-8cd5be11cac4",
+      "platform": "youtube",
+      "profile_ref": "d5pskwub",
+      "status": "completed",
+      "cursor": null,
+      "active_query": null,
+      "calls_used": 1,
+      "stop_code": null,
+      "updated_at": 1792637222
+    },
+    "hit": {
+      "id": "2ec9cd06-d294-41d5-a076-feeeb0176caf",
+      "discovery_campaign_id": "16a5063c-b0fe-438e-9f75-8cd5be11cac4",
+      "platform": "youtube",
+      "profile_ref": "d5pskwub",
+      "search_keyword": "AI Agent explained",
+      "source_url": "https://www.youtube.com/watch?v=4TvH-OZhwxI&pp=ygUSQUkgQWdlbnQgZXhwbGFpbmVk",
+      "title": "AI Agents Explained: How to Create and Use AI Agents in 2026",
+      "author_label": "AI Master",
+      "captured_at": 1792635164
+    },
+    "candidate": {
+      "id": "c92924ed-366d-4d31-9f54-51603cf244f3",
+      "discovery_campaign_id": "16a5063c-b0fe-438e-9f75-8cd5be11cac4",
+      "criteria_revision": 1,
+      "platform": "youtube",
+      "source_profile_ref": "d5pskwub",
+      "platform_account_id": "UC0yHbz4OxdQFwmVX2BBQqLg",
+      "display_name": "AI Master",
+      "profile_url": "https://www.youtube.com/channel/UC0yHbz4OxdQFwmVX2BBQqLg",
+      "verdict": "qualified",
+      "evidence_json": "{\"source_urls\":[\"https://www.youtube.com/watch?v=4TvH-OZhwxI&pp=ygUSQUkgQWdlbnQgZXhwbGFpbmVk\",\"https://www.youtube.com/watch?v=4TvH-OZhwxI\"],\"subscribers_raw\":\"34万位订阅者\",\"subscribers_source_url\":\"https://www.youtube.com/watch?v=4TvH-OZhwxI\",\"captured_at\":1792636801,\"video_title\":\"AI Agents Explained: How to Create and Use AI Agents in 2026\",\"video_description\":\"#sponsored Redeem IAMAIMASTER50 to save 50% on our Starter and Standard Plans for the first 3 months (only applicable to new paying customers)  https://www.brevo.com/partners/iamaimaster/?utm_medium=partnership&utm_source=iamaimaster&utm_campaign=youtube (@brevo_official)\\n\\n🧠 Learn to build real AI agents — step by step training inside AI Master → https://aimaster.me/yt/ai_agents\\n🎬 Skip building agents from zero. Get a ready-made AI content pipeline and start producing today → https://aimaster.me/\\n\\nYou're probably using Claude like a chatbot. Same model, same subscription — but agents can open your browser, run 10 tasks at once, and finish a week of work before lunch.\\n\\nThis is the complete guide to agentic AI in 2026: how to create AI agents, how agents actually work, which platforms are worth your time, and the prompt structure that makes them actually deliver.\\n\\n▶ WHAT'S IN THIS VIDEO\\n• What separates a chatbot from a real AI agent (LLM + tools + memory + goals loop)\\n• Claude Code — Anthropic's reasoning agent, and why it's not just for coding\\n• OpenAI Codex — lowest-friction entry if you already pay for ChatGPT\\n• OpenClaw — open-source agent that lives inside Telegram, WhatsApp, iMessage\\n• Google Antigravity — visual agent built on Gemini, best for front-end and design\\n• Prompt Contracts: Goal → Constraints → Format → Failure (the 4-part structure that stops agents from going off the rails)\\n• Memory files: teach your agent once and never repeat yourself\\n\\n⏱️ TIMESTAMPS:\\n00:00 - The most expensive AI mistake right now\\n01:21 - What an AI agent actually is\\n03:30 Claude Code — install & first run\\n06:45 OpenAI Codex — install & first run\\n09:07 OpenClaw — install & first run\\n12:25 Google Antigravity — install & first run\\n16:44 Prompt Contracts: the 4-section structure\\n21:53 Memory files: teach once, never repeat\\n\\n#AIAgents #ClaudeCode #AIAutomation #Brevo\",\"video_observations\":{\"duration_seconds\":1468,\"published_at\":\"2026-05-13T11:56:35-07:00\",\"text_completeness\":\"complete\",\"view_count\":137762},\"public_links\":[\"https://www.brevo.com/partners/iamaimaster/?utm_medium=partnership&utm_source=iamaimaster&utm_campaign=youtube\",\"https://aimaster.me/yt/ai_agents\",\"https://aimaster.me/\"],\"public_link_observations\":[{\"label\":\"https://www.brevo.com/partners/iamaimaster/?utm_medium=partnership&utm_source=iamaimaster&utm_campaign=youtube\",\"source\":\"shortDescription\",\"url\":\"https://www.brevo.com/partners/iamaimaster/?utm_medium=partnership&utm_source=iamaimaster&utm_campaign=youtube\"},{\"label\":\"https://aimaster.me/yt/ai_agents\",\"source\":\"shortDescription\",\"url\":\"https://aimaster.me/yt/ai_agents\"},{\"label\":\"https://aimaster.me/\",\"source\":\"shortDescription\",\"url\":\"https://aimaster.me/\"},{\"label\":\"https://www.brevo.com/partners/iamaim...\",\"source\":\"attributedDescription.commandRuns\",\"url\":\"https://www.brevo.com/partners/iamaimaster/?utm_medium=partnership&utm_source=iamaimaster&utm_campaign=youtube\"},{\"label\":\"https://aimaster.me/yt/ai_agents\",\"source\":\"attributedDescription.commandRuns\",\"url\":\"https://aimaster.me/yt/ai_agents\"},{\"label\":\"https://aimaster.me/\",\"source\":\"attributedDescription.commandRuns\",\"url\":\"https://aimaster.me/\"}]}",
+      "created_at": 1792636802,
+      "updated_at": 1792636855,
+      "source_platform": "youtube"
+    },
+    "completion": {
+      "search_hit_id": "2ec9cd06-d294-41d5-a076-feeeb0176caf",
+      "completed_at": 1792636802
+    },
+    "binding": {
+      "search_hit_id": "2ec9cd06-d294-41d5-a076-feeeb0176caf",
+      "discovery_campaign_id": "16a5063c-b0fe-438e-9f75-8cd5be11cac4",
+      "criteria_revision": 1,
+      "candidate_id": "c92924ed-366d-4d31-9f54-51603cf244f3",
+      "native_author_id": "UC0yHbz4OxdQFwmVX2BBQqLg",
+      "created_at": 1792636802
+    }
+  },
+  "current": {
+    "campaign": {
+      "id": "yt-ai-agent-094r2-20261028",
+      "phase": "active",
+      "current_revision": 1,
+      "target_count": 30,
+      "max_calls": null,
+      "used_calls": 101,
+      "created_at": 1793227103,
+      "updated_at": 1793228193
+    },
+    "revision": {
+      "discovery_campaign_id": "yt-ai-agent-094r2-20261028",
+      "revision": 1,
+      "brief_json": "\"在YouTube搜索30个AI Agent相关博主，粉丝至少2000，语言不限；记录搜索命中率、评分正确率、各阶段耗时和具体错误。保留已有结果，不重复读取成功账号。\"",
+      "opencli_version": "1.8.8",
+      "criteria_json": "{\"contact_preference\":\"public_email_first\",\"requires_ai_tool_demo\":false,\"requires_public_tool_url\":false,\"category\":\"AI Agent\",\"region\":\"\",\"language\":\"\",\"min_subscribers\":2000,\"min_subscribers_source\":\"explicit\",\"quality_filter\":null,\"requirements\":[{\"description\":\"博主身份，需要本人发布或明确归属的相关内容证据\",\"excerpt\":\"博主\"}],\"contact_search_terms\":[\"email\",\"business cooperation\",\"contact\",\"official website\"],\"automatic_query_expansion\":true,\"table_subject\":\"YouTube AI Agent新版复测\",\"occupational_review_applicability\":\"unknown\",\"refinement\":{\"campaign_id\":\"xhs-ai-agent-094r2-20261028\",\"expected_revision\":1}}",
+      "scope_json": "[{\"platform\":\"youtube\",\"profile_ref\":\"d5pskwub\",\"keywords\":[\"AI agent tutorial\",\"AI agent workflow\",\"智能体 实战\",\"n8n AI agent\",\"build AI agents\",\"AI Agent教程\"]}]",
+      "approved_at": 1793227164
+    },
+    "run": {
+      "discovery_campaign_id": "yt-ai-agent-094r2-20261028",
+      "platform": "youtube",
+      "profile_ref": "d5pskwub",
+      "status": "technical_stop",
+      "cursor": "{\"last_query\":\"智能体 实战\",\"consecutive_failures\":0}",
+      "active_query": "page:5c4a3bcf-ea59-485b-bf41-41b157cb890b:101",
+      "calls_used": 3,
+      "stop_code": "interrupted_public_page_read",
+      "updated_at": 1793228193
+    },
+    "hits": [
+      {
+        "id": "a45da3e3-b22d-4487-b9e1-a36ade14ffad",
+        "discovery_campaign_id": "yt-ai-agent-094r2-20261028",
+        "platform": "youtube",
+        "profile_ref": "d5pskwub",
+        "search_keyword": "AI agent tutorial",
+        "source_url": "https://www.youtube.com/watch?v=bcM9dP_uXJU&pp=ygURQUkgYWdlbnQgdHV0b3JpYWw%3D",
+        "title": "How to Build an AI Agent with Claude Code (Claude AI Agent Tutorial)",
+        "author_label": "AI Master",
+        "captured_at": 1793227174
+      },
+      {
+        "id": "37662188-6a0b-496c-9620-05590afd88e1",
+        "discovery_campaign_id": "yt-ai-agent-094r2-20261028",
+        "platform": "youtube",
+        "profile_ref": "d5pskwub",
+        "search_keyword": "AI agent tutorial",
+        "source_url": "https://www.youtube.com/watch?v=FwOTs4UxQS4&pp=ygURQUkgYWdlbnQgdHV0b3JpYWzSBwkJMgwBhyohjO8%3D",
+        "title": "AI Agents, Clearly Explained",
+        "author_label": "Jeff Su",
+        "captured_at": 1793227174
+      },
+      {
+        "id": "81501b1e-7eae-4b30-b8bb-ab49aa608be5",
+        "discovery_campaign_id": "yt-ai-agent-094r2-20261028",
+        "platform": "youtube",
+        "profile_ref": "d5pskwub",
+        "search_keyword": "AI agent tutorial",
+        "source_url": "https://www.youtube.com/watch?v=Bm84BAtOfQw&pp=ygURQUkgYWdlbnQgdHV0b3JpYWzSBwkJMgwBhyohjO8%3D",
+        "title": "You’re Not Behind (Yet): How to Build Your First AI Agent (Full Guide)",
+        "author_label": "Dan Martell",
+        "captured_at": 1793227174
+      },
+      {
+        "id": "af57b179-7a6e-4579-a2e9-97fe6f734763",
+        "discovery_campaign_id": "yt-ai-agent-094r2-20261028",
+        "platform": "youtube",
+        "profile_ref": "d5pskwub",
+        "search_keyword": "AI agent workflow",
+        "source_url": "https://www.youtube.com/watch?v=HdI_aYzgJIg&pp=ygURQUkgYWdlbnQgd29ya2Zsb3c%3D",
+        "title": "Personal Agents, Clearly Explained",
+        "author_label": "Jeff Su",
+        "captured_at": 1793227403
+      },
+      {
+        "id": "8eaa7291-9b89-4688-9c2d-74c840121302",
+        "discovery_campaign_id": "yt-ai-agent-094r2-20261028",
+        "platform": "youtube",
+        "profile_ref": "d5pskwub",
+        "search_keyword": "AI agent tutorial",
+        "source_url": "https://www.youtube.com/shorts/vcvRVlc_VFg",
+        "title": "Build a Whatsapp AI Agent for appointment handling (n8n Tutorial) #n8n #aiautomation",
+        "author_label": "Ed Hill | AI Automation",
+        "captured_at": 1793227174
+      }
+    ],
+    "authors": [
+      {
+        "search_hit_id": "a45da3e3-b22d-4487-b9e1-a36ade14ffad",
+        "author_id": "UC0yHbz4OxdQFwmVX2BBQqLg",
+        "author_url": "https://www.youtube.com/channel/UC0yHbz4OxdQFwmVX2BBQqLg",
+        "observed_at": 1793227174
+      },
+      {
+        "search_hit_id": "37662188-6a0b-496c-9620-05590afd88e1",
+        "author_id": "UCwAnu01qlnVg1Ai2AbtTMaA",
+        "author_url": "https://www.youtube.com/channel/UCwAnu01qlnVg1Ai2AbtTMaA",
+        "observed_at": 1793227174
+      },
+      {
+        "search_hit_id": "81501b1e-7eae-4b30-b8bb-ab49aa608be5",
+        "author_id": "UCA-mWX9CvCTVFWRMb9bKc9w",
+        "author_url": "https://www.youtube.com/channel/UCA-mWX9CvCTVFWRMb9bKc9w",
+        "observed_at": 1793227174
+      },
+      {
+        "search_hit_id": "af57b179-7a6e-4579-a2e9-97fe6f734763",
+        "author_id": "UCwAnu01qlnVg1Ai2AbtTMaA",
+        "author_url": "https://www.youtube.com/channel/UCwAnu01qlnVg1Ai2AbtTMaA",
+        "observed_at": 1793227403
+      }
+    ],
+    "candidates": [
+      {
+        "id": "7e7e5f24-4cfd-4260-91a6-0ebf13815521",
+        "discovery_campaign_id": "yt-ai-agent-094r2-20261028",
+        "criteria_revision": 1,
+        "platform": "youtube",
+        "source_profile_ref": "d5pskwub",
+        "platform_account_id": "UCA-mWX9CvCTVFWRMb9bKc9w",
+        "display_name": "Dan Martell",
+        "profile_url": "https://www.youtube.com/channel/UCA-mWX9CvCTVFWRMb9bKc9w",
+        "verdict": "qualified",
+        "evidence_json": "{\"source_urls\":[\"https://www.youtube.com/watch?v=Bm84BAtOfQw&pp=ygURQUkgYWdlbnQgdHV0b3JpYWzSBwkJMgwBhyohjO8%3D\",\"https://www.youtube.com/watch?v=Bm84BAtOfQw&pp=ygUSQUkgQWdlbnQgZXhwbGFpbmVk\",\"https://www.youtube.com/watch?v=Bm84BAtOfQw\"],\"subscribers_raw\":\"313万位订阅者\",\"subscribers_source_url\":\"https://www.youtube.com/watch?v=Bm84BAtOfQw\",\"captured_at\":1792635599,\"video_title\":\"You’re Not Behind (Yet): How to Build Your First AI Agent (Full Guide)\",\"video_description\":\"✅ Get Your FREE AI Company Operating System here: https://go.danmartell.com/3SXCfgk\\n\\n👥 Are you building an AI software company? Partner with me: https://go.danmartell.com/4pjN7RP\\n\\nBy 2030, the biggest wave of new jobs isn't going to reward people who can chat with AI. It's going to reward people who can build with it.\\n\\nRight now most people are still typing prompts one at a time, while a small group is quietly building AI agents that run their businesses in the background.\\n\\nIn this video, I show you exactly how I went from doing the work to directing it, and how you can build your first AI agent this week even if you've never touched code.\\n\\nWatch until the end and you'll walk away with a repeatable way to think about every future agent you build.\\n\\nPrompts from the video:\\n\\nIdentity files prompt:\\n\\\"I want to build an AI agent that runs my inbox [your AIM from previous Step]. Create its three identity files: a SOUL file, an IDENTITY file, and a USER file (about me). Ask me any questions you need to fill these in accurately, then write all three.\\\"\\n\\nManager agent prompt:\\n\\\"You are my Manager agent. You never do any task yourself. When a job comes in, your only move is to spin up a dedicated sub-agent for that one job, hand it the task, and let it run. One agent, one lane. If a job touches on multiple areas, split it into separate sub-agents, one per area. You coordinate and report back to me.\\\"\\n\\nSpecialist agent prompt:\\n\\\"Your one job is my inbox — nothing else. You never step outside the inbox.\\\"\\n\\nEmail voice study prompt:\\n\\\"Connect to my email and read my last 50 sent messages. Study how I actually write — my tone, my greetings and sign-offs, how long my sentences are, the phrases I use the most. Then write a style guide that captures my voice and tone. To test it: draft a reply to my newest unread email as me, and I'll tell you what's off so you can tighten it.\\\"\\n\\n\\n▸▸ Subscribe to The Martell Method Newsletter: https://bit.ly/3XEBXez\\n\\n▸▸ Get My New Book (Buy Back Your Time): https://bit.ly/3pCTG78\\n\\nIG: @danmartell\",\"video_observations\":{\"duration_seconds\":1344,\"published_at\":\"2026-07-15T06:00:36-07:00\",\"text_completeness\":\"complete\",\"view_count\":863015},\"public_links\":[\"https://go.danmartell.com/3SXCfgk\",\"https://go.danmartell.com/4pjN7RP\",\"https://bit.ly/3XEBXez\",\"https://bit.ly/3pCTG78\"],\"public_link_observations\":[{\"label\":\"https://go.danmartell.com/3SXCfgk\",\"source\":\"shortDescription\",\"url\":\"https://go.danmartell.com/3SXCfgk\"},{\"label\":\"https://go.danmartell.com/4pjN7RP\",\"source\":\"shortDescription\",\"url\":\"https://go.danmartell.com/4pjN7RP\"},{\"label\":\"https://bit.ly/3XEBXez\",\"source\":\"shortDescription\",\"url\":\"https://bit.ly/3XEBXez\"},{\"label\":\"https://bit.ly/3pCTG78\",\"source\":\"shortDescription\",\"url\":\"https://bit.ly/3pCTG78\"},{\"label\":\"https://go.danmartell.com/3SXCfgk\",\"source\":\"attributedDescription.commandRuns\",\"url\":\"https://go.danmartell.com/3SXCfgk\"},{\"label\":\"https://go.danmartell.com/4pjN7RP\",\"source\":\"attributedDescription.commandRuns\",\"url\":\"https://go.danmartell.com/4pjN7RP\"},{\"label\":\"https://bit.ly/3XEBXez\",\"source\":\"attributedDescription.commandRuns\",\"url\":\"https://bit.ly/3XEBXez\"},{\"label\":\"https://bit.ly/3pCTG78\",\"source\":\"attributedDescription.commandRuns\",\"url\":\"https://bit.ly/3pCTG78\"}]}",
+        "created_at": 1793227194,
+        "updated_at": 1793227214,
+        "source_platform": "youtube"
+      },
+      {
+        "id": "9994e989-6270-4fdc-8e5d-81b0756650ca",
+        "discovery_campaign_id": "yt-ai-agent-094r2-20261028",
+        "criteria_revision": 1,
+        "platform": "youtube",
+        "source_profile_ref": "d5pskwub",
+        "platform_account_id": "UCwAnu01qlnVg1Ai2AbtTMaA",
+        "display_name": "Jeff Su",
+        "profile_url": "https://www.youtube.com/channel/UCwAnu01qlnVg1Ai2AbtTMaA",
+        "verdict": "qualified",
+        "evidence_json": "{\"source_urls\":[\"https://www.youtube.com/watch?v=FwOTs4UxQS4&pp=ygURQUkgYWdlbnQgdHV0b3JpYWzSBwkJMgwBhyohjO8%3D\",\"https://www.youtube.com/watch?v=FwOTs4UxQS4&pp=ygUSQUkgQWdlbnQgZXhwbGFpbmVk\",\"https://www.youtube.com/watch?v=FwOTs4UxQS4\"],\"subscribers_raw\":\"193万位订阅者\",\"subscribers_source_url\":\"https://www.youtube.com/watch?v=FwOTs4UxQS4\",\"captured_at\":1792635176,\"video_title\":\"AI Agents, Clearly Explained\",\"video_description\":\"My AI Toolkit: https://academy.jeffsu.org/ai-toolkit?utm_source=youtube&utm_medium=video&utm_campaign=177\\n\\nUnderstanding AI Agents doesn't require a technical background. This video breaks down the evolution from basic LLMs like #ChatGPT to AI Workflows and finally to true #AI Agents through practical, real-world examples.\\n\\nLearn the key differences between these technologies and discover how concepts like RAG and ReAct actually work in simple terms. Perfect for regular AI users who want to understand how these emerging technologies will impact their daily lives.\\n\\n*TIMESTAMPS*\\n00:00 AI vs. AI Agents\\n01:04 Level 1: LLMs\\n02:17 Level 2: AI Workflows\\n05:26 Level 3: AI Agents\\n07:48 Real-world Example\\n09:10 Summary\\n\\n*RESOURCES MENTIONED*\\nHelena Liu's AI Workflow Tutorial: https://youtu.be/H0YRniHh2tg\\nAndrew Ng's AI Agent Demo: https://youtu.be/KrRD7r7y7NY\\n\\n*BE MY FRIEND:*\\n📧 Subscribe to my newsletter - https://www.jeffsu.org/newsletter/?utm_source=youtube&utm_medium=video&utm_campaign=description\\n📸 Instagram - https://instagram.com/j.sushie\\n🤝 LinkedIn - https://www.linkedin.com/in/jsu05/\\n\\n*MY FAVORITE GEAR*\\n🎬 My YouTube Gear - https://www.jeffsu.org/yt-gear/\\n🎒 Everyday Carry - https://www.jeffsu.org/my-edc/\\n\\n*MY TOP 3 FAVORITE SOFTWARE*\\n❎ CleanShot X - https://geni.us/cleanshotx\\n✍️ Skillshare - https://geni.us/skillshare-jeff\\n💼 Teal - http://tealhq.co/jeffsu\\n\\n#aiagents\",\"video_observations\":{\"duration_seconds\":609,\"published_at\":\"2025-04-08T06:00:28-07:00\",\"text_completeness\":\"complete\",\"view_count\":5488621},\"public_links\":[\"https://academy.jeffsu.org/ai-toolkit?utm_source=youtube&utm_medium=video&utm_campaign=177\",\"https://youtu.be/H0YRniHh2tg\",\"https://youtu.be/KrRD7r7y7NY\",\"https://www.jeffsu.org/newsletter/?utm_source=youtube&utm_medium=video&utm_campaign=description\",\"https://instagram.com/j.sushie\",\"https://www.linkedin.com/in/jsu05/\",\"https://www.jeffsu.org/yt-gear/\",\"https://www.jeffsu.org/my-edc/\",\"https://geni.us/cleanshotx\",\"https://geni.us/skillshare-jeff\"],\"public_link_observations\":[{\"label\":\"https://academy.jeffsu.org/ai-toolkit?utm_source=youtube&utm_medium=video&utm_campaign=177\",\"source\":\"shortDescription\",\"url\":\"https://academy.jeffsu.org/ai-toolkit?utm_source=youtube&utm_medium=video&utm_campaign=177\"},{\"label\":\"https://youtu.be/H0YRniHh2tg\",\"source\":\"shortDescription\",\"url\":\"https://youtu.be/H0YRniHh2tg\"},{\"label\":\"https://youtu.be/KrRD7r7y7NY\",\"source\":\"shortDescription\",\"url\":\"https://youtu.be/KrRD7r7y7NY\"},{\"label\":\"https://www.jeffsu.org/newsletter/?utm_source=youtube&utm_medium=video&utm_campaign=description\",\"source\":\"shortDescription\",\"url\":\"https://www.jeffsu.org/newsletter/?utm_source=youtube&utm_medium=video&utm_campaign=description\"},{\"label\":\"https://instagram.com/j.sushie\",\"source\":\"shortDescription\",\"url\":\"https://instagram.com/j.sushie\"},{\"label\":\"https://www.linkedin.com/in/jsu05/\",\"source\":\"shortDescription\",\"url\":\"https://www.linkedin.com/in/jsu05/\"},{\"label\":\"https://www.jeffsu.org/yt-gear/\",\"source\":\"shortDescription\",\"url\":\"https://www.jeffsu.org/yt-gear/\"},{\"label\":\"https://www.jeffsu.org/my-edc/\",\"source\":\"shortDescription\",\"url\":\"https://www.jeffsu.org/my-edc/\"},{\"label\":\"https://geni.us/cleanshotx\",\"source\":\"shortDescription\",\"url\":\"https://geni.us/cleanshotx\"},{\"label\":\"https://geni.us/skillshare-jeff\",\"source\":\"shortDescription\",\"url\":\"https://geni.us/skillshare-jeff\"},{\"label\":\"https://academy.jeffsu.org/ai-toolkit...\",\"source\":\"attributedDescription.commandRuns\",\"url\":\"https://academy.jeffsu.org/ai-toolkit?utm_source=youtube&utm_medium=video&utm_campaign=177\"},{\"label\":\"https://www.jeffsu.org/newsletter/?ut...\",\"source\":\"attributedDescription.commandRuns\",\"url\":\"https://www.jeffsu.org/newsletter/?utm_source=youtube&utm_medium=video&utm_campaign=description\"},{\"label\":\"  / j.sushie  \",\"source\":\"attributedDescription.commandRuns\",\"url\":\"https://instagram.com/j.sushie\"},{\"label\":\"  / jsu05  \",\"source\":\"attributedDescription.commandRuns\",\"url\":\"https://www.linkedin.com/in/jsu05/\"},{\"label\":\"https://www.jeffsu.org/yt-gear/\",\"source\":\"attributedDescription.commandRuns\",\"url\":\"https://www.jeffsu.org/yt-gear/\"},{\"label\":\"https://www.jeffsu.org/my-edc/\",\"source\":\"attributedDescription.commandRuns\",\"url\":\"https://www.jeffsu.org/my-edc/\"},{\"label\":\"https://geni.us/cleanshotx\",\"source\":\"attributedDescription.commandRuns\",\"url\":\"https://geni.us/cleanshotx\"},{\"label\":\"https://geni.us/skillshare-jeff\",\"source\":\"attributedDescription.commandRuns\",\"url\":\"https://geni.us/skillshare-jeff\"}]}",
+        "created_at": 1793227174,
+        "updated_at": 1793227194,
+        "source_platform": "youtube"
+      }
+    ]
+  }
+}

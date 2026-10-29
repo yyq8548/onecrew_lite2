@@ -3,6 +3,8 @@ import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import { decodeFlatSemanticPlan, flatSemanticPlan, structuredSemanticSchema, loadOriginalDiscoveryQueryGuidance, loadBundledDiscoveryQueryGuidance, discoveryPlanningPrompt } from "../src/discovery/semantic-planner.ts";
 import { loadBundledDiscoveryMatchRubric } from "../src/discovery/semantic-match.ts";
+import { buildDiscoveryDraft } from "../src/discovery/draft.ts";
+import { discoveryCriteria } from "../src/discovery/contracts.ts";
 
 test("原flat语义状态完整保留，矛盾null值明确失败，schema仅供受限结构输出", () => {
   const unspecified = { state: "unspecified", value: null, excerpt: null };
@@ -12,6 +14,16 @@ test("原flat语义状态完整保留，矛盾null值明确失败，schema仅供
   const schema = structuredSemanticSchema(flatSemanticPlan);
   assert.equal(schema.additionalProperties, false); assert.ok(Array.isArray(schema.required));
   assert.ok(JSON.stringify(schema).includes("uint64"));
+  assert.equal(plan.intent.occupational_review_applicability, "unknown");
+  const sources = [{ platform: "youtube", registered: true, allowed_values: [] }];
+  for (const applicability of ["required", "not_required", "unknown"]) {
+    const current = decodeFlatSemanticPlan({ ...raw, intent: { ...raw.intent, occupational_review_applicability: applicability } }, "iPhone");
+    const draft = buildDiscoveryDraft({ id: "occupational", brief: "苹果手机", profile_ref: "work", opencli_version: "1.8.8" }, current, sources);
+    assert.equal(draft.criteria.occupational_review_applicability, applicability);
+  }
+  const refined = buildDiscoveryDraft({ id: "occupational-refined", brief: "苹果手机", profile_ref: "work", opencli_version: "1.8.8" }, plan, sources, { criteria: { occupational_review_applicability: "not_required" }, target_count: 30 });
+  assert.equal(refined.criteria.occupational_review_applicability, "unknown");
+  assert.equal(discoveryCriteria.safeParse({ occupational_review_applicability: "anything" }).success, false);
 });
 
 test("原完整查询指导资源通过固定hash，保留复合产品/全部来源/语言与原生查询语义", async () => {

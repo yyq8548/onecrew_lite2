@@ -3,6 +3,7 @@ import { z } from "zod";
 import { creatorSearchSource } from "./sources.ts";
 import { OpenCliError } from "./errors.ts";
 import { normalizeLinkedinHandle } from "./linkedin.ts";
+import { xiaohongshuNoteId } from "./xiaohongshu.ts";
 
 export const creatorSearchMaterial = z.strictObject({
   source_url: z.string(), author_id: z.string().nullable(), author_url: z.string().nullable(), native_author_id: z.string().nullable(),
@@ -39,7 +40,7 @@ function generic(platform: string, input: unknown): CreatorSearchHit {
   const hosts: Readonly<Record<string, readonly string[]>> = { youtube: ["youtube.com", "www.youtube.com"], twitter: ["x.com", "www.x.com", "twitter.com", "www.twitter.com"], instagram: ["instagram.com", "www.instagram.com"], facebook: ["facebook.com", "www.facebook.com", "m.facebook.com"], linkedin: ["linkedin.com", "www.linkedin.com"], douyin: ["douyin.com", "www.douyin.com"], weibo: ["weibo.com", "www.weibo.com", "s.weibo.com"], tieba: ["tieba.baidu.com"] };
   const host = url.hostname;
   const webHost = ["google", "yahoo"].includes(platform) && host.includes(".") && ![".localhost", ".local", ".internal", ".test"].some(suffix => host.endsWith(suffix)) && isIP(host.replace(/^\[|\]$/gu, "")) === 0;
-  if (url.protocol !== "https:" || url.username || url.password || url.port || !(hosts[platform]?.includes(host) || webHost)) invalid();
+  if (url.protocol !== "https:" || url.username || url.password || url.port || !(hosts[platform]?.includes(host) || webHost || platform === "zhihu" && ["www.zhihu.com", "zhuanlan.zhihu.com"].includes(host) || platform === "xiaohongshu" && host === "www.xiaohongshu.com")) invalid();
   if (platform === "google" && ["google.com", "www.google.com"].includes(host) && ["/goto", "/aclk", "/url"].includes(url.pathname)) invalid();
   if (platform === "linkedin" && field("headline").trim()) title = `${title}\n${field("headline")}`;
   const body = title;
@@ -50,6 +51,14 @@ function generic(platform: string, input: unknown): CreatorSearchHit {
   if (platform === "youtube" && row.channel_id !== undefined) {
     if (!/^UC[A-Za-z\d_-]{22}$/u.test(field("channel_id"))) invalid();
     authorId = field("channel_id"); authorUrl = `https://www.youtube.com/channel/${authorId}`;
+  } else if (platform === "xiaohongshu") {
+    if (xiaohongshuNoteId(source) !== field("id") || !/^[a-f0-9]{24}$/u.test(field("author_id")) || field("author_url") !== `https://www.xiaohongshu.com/user/profile/${field("author_id")}` || !author.trim()) invalid();
+    authorId = field("author_id"); authorUrl = field("author_url");
+  } else if (platform === "zhihu") {
+    if (!/^https:\/\/(?:www\.zhihu\.com\/question\/[1-9][0-9]{0,19}\/answer\/[1-9][0-9]{0,19}|zhuanlan\.zhihu\.com\/p\/[1-9][0-9]{0,19})$/u.test(source)
+      || !/^[a-f0-9]{32}$/u.test(field("author_id")) || !/^[A-Za-z0-9_-]{1,128}$/u.test(field("url_token"))
+      || field("author_url") !== `https://www.zhihu.com/people/${field("url_token")}` || !author.trim()) invalid();
+    authorId = field("author_id"); authorUrl = field("author_url");
   } else if (platform === "twitter") {
     const post = field("id");
     const handle = field("author").replace(/^@/u, "");
@@ -105,7 +114,8 @@ export function decodeCreatorSearch(platform: string, value: unknown, limit: num
   const output: CreatorSearchHit[] = [];
   for (const value of rows) {
     const hit = generic(platform, value);
-    if (!seen.has(hit.source_url)) { seen.add(hit.source_url); output.push(hit); }
+    const key = platform === "xiaohongshu" ? xiaohongshuNoteId(hit.source_url)! : hit.source_url;
+    if (!seen.has(key)) { seen.add(key); output.push(hit); }
   }
   return output;
 }

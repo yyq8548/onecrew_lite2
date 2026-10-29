@@ -37,6 +37,7 @@ export async function createMcpCoordinator(dependencies: McpCoordinatorDependenc
     async call(session: string, name: string, arguments_: unknown): Promise<unknown> {
       await dependencies.authorize(session);
       const selected = dependencies.sessions.authorize(session);
+      return dependencies.registry.withAuthorizedAccount(selected.account, async () => {
       if (name === "onecrew_tool_search") return search.search(selected.surface, arguments_);
       if (name === "onecrew_tool_get") return catalogue.get(selected.surface, arguments_);
       if (name === "onecrew_connection_list") {
@@ -51,6 +52,7 @@ export async function createMcpCoordinator(dependencies: McpCoordinatorDependenc
       if (name === "onecrew_result_state") return dependencies.results.state(session, arguments_);
       if (name === "onecrew_tool_execute") return dependencies.results.execute(session, arguments_, catalogue, handlers);
       throw Object.assign(new Error("MCP tool is unavailable"), { code: "mcp.tool_unavailable", status: 404 });
+      });
     },
   });
 }
