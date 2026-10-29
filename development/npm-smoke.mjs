@@ -63,6 +63,7 @@ try {
   console.log('[DEBUG-win099] web-pages-ready');
   const mcpStartedAt = performance.now();
   await client.connect(transport);
+  timings.mcp_connect = Math.round(performance.now() - mcpStartedAt);
   console.log('[DEBUG-win099] mcp-connected', Math.round(performance.now() - mcpStartedAt));
   assert.ok((await client.listTools()).tools.some(tool => tool.name === 'onecrew_status'));
   console.log('[DEBUG-win099] mcp-tools-listed');
@@ -71,6 +72,7 @@ try {
   assert.ok(!status.isError);
   const account = JSON.parse(status.content.find(block => block.type === 'text').text);
   assert.equal(account.instance_id, first.instance_id);
+  assert.equal(account.resource_identity.executable_sha256, catalog.platforms[target].executableSha256);
   for (const destination of ['workbench', 'library']) {
     console.log('[DEBUG-win099] workspace', destination);
     const opened = await client.callTool({ name: 'onecrew_workspace_open', arguments: { destination } });

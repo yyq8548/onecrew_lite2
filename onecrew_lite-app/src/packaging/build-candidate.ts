@@ -134,7 +134,6 @@ export async function buildCandidate(options: { output: string; productVersion: 
   await writeFile(join(stage, "resources", "mcp-current-registry.json"), currentRegistry, { flag: "wx" });
   await copyTree(join(root, "onecrew_lite-app", "src", "service", "workflow-guides.json"), join(stage, "resources", "workflow-guides.json"));
   await copyTree(join(root, "onecrew_lite-app", "src", "service", "windows-host.ps1"), join(stage, "resources", "service", "windows-host.ps1"));
-  await copyTree(join(root, "onecrew_lite-app", "src", "service", "windows-executable-path.ps1"), join(stage, "resources", "service", "windows-executable-path.ps1"));
   await copyTree(join(root, "onecrew_lite-mcp-ui", "dist"), join(stage, "resources", "mcp"));
   for (const [id, names] of Object.entries(OPENCLI_ADDON_FILES)) for (const name of names) await copyTree(join(root, "onecrew_lite-opencli", id, name), join(stage, "resources", "opencli-addons", id, name));
   for (const name of await readdir(join(root, "onecrew_lite-app", "src", "platforms", "browser"))) if (name.endsWith(".ps1")) await copyTree(join(root, "onecrew_lite-app", "src", "platforms", "browser", name), join(stage, "resources", "browser", name));

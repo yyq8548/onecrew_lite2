@@ -1,12 +1,11 @@
 import { getAsset, isSea } from "node:sea";
 import { lstat, realpath } from "node:fs/promises";
-import { delimiter, join } from "node:path";
+import { delimiter, join, toNamespacedPath } from "node:path";
 import { homedir } from "node:os";
 import { createRequire } from "node:module";
 import { createHash } from "node:crypto";
 import { parsePayloadManifest } from "./payload-manifest.ts";
 import { materializePayload, PayloadPermissions } from "./payload-cache.ts";
-import { readWindowsExecutablePath } from "./windows-executable-path.ts";
 
 if (!isSea()) throw new Error("package.sea_required");
 const manifest = parsePayloadManifest(new Uint8Array(getAsset("runtime-manifest.json")));
@@ -16,9 +15,7 @@ if (createHash("sha256").update(script).digest("hex") !== manifest.files.find(fi
 const permissions = new PayloadPermissions(script);
 let executablePath = process.execPath;
 if (process.platform === "win32") {
-  const imageScript = new Uint8Array(getAsset("resources/service/windows-executable-path.ps1"));
-  if (createHash("sha256").update(imageScript).digest("hex") !== manifest.files.find(file => file.path === "resources/service/windows-executable-path.ps1")?.sha256) throw new Error("package.bootstrap_resource_mismatch");
-  executablePath = await readWindowsExecutablePath(imageScript);
+  executablePath = toNamespacedPath(await realpath(toNamespacedPath(executablePath)));
 }
 const parent = process.platform === "win32" ? process.env.LOCALAPPDATA : process.platform === "darwin" ? join(homedir(), "Library", "Caches") : undefined;
 if (!parent) throw new Error("package.cache_platform_unsupported");
