@@ -181,7 +181,7 @@ export class DiscoveryRepository {
   #independentRead(campaign: string, scoringHit: string, bases: ScoringBases, policy: DiscoverySchedulingPolicy): DiscoveryStep | null {
     const basis = bases.get(scoringHit)!, platform = basis.native_platform ?? basis.hit.platform;
     if (policy.busyPlatforms?.includes(platform) || discoveryReadBusy(this.#db, campaign, [platform])) return null;
-    if (!["twitter", "bilibili", "facebook", "instagram", "weibo", "linkedin", "tiktok", "youtube", "zhihu"].includes(platform)) return null;
+    if (!["twitter", "bilibili", "facebook", "instagram", "weibo", "linkedin", "tiktok", "youtube"].includes(platform)) return null;
     const held = new Set<string>(policy.heldQueryHits ?? this.lowYieldUnreadHits(campaign));
     for (const [hit, source] of bases) {
       const rows = this.#db.prepare(`SELECT h.id FROM discovery_search_hits h LEFT JOIN discovery_search_authors a ON a.search_hit_id=h.id LEFT JOIN discovery_search_authors held ON held.search_hit_id=?2 LEFT JOIN discovery_identity_reads i ON i.search_hit_id=h.id

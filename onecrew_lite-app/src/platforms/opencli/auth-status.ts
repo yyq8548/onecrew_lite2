@@ -6,7 +6,7 @@ export type OpenCliAuthState = "logged_in" | "session_detected" | "not_logged_in
 export interface OpenCliAuthObservation { platform: string; profile_ref: string; status: OpenCliAuthState; checked_at: number; method: "full" | "quick" | "skipped"; issue: string | null }
 export function creatorAuthProbe(platform: string) {
   const source = creatorSearchSource(platform);
-  const native = ["bilibili", "tiktok", "instagram", "facebook", "douyin", "linkedin", "weibo", "tieba", "twitter", "youtube", "zhihu", "xiaohongshu"].includes(platform);
+  const native = ["bilibili", "tiktok", "instagram", "facebook", "douyin", "linkedin", "weibo", "tieba", "twitter", "youtube", "xiaohongshu"].includes(platform);
   const site = native ? `onecrew-${platform}-auth` : source.site;
   return { site, full: native, addon: native };
 }

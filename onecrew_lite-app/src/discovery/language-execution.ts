@@ -73,7 +73,7 @@ export class DiscoveryLanguageExecutor {
       const comments = await this.reader.linkedinOriginalComments(browser, claim.author_handle, claim.author_id, source);
       return { author_id: claim.author_id, source_url: source, text: text.parse(native.text), comments: comments.map(comment => ({ source_url: `${source}#comment-${comment.id}`, text: comment.text })) };
     }
-    if (["instagram", "zhihu", "xiaohongshu"].includes(claim.platform)) {
+    if (["instagram", "xiaohongshu"].includes(claim.platform)) {
       const saved = bodyText(claim, material);
       return { author_id: claim.author_id, source_url: source, text: saved.text, comments: [] };
     }

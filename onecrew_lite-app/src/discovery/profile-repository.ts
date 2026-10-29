@@ -23,7 +23,7 @@ const profileStops = new Set(["opencli_timeout", "opencli_output_too_large", "op
 for (const code of NATIVE_READ_FAILURE_CODES) profileStops.add(code);
 for (const code of PLATFORM_READ_FAILURE_CODES) if (code.startsWith("linkedin_profile_") || code.startsWith("facebook_profile_")) profileStops.add(code);
 export interface DiscoveryProfileReceipt { claim: DiscoveryProfileClaim; status: string; native_profile: Record<string, unknown> | null; stop_code: string | null; captured_at: number | bigint }
-const sourcePlatforms = ["bilibili", "tiktok", "twitter", "facebook", "instagram", "weibo", "bluesky", "zhihu", "hackernews", "pixiv", "linkedin", "xiaohongshu"];
+const sourcePlatforms = ["bilibili", "tiktok", "twitter", "facebook", "instagram", "weibo", "bluesky", "hackernews", "pixiv", "linkedin", "xiaohongshu"];
 
 export function validateDiscoveryProfileResult(claim: DiscoveryProfileClaim, native: Record<string, unknown> | null, stop: string | null): void {
   if (native === null) { if (stop !== null && profileStops.has(stop)) return; throw new Error("discovery_profile_result_invalid"); }
@@ -69,7 +69,7 @@ export class DiscoveryProfileRepository {
       JOIN discovery_platform_runs r ON r.discovery_campaign_id=c.id AND r.platform=h.platform AND r.profile_ref=h.profile_ref
       LEFT JOIN discovery_profile_reads p ON p.discovery_campaign_id=c.id AND p.platform=h.platform AND p.profile_ref=h.profile_ref AND p.author_id=a.author_id
       WHERE c.id=?1 AND c.phase='active' AND v.approved_at IS NOT NULL
-        AND h.platform IN ('bilibili','tiktok','twitter','facebook','instagram','weibo','bluesky','zhihu','hackernews','pixiv','linkedin','xiaohongshu')
+        AND h.platform IN ('bilibili','tiktok','twitter','facebook','instagram','weibo','bluesky','hackernews','pixiv','linkedin','xiaohongshu')
         AND h.platform NOT IN(SELECT value FROM json_each(?2)) AND h.id NOT IN(SELECT value FROM json_each(?3))
         AND (?4 IS NULL OR h.platform=?4)
         AND NOT EXISTS(SELECT 1 FROM json_each(v.criteria_json,'$.excluded_accounts') excluded WHERE json_extract(excluded.value,'$.profile_url')=a.author_url)

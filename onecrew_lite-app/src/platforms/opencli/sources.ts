@@ -13,7 +13,6 @@ export const CREATOR_SEARCH_SOURCES: Readonly<Record<string, SearchSource>> = Ob
   bilibili: { site: "onecrew-bilibili", name: "search", maximum: 50, addon: "onecrew-bilibili", discovery: true },
   douyin: { site: "onecrew-search-douyin", name: "search", maximum: 30, addon: "onecrew-browser-search", discovery: true },
   weibo: { site: "onecrew-search-weibo", name: "search", maximum: 50, addon: "onecrew-browser-search", discovery: true },
-  zhihu: { site: "onecrew-zhihu", name: "search", maximum: 20, addon: "onecrew-zhihu", discovery: true },
   xiaohongshu: { site: "onecrew-xiaohongshu", name: "search", maximum: 20, addon: "onecrew-xiaohongshu", discovery: true },
   google: { site: "onecrew-search-google", name: "search", maximum: 50, addon: "onecrew-browser-search", discovery: true },
   yahoo: { site: "onecrew-search-yahoo", name: "search", maximum: 7, addon: "onecrew-browser-search", discovery: true },
@@ -23,7 +22,7 @@ for (const source of Object.values(CREATOR_SEARCH_SOURCES)) Object.freeze(source
 export const TEMPORARILY_DISABLED_CREATOR_SOURCES: readonly string[] = Object.freeze(["google", "yahoo"]);
 
 // 旧任务保留原始来源标识，执行时排除已移除的来源，已有结果不变。
-export const RETIRED_CREATOR_SOURCES = Object.freeze(["pixiv", "weixin", "stackoverflow", "stackoverflow-users", "devto-tag", "hf-spaces", "nowcoder", "producthunt-posts", "medium", "medium-tag", "bluesky", "jike", "dribbble-designers", "hupu", "apple-podcasts", "pinterest", "reddit", "pinterest-pins", "pinterest-boards", "dribbble-shots", "google-images", "reddit-subreddit", "linkedin-learning", "substack", "v2ex-node", "lesswrong-tag", "lobsters-tag", "stackoverflow-tag", "juejin-hot", "linux-do", "linkedin-salesnav", "duckduckgo", "archive", "weread", "douban-books", "douban-music", "hf-models", "hf-datasets", "hackernews"]);
+export const RETIRED_CREATOR_SOURCES = Object.freeze(["zhihu", "pixiv", "weixin", "stackoverflow", "stackoverflow-users", "devto-tag", "hf-spaces", "nowcoder", "producthunt-posts", "medium", "medium-tag", "bluesky", "jike", "dribbble-designers", "hupu", "apple-podcasts", "pinterest", "reddit", "pinterest-pins", "pinterest-boards", "dribbble-shots", "google-images", "reddit-subreddit", "linkedin-learning", "substack", "v2ex-node", "lesswrong-tag", "lobsters-tag", "stackoverflow-tag", "juejin-hot", "linux-do", "linkedin-salesnav", "duckduckgo", "archive", "weread", "douban-books", "douban-music", "hf-models", "hf-datasets", "hackernews"]);
 
 export const INACTIVE_CREATOR_SOURCES: readonly string[] = Object.freeze([...RETIRED_CREATOR_SOURCES, ...TEMPORARILY_DISABLED_CREATOR_SOURCES]);
 

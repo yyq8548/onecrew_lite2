@@ -1,14 +1,13 @@
 // These are read commands, never the similarly named comment/reply write commands.
 export const commentReaders = Object.freeze([
-  ['bilibili', 'comments'], ['zhihu', 'answer-comments'],
+  ['bilibili', 'comments'],
   ['weibo', 'comments'],
 ]);
 
 export function boundedCommentArgs(site, args) {
   const limit = args.limit ?? 20;
   if (!Number.isInteger(limit) || limit < 1 || limit > 20) throw new Error('Comment limit must be 1..20');
-  // Bound nested traversal as well as the number of top-level rows.
-  return { ...args, limit, ...(site === 'zhihu' ? { 'replies-limit': 0 } : {}) };
+  return { ...args, limit };
 }
 
 export async function readComments(page, args, site, native, ownPage) {
@@ -29,20 +28,7 @@ export async function readComments(page, args, site, native, ownPage) {
       const data = response && 'session' in Object(response) && 'data' in Object(response) ? response.data : response;
       return projectWeiboComments(data, bounded.limit);
     }
-    if (site !== 'zhihu') return native.func(owned, bounded);
-    // Keep native IDs from the same read before upstream drops them for display.
-    const authors = new Map();
-    const observed = new Proxy(owned, {get(object, key) {
-      if (key === 'evaluate') return async (...params) => {
-        const result = await object.evaluate(...params);
-        captureZhihuCommentAuthors(authors, params[1], bounded.id, result);
-        return result;
-      };
-      const value = Reflect.get(object, key);
-      return typeof value === 'function' ? value.bind(object) : value;
-    }});
-    const rows = await native.func(observed, bounded);
-    return rows.map(row => ({...row, native_author_id: authors.get(String(row.id)) ?? null}));
+    return native.func(owned, bounded);
   });
 }
 
@@ -105,26 +91,4 @@ export function projectWeiboComments(payload, limit) {
       time: typeof comment.created_at === 'string' ? comment.created_at.slice(0, 100) : '',
     };
   });
-}
-
-export function captureZhihuCommentAuthors(authors, request, answerId, result) {
-  if (!/^[1-9][0-9]{0,19}$/.test(String(answerId))) return;
-  let url;
-  try { url = new URL(request); } catch { return; }
-  if (url.origin !== 'https://www.zhihu.com' || url.username || url.password
-      || url.pathname !== `/api/v4/comment_v5/answers/${answerId}/root_comment`) return;
-  const payload = result && 'session' in Object(result) && 'data' in Object(result) ? result.data : result;
-  if (!Array.isArray(payload?.data)) return;
-  if (payload.data.length > 20) throw new Error('Zhihu comment page exceeded reviewed limit');
-  for (const comment of payload.data) {
-    const id = typeof comment?.id === 'string' ? comment.id
-      : Number.isSafeInteger(comment?.id) ? String(comment.id) : '';
-    if (!/^[1-9][0-9]{0,19}$/.test(id)) throw new Error('Zhihu comment ID invalid');
-    const author = comment.author?.member ?? comment.author;
-    const nativeId = typeof author?.id === 'string' && /^[a-zA-Z0-9_-]{1,128}$/.test(author.id)
-      && author.id !== '0' && author.is_anonymous !== true
-      && comment.author?.is_anonymous !== true && comment.is_anonymous !== true ? author.id : null;
-    if (authors.has(id) && authors.get(id) !== nativeId) throw new Error('Zhihu comment author conflict');
-    authors.set(id, nativeId);
-  }
 }

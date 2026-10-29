@@ -4,7 +4,6 @@ export function creatorProfileSource(site: string, authorId: string, source: str
   const invalid = (): never => { throw new OpenCliError("opencli_invalid_input"); };
   switch (site) {
     case "xiaohongshu": return /^[a-f0-9]{24}$/u.test(authorId) && source === `https://www.xiaohongshu.com/user/profile/${authorId}` ? authorId : invalid();
-    case "zhihu": { const match = /^https:\/\/www\.zhihu\.com\/people\/([A-Za-z0-9_-]{1,128})$/u.exec(source); return match && /^[a-f0-9]{32}$/u.test(authorId) ? match[1]! : invalid(); }
     case "linkedin": if (source !== `https://www.linkedin.com/in/${authorId}/`) return invalid(); return authorId;
     case "bluesky": if (source !== `https://bsky.app/profile/${authorId}`) return invalid(); return "";
     case "weibo": if (source !== `https://weibo.com/u/${authorId}`) return invalid(); return "";

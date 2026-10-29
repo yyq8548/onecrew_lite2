@@ -33,7 +33,6 @@ import { instagramProfileIdentityPlan, tiktokProfileIdentityPlan } from "./profi
 import { creatorAuthArguments, creatorAuthProbe, decodeCreatorAuthStatus } from "./auth-status.ts";
 import type { OpenCliAuthObservation } from "./auth-status.ts";
 import { openCliLoginPage } from "./login-pages.ts";
-import { zhihuReadPlan } from "./zhihu.ts";
 
 // 由应用唯一的账号设置与 Chrome 连接映射提供。请求里的 profile 字段不是身份凭据。
 export interface VerifiedOpenCliBrowserBinding {
@@ -111,7 +110,6 @@ export class OpenCliReader {
     const username = creatorProfileSource(site, authorId, authorUrl);
     switch (site) {
       case "xiaohongshu": return this.#native(binding, xiaohongshuReadPlan("profile", authorId, authorUrl));
-      case "zhihu": return this.#native(binding, zhihuReadPlan("profile", authorId, authorUrl));
       case "linkedin": return this.linkedinPublicProfile(binding, username);
       case "weibo": return this.weiboPublicProfile(binding, authorId);
       case "facebook": return this.facebookPublicProfile(binding, authorId);
@@ -237,7 +235,6 @@ export class OpenCliReader {
   twitterRecentContent(binding: VerifiedOpenCliBrowserBinding, handle: string) { return this.#native(binding, twitterRecentContentPlan(handle)); }
   bilibiliSourceVideoEvidence(binding: VerifiedOpenCliBrowserBinding, sourceUrl: string) { return this.#native(binding, bilibiliVideoPlan(sourceUrl)); }
   weiboPublicProfile(binding: VerifiedOpenCliBrowserBinding, authorId: string) { return this.#native(binding, weiboProfilePlan(authorId)); }
-  zhihuContent(binding: VerifiedOpenCliBrowserBinding, authorId: string, source: string) { return this.#native(binding, zhihuReadPlan("content", authorId, source)); }
   xiaohongshuContent(binding: VerifiedOpenCliBrowserBinding, authorId: string, source: string) { return this.#native(binding, xiaohongshuReadPlan("content", authorId, source)); }
   weiboPostEvidence(binding: VerifiedOpenCliBrowserBinding, sourceUrl: string) { return this.#native(binding, weiboPostPlan(sourceUrl)); }
   weiboOriginalComments(binding: VerifiedOpenCliBrowserBinding, nativePostId: string) { return this.#native(binding, weiboCommentsPlan(nativePostId)); }

@@ -31,8 +31,6 @@ export function classifyOpenCliFailure(exitCode: number | null, stdout: Uint8Arr
 function classifyNativeReadFailure(output: string): OpenCliErrorCode | null {
   if (["onecrew_youtube_search_bootstrap_timeout", "onecrew_youtube_page_timeout", "onecrew_profile_timeout", "onecrew_xiaohongshu_page_timeout"].some(marker => output.includes(marker))) return "opencli_timeout";
   const stages: readonly (readonly [string, OpenCliErrorCode])[] = [
-    ["onecrew_zhihu_http", "provider_response_http_error"],
-    ["onecrew_zhihu_invalid", "provider_response_shape_invalid"],
     ["onecrew_xiaohongshu_unavailable", "provider_source_unavailable"],
     ["onecrew_xiaohongshu_", "provider_response_shape_invalid"],
     ["onecrew_linkedin_invalid_contact_profile_route", "linkedin_contact_profile_route"],

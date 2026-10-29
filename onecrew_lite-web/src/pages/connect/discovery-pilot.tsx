@@ -49,7 +49,7 @@ import { discoveryHitsCsv, loadAllDiscoveryHits } from "./library-csv-export";
 // New drafts start with every registered entry. Saved Campaign scopes remain frozen.
 export const SEARCH_PLATFORM_GROUPS = [
   { label: "overseas", platforms: ["youtube", "tiktok", "instagram", "twitter", "linkedin", "linkedin-salesnav", "facebook", "producthunt-posts"] },
-  { label: "chinese", platforms: ["bilibili", "weixin", "douyin", "weibo", "zhihu", "xiaohongshu", "hupu", "juejin-hot", "weread", "douban-books", "douban-music"] },
+  { label: "chinese", platforms: ["bilibili", "weixin", "douyin", "weibo", "xiaohongshu", "hupu", "juejin-hot", "weread", "douban-books", "douban-music"] },
   { label: "publications", platforms: ["medium", "medium-tag", "substack", "apple-podcasts", "archive", "devto-tag", "lesswrong-tag", "lobsters-tag", "linkedin-learning"] },
   { label: "other", platforms: ["bluesky", "jike", "hackernews", "linux-do", "nowcoder", "v2ex-node", "stackoverflow", "stackoverflow-tag", "stackoverflow-users", "hf-spaces", "hf-models", "hf-datasets", "dribbble-shots", "dribbble-designers", "google", "google-images", "duckduckgo", "yahoo"] },
 ] as const;
@@ -438,7 +438,7 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
     (candidates.data?.pages ?? []).flatMap(page => page.flatMap(candidate => candidate.evidence.source_urls)),
   ), [candidates.data]);
   const onVerifyHit = useCallback((hitId: string) => verify.mutate(hitId), [verify.mutate]);
-  const run = current?.platform_runs.filter(item => !excludedPlatforms.includes(item.platform)).find(item => item.platform === activePlatform);
+  const run = current?.platform_runs.filter(item => availablePlatforms.includes(item.platform) && !excludedPlatforms.includes(item.platform)).find(item => item.platform === activePlatform);
   const frozenProfile = current?.scopes[0]?.profile_ref;
   const profileChanged = !!frozenProfile && frozenProfile !== profileRef;
 
@@ -691,7 +691,7 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
           onSync={() => librarySync.mutate(current.id)} onStart={() => { void startAutomatic(); }}
           onPause={() => { startGeneration.current += 1; pauseExecution.mutate(current.id); }} onAnother={startAnother} onExpanded={startExpanded}
           canExpand={availablePlatforms.some(platform => !current.scopes.some(scope => scope.platform === platform))}
-          onIssues={() => { const issue = current.platform_runs.find(run => !excludedPlatforms.includes(run.platform) && ["unauthorized", "technical_stop", "risk_control_stop"].includes(run.status)); if (issue) setActivePlatform(issue.platform); setPlatformsOpen(true); requestAnimationFrame(() => platformDetails.current?.scrollIntoView({ block: "start", behavior: "smooth" })); }} />
+           onIssues={() => { const issue = current.platform_runs.find(run => availablePlatforms.includes(run.platform) && !excludedPlatforms.includes(run.platform) && ["unauthorized", "technical_stop", "risk_control_stop"].includes(run.status)); if (issue) setActivePlatform(issue.platform); setPlatformsOpen(true); requestAnimationFrame(() => platformDetails.current?.scrollIntoView({ block: "start", behavior: "smooth" })); }} />
         {!running && stage !== "searching" && runCheckpoint?.campaign_id === current.id && runCheckpoint.revision === current.revision && runCheckpoint.reason && <p role="status" className="text-sm text-muted-foreground">
           {t("opencliPilot.lastStop")} {t(`opencliPilot.stopReasons.${runCheckpoint.reason}`)} · {formatDate(runCheckpoint.recorded_at / 1000, i18n.resolvedLanguage)}
         </p>}
@@ -721,7 +721,7 @@ export function DiscoveryPilot({ profileRef, version, capabilities, credentialId
         {platformsOpen && <Collapsible ref={platformDetails} key={`platform-runs:${current.id}`} open={platformsOpen} onOpenChange={setPlatformsOpen} className="discovery-disclosure">
         <CollapsibleTrigger asChild><Button variant="ghost">{t("opencliPilot.platformRunsDetails")}</Button></CollapsibleTrigger>
         <CollapsibleContent className="space-y-3 pt-3">
-        {current.phase === "active" && <div className="grid gap-1"><Label htmlFor="discovery-active-platform">{t("opencliPilot.platformStatusFilter")}</Label><select id="discovery-active-platform" className="h-9 rounded-md border bg-background px-3 text-sm" value={activePlatform} onChange={event => setActivePlatform(event.target.value)}>{current.scopes.filter(scope => !excludedPlatforms.includes(scope.platform)).map(scope => <option key={scope.platform} value={scope.platform}>{platformDisplayName(scope.platform)}</option>)}</select></div>}
+         {current.phase === "active" && <div className="grid gap-1"><Label htmlFor="discovery-active-platform">{t("opencliPilot.platformStatusFilter")}</Label><select id="discovery-active-platform" className="h-9 rounded-md border bg-background px-3 text-sm" value={activePlatform} onChange={event => setActivePlatform(event.target.value)}>{current.scopes.filter(scope => availablePlatforms.includes(scope.platform) && !excludedPlatforms.includes(scope.platform)).map(scope => <option key={scope.platform} value={scope.platform}>{platformDisplayName(scope.platform)}</option>)}</select></div>}
         {run && <p className="text-sm text-muted-foreground">{t("opencliPilot.runStatus", { status: discoveryRunStageKey(run.status) ? t(discoveryRunStageKey(run.status)!) : run.status, calls: run.calls_used })}{run.stop_code ? ` · ${t(discoveryProviderFailureKey(run.stop_code))}` : ""}</p>}
         {coverage && <p className="text-sm text-muted-foreground">{t("opencliPilot.coverage", coverage)}</p>}
         <div className="space-y-3 text-sm">{current.platform_runs.map(item => <div key={`${item.platform}:${item.profile_ref}`} className="flex flex-wrap justify-between gap-2 border-b pb-3">

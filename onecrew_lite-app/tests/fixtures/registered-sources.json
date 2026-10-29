@@ -75,14 +75,6 @@
     {
       "allowed_values": [],
       "browser_required": true,
-      "command": "onecrew-zhihu/search",
-      "platform": "zhihu",
-      "registered": true,
-      "scope_kind": "query"
-    },
-    {
-      "allowed_values": [],
-      "browser_required": true,
       "command": "onecrew-xiaohongshu/search",
       "platform": "xiaohongshu",
       "registered": true,

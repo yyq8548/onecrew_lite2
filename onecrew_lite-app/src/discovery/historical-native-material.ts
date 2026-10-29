@@ -15,7 +15,7 @@ const zhProfile = z.strictObject({ ...zhAuthor, follower_count: count.nullable()
 const pixivProfile = z.strictObject({ adapter_version: z.literal("1.0.0"), author_id: numeric, author_label: label, profile_url: z.string(), follower_count: z.null(), bio: text(8000), public_links: z.array(z.string().refine(publicLink)).max(10), evidence_source: z.literal("native_ajax_response") }).refine(value => value.profile_url === `https://www.pixiv.net/users/${value.author_id}`);
 const hnProfile = z.strictObject({ author_id: hnAuthor, username: z.string(), biography_html: text(16000), biography: text(8000), profile_url: z.string(), created: count, karma: count, follower_count: z.null() }).refine(value => value.username === value.author_id && value.profile_url === `https://news.ycombinator.com/user?id=${value.author_id}`);
 
-// 知乎复用已有严格证据合同；其他退役平台仅解码历史材料。
+// 退役平台仅解码历史材料，保留作者绑定和已有评分依据。
 export function validateHistoricalDiscoveryProfile(platform: string, author: string, authorUrl: string, raw: unknown): Record<string, unknown> {
   const native = platform === "zhihu" ? zhProfile.parse(raw) : platform === "pixiv" ? pixivProfile.parse(raw) : platform === "hackernews" ? hnProfile.parse(raw) : null;
   if (!native || native.author_id !== author || ("author_url" in native ? native.author_url : native.profile_url) !== authorUrl) throw new Error("review_native_profile_binding_unavailable");

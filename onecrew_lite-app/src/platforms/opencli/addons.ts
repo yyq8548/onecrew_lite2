@@ -6,7 +6,6 @@ const nativeLock = createRequire(import.meta.url)("fs-native-extensions") as { t
 
 // 只读适配器分发清单；测试文件不作为可执行插件分发。
 export const OPENCLI_ADDON_FILES = Object.freeze({
-  "onecrew-zhihu": ["cli.js", "read.mjs"],
   "onecrew-xiaohongshu": ["cli.js", "page.mjs", "read.mjs"],
   "onecrew-youtube": ["language.mjs", "language.js", "evidence.mjs", "channel.mjs", "channel-contact.js", "video-evidence.js", "hidden-email.mjs", "hidden-email-store.mjs"],
   "onecrew-tiktok": ["search.mjs", "search.js"],
@@ -116,7 +115,9 @@ export class OpenCliAddons {
   async #publish(approved: boolean, repair: boolean): Promise<{ id: OpenCliAddonId; state: OpenCliAddonState }[]> {
     if (approved !== true) throw new OpenCliError("opencli_invalid_input");
     const before = await this.status();
-    if (before.every(item => item.state === "ready")) return before;
+    const retiredDirectory = join(this.#installedRoot, "onecrew-zhihu");
+    const retiredState = await directoryState(retiredDirectory);
+    if (before.every(item => item.state === "ready") && retiredState === "missing") return before;
     if (before.some(item => item.state === "unavailable" || !repair && item.state === "conflict")) throw new OpenCliError("opencli_read_command_unavailable");
     await this.#parents();
     const config = dirname(this.#installedRoot); const lockPath = join(config, "onecrew-repair.lock");
@@ -135,8 +136,13 @@ export class OpenCliAddons {
       if (backupState === "missing") await mkdir(backups, { mode: 0o700 }); else if (backupState !== null) throw new OpenCliError("opencli_unavailable");
       const backup = await mkdtemp(join(backups, "addons-"));
       for (const item of selected) await this.#stage(join(stage, item.id), item.id);
-      const moved: OpenCliAddonId[] = []; const published: OpenCliAddonId[] = [];
+      const moved: string[] = []; const published: OpenCliAddonId[] = [];
       const result = await (async () => {
+        const retired = await directoryState(retiredDirectory);
+        if (retired !== "missing") {
+          if (retired !== null) throw new OpenCliError("opencli_unavailable");
+          await rename(retiredDirectory, join(backup, "onecrew-zhihu")); moved.push("onecrew-zhihu");
+        }
         for (const item of selected) {
           const destination = join(this.#installedRoot, item.id);
           if (item.state === "conflict") {

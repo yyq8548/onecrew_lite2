@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { boundedCommentArgs, readComments, captureZhihuCommentAuthors, projectWeiboComments, fetchWeiboComments } from './comments.mjs';
+import { boundedCommentArgs, commentReaders, readComments, projectWeiboComments, fetchWeiboComments } from './comments.mjs';
 test('comment reads cannot expand arbitrary nested trees', () => {
-  assert.equal(boundedCommentArgs('zhihu', {'replies-limit': 100})['replies-limit'], 0);
+  assert.equal(boundedCommentArgs('bilibili', {}).limit, 20);
+  assert.ok(commentReaders.every(([site]) => site !== 'zhihu'));
   assert.throws(() => boundedCommentArgs('weibo', {limit: 21}));
 });
 test('write commands rejected before browser access', async () => {
@@ -105,60 +106,4 @@ test('Weibo API redirects, auth and rate limits cannot become empty comments', a
   assert.deepEqual(await fetchWeiboComments('123', 2), {stop: 'auth'});
   response = {...response, url: 'https://example.com/'};
   assert.deepEqual(await fetchWeiboComments('123', 2), {stop: 'read'});
-});
-
-const answerId = '1942920999768162458';
-const commentUrl = `https://www.zhihu.com/api/v4/comment_v5/answers/${answerId}/root_comment?limit=20`;
-
-test('Zhihu keeps native identity from the same read, never display names', async () => {
-  let reads = 0;
-  const payload = {data: [
-    {id: '11356380795', author: {member: {id: 'author-a', name: '同名'}}},
-    {id: '11368447161', author: {id: 'author-b', name: '同名'}},
-  ]};
-  const owned = {goto: async () => {}, evaluate: async () => {reads++; return payload;}};
-  const rows = await readComments({}, {id: answerId, limit: 5}, 'zhihu', {
-    name: 'answer-comments', access: 'read', domain: 'www.zhihu.com',
-    func: async (page, args) => {
-      assert.equal(args['replies-limit'], 0);
-      assert.equal(args.limit, 5);
-      const response = await page.evaluate(() => {}, commentUrl);
-      return response.data.map(row => ({id: row.id, author: '同名', content: '原文'}));
-    },
-  }, (_page, run) => run(owned));
-  assert.equal(reads, 1);
-  assert.deepEqual(rows.map(row => row.native_author_id), ['author-a', 'author-b']);
-  assert.ok(rows.every(row => row.author === '同名' && row.content === '原文'));
-});
-
-test('Zhihu ignores unrelated origins and answer IDs', () => {
-  const authors = new Map();
-  const payload = {data: [{id: '1', author: {id: 'author-a'}}]};
-  for (const url of [commentUrl.replace('www.zhihu.com', 'example.com'),
-    commentUrl.replace(answerId, '123'), commentUrl.replace('https:', 'http:'),
-    commentUrl.replace('www.zhihu.com', 'user@www.zhihu.com')]) {
-    captureZhihuCommentAuthors(authors, url, answerId, payload);
-  }
-  assert.equal(authors.size, 0);
-});
-
-test('Zhihu missing or anonymous native identities stay unknown', () => {
-  const authors = new Map();
-  const rows = [{id: '1', author: {name: '姓名'}},
-    {id: '2', author: {id: '0'}},
-    {id: '3', author: {id: 'a', is_anonymous: true}},
-    {id: '4', author: {is_anonymous: true, member: {id: 'b'}}},
-    {id: '5', is_anonymous: true, author: {id: 'c'}}];
-  captureZhihuCommentAuthors(authors, commentUrl, answerId, {session: {}, data: {data: rows}});
-  assert.equal(authors.size, 5);
-  assert.ok([...authors.values()].every(value => value === null));
-});
-
-test('Zhihu rejects ambiguous IDs, conflicting authors and unbounded pages', () => {
-  const authors = new Map();
-  const capture = rows => captureZhihuCommentAuthors(authors, commentUrl, answerId, {data: rows});
-  assert.throws(() => capture([{id: Number.MAX_SAFE_INTEGER + 1}]), /ID invalid/);
-  capture([{id: '1', author: {id: 'a'}}]);
-  assert.throws(() => capture([{id: '1', author: {id: 'b'}}]), /author conflict/);
-  assert.throws(() => capture(Array(21).fill({id: '2'})), /reviewed limit/);
 });

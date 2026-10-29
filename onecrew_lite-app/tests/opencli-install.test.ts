@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, readdir, readFile, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
@@ -30,4 +30,17 @@ test("原bundle真实安装到隔离home，冲突必须显式修复且未知文�
   }
   assert.equal(preserved, true);
   assert.equal((await addons.status()).every(item => item.state === "ready"), true);
+  const retired = join(home, ".opencli", "clis", "onecrew-zhihu");
+  await mkdir(retired);
+  const retainedEvidence = fileURLToPath(new URL("./fixtures/zhihu-profile-contact-live-20261029.json", import.meta.url));
+  await cp(retainedEvidence, join(retired, "saved-evidence.json"));
+  assert.equal((await addons.repair(true)).every(item => item.state === "ready"), true);
+  assert.equal((await readdir(join(home, ".opencli", "clis"))).includes("onecrew-zhihu"), false);
+  const archived = await readdir(backups); let evidencePreserved = false;
+  for (const root of archived) {
+    const directory = join(backups, root, "onecrew-zhihu");
+    if ((await readdir(join(backups, root))).includes("onecrew-zhihu"))
+      evidencePreserved = (await readFile(join(directory, "saved-evidence.json"))).equals(await readFile(retainedEvidence));
+  }
+  assert.equal(evidencePreserved, true);
 });

@@ -4,7 +4,7 @@ import { z } from "zod";
 import { invoke, isRuntimeAvailable, unifiedAccountSessionKey } from "./local-runtime";
 
 const profileSchema = z.object({ context_id: z.string(), alias: z.string().nullable() });
-const ADDON_IDS = ["onecrew-site-auth", "onecrew-zhihu", "onecrew-xiaohongshu", "onecrew-youtube", "onecrew-tiktok", "onecrew-bilibili", "onecrew-tiktok-profile", "onecrew-bilibili-profile", "onecrew-bilibili-video", "onecrew-twitter-identity", "onecrew-twitter-post-identity", "onecrew-twitter-post-content", "onecrew-browser-search"] as const;
+const ADDON_IDS = ["onecrew-site-auth", "onecrew-xiaohongshu", "onecrew-youtube", "onecrew-tiktok", "onecrew-bilibili", "onecrew-tiktok-profile", "onecrew-bilibili-profile", "onecrew-bilibili-video", "onecrew-twitter-identity", "onecrew-twitter-post-identity", "onecrew-twitter-post-content", "onecrew-browser-search"] as const;
 const addonSchema = z.object({
   id: z.enum(ADDON_IDS),
   state: z.enum(["missing", "ready", "conflict", "unavailable"]),
