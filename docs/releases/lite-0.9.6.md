@@ -2,6 +2,8 @@
 
 本次将已在本机验收的 Lite 0.9.4 R3 搜索流程优化及此前知乎、小红书接入汇集为 0.9.6。公司客户端基线为 `main` 的 `4fd4dec79dec14ef6f0c420b664e0289e951a26f`，功能来源为 `165939b3b8cbd543055ce9355b2de211e55b4c86`。合并前的候选验证与正式发布分别记录；正式分发需确认公司 MR 合并。
 
+客户端 [MR !8](https://git.digifinex.org/onecrew_lite/onecrew_lite/-/merge_requests/8)；Access [MR !34](https://git.digifinex.org/onecrew/onecrew-access/-/merge_requests/34)。先确认客户端 main 与 Access onecrew 均已合并，再上传安装包、发布 npm 与切换默认入口。
+
 本版保留读取与评分并发、原生作者身份和证据校验、跨任务已成功读取材料、旧 Library 迁移、原账号和安装身份、表格及搜索结果。安装及发布验收不恢复搜索。宿主等待使用整数毫秒，联系页排除明确嘉宾与推广资源，推荐完成与可选联系资料补充分别展示。
 
 交付范围为 Mac ARM64 ZIP、对应安装提示词、`@onecrew/lite@0.9.6` 和 Mac 平台 npm 包。npm 主包继续引用已验收的 Windows 0.9.1；`windows_installer` 保持公司基线内容，不重新打包或发布 Windows。公司 Pro、Cloud、账号及其他配置不在修改范围。
