@@ -21,16 +21,19 @@ if (process.platform === "win32") {
 const parent = process.platform === "win32" ? process.env.LOCALAPPDATA : process.platform === "darwin" ? join(homedir(), "Library", "Caches") : undefined;
 if (!parent) throw new Error("package.cache_platform_unsupported");
 let directory = parent;
+const ancestors: string[] = [];
 for (const part of ["OneCrewLite", "cache", "runtime"]) {
   directory = join(directory, part);
-  if (process.env.ONECREW_LITE_DIAGNOSTICS === "1") process.stderr.write(`[DEBUG-win099] cache-directory ${part}\n`);
-  const exists = await lstat(directory).then(() => true, error => { if (error.code === "ENOENT") return false; throw error; });
-  if (exists) await permissions.verify(directory); else await permissions.create(directory);
+  ancestors.push(directory);
+}
+const cached = await lstat(join(directory, manifest.payloadSha256)).then(() => true, error => { if (error.code === "ENOENT") return false; throw error; });
+if (!cached) for (const ancestor of ancestors) {
+  const exists = await lstat(ancestor).then(() => true, error => { if (error.code === "ENOENT") return false; throw error; });
+  if (exists) await permissions.verify(ancestor); else await permissions.create(ancestor);
 }
 if (process.env.ONECREW_LITE_DIAGNOSTICS === "1") process.stderr.write("[DEBUG-win099] materialize-start\n");
-const payloadRoot = await realpath(await materializePayload(manifest, path => new Uint8Array(getAsset(path)), directory, permissions));
+const payloadRoot = await realpath(await materializePayload(manifest, path => new Uint8Array(getAsset(path)), directory, permissions, ancestors));
 if (process.env.ONECREW_LITE_DIAGNOSTICS === "1") process.stderr.write("[DEBUG-win099] materialize-complete\n");
-await permissions.verify(payloadRoot);
 if (process.platform === "win32") process.env.PATH = `${join(payloadRoot, "runtime")}${delimiter}${process.env.PATH ?? ""}`;
 Object.defineProperty(globalThis, Symbol.for("onecrew_lite.verified_payload"), { value: Object.freeze({ payloadRoot, payloadSha256: manifest.payloadSha256, executablePath }), writable: false, configurable: false });
 const loader = join(payloadRoot, "app", "runtime-loader.cjs");

@@ -46,9 +46,10 @@ export class PayloadPermissions {
       await this.verify(path);
     }
   }
-  async verifyTree(path: string): Promise<void> {
-    if (process.platform === "win32") await this.#windows("VerifyTree", path);
+  async verifyTree(path: string, ancestors: readonly string[] = []): Promise<void> {
+    if (process.platform === "win32") await this.#windows("VerifyTree", path, ancestors);
     else {
+      for (const ancestor of ancestors) await this.#unix(ancestor);
       await this.#unix(path);
       for (const child of await readdir(path, { withFileTypes: true })) {
         const target = join(path, child.name);
@@ -73,8 +74,8 @@ async function readStable(path: string, expectedSize?: number): Promise<Uint8Arr
   return bytes;
 }
 
-export async function verifyPayloadCache(root: string, manifest: PayloadManifest, permissions: PayloadPermissions): Promise<void> {
-  await permissions.verifyTree(root);
+export async function verifyPayloadCache(root: string, manifest: PayloadManifest, permissions: PayloadPermissions, ancestors: readonly string[] = []): Promise<void> {
+  await permissions.verifyTree(root, ancestors);
   const actual: string[] = [];
   const allowedDirectories = new Set<string>();
   for (const file of manifest.files) { const parts = file.path.split("/"); parts.pop(); while (parts.length) { allowedDirectories.add(parts.join("/")); parts.pop(); } }
@@ -94,19 +95,22 @@ export async function verifyPayloadCache(root: string, manifest: PayloadManifest
   for (const file of manifest.files) if (digest(await readStable(join(root, ...file.path.split("/")), file.size)) !== file.sha256) throw new Error("package.cache_hash_mismatch");
 }
 
-export async function materializePayload(manifest: PayloadManifest, readAsset: (path: string) => Uint8Array, base: string, permissions: PayloadPermissions): Promise<string> {
-  await permissions.verify(base);
+export async function materializePayload(manifest: PayloadManifest, readAsset: (path: string) => Uint8Array, base: string, permissions: PayloadPermissions, ancestors: readonly string[] = [base]): Promise<string> {
   const target = join(base, manifest.payloadSha256);
   async function verifiedRoot(): Promise<string> {
-    await permissions.verify(target);
     const marker = join(target, ".complete");
     if (Buffer.from(await readStable(marker, manifest.payloadSha256.length + 1)).toString("utf8") !== manifest.payloadSha256 + "\n") throw new Error("package.cache_manifest_mismatch");
     // Windows 桌面宿主可能只重定向文件；以真实完成标记确定物理目录，再核验整份资源。
     const physical = dirname(await realpath(marker));
-    await verifyPayloadCache(physical, manifest, permissions);
+    await verifyPayloadCache(physical, manifest, permissions, ancestors);
     return physical;
   }
-  if (await lstat(target).then(() => true, error => { if (error.code === "ENOENT") return false; throw error; })) return verifiedRoot();
+  const existing = await lstat(target).then(item => item, error => { if (error.code === "ENOENT") return undefined; throw error; });
+  if (existing) {
+    if (!existing.isDirectory() || existing.isSymbolicLink()) throw new Error("package.unsafe_cache_ancestor");
+    return verifiedRoot();
+  }
+  await permissions.verify(base);
   const stage = join(base, `.candidate-${randomUUID()}`), directories = new Set<string>();
   for (const file of manifest.files) {
     const parts = file.path.split("/"); parts.pop();

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFile, writeFile, mkdir, rm } from "node:fs/promises";
+import { chmod, readFile, writeFile, mkdir, rm } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
@@ -31,6 +31,11 @@ test("candidate payload private extraction verifies every warm-cache file and re
     assert.deepEqual(parsePayloadManifest(Buffer.from(JSON.stringify(manifest))), manifest);
     const root = await materializePayload(manifest, path => assets.get(path)!, directory, permissions);
     assert.equal(await materializePayload(manifest, path => assets.get(path)!, directory, permissions), root);
+    if (process.platform !== "win32") {
+      await chmod(directory, 0o755);
+      await assert.rejects(materializePayload(manifest, path => assets.get(path)!, directory, permissions), /cache_permissions_invalid/u);
+      await chmod(directory, 0o700);
+    }
     await writeFile(join(root, "unexpected.txt"), "unlisted", { flag: "wx", mode: 0o600 });
     await assert.rejects(verifyPayloadCache(root, manifest, permissions), /inventory_mismatch/u);
     await rm(join(root, "unexpected.txt"));

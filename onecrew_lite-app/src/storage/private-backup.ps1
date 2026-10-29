@@ -117,6 +117,12 @@ Assert-NoReparse $directoryPath
 Assert-PrivateAcl $directoryPath $true
 if ($Operation -eq 'VerifyTree') {
   if ($File) { throw 'Tree verification cannot select one file' }
+  if ($TreeManifest) {
+    foreach ($ancestor in (ConvertFrom-Json -InputObject $TreeManifest)) {
+      Assert-NoReparse $ancestor
+      Assert-PrivateAcl $ancestor $true
+    }
+  }
   $pending = New-Object 'System.Collections.Generic.Stack[System.IO.DirectoryInfo]'
   $pending.Push((New-Object System.IO.DirectoryInfo($directoryPath)))
   while ($pending.Count -gt 0) {
